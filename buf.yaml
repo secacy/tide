@@ -1,0 +1,15 @@
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+  except:
+    # Directional names are intentional for the bidirectional streaming wire contracts.
+    - RPC_REQUEST_STANDARD_NAME
+    - RPC_RESPONSE_STANDARD_NAME
+    # Keep the concise public service names defined by the Tide protocol.
+    - SERVICE_SUFFIX
+breaking:
+  use:
+    - FILE

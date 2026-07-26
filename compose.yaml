@@ -1,0 +1,43 @@
+services:
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 1s
+      retries: 20
+
+  mock-asr:
+    build:
+      context: .
+      args:
+        TARGET: mock-asr
+    command: ["-addr", ":9091"]
+
+  gateway:
+    build:
+      context: .
+      args:
+        TARGET: gateway
+    depends_on:
+      redis:
+        condition: service_healthy
+      mock-asr:
+        condition: service_started
+    environment:
+      TIDE_REDIS_ADDR: redis:6379
+      TIDE_ASR_ADDR: mock-asr:9091
+      TIDE_METRICS_ADDR: ":8081"
+      TIDE_NODE_ID: gateway-compose
+      TIDE_PEER_ADVERTISE_ADDR: gateway:9090
+      TIDE_TOKEN_SECRET: compose-development-token-secret
+      TIDE_JWT_HS256_SECRET: compose-development-access-secret
+      TIDE_ALLOWED_ORIGINS: localhost:*,127.0.0.1:*
+      TIDE_PUBLIC_WS_BASE_URL: ws://localhost:8080
+      TIDE_CREATE_RATE_PER_MIN: "20000"
+      TIDE_CONNECT_RATE_PER_MIN: "30000"
+      TIDE_TENANT_MAX_STREAMS: "12000"
+    ports:
+      - "8080:8080"
+      - "9090:9090"

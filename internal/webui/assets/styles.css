@@ -1,0 +1,88 @@
+:root {
+  color-scheme: light;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #18332d;
+  background: #eef4f1;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 80% 10%, rgba(80, 167, 141, .22), transparent 30rem),
+    linear-gradient(145deg, #f8fbfa, #e7f0ec);
+}
+
+main {
+  width: min(880px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 64px 0 40px;
+}
+
+header { margin-bottom: 28px; }
+.eyebrow { color: #287864; font-size: 12px; font-weight: 750; letter-spacing: .13em; }
+h1 { margin: 6px 0; font-size: clamp(36px, 7vw, 62px); letter-spacing: -.04em; }
+.subtitle { color: #60766f; }
+
+.panel {
+  background: rgba(255,255,255,.86);
+  border: 1px solid rgba(31, 92, 75, .14);
+  border-radius: 18px;
+  box-shadow: 0 18px 60px rgba(31, 71, 60, .09);
+  padding: 24px;
+}
+
+.controls { display: grid; grid-template-columns: 1fr 180px; gap: 18px; }
+label { display: grid; gap: 7px; font-size: 13px; font-weight: 700; }
+textarea, input {
+  width: 100%;
+  border: 1px solid #b9cbc5;
+  border-radius: 9px;
+  background: #fbfdfc;
+  color: inherit;
+  font: inherit;
+  font-weight: 450;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.actions { grid-column: 1 / -1; display: flex; gap: 10px; }
+button {
+  border: 0;
+  border-radius: 999px;
+  background: #16785f;
+  color: white;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 750;
+  padding: 11px 19px;
+}
+button.secondary { background: #e5eeeb; color: #315148; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+
+.statusbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 18px 4px;
+  color: #60766f;
+  font-size: 13px;
+}
+#status { color: #b36b20; font-weight: 750; }
+#status[data-state="live"] { color: #087b57; }
+#status[data-state="error"] { color: #b53636; }
+
+.transcript { min-height: 300px; }
+.transcript h2 { margin-top: 0; font-size: 15px; color: #60766f; }
+#finals p { font-size: 20px; line-height: 1.55; margin: 0 0 12px; }
+.partial { color: #81918c; font-size: 20px; line-height: 1.55; }
+#error { min-height: 24px; color: #b53636; }
+footer { color: #748780; font-size: 12px; text-align: center; }
+
+@media (max-width: 620px) {
+  main { padding-top: 32px; }
+  .controls { grid-template-columns: 1fr; }
+  .actions { grid-column: 1; }
+}

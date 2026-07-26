@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tide 实时语音网关</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">TIDE · CLINICAL VOICE INFRASTRUCTURE</p>
+      <h1>实时问诊转录</h1>
+      <p class="subtitle">PCM16 / 16 kHz / 单声道 · 演示客户端</p>
+    </header>
+
+    <section class="panel controls">
+      <label>
+        Access token
+        <textarea id="token" rows="3" placeholder="开发模式可留空，页面会从 /dev/token 获取临时令牌"></textarea>
+      </label>
+      <label>
+        语言
+        <input id="language" value="zh-CN" maxlength="35">
+      </label>
+      <div class="actions">
+        <button id="start">开始问诊</button>
+        <button id="pause" disabled>暂停收音</button>
+        <button id="stop" class="secondary" disabled>结束</button>
+      </div>
+    </section>
+
+    <section class="statusbar">
+      <span id="status" data-state="idle">未连接</span>
+      <span>Epoch <strong id="epoch">—</strong></span>
+      <span>Offset <strong id="offset">0</strong></span>
+    </section>
+
+    <section class="panel transcript">
+      <h2>转录结果</h2>
+      <div id="finals"></div>
+      <p id="partial" class="partial">等待音频…</p>
+    </section>
+
+    <p id="error" role="alert"></p>
+    <footer>本示例不会在浏览器或网关中持久化音频与转录文本。</footer>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>

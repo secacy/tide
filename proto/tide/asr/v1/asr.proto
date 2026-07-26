@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package tide.asr.v1;
+
+option go_package = "github.com/can/tide/gen/tide/asr/v1;asrv1";
+
+service ASR {
+  rpc Transcribe(stream GatewayToASR) returns (stream ASRToGateway);
+}
+
+message GatewayToASR {
+  oneof payload {
+    Start start = 1;
+    Audio audio = 2;
+    End end = 3;
+  }
+}
+
+message Start {
+  string stream_id = 1;
+  uint64 epoch = 2;
+  string language_code = 3;
+  AudioConfig audio = 4;
+  uint64 initial_sample_offset = 5;
+}
+
+message AudioConfig {
+  string encoding = 1;
+  uint32 sample_rate_hz = 2;
+  uint32 channels = 3;
+}
+
+message Audio {
+  uint64 sample_offset = 1;
+  bytes pcm = 2;
+  int64 received_unix_nano = 3;
+}
+
+message End {
+  string reason = 1;
+}
+
+message ASRToGateway {
+  oneof payload {
+    Ready ready = 1;
+    Ack ack = 2;
+    Transcript transcript = 3;
+    ASRError error = 4;
+  }
+}
+
+message Ready {
+  uint64 epoch = 1;
+}
+
+message Ack {
+  uint64 next_sample_offset = 1;
+}
+
+message Transcript {
+  uint64 epoch = 1;
+  string segment_id = 2;
+  uint64 revision = 3;
+  string text = 4;
+  bool is_final = 5;
+  uint64 start_ms = 6;
+  uint64 end_ms = 7;
+}
+
+message ASRError {
+  string code = 1;
+  string message = 2;
+  bool retryable = 3;
+}

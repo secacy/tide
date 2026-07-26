@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package tide.peer.v1;
+
+option go_package = "github.com/can/tide/gen/tide/peer/v1;peerv1";
+
+service GatewayPeer {
+  rpc Relay(stream EdgeToOwner) returns (stream OwnerToEdge);
+}
+
+message EdgeToOwner {
+  oneof payload {
+    Open open = 1;
+    Audio audio = 2;
+    End end = 3;
+  }
+}
+
+message Open {
+  string stream_id = 1;
+  string tenant_id = 2;
+  uint64 generation = 3;
+  uint64 epoch = 4;
+  string language_code = 5;
+}
+
+message Audio {
+  uint64 sample_offset = 1;
+  bytes pcm = 2;
+  int64 received_unix_nano = 3;
+}
+
+message End {
+  string reason = 1;
+}
+
+message OwnerToEdge {
+  oneof payload {
+    Ready ready = 1;
+    Ack ack = 2;
+    Transcript transcript = 3;
+    Discontinuity discontinuity = 4;
+    RelayError error = 5;
+    Ended ended = 6;
+  }
+}
+
+message Ready {
+  uint64 epoch = 1;
+  uint64 next_sample_offset = 2;
+}
+
+message Ack {
+  uint64 next_sample_offset = 1;
+}
+
+message Transcript {
+  uint64 epoch = 1;
+  string segment_id = 2;
+  uint64 revision = 3;
+  string text = 4;
+  bool is_final = 5;
+  uint64 start_ms = 6;
+  uint64 end_ms = 7;
+  int64 received_unix_nano = 8;
+}
+
+message Discontinuity {
+  uint64 previous_epoch = 1;
+  uint64 epoch = 2;
+  string reason = 3;
+}
+
+message RelayError {
+  string code = 1;
+  string message = 2;
+  bool retryable = 3;
+}
+
+message Ended {
+  string reason = 1;
+}
