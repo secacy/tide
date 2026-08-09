@@ -22,6 +22,8 @@ Browser ── WebSocket ──> Edge gateway ── peer gRPC ──> Owner gat
 
 Owner 宕机或优雅下线后，新节点取得过期租约并增加 `epoch`。客户端收到 `discontinuity`，继续使用同一 `stream_id`，但 ASR 上下文会重新建立，不承诺无损恢复。
 
+示例网页会把最近 30 秒未 ACK 的 PCM 保存在内存 Ring Buffer 中，短时断线后按服务端恢复点受控回放；ACK 后才释放缓存。缓存不会写入浏览器持久存储，页面刷新不在恢复保证内。
+
 ## 本地运行
 
 要求 Go 1.26。原生运行不依赖 Redis，此时使用内存会话存储，只支持单节点：
@@ -115,6 +117,8 @@ Authorization: Bearer <JWT>
 - `discontinuity`: `previous_epoch`、`epoch`、`reason`
 - `error`: 稳定的 `code`、安全的 `message`、`retryable`
 - `ended`: `reason`
+
+客户端以 `(epoch, segment_id)` 为幂等键，只接受更新的 revision；final 不会因重放而重复追加。
 
 客户端以 `{"type":"end"}` 显式结束，也可调用：
 
