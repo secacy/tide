@@ -19,17 +19,17 @@ func TestMemoryStoreTokenRotationAndReplacement(t *testing.T) {
 	if err := store.Create(t.Context(), newTestSession("one", "clinic", "first"), 2); err != nil {
 		t.Fatal(err)
 	}
-	stream, err := store.Attach(t.Context(), "one", "clinic", 0, "first", "second")
+	stream, err := store.Attach(t.Context(), "one", "clinic", 0, "first", "second", time.Now(), time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if stream.Generation != 1 || stream.State != StateAttached {
 		t.Fatalf("unexpected attached stream: %+v", stream)
 	}
-	if _, err := store.Attach(t.Context(), "one", "clinic", 0, "first", "replay"); !errors.Is(err, ErrTokenConsumed) {
+	if _, err := store.Attach(t.Context(), "one", "clinic", 0, "first", "replay", time.Now(), time.Minute); !errors.Is(err, ErrTokenConsumed) {
 		t.Fatalf("replayed token returned %v", err)
 	}
-	stream, err = store.Attach(t.Context(), "one", "clinic", 1, "second", "third")
+	stream, err = store.Attach(t.Context(), "one", "clinic", 1, "second", "third", time.Now(), time.Minute)
 	if err != nil || stream.Generation != 2 {
 		t.Fatalf("replacement attach: stream=%+v err=%v", stream, err)
 	}
@@ -78,7 +78,51 @@ func TestMemoryStoreRejectsExpiredSession(t *testing.T) {
 	if err := store.Create(t.Context(), stream, 1); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := store.Attach(t.Context(), stream.ID, stream.TenantID, 0, "token", "next"); !errors.Is(err, ErrExpired) {
+	if _, err := store.Attach(t.Context(), stream.ID, stream.TenantID, 0, "token", "next", time.Now(), time.Minute); !errors.Is(err, ErrExpired) {
 		t.Fatalf("expected expiration error, got %v", err)
+	}
+}
+
+func TestMemoryStoreResumeWindowAndTokenRotation(t *testing.T) {
+	store := NewMemoryStore()
+	stream := newTestSession("resume", "clinic", "first")
+	if err := store.Create(t.Context(), stream, 1); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now()
+	attached, err := store.Attach(t.Context(), stream.ID, stream.TenantID, 0, "first", "second", now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.MarkDetached(t.Context(), stream.ID, attached.Generation, now.Add(time.Second)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.RotateToken(t.Context(), stream.ID, stream.TenantID, "third", now, time.Minute); err != nil {
+		t.Fatalf("rotate token inside resume window: %v", err)
+	}
+	if _, err := store.Attach(t.Context(), stream.ID, stream.TenantID, attached.Generation, "third", "fourth", now.Add(2*time.Second), time.Minute); !errors.Is(err, ErrResumeExpired) {
+		t.Fatalf("attach outside resume window returned %v", err)
+	}
+	if _, err := store.RotateToken(t.Context(), stream.ID, stream.TenantID, "fifth", now.Add(2*time.Second), time.Minute); !errors.Is(err, ErrResumeExpired) {
+		t.Fatalf("token rotation outside resume window returned %v", err)
+	}
+}
+
+func TestMemoryStoreRejectsAttachAfterDeadOwnerWindow(t *testing.T) {
+	store := NewMemoryStore()
+	stream := newTestSession("dead-owner", "clinic", "first")
+	if err := store.Create(t.Context(), stream, 1); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now()
+	attached, err := store.Attach(t.Context(), stream.ID, stream.TenantID, 0, "first", "second", now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, acquired, _, err := store.AcquireOwner(t.Context(), stream.ID, "node/boot", "node:9090", now, time.Second); err != nil || !acquired {
+		t.Fatalf("acquire owner: acquired=%v err=%v", acquired, err)
+	}
+	if _, err := store.Attach(t.Context(), stream.ID, stream.TenantID, attached.Generation, "second", "third", now.Add(3*time.Second), time.Second); !errors.Is(err, ErrResumeExpired) {
+		t.Fatalf("attach after dead owner window returned %v", err)
 	}
 }

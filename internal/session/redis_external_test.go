@@ -32,7 +32,7 @@ func TestExternalRedisLifecycle(t *testing.T) {
 	if err := store.Create(ctx, stream, 1); err != nil {
 		t.Fatal(err)
 	}
-	stream, err = store.Attach(ctx, stream.ID, stream.TenantID, 0, "initial", "next")
+	stream, err = store.Attach(ctx, stream.ID, stream.TenantID, 0, "initial", "next", time.Now(), time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}

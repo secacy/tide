@@ -33,6 +33,7 @@ const (
 
 type Server struct {
 	config      config.Config
+	ownerID     string
 	store       session.Store
 	auth        *auth.Verifier
 	tokens      *auth.StreamTokenService
@@ -55,6 +56,7 @@ type rateWindow struct {
 
 func NewServer(
 	cfg config.Config,
+	ownerID string,
 	store session.Store,
 	verifier *auth.Verifier,
 	tokens *auth.StreamTokenService,
@@ -65,7 +67,7 @@ func NewServer(
 	example http.Handler,
 ) *Server {
 	return &Server{
-		config: cfg, store: store, auth: verifier, tokens: tokens,
+		config: cfg, ownerID: ownerID, store: store, auth: verifier, tokens: tokens,
 		manager: manager, peers: peers, metrics: metrics, logger: logger,
 		rateWindows: make(map[string]*rateWindow), example: example,
 	}
@@ -74,6 +76,7 @@ func NewServer(
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /v1/streams", s.createStream)
+	mux.HandleFunc("POST /v1/streams/{stream_id}/resume-token", s.rotateResumeToken)
 	mux.HandleFunc("DELETE /v1/streams/{stream_id}", s.deleteStream)
 	mux.HandleFunc("GET /v1/streams/{stream_id}/ws", s.connectStream)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, _ *http.Request) {
@@ -137,6 +140,11 @@ type audioSpec struct {
 	FrameMS      int    `json:"frame_ms"`
 }
 
+type rotateTokenResponse struct {
+	ResumeToken string    `json:"resume_token"`
+	ExpiresAt   time.Time `json:"expires_at"`
+}
+
 func (s *Server) createStream(w http.ResponseWriter, r *http.Request) {
 	if s.draining.Load() {
 		w.Header().Set("Retry-After", "5")
@@ -191,11 +199,64 @@ func (s *Server) createStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.metrics.StreamsCreated.Inc()
+	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusCreated, createResponse{
 		StreamID: streamID, WebSocket: s.webSocketURL(r, streamID),
 		AttachToken: token, ExpiresAt: tokenExpiry,
 		Audio: audioSpec{Encoding: "pcm_s16le", SampleRateHz: 16000, Channels: 1, FrameMS: 40},
 	})
+}
+
+func (s *Server) rotateResumeToken(w http.ResponseWriter, r *http.Request) {
+	identity, err := s.authenticate(r)
+	if err != nil {
+		writeError(w, http.StatusUnauthorized, "unauthorized", "invalid bearer token")
+		return
+	}
+	if !s.allowRate("resume-token:"+identity.TenantID, s.config.ConnectRatePerMin) {
+		w.Header().Set("Retry-After", "60")
+		writeError(w, http.StatusTooManyRequests, "rate_limited", "resume token rate exceeded")
+		return
+	}
+	jti, tokenHash, err := s.tokens.NewTokenID()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal", "could not create resume token")
+		return
+	}
+	stream, err := s.store.RotateToken(
+		r.Context(), r.PathValue("stream_id"), identity.TenantID, tokenHash,
+		time.Now(), s.config.DetachWindow,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, session.ErrNotFound):
+			writeError(w, http.StatusNotFound, "stream_not_found", "stream not found")
+		case errors.Is(err, session.ErrForbidden):
+			writeError(w, http.StatusForbidden, "forbidden", "stream belongs to another tenant")
+		case errors.Is(err, session.ErrResumeExpired):
+			writeError(w, http.StatusGone, "resume_window_expired", "stream resume window has expired")
+		case errors.Is(err, session.ErrEnded), errors.Is(err, session.ErrExpired):
+			writeError(w, http.StatusGone, "stream_ended", "stream has ended")
+		default:
+			s.logger.Error("rotate resume token", "stream_id", r.PathValue("stream_id"), "error", err)
+			writeError(w, http.StatusServiceUnavailable, "store_unavailable", "session store unavailable")
+		}
+		return
+	}
+	kind := auth.TokenResume
+	if stream.State == session.StateCreated && stream.Generation == 0 {
+		kind = auth.TokenAttach
+	}
+	token, expiresAt, err := s.tokens.IssueWithID(
+		stream.ID, stream.TenantID, kind, jti,
+		stream.Generation, stream.Epoch, streamTokenTTL,
+	)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "internal", "could not create resume token")
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, rotateTokenResponse{ResumeToken: token, ExpiresAt: expiresAt})
 }
 
 func (s *Server) deleteStream(w http.ResponseWriter, r *http.Request) {
@@ -286,17 +347,23 @@ func (s *Server) connectStream(w http.ResponseWriter, r *http.Request) {
 		closeWS(conn, websocket.StatusInternalError, "internal error")
 		return
 	}
-	stream, err := s.store.Attach(ctx, claims.StreamID, claims.TenantID, claims.Generation, auth.HashTokenID(claims.ID), nextHash)
+	now := time.Now()
+	stream, err := s.store.Attach(
+		ctx, claims.StreamID, claims.TenantID, claims.Generation,
+		auth.HashTokenID(claims.ID), nextHash, now, s.config.DetachWindow,
+	)
 	if err != nil {
 		status := websocket.StatusPolicyViolation
 		if errors.Is(err, session.ErrTokenConsumed) {
 			status = 4409
+		} else if errors.Is(err, session.ErrResumeExpired) {
+			status = 4410
 		}
 		closeWS(conn, status, "stream cannot be attached")
 		return
 	}
 	stream, acquired, _, err := s.store.AcquireOwner(
-		ctx, stream.ID, s.config.NodeID, s.config.PeerAdvertiseAddr,
+		ctx, stream.ID, s.ownerID, s.config.PeerAdvertiseAddr,
 		time.Now(), s.config.OwnerLease,
 	)
 	if err != nil {

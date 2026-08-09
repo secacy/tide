@@ -18,7 +18,7 @@ Browser ── WebSocket ──> Edge gateway ── peer gRPC ──> Owner gat
                  （不含音频和转录正文）
 ```
 
-逻辑 `stream_id` 与 WebSocket 连接分离。连接断开后，逻辑流保留 30 秒；新连接消费轮换后的 resume token 并增加 attachment generation，旧连接随即失效。每条流只有 owner 节点持有 ASR 流，连接落到其他节点时由内部 `GatewayPeer.Relay` 转发。
+逻辑 `stream_id` 与 WebSocket 连接分离。连接断开后，逻辑流保留 30 秒；新连接消费轮换后的 resume token 并增加 attachment generation，旧连接随即失效。附着会原子校验断线窗口；每条流只有带进程级 incarnation 的 owner 持有 ASR 流，连接落到其他节点时由内部 `GatewayPeer.Relay` 转发。
 
 Owner 宕机或优雅下线后，新节点取得过期租约并增加 `epoch`。客户端收到 `discontinuity`，继续使用同一 `stream_id`，但 ASR 上下文会重新建立，不承诺无损恢复。
 
@@ -91,6 +91,15 @@ WebSocket 升级后必须在 3 秒内发送：
   "expires_at": "2026-07-26T12:02:00Z"
 }
 ```
+
+resume token 有效期为 2 分钟。长会话断线后若 token 已过期，可用 access JWT 重新签发：
+
+```http
+POST /v1/streams/{stream_id}/resume-token
+Authorization: Bearer <JWT>
+```
+
+该操作原子轮换 token，且只允许在 stream 生命周期和断线续接窗口内执行。
 
 音频采用二进制消息：
 

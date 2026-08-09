@@ -71,7 +71,7 @@ func TestPeerRelayForwardsAudioToOwner(t *testing.T) {
 	if err := store.Create(t.Context(), stream, 10); err != nil {
 		t.Fatal(err)
 	}
-	stream, err = store.Attach(t.Context(), stream.ID, stream.TenantID, 0, "first", "second")
+	stream, err = store.Attach(t.Context(), stream.ID, stream.TenantID, 0, "first", "second", time.Now(), time.Minute)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -86,20 +86,22 @@ func (s *RedisStore) Get(ctx context.Context, streamID string) (Session, error) 
 
 var attachScript = redis.NewScript(`
 if redis.call("EXISTS", KEYS[1]) == 0 then return {-1} end
-local values = redis.call("HMGET", KEYS[1], "tenant", "state", "generation", "token_hash", "expires_ms")
+local values = redis.call("HMGET", KEYS[1], "tenant", "state", "generation", "token_hash", "expires_ms", "detached_until_ms", "owner_lease_ms")
 if values[1] ~= ARGV[1] then return {-2} end
 if values[2] == "ended" or values[2] == "failed" then return {-3} end
 if tonumber(values[3]) ~= tonumber(ARGV[2]) or values[4] ~= ARGV[3] then return {-4} end
 if tonumber(values[5]) <= tonumber(ARGV[5]) then return {-5} end
+if values[2] == "detached" and (tonumber(values[6]) == 0 or tonumber(values[6]) <= tonumber(ARGV[5])) then return {-6} end
+if values[2] == "attached" and tonumber(values[7]) > 0 and tonumber(values[7]) + tonumber(ARGV[6]) <= tonumber(ARGV[5]) then return {-6} end
 local generation = tonumber(values[3]) + 1
 redis.call("HSET", KEYS[1], "generation", generation, "token_hash", ARGV[4],
   "state", "attached", "detached_until_ms", "0")
 return {generation}
 `)
 
-func (s *RedisStore) Attach(ctx context.Context, streamID, tenantID string, expectedGeneration uint64, tokenHash, nextTokenHash string) (Session, error) {
+func (s *RedisStore) Attach(ctx context.Context, streamID, tenantID string, expectedGeneration uint64, tokenHash, nextTokenHash string, now time.Time, detachWindow time.Duration) (Session, error) {
 	result, err := attachScript.Run(ctx, s.client, []string{redisPrefix + streamID},
-		tenantID, expectedGeneration, tokenHash, nextTokenHash, time.Now().UnixMilli()).Int64Slice()
+		tenantID, expectedGeneration, tokenHash, nextTokenHash, now.UnixMilli(), detachWindow.Milliseconds()).Int64Slice()
 	if err != nil {
 		return Session{}, fmt.Errorf("attach stream: %w", err)
 	}
@@ -117,6 +119,41 @@ func (s *RedisStore) Attach(ctx context.Context, streamID, tenantID string, expe
 		return Session{}, ErrTokenConsumed
 	case -5:
 		return Session{}, ErrExpired
+	case -6:
+		return Session{}, ErrResumeExpired
+	}
+	return s.Get(ctx, streamID)
+}
+
+var rotateTokenScript = redis.NewScript(`
+if redis.call("EXISTS", KEYS[1]) == 0 then return -1 end
+local values = redis.call("HMGET", KEYS[1], "tenant", "state", "expires_ms", "detached_until_ms", "owner_lease_ms")
+if values[1] ~= ARGV[1] then return -2 end
+if values[2] == "ended" or values[2] == "failed" then return -3 end
+if tonumber(values[3]) <= tonumber(ARGV[3]) then return -4 end
+if values[2] == "detached" and (tonumber(values[4]) == 0 or tonumber(values[4]) <= tonumber(ARGV[3])) then return -5 end
+if values[2] == "attached" and tonumber(values[5]) > 0 and tonumber(values[5]) + tonumber(ARGV[4]) <= tonumber(ARGV[3]) then return -5 end
+redis.call("HSET", KEYS[1], "token_hash", ARGV[2])
+return 1
+`)
+
+func (s *RedisStore) RotateToken(ctx context.Context, streamID, tenantID, nextTokenHash string, now time.Time, detachWindow time.Duration) (Session, error) {
+	result, err := rotateTokenScript.Run(ctx, s.client, []string{redisPrefix + streamID},
+		tenantID, nextTokenHash, now.UnixMilli(), detachWindow.Milliseconds()).Int()
+	if err != nil {
+		return Session{}, fmt.Errorf("rotate stream token: %w", err)
+	}
+	switch result {
+	case -1:
+		return Session{}, ErrNotFound
+	case -2:
+		return Session{}, ErrForbidden
+	case -3:
+		return Session{}, ErrEnded
+	case -4:
+		return Session{}, ErrExpired
+	case -5:
+		return Session{}, ErrResumeExpired
 	}
 	return s.Get(ctx, streamID)
 }

@@ -52,14 +52,14 @@ func (s *MemoryStore) Get(_ context.Context, streamID string) (Session, error) {
 	return stream, nil
 }
 
-func (s *MemoryStore) Attach(_ context.Context, streamID, tenantID string, expectedGeneration uint64, tokenHash, nextTokenHash string) (Session, error) {
+func (s *MemoryStore) Attach(_ context.Context, streamID, tenantID string, expectedGeneration uint64, tokenHash, nextTokenHash string, now time.Time, detachWindow time.Duration) (Session, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	stream, ok := s.sessions[streamID]
 	if !ok {
 		return Session{}, ErrNotFound
 	}
-	if time.Now().After(stream.ExpiresAt) {
+	if !now.Before(stream.ExpiresAt) {
 		return Session{}, ErrExpired
 	}
 	if stream.TenantID != tenantID {
@@ -68,6 +68,9 @@ func (s *MemoryStore) Attach(_ context.Context, streamID, tenantID string, expec
 	if stream.State == StateEnded || stream.State == StateFailed {
 		return Session{}, ErrEnded
 	}
+	if resumeExpired(stream, now, detachWindow) {
+		return Session{}, ErrResumeExpired
+	}
 	if stream.Generation != expectedGeneration || stream.TokenHash != tokenHash {
 		return Session{}, ErrTokenConsumed
 	}
@@ -75,6 +78,30 @@ func (s *MemoryStore) Attach(_ context.Context, streamID, tenantID string, expec
 	stream.TokenHash = nextTokenHash
 	stream.State = StateAttached
 	stream.DetachedUntil = time.Time{}
+	s.sessions[streamID] = stream
+	return stream, nil
+}
+
+func (s *MemoryStore) RotateToken(_ context.Context, streamID, tenantID, nextTokenHash string, now time.Time, detachWindow time.Duration) (Session, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	stream, ok := s.sessions[streamID]
+	if !ok {
+		return Session{}, ErrNotFound
+	}
+	if !now.Before(stream.ExpiresAt) {
+		return Session{}, ErrExpired
+	}
+	if stream.TenantID != tenantID {
+		return Session{}, ErrForbidden
+	}
+	if stream.State == StateEnded || stream.State == StateFailed {
+		return Session{}, ErrEnded
+	}
+	if resumeExpired(stream, now, detachWindow) {
+		return Session{}, ErrResumeExpired
+	}
+	stream.TokenHash = nextTokenHash
 	s.sessions[streamID] = stream
 	return stream, nil
 }

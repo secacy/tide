@@ -93,8 +93,9 @@ func TestWebSocketToASRFlow(t *testing.T) {
 	}
 	store := session.NewMemoryStore()
 	appMetrics := metrics.New(prometheus.NewRegistry())
+	ownerID := cfg.NodeID + "/test-incarnation"
 	manager := relay.NewManager(
-		asrv1.NewASRClient(asrConn), store, cfg.NodeID,
+		asrv1.NewASRClient(asrConn), store, ownerID,
 		cfg.OwnerLease, cfg.OwnerRenew, cfg.DetachWindow, cfg.EndedRetention,
 		appMetrics, testLogger(),
 	)
@@ -111,7 +112,7 @@ func TestWebSocketToASRFlow(t *testing.T) {
 		t.Fatal(err)
 	}
 	api := gateway.NewServer(
-		cfg, store, accessVerifier,
+		cfg, ownerID, store, accessVerifier,
 		auth.NewStreamTokenService("abcdefghijklmnopqrstuvwxyz123456"),
 		manager, peerDialer, appMetrics, testLogger(), nil,
 	)
@@ -171,6 +172,27 @@ func TestWebSocketToASRFlow(t *testing.T) {
 			t.Fatalf("gateway error: %+v", event)
 		}
 	}
+	rotateRequest, _ := http.NewRequest(
+		http.MethodPost,
+		httpServer.URL+"/v1/streams/"+created.StreamID+"/resume-token",
+		nil,
+	)
+	rotateRequest.Header.Set("Authorization", "Bearer "+accessToken)
+	rotateResponse, err := http.DefaultClient.Do(rotateRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rotateResponse.Body.Close()
+	if rotateResponse.StatusCode != http.StatusOK || rotateResponse.Header.Get("Cache-Control") != "no-store" {
+		body, _ := io.ReadAll(rotateResponse.Body)
+		t.Fatalf("rotate token status=%d cache=%q body=%s", rotateResponse.StatusCode, rotateResponse.Header.Get("Cache-Control"), body)
+	}
+	var rotated struct {
+		ResumeToken string `json:"resume_token"`
+	}
+	if err := json.NewDecoder(rotateResponse.Body).Decode(&rotated); err != nil || rotated.ResumeToken == "" {
+		t.Fatalf("decode rotated token: token=%q err=%v", rotated.ResumeToken, err)
+	}
 	if err := conn.Close(websocket.StatusNormalClosure, "test reconnect"); err != nil {
 		t.Fatal(err)
 	}
@@ -180,7 +202,7 @@ func TestWebSocketToASRFlow(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer reconnected.CloseNow()
-	if err := writeJSONWS(ctx, reconnected, map[string]string{"type": "hello", "token": ready.ResumeToken}); err != nil {
+	if err := writeJSONWS(ctx, reconnected, map[string]string{"type": "hello", "token": rotated.ResumeToken}); err != nil {
 		t.Fatal(err)
 	}
 	resumed := readWire(t, ctx, reconnected)

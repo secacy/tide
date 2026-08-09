@@ -18,6 +18,7 @@ import (
 	"github.com/secacy/tide/internal/auth"
 	"github.com/secacy/tide/internal/config"
 	"github.com/secacy/tide/internal/gateway"
+	"github.com/secacy/tide/internal/id"
 	"github.com/secacy/tide/internal/metrics"
 	"github.com/secacy/tide/internal/relay"
 	"github.com/secacy/tide/internal/session"
@@ -35,6 +36,12 @@ func main() {
 		logger.Error("invalid configuration", "error", err)
 		os.Exit(2)
 	}
+	incarnation, err := id.New()
+	if err != nil {
+		logger.Error("create owner incarnation", "error", err)
+		os.Exit(2)
+	}
+	ownerID := cfg.NodeID + "/" + incarnation
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 	shutdownTelemetry, err := telemetry.Setup(ctx, "tide-gateway", cfg.OTLPEndpoint)
@@ -76,7 +83,7 @@ func main() {
 	registry := prometheus.NewRegistry()
 	appMetrics := metrics.New(registry)
 	manager := relay.NewManager(
-		asrv1.NewASRClient(asrConn), store, cfg.NodeID,
+		asrv1.NewASRClient(asrConn), store, ownerID,
 		cfg.OwnerLease, cfg.OwnerRenew, cfg.DetachWindow, cfg.EndedRetention,
 		appMetrics, logger,
 	)
@@ -96,7 +103,7 @@ func main() {
 	}
 	grpcServer := grpc.NewServer(peerServerOption, grpc.StatsHandler(otelgrpc.NewServerHandler()))
 	peerv1.RegisterGatewayPeerServer(grpcServer, &relay.PeerServer{
-		NodeID: cfg.NodeID, Store: store, Manager: manager,
+		NodeID: ownerID, Store: store, Manager: manager,
 	})
 	peerListener, err := net.Listen("tcp", cfg.PeerAddr)
 	if err != nil {
@@ -112,7 +119,7 @@ func main() {
 	}()
 
 	api := gateway.NewServer(
-		cfg, store,
+		cfg, ownerID, store,
 		auth.NewVerifier(cfg.JWTSecret, cfg.JWKSURL, cfg.JWTIssuer, cfg.JWTAudience),
 		auth.NewStreamTokenService(cfg.TokenSecret),
 		manager, peerDialer, appMetrics, logger, webui.Handler(),
