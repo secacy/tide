@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package tide.peer.v1;
 
-option go_package = "github.com/can/tide/gen/tide/peer/v1;peerv1";
+option go_package = "github.com/secacy/tide/gen/tide/peer/v1;peerv1";
 
 service GatewayPeer {
   rpc Relay(stream EdgeToOwner) returns (stream OwnerToEdge);

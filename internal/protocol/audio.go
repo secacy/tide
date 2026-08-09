@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 
-	"github.com/can/tide/internal/relay"
+	"github.com/secacy/tide/internal/relay"
 )
 
 const (

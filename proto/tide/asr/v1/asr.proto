@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package tide.asr.v1;
 
-option go_package = "github.com/can/tide/gen/tide/asr/v1;asrv1";
+option go_package = "github.com/secacy/tide/gen/tide/asr/v1;asrv1";
 
 service ASR {
   rpc Transcribe(stream GatewayToASR) returns (stream ASRToGateway);

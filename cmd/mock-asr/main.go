@@ -12,7 +12,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	asrv1 "github.com/can/tide/gen/tide/asr/v1"
+	asrv1 "github.com/secacy/tide/gen/tide/asr/v1"
 	"google.golang.org/grpc"
 )
 

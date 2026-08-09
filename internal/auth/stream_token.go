@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/can/tide/internal/id"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/secacy/tide/internal/id"
 )
 
 const (

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/can/tide/internal/id"
+	"github.com/secacy/tide/internal/id"
 )
 
 func TestExternalRedisLifecycle(t *testing.T) {

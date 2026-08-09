@@ -867,7 +867,7 @@ const file_tide_peer_v1_peer_proto_rawDesc = "" +
 	"\x05Ended\x12\x16\n" +
 	"\x06reason\x18\x01 \x01(\tR\x06reason2P\n" +
 	"\vGatewayPeer\x12A\n" +
-	"\x05Relay\x12\x19.tide.peer.v1.EdgeToOwner\x1a\x19.tide.peer.v1.OwnerToEdge(\x010\x01B-Z+github.com/can/tide/gen/tide/peer/v1;peerv1b\x06proto3"
+	"\x05Relay\x12\x19.tide.peer.v1.EdgeToOwner\x1a\x19.tide.peer.v1.OwnerToEdge(\x010\x01B0Z.github.com/secacy/tide/gen/tide/peer/v1;peerv1b\x06proto3"
 
 var (
 	file_tide_peer_v1_peer_proto_rawDescOnce sync.Once

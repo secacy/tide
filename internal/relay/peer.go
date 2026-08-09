@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
-	peerv1 "github.com/can/tide/gen/tide/peer/v1"
-	"github.com/can/tide/internal/session"
+	peerv1 "github.com/secacy/tide/gen/tide/peer/v1"
+	"github.com/secacy/tide/internal/session"
 	"google.golang.org/grpc"
 )
 

@@ -767,7 +767,7 @@ const file_tide_asr_v1_asr_proto_rawDesc = "" +
 	"\tretryable\x18\x03 \x01(\bR\tretryable2M\n" +
 	"\x03ASR\x12F\n" +
 	"\n" +
-	"Transcribe\x12\x19.tide.asr.v1.GatewayToASR\x1a\x19.tide.asr.v1.ASRToGateway(\x010\x01B+Z)github.com/can/tide/gen/tide/asr/v1;asrv1b\x06proto3"
+	"Transcribe\x12\x19.tide.asr.v1.GatewayToASR\x1a\x19.tide.asr.v1.ASRToGateway(\x010\x01B.Z,github.com/secacy/tide/gen/tide/asr/v1;asrv1b\x06proto3"
 
 var (
 	file_tide_asr_v1_asr_proto_rawDescOnce sync.Once

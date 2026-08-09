@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	asrv1 "github.com/can/tide/gen/tide/asr/v1"
-	"github.com/can/tide/internal/metrics"
-	"github.com/can/tide/internal/session"
+	asrv1 "github.com/secacy/tide/gen/tide/asr/v1"
+	"github.com/secacy/tide/internal/metrics"
+	"github.com/secacy/tide/internal/session"
 )
 
 const (

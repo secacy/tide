@@ -14,14 +14,14 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/can/tide/internal/auth"
-	"github.com/can/tide/internal/config"
-	"github.com/can/tide/internal/id"
-	"github.com/can/tide/internal/metrics"
-	"github.com/can/tide/internal/protocol"
-	"github.com/can/tide/internal/relay"
-	"github.com/can/tide/internal/session"
 	"github.com/coder/websocket"
+	"github.com/secacy/tide/internal/auth"
+	"github.com/secacy/tide/internal/config"
+	"github.com/secacy/tide/internal/id"
+	"github.com/secacy/tide/internal/metrics"
+	"github.com/secacy/tide/internal/protocol"
+	"github.com/secacy/tide/internal/relay"
+	"github.com/secacy/tide/internal/session"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
