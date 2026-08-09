@@ -2,6 +2,7 @@ package relay
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -28,6 +29,7 @@ type Manager struct {
 	nodeID       string
 	ownerLease   time.Duration
 	ownerRenew   time.Duration
+	readyTimeout time.Duration
 	detachWindow time.Duration
 	retention    time.Duration
 	metrics      *metrics.Metrics
@@ -43,6 +45,7 @@ func NewManager(
 	asr asrv1.ASRClient,
 	store session.Store,
 	nodeID string,
+	readyTimeout time.Duration,
 	ownerLease, ownerRenew, detachWindow, retention time.Duration,
 	metrics *metrics.Metrics,
 	logger *slog.Logger,
@@ -52,7 +55,7 @@ func NewManager(
 		ctx: ctx, cancel: cancel, runtimes: make(map[string]*runtime),
 		creating: make(map[string]*runtimeCreation),
 		asr:      asr, store: store, nodeID: nodeID,
-		ownerLease: ownerLease, ownerRenew: ownerRenew,
+		ownerLease: ownerLease, ownerRenew: ownerRenew, readyTimeout: readyTimeout,
 		detachWindow: detachWindow, retention: retention,
 		metrics: metrics, logger: logger,
 	}
@@ -148,7 +151,8 @@ type runtime struct {
 
 	mu              sync.Mutex
 	generation      uint64
-	nextOffset      uint64
+	acceptedOffset  uint64
+	committedOffset uint64
 	events          chan Event
 	detachTimer     *time.Timer
 	closed          bool
@@ -171,7 +175,7 @@ func newRuntime(manager *Manager, stream session.Session) (*runtime, error) {
 	}
 	start := &asrv1.GatewayToASR{Payload: &asrv1.GatewayToASR_Start{Start: &asrv1.Start{
 		StreamId: stream.ID, Epoch: stream.Epoch, LanguageCode: stream.LanguageCode,
-		InitialSampleOffset: stream.NextOffset,
+		InitialSampleOffset: stream.AcceptedOffset,
 		Audio:               &asrv1.AudioConfig{Encoding: "pcm_s16le", SampleRateHz: 16000, Channels: 1},
 	}}}
 	if err := asrStream.Send(start); err != nil {
@@ -182,9 +186,28 @@ func newRuntime(manager *Manager, stream session.Session) (*runtime, error) {
 		manager: manager, stream: stream, ctx: ctx, cancel: cancel, asr: asrStream,
 		audio:     make(chan AudioFrame, audioQueueFrames),
 		asrEvents: make(chan *asrv1.ASRToGateway, 16), asrErr: make(chan error, 1),
-		end: make(chan string, 1), done: make(chan struct{}), nextOffset: stream.NextOffset,
+		end: make(chan string, 1), done: make(chan struct{}),
+		acceptedOffset: stream.AcceptedOffset, committedOffset: stream.CommittedOffset,
 	}
 	go r.receiveASR()
+	timer := time.NewTimer(manager.readyTimeout)
+	defer timer.Stop()
+	select {
+	case message := <-r.asrEvents:
+		ready := message.GetReady()
+		if ready == nil || ready.Epoch != stream.Epoch {
+			cancel()
+			return nil, errors.New("ASR did not confirm the stream epoch")
+		}
+	case err := <-r.asrErr:
+		cancel()
+		return nil, fmt.Errorf("wait for ASR ready: %w", err)
+	case <-timer.C:
+		cancel()
+		return nil, errors.New("timed out waiting for ASR ready")
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
 	go r.run()
 	return r, nil
 }
@@ -217,6 +240,16 @@ func (r *runtime) attach(generation uint64) (Bridge, error) {
 
 func (a *attachment) Events() <-chan Event { return a.events }
 
+func (a *attachment) Ready() Ready {
+	r := a.runtime
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return Ready{
+		Epoch: r.stream.Epoch, AcceptedOffset: r.acceptedOffset,
+		CommittedOffset: r.committedOffset,
+	}
+}
+
 func (a *attachment) SendAudio(frame AudioFrame) error {
 	r := a.runtime
 	r.mu.Lock()
@@ -225,8 +258,8 @@ func (a *attachment) SendAudio(frame AudioFrame) error {
 		return ErrReplaced
 	}
 	samples := uint64(len(frame.PCM) / 2)
-	if frame.SampleOffset < r.nextOffset {
-		next := r.nextOffset
+	if frame.SampleOffset < r.acceptedOffset {
+		next := r.acceptedOffset
 		events := r.events
 		r.mu.Unlock()
 		select {
@@ -235,13 +268,13 @@ func (a *attachment) SendAudio(frame AudioFrame) error {
 		}
 		return nil
 	}
-	if frame.SampleOffset != r.nextOffset {
+	if frame.SampleOffset != r.acceptedOffset {
 		r.mu.Unlock()
 		return ErrInvalidOffset
 	}
 	select {
 	case r.audio <- frame:
-		r.nextOffset += samples
+		r.acceptedOffset += samples
 		r.mu.Unlock()
 		return nil
 	default:
@@ -327,9 +360,9 @@ func (r *runtime) run() {
 			processedFrames++
 			if processedFrames%10 == 0 {
 				r.mu.Lock()
-				generation, offset := r.generation, r.nextOffset
+				offset := r.acceptedOffset
 				r.mu.Unlock()
-				_ = r.manager.store.UpdateOffset(r.ctx, r.stream.ID, generation, offset)
+				_ = r.manager.store.UpdateAcceptedOffset(r.ctx, r.stream.ID, r.manager.nodeID, offset)
 			}
 		case message := <-r.asrEvents:
 			r.handleASR(message)
@@ -358,7 +391,28 @@ func (r *runtime) handleASR(message *asrv1.ASRToGateway) {
 	now := time.Now()
 	switch payload := message.Payload.(type) {
 	case *asrv1.ASRToGateway_Ack:
-		r.publish(Event{Type: EventAck, NextSampleOffset: payload.Ack.NextSampleOffset, ReceivedAt: now})
+		r.mu.Lock()
+		next := payload.Ack.NextSampleOffset
+		if next < r.committedOffset || next > r.acceptedOffset {
+			r.mu.Unlock()
+			r.publish(Event{Type: EventError, Code: "invalid_asr_ack", Message: "ASR returned an invalid ACK", Retryable: true})
+			return
+		}
+		if next == r.committedOffset {
+			r.mu.Unlock()
+			return
+		}
+		r.mu.Unlock()
+		if err := r.manager.store.UpdateCommittedOffset(r.ctx, r.stream.ID, r.manager.nodeID, next); err != nil {
+			r.publish(Event{Type: EventError, Code: "store_unavailable", Message: "could not commit audio progress", Retryable: true})
+			return
+		}
+		r.mu.Lock()
+		if next > r.committedOffset {
+			r.committedOffset = next
+		}
+		r.mu.Unlock()
+		r.publish(Event{Type: EventAck, NextSampleOffset: next, ReceivedAt: now})
 	case *asrv1.ASRToGateway_Transcript:
 		value := payload.Transcript
 		r.publish(Event{
@@ -442,7 +496,7 @@ func (r *runtime) finish() {
 		return
 	}
 	r.closed = true
-	generation, offset, preserve := r.generation, r.nextOffset, r.preserveSession
+	generation, accepted, committed, preserve := r.generation, r.acceptedOffset, r.committedOffset, r.preserveSession
 	if r.detachTimer != nil {
 		r.detachTimer.Stop()
 	}
@@ -451,7 +505,8 @@ func (r *runtime) finish() {
 		r.events = nil
 	}
 	r.mu.Unlock()
-	_ = r.manager.store.UpdateOffset(context.Background(), r.stream.ID, generation, offset)
+	_ = r.manager.store.UpdateAcceptedOffset(context.Background(), r.stream.ID, r.manager.nodeID, accepted)
+	_ = r.manager.store.UpdateCommittedOffset(context.Background(), r.stream.ID, r.manager.nodeID, committed)
 	if preserve {
 		_ = r.manager.store.ReleaseOwner(context.Background(), r.stream.ID, r.manager.nodeID)
 		_ = r.manager.store.MarkDetached(

@@ -122,15 +122,38 @@ func (s *MemoryStore) MarkDetached(_ context.Context, streamID string, generatio
 	return nil
 }
 
-func (s *MemoryStore) UpdateOffset(_ context.Context, streamID string, generation, nextOffset uint64) error {
+func (s *MemoryStore) UpdateAcceptedOffset(_ context.Context, streamID, ownerID string, nextOffset uint64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	stream, ok := s.sessions[streamID]
 	if !ok {
 		return ErrNotFound
 	}
-	if stream.Generation == generation && nextOffset > stream.NextOffset {
-		stream.NextOffset = nextOffset
+	if stream.OwnerID != ownerID {
+		return ErrOwnerConflict
+	}
+	if nextOffset > stream.AcceptedOffset {
+		stream.AcceptedOffset = nextOffset
+		s.sessions[streamID] = stream
+	}
+	return nil
+}
+
+func (s *MemoryStore) UpdateCommittedOffset(_ context.Context, streamID, ownerID string, nextOffset uint64) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	stream, ok := s.sessions[streamID]
+	if !ok {
+		return ErrNotFound
+	}
+	if stream.OwnerID != ownerID {
+		return ErrOwnerConflict
+	}
+	if nextOffset > stream.CommittedOffset {
+		stream.CommittedOffset = nextOffset
+		if nextOffset > stream.AcceptedOffset {
+			stream.AcceptedOffset = nextOffset
+		}
 		s.sessions[streamID] = stream
 	}
 	return nil
@@ -157,6 +180,7 @@ func (s *MemoryStore) AcquireOwner(_ context.Context, streamID, nodeID, nodeAddr
 		stream.Epoch = 1
 	} else if changed {
 		stream.Epoch++
+		stream.AcceptedOffset = stream.CommittedOffset
 	}
 	stream.OwnerID = nodeID
 	stream.OwnerAddr = nodeAddr

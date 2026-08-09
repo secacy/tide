@@ -126,3 +126,32 @@ func TestMemoryStoreRejectsAttachAfterDeadOwnerWindow(t *testing.T) {
 		t.Fatalf("attach after dead owner window returned %v", err)
 	}
 }
+
+func TestMemoryStoreOwnerChangeResetsAcceptedToCommitted(t *testing.T) {
+	store := NewMemoryStore()
+	stream := newTestSession("offset-reset", "clinic", "first")
+	if err := store.Create(t.Context(), stream, 1); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now()
+	_, err := store.Attach(t.Context(), stream.ID, stream.TenantID, 0, "first", "second", now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, acquired, _, err := store.AcquireOwner(t.Context(), stream.ID, "node/boot-1", "node:9090", now, time.Second); err != nil || !acquired {
+		t.Fatalf("acquire first owner: acquired=%v err=%v", acquired, err)
+	}
+	if err := store.UpdateAcceptedOffset(t.Context(), stream.ID, "node/boot-1", 1280); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.UpdateCommittedOffset(t.Context(), stream.ID, "node/boot-1", 640); err != nil {
+		t.Fatal(err)
+	}
+	owned, acquired, changed, err := store.AcquireOwner(t.Context(), stream.ID, "node/boot-2", "node:9090", now.Add(2*time.Second), time.Second)
+	if err != nil || !acquired || !changed || owned.AcceptedOffset != 640 || owned.CommittedOffset != 640 {
+		t.Fatalf("owner change did not reset watermarks: stream=%+v acquired=%v changed=%v err=%v", owned, acquired, changed, err)
+	}
+	if err := store.UpdateCommittedOffset(t.Context(), stream.ID, "node/boot-1", 1280); !errors.Is(err, ErrOwnerConflict) {
+		t.Fatalf("stale owner updated committed watermark: %v", err)
+	}
+}

@@ -40,7 +40,10 @@ func TestExternalRedisLifecycle(t *testing.T) {
 	if err != nil || !acquired || stream.Epoch != 1 {
 		t.Fatalf("acquire owner: stream=%+v acquired=%v err=%v", stream, acquired, err)
 	}
-	if err := store.UpdateOffset(ctx, stream.ID, stream.Generation, 640); err != nil {
+	if err := store.UpdateAcceptedOffset(ctx, stream.ID, "node-a", 640); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.UpdateCommittedOffset(ctx, stream.ID, "node-a", 640); err != nil {
 		t.Fatal(err)
 	}
 	if err := store.End(ctx, stream.ID, stream.TenantID, "test", time.Second); err != nil {

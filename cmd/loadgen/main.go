@@ -165,16 +165,27 @@ func (r *runner) runStream(parent context.Context, duration time.Duration) error
 	if err := writeJSON(ctx, conn, map[string]string{"type": "hello", "token": stream.AttachToken}); err != nil {
 		return err
 	}
-	messageType, data, err := conn.Read(ctx)
-	if err != nil || messageType != websocket.MessageText {
-		return fmt.Errorf("read ready: %w", err)
-	}
 	var ready struct {
 		Type             string `json:"type"`
 		NextSampleOffset uint64 `json:"next_sample_offset"`
 	}
-	if err := json.Unmarshal(data, &ready); err != nil || ready.Type != "ready" {
-		return errors.New("gateway did not send ready")
+	attached := false
+	for ready.Type != "ready" {
+		messageType, data, err := conn.Read(ctx)
+		if err != nil || messageType != websocket.MessageText {
+			return fmt.Errorf("read attach handshake: %w", err)
+		}
+		if err := json.Unmarshal(data, &ready); err != nil {
+			return fmt.Errorf("decode attach handshake: %w", err)
+		}
+		if ready.Type == "attached" {
+			attached = true
+		} else if ready.Type != "ready" {
+			return errors.New("gateway returned an unexpected attach event")
+		}
+	}
+	if !attached {
+		return errors.New("gateway did not confirm attachment before ready")
 	}
 	r.stats.connected.Add(1)
 

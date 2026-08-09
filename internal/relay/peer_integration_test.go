@@ -23,7 +23,13 @@ type peerTestASR struct {
 }
 
 func (peerTestASR) Transcribe(stream grpc.BidiStreamingServer[asrv1.GatewayToASR, asrv1.ASRToGateway]) error {
-	if _, err := stream.Recv(); err != nil {
+	first, err := stream.Recv()
+	if err != nil {
+		return err
+	}
+	if err := stream.Send(&asrv1.ASRToGateway{Payload: &asrv1.ASRToGateway_Ready{
+		Ready: &asrv1.Ready{Epoch: first.GetStart().Epoch},
+	}}); err != nil {
 		return err
 	}
 	for {
@@ -85,6 +91,7 @@ func TestPeerRelayForwardsAudioToOwner(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
 	manager := NewManager(
 		asrv1.NewASRClient(asrConn), store, "owner-a",
+		time.Second,
 		10*time.Second, time.Second, time.Second, time.Minute,
 		appmetrics.New(prometheus.NewRegistry()), logger,
 	)
@@ -112,6 +119,9 @@ func TestPeerRelayForwardsAudioToOwner(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer bridge.Close()
+	if ready := bridge.Ready(); ready.Epoch != stream.Epoch || ready.AcceptedOffset != 0 || ready.CommittedOffset != 0 {
+		t.Fatalf("unexpected peer ready state: %+v", ready)
+	}
 	if err := bridge.SendAudio(AudioFrame{
 		SampleOffset: 0, PCM: make([]byte, 1280), ReceivedAt: time.Now(),
 	}); err != nil {
@@ -121,6 +131,10 @@ func TestPeerRelayForwardsAudioToOwner(t *testing.T) {
 	case event := <-bridge.Events():
 		if event.Type != EventAck || event.NextSampleOffset != 640 {
 			t.Fatalf("unexpected owner event: %+v", event)
+		}
+		stored, err := store.Get(t.Context(), stream.ID)
+		if err != nil || stored.CommittedOffset != 640 {
+			t.Fatalf("peer ACK was not committed: stream=%+v err=%v", stored, err)
 		}
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())

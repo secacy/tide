@@ -38,7 +38,7 @@ if redis.call("EXISTS", KEYS[1]) == 1 then return -1 end
 redis.call("HSET", KEYS[1],
   "id", ARGV[3], "tenant", ARGV[4], "language", ARGV[5],
   "state", ARGV[6], "generation", "0", "epoch", "0", "owner_id", "",
-  "owner_addr", "", "owner_lease_ms", "0", "next_offset", "0",
+  "owner_addr", "", "owner_lease_ms", "0", "accepted_offset", "0", "committed_offset", "0",
   "token_hash", ARGV[7], "created_ms", ARGV[8], "expires_ms", ARGV[9],
   "detached_until_ms", "0")
 redis.call("PEXPIREAT", KEYS[1], ARGV[9] + ARGV[10])
@@ -172,23 +172,56 @@ func (s *RedisStore) MarkDetached(ctx context.Context, streamID string, generati
 		generation, until.UnixMilli()).Err()
 }
 
-var offsetScript = redis.NewScript(`
+var acceptedOffsetScript = redis.NewScript(`
 if redis.call("EXISTS", KEYS[1]) == 0 then return 0 end
-local values = redis.call("HMGET", KEYS[1], "generation", "next_offset")
-if tonumber(values[1]) == tonumber(ARGV[1]) and tonumber(ARGV[2]) > tonumber(values[2]) then
-  redis.call("HSET", KEYS[1], "next_offset", ARGV[2])
+local values = redis.call("HMGET", KEYS[1], "generation", "accepted_offset")
+if redis.call("HGET", KEYS[1], "owner_id") ~= ARGV[1] then return -1 end
+local accepted = tonumber(values[2]) or tonumber(redis.call("HGET", KEYS[1], "next_offset")) or 0
+if tonumber(ARGV[2]) > accepted then
+  redis.call("HSET", KEYS[1], "accepted_offset", ARGV[2])
 end
 return 1
 `)
 
-func (s *RedisStore) UpdateOffset(ctx context.Context, streamID string, generation, nextOffset uint64) error {
-	return offsetScript.Run(ctx, s.client, []string{redisPrefix + streamID},
-		generation, nextOffset).Err()
+func (s *RedisStore) UpdateAcceptedOffset(ctx context.Context, streamID, ownerID string, nextOffset uint64) error {
+	result, err := acceptedOffsetScript.Run(ctx, s.client, []string{redisPrefix + streamID}, ownerID, nextOffset).Int()
+	if err != nil {
+		return err
+	}
+	if result == -1 {
+		return ErrOwnerConflict
+	}
+	return nil
+}
+
+var committedOffsetScript = redis.NewScript(`
+if redis.call("EXISTS", KEYS[1]) == 0 then return 0 end
+local values = redis.call("HMGET", KEYS[1], "generation", "accepted_offset", "committed_offset")
+if redis.call("HGET", KEYS[1], "owner_id") ~= ARGV[1] then return -1 end
+local accepted = tonumber(values[2]) or tonumber(redis.call("HGET", KEYS[1], "next_offset")) or 0
+local committed = tonumber(values[3]) or 0
+if tonumber(ARGV[2]) > committed then
+  local next_offset = tonumber(ARGV[2])
+  if next_offset > accepted then accepted = next_offset end
+  redis.call("HSET", KEYS[1], "accepted_offset", accepted, "committed_offset", next_offset)
+end
+return 1
+`)
+
+func (s *RedisStore) UpdateCommittedOffset(ctx context.Context, streamID, ownerID string, nextOffset uint64) error {
+	result, err := committedOffsetScript.Run(ctx, s.client, []string{redisPrefix + streamID}, ownerID, nextOffset).Int()
+	if err != nil {
+		return err
+	}
+	if result == -1 {
+		return ErrOwnerConflict
+	}
+	return nil
 }
 
 var ownerScript = redis.NewScript(`
 if redis.call("EXISTS", KEYS[1]) == 0 then return {-1, 0, 0} end
-local values = redis.call("HMGET", KEYS[1], "state", "owner_id", "owner_lease_ms", "epoch", "expires_ms")
+local values = redis.call("HMGET", KEYS[1], "state", "owner_id", "owner_lease_ms", "epoch", "expires_ms", "accepted_offset", "committed_offset")
 if values[1] == "ended" or values[1] == "failed" then return {-2, 0, 0} end
 if tonumber(values[5]) <= tonumber(ARGV[3]) then return {-3, 0, 0} end
 local previous = values[2]
@@ -196,15 +229,19 @@ if previous ~= "" and previous ~= ARGV[1] and tonumber(values[3]) > tonumber(ARG
   return {0, tonumber(values[4]), 0}
 end
 local epoch = tonumber(values[4])
+local accepted = tonumber(values[6]) or tonumber(redis.call("HGET", KEYS[1], "next_offset")) or 0
+local committed = tonumber(values[7]) or 0
 local changed = 0
 if previous == "" then
   epoch = 1
 elseif previous ~= ARGV[1] then
   epoch = epoch + 1
   changed = 1
+  accepted = committed
 end
 redis.call("HSET", KEYS[1], "owner_id", ARGV[1], "owner_addr", ARGV[2],
-  "owner_lease_ms", ARGV[4], "epoch", epoch)
+  "owner_lease_ms", ARGV[4], "epoch", epoch, "accepted_offset", accepted,
+  "committed_offset", committed)
 return {1, epoch, changed}
 `)
 
@@ -331,9 +368,16 @@ func decodeSession(values map[string]string) (Session, error) {
 	if err != nil {
 		return Session{}, fmt.Errorf("decode epoch: %w", err)
 	}
-	nextOffset, err := uintValue("next_offset")
+	acceptedOffset, err := uintValue("accepted_offset")
 	if err != nil {
-		return Session{}, fmt.Errorf("decode offset: %w", err)
+		acceptedOffset, err = uintValue("next_offset")
+		if err != nil {
+			return Session{}, fmt.Errorf("decode accepted offset: %w", err)
+		}
+	}
+	committedOffset, err := uintValue("committed_offset")
+	if err != nil {
+		committedOffset = 0
 	}
 	created, _ := intValue("created_ms")
 	expires, _ := intValue("expires_ms")
@@ -344,7 +388,8 @@ func decodeSession(values map[string]string) (Session, error) {
 		LanguageCode: values["language"], State: State(values["state"]),
 		Generation: generation, Epoch: epoch, OwnerID: values["owner_id"],
 		OwnerAddr: values["owner_addr"], OwnerLeaseEnd: timeValue(lease),
-		NextOffset: nextOffset, TokenHash: values["token_hash"],
+		AcceptedOffset: acceptedOffset, CommittedOffset: committedOffset,
+		TokenHash: values["token_hash"],
 		CreatedAt: timeValue(created), ExpiresAt: timeValue(expires),
 		DetachedUntil: timeValue(detached),
 	}, nil

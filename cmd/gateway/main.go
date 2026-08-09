@@ -84,6 +84,7 @@ func main() {
 	appMetrics := metrics.New(registry)
 	manager := relay.NewManager(
 		asrv1.NewASRClient(asrConn), store, ownerID,
+		cfg.AttachTimeout,
 		cfg.OwnerLease, cfg.OwnerRenew, cfg.DetachWindow, cfg.EndedRetention,
 		appMetrics, logger,
 	)

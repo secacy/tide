@@ -44,8 +44,10 @@ func (s *PeerServer) Relay(stream grpc.BidiStreamingServer[peerv1.EdgeToOwner, p
 		return err
 	}
 	defer bridge.Close()
+	ready := bridge.Ready()
 	if err := stream.Send(&peerv1.OwnerToEdge{Payload: &peerv1.OwnerToEdge_Ready{Ready: &peerv1.Ready{
-		Epoch: current.Epoch, NextSampleOffset: current.NextOffset,
+		Epoch: ready.Epoch, NextSampleOffset: ready.AcceptedOffset,
+		CommittedSampleOffset: ready.CommittedOffset,
 	}}}); err != nil {
 		return err
 	}
@@ -149,11 +151,18 @@ func (d *PeerDialer) Attach(ctx context.Context, ownerAddr string, stream sessio
 		cancel()
 		return nil, ctx.Err()
 	}
-	if first.GetReady() == nil {
+	ready := first.GetReady()
+	if ready == nil {
 		cancel()
 		return nil, errors.New("peer did not send ready")
 	}
-	remote := &remoteBridge{rpc: rpc, events: make(chan Event, eventQueueSize), cancel: cancel}
+	remote := &remoteBridge{
+		rpc: rpc, events: make(chan Event, eventQueueSize), cancel: cancel,
+		ready: Ready{
+			Epoch: ready.Epoch, AcceptedOffset: ready.NextSampleOffset,
+			CommittedOffset: ready.CommittedSampleOffset,
+		},
+	}
 	go remote.receive()
 	return remote, nil
 }
@@ -184,12 +193,14 @@ func (d *PeerDialer) Close() {
 type remoteBridge struct {
 	rpc    peerv1.GatewayPeer_RelayClient
 	events chan Event
+	ready  Ready
 	mu     sync.Mutex
 	closed bool
 	once   sync.Once
 	cancel context.CancelFunc
 }
 
+func (r *remoteBridge) Ready() Ready         { return r.ready }
 func (r *remoteBridge) Events() <-chan Event { return r.events }
 
 func (r *remoteBridge) SendAudio(frame AudioFrame) error {

@@ -287,7 +287,8 @@ type wireEvent struct {
 	StreamID         string    `json:"stream_id,omitempty"`
 	Epoch            uint64    `json:"epoch,omitempty"`
 	PreviousEpoch    uint64    `json:"previous_epoch,omitempty"`
-	NextSampleOffset uint64    `json:"next_sample_offset,omitempty"`
+	NextSampleOffset *uint64   `json:"next_sample_offset,omitempty"`
+	CommittedOffset  *uint64   `json:"committed_sample_offset,omitempty"`
 	ResumeToken      string    `json:"resume_token,omitempty"`
 	SegmentID        string    `json:"segment_id,omitempty"`
 	Revision         uint64    `json:"revision,omitempty"`
@@ -362,6 +363,12 @@ func (s *Server) connectStream(w http.ResponseWriter, r *http.Request) {
 		closeWS(conn, status, "stream cannot be attached")
 		return
 	}
+	defer func() {
+		_ = s.store.MarkDetached(
+			context.Background(), stream.ID, stream.Generation,
+			time.Now().Add(s.config.DetachWindow),
+		)
+	}()
 	stream, acquired, _, err := s.store.AcquireOwner(
 		ctx, stream.ID, s.ownerID, s.config.PeerAdvertiseAddr,
 		time.Now(), s.config.OwnerLease,
@@ -379,18 +386,10 @@ func (s *Server) connectStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := writeWS(ctx, conn, wireEvent{
-		Type: "ready", StreamID: stream.ID, Epoch: stream.Epoch,
-		NextSampleOffset: stream.NextOffset, ResumeToken: resume, ExpiresAt: tokenExpiry,
+		Type: "attached", StreamID: stream.ID, Epoch: stream.Epoch,
+		ResumeToken: resume, ExpiresAt: tokenExpiry,
 	}); err != nil {
 		return
-	}
-	if claims.Kind == auth.TokenResume && stream.Epoch > claims.Epoch {
-		if err := writeWS(ctx, conn, wireEvent{
-			Type: "discontinuity", PreviousEpoch: claims.Epoch,
-			Epoch: stream.Epoch, Reason: "owner_changed",
-		}); err != nil {
-			return
-		}
 	}
 	var bridge relay.Bridge
 	if acquired {
@@ -407,12 +406,22 @@ func (s *Server) connectStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer bridge.Close()
-	defer func() {
-		_ = s.store.MarkDetached(
-			context.Background(), stream.ID, stream.Generation,
-			time.Now().Add(s.config.DetachWindow),
-		)
-	}()
+	ready := bridge.Ready()
+	if err := writeWS(ctx, conn, wireEvent{
+		Type: "ready", StreamID: stream.ID, Epoch: ready.Epoch,
+		NextSampleOffset: uint64Pointer(ready.AcceptedOffset),
+		CommittedOffset:  uint64Pointer(ready.CommittedOffset),
+	}); err != nil {
+		return
+	}
+	if claims.Kind == auth.TokenResume && stream.Epoch > claims.Epoch {
+		if err := writeWS(ctx, conn, wireEvent{
+			Type: "discontinuity", PreviousEpoch: claims.Epoch,
+			Epoch: stream.Epoch, Reason: "owner_changed",
+		}); err != nil {
+			return
+		}
+	}
 	s.active.Add(1)
 	s.metrics.ActiveConnections.Inc()
 	defer s.active.Add(-1)
@@ -581,14 +590,19 @@ func (s *Server) webSocketURL(r *http.Request, streamID string) string {
 }
 
 func toWire(event relay.Event) wireEvent {
-	return wireEvent{
+	wire := wireEvent{
 		Type: string(event.Type), Epoch: event.Epoch, PreviousEpoch: event.PreviousEpoch,
-		NextSampleOffset: event.NextSampleOffset, SegmentID: event.SegmentID,
-		Revision: event.Revision, Text: event.Text, IsFinal: event.IsFinal,
+		SegmentID: event.SegmentID, Revision: event.Revision, Text: event.Text, IsFinal: event.IsFinal,
 		StartMS: event.StartMS, EndMS: event.EndMS, Code: event.Code,
 		Message: event.Message, Retryable: event.Retryable, Reason: event.Reason,
 	}
+	if event.Type == relay.EventAck {
+		wire.NextSampleOffset = uint64Pointer(event.NextSampleOffset)
+	}
+	return wire
 }
+
+func uint64Pointer(value uint64) *uint64 { return &value }
 
 func writeWS(ctx context.Context, conn *websocket.Conn, value wireEvent) error {
 	data, err := json.Marshal(value)

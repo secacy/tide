@@ -29,9 +29,10 @@ import (
 
 type testASR struct {
 	asrv1.UnimplementedASRServer
+	readyGate <-chan struct{}
 }
 
-func (testASR) Transcribe(stream grpc.BidiStreamingServer[asrv1.GatewayToASR, asrv1.ASRToGateway]) error {
+func (s testASR) Transcribe(stream grpc.BidiStreamingServer[asrv1.GatewayToASR, asrv1.ASRToGateway]) error {
 	first, err := stream.Recv()
 	if err != nil {
 		return err
@@ -39,6 +40,18 @@ func (testASR) Transcribe(stream grpc.BidiStreamingServer[asrv1.GatewayToASR, as
 	start := first.GetStart()
 	if start == nil {
 		return io.ErrUnexpectedEOF
+	}
+	if s.readyGate != nil {
+		select {
+		case <-s.readyGate:
+		case <-stream.Context().Done():
+			return stream.Context().Err()
+		}
+	}
+	if err := stream.Send(&asrv1.ASRToGateway{Payload: &asrv1.ASRToGateway_Ready{
+		Ready: &asrv1.Ready{Epoch: start.Epoch},
+	}}); err != nil {
+		return err
 	}
 	for {
 		message, err := stream.Recv()
@@ -69,7 +82,8 @@ func (testASR) Transcribe(stream grpc.BidiStreamingServer[asrv1.GatewayToASR, as
 func TestWebSocketToASRFlow(t *testing.T) {
 	asrListener := bufconn.Listen(1024 * 1024)
 	asrServer := grpc.NewServer()
-	asrv1.RegisterASRServer(asrServer, testASR{})
+	readyGate := make(chan struct{})
+	asrv1.RegisterASRServer(asrServer, testASR{readyGate: readyGate})
 	go func() { _ = asrServer.Serve(asrListener) }()
 	t.Cleanup(asrServer.Stop)
 	asrConn, err := grpc.NewClient(
@@ -96,6 +110,7 @@ func TestWebSocketToASRFlow(t *testing.T) {
 	ownerID := cfg.NodeID + "/test-incarnation"
 	manager := relay.NewManager(
 		asrv1.NewASRClient(asrConn), store, ownerID,
+		cfg.AttachTimeout,
 		cfg.OwnerLease, cfg.OwnerRenew, cfg.DetachWindow, cfg.EndedRetention,
 		appMetrics, testLogger(),
 	)
@@ -153,8 +168,13 @@ func TestWebSocketToASRFlow(t *testing.T) {
 	if err := writeJSONWS(ctx, conn, map[string]string{"type": "hello", "token": created.AttachToken}); err != nil {
 		t.Fatal(err)
 	}
+	attached := readWire(t, ctx, conn)
+	if attached.Type != "attached" || attached.ResumeToken == "" || attached.Epoch != 1 {
+		t.Fatalf("unexpected attached: %+v", attached)
+	}
+	close(readyGate)
 	ready := readWire(t, ctx, conn)
-	if ready.Type != "ready" || ready.ResumeToken == "" || ready.Epoch != 1 {
+	if ready.Type != "ready" || ready.Epoch != 1 || ready.CommittedOffset != 0 {
 		t.Fatalf("unexpected ready: %+v", ready)
 	}
 	if err := writeAudioWS(ctx, conn, ready.NextSampleOffset); err != nil {
@@ -171,6 +191,10 @@ func TestWebSocketToASRFlow(t *testing.T) {
 		case "error":
 			t.Fatalf("gateway error: %+v", event)
 		}
+	}
+	stored, err := store.Get(t.Context(), created.StreamID)
+	if err != nil || stored.AcceptedOffset != 640 || stored.CommittedOffset != 640 {
+		t.Fatalf("committed store progress: stream=%+v err=%v", stored, err)
 	}
 	rotateRequest, _ := http.NewRequest(
 		http.MethodPost,
@@ -205,8 +229,12 @@ func TestWebSocketToASRFlow(t *testing.T) {
 	if err := writeJSONWS(ctx, reconnected, map[string]string{"type": "hello", "token": rotated.ResumeToken}); err != nil {
 		t.Fatal(err)
 	}
+	reattached := readWire(t, ctx, reconnected)
+	if reattached.Type != "attached" || reattached.ResumeToken == "" || reattached.Epoch != ready.Epoch {
+		t.Fatalf("unexpected reattached: %+v", reattached)
+	}
 	resumed := readWire(t, ctx, reconnected)
-	if resumed.Type != "ready" || resumed.ResumeToken == "" || resumed.Epoch != ready.Epoch {
+	if resumed.Type != "ready" || resumed.Epoch != ready.Epoch || resumed.CommittedOffset != 640 {
 		t.Fatalf("unexpected resumed ready: %+v", resumed)
 	}
 
@@ -246,6 +274,7 @@ type testWireEvent struct {
 	Type             string `json:"type"`
 	Epoch            uint64 `json:"epoch"`
 	NextSampleOffset uint64 `json:"next_sample_offset"`
+	CommittedOffset  uint64 `json:"committed_sample_offset"`
 	ResumeToken      string `json:"resume_token"`
 	Text             string `json:"text"`
 	IsFinal          bool   `json:"is_final"`

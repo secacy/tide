@@ -46,7 +46,14 @@ type Event struct {
 	ReceivedAt       time.Time
 }
 
+type Ready struct {
+	Epoch           uint64
+	AcceptedOffset  uint64
+	CommittedOffset uint64
+}
+
 type Bridge interface {
+	Ready() Ready
 	Events() <-chan Event
 	SendAudio(frame AudioFrame) error
 	End(reason string) error

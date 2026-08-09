@@ -446,11 +446,12 @@ func (*OwnerToEdge_Error) isOwnerToEdge_Payload() {}
 func (*OwnerToEdge_Ended) isOwnerToEdge_Payload() {}
 
 type Ready struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	Epoch            uint64                 `protobuf:"varint,1,opt,name=epoch,proto3" json:"epoch,omitempty"`
-	NextSampleOffset uint64                 `protobuf:"varint,2,opt,name=next_sample_offset,json=nextSampleOffset,proto3" json:"next_sample_offset,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	Epoch                 uint64                 `protobuf:"varint,1,opt,name=epoch,proto3" json:"epoch,omitempty"`
+	NextSampleOffset      uint64                 `protobuf:"varint,2,opt,name=next_sample_offset,json=nextSampleOffset,proto3" json:"next_sample_offset,omitempty"`
+	CommittedSampleOffset uint64                 `protobuf:"varint,3,opt,name=committed_sample_offset,json=committedSampleOffset,proto3" json:"committed_sample_offset,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *Ready) Reset() {
@@ -493,6 +494,13 @@ func (x *Ready) GetEpoch() uint64 {
 func (x *Ready) GetNextSampleOffset() uint64 {
 	if x != nil {
 		return x.NextSampleOffset
+	}
+	return 0
+}
+
+func (x *Ready) GetCommittedSampleOffset() uint64 {
+	if x != nil {
+		return x.CommittedSampleOffset
 	}
 	return 0
 }
@@ -838,10 +846,11 @@ const file_tide_peer_v1_peer_proto_rawDesc = "" +
 	"\rdiscontinuity\x18\x04 \x01(\v2\x1b.tide.peer.v1.DiscontinuityH\x00R\rdiscontinuity\x120\n" +
 	"\x05error\x18\x05 \x01(\v2\x18.tide.peer.v1.RelayErrorH\x00R\x05error\x12+\n" +
 	"\x05ended\x18\x06 \x01(\v2\x13.tide.peer.v1.EndedH\x00R\x05endedB\t\n" +
-	"\apayload\"K\n" +
+	"\apayload\"\x83\x01\n" +
 	"\x05Ready\x12\x14\n" +
 	"\x05epoch\x18\x01 \x01(\x04R\x05epoch\x12,\n" +
-	"\x12next_sample_offset\x18\x02 \x01(\x04R\x10nextSampleOffset\"3\n" +
+	"\x12next_sample_offset\x18\x02 \x01(\x04R\x10nextSampleOffset\x126\n" +
+	"\x17committed_sample_offset\x18\x03 \x01(\x04R\x15committedSampleOffset\"3\n" +
 	"\x03Ack\x12,\n" +
 	"\x12next_sample_offset\x18\x01 \x01(\x04R\x10nextSampleOffset\"\xec\x01\n" +
 	"\n" +

@@ -29,20 +29,21 @@ var (
 )
 
 type Session struct {
-	ID            string
-	TenantID      string
-	LanguageCode  string
-	State         State
-	Generation    uint64
-	Epoch         uint64
-	OwnerID       string
-	OwnerAddr     string
-	OwnerLeaseEnd time.Time
-	NextOffset    uint64
-	TokenHash     string
-	CreatedAt     time.Time
-	ExpiresAt     time.Time
-	DetachedUntil time.Time
+	ID              string
+	TenantID        string
+	LanguageCode    string
+	State           State
+	Generation      uint64
+	Epoch           uint64
+	OwnerID         string
+	OwnerAddr       string
+	OwnerLeaseEnd   time.Time
+	AcceptedOffset  uint64
+	CommittedOffset uint64
+	TokenHash       string
+	CreatedAt       time.Time
+	ExpiresAt       time.Time
+	DetachedUntil   time.Time
 }
 
 type Store interface {
@@ -52,7 +53,8 @@ type Store interface {
 	Attach(ctx context.Context, streamID, tenantID string, expectedGeneration uint64, tokenHash, nextTokenHash string, now time.Time, detachWindow time.Duration) (Session, error)
 	RotateToken(ctx context.Context, streamID, tenantID, nextTokenHash string, now time.Time, detachWindow time.Duration) (Session, error)
 	MarkDetached(ctx context.Context, streamID string, generation uint64, until time.Time) error
-	UpdateOffset(ctx context.Context, streamID string, generation, nextOffset uint64) error
+	UpdateAcceptedOffset(ctx context.Context, streamID, ownerID string, nextOffset uint64) error
+	UpdateCommittedOffset(ctx context.Context, streamID, ownerID string, nextOffset uint64) error
 	AcquireOwner(ctx context.Context, streamID, nodeID, nodeAddr string, now time.Time, lease time.Duration) (stream Session, acquired bool, changed bool, err error)
 	RenewOwner(ctx context.Context, streamID, nodeID string, now time.Time, lease time.Duration) error
 	ReleaseOwner(ctx context.Context, streamID, nodeID string) error

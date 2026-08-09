@@ -48,6 +48,7 @@ message OwnerToEdge {
 message Ready {
   uint64 epoch = 1;
   uint64 next_sample_offset = 2;
+  uint64 committed_sample_offset = 3;
 }
 
 message Ack {

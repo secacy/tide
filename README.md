@@ -81,7 +81,19 @@ WebSocket 升级后必须在 3 秒内发送：
 {"type":"hello","token":"<attach-or-resume-token>"}
 ```
 
-服务端返回新的、单次使用的 resume token：
+服务端先确认附着并返回新的、单次使用的 resume token：
+
+```json
+{
+  "type": "attached",
+  "stream_id": "9b4a…",
+  "epoch": 1,
+  "resume_token": "<rotated-token>",
+  "expires_at": "2026-07-26T12:02:00Z"
+}
+```
+
+owner bridge 建立且 ASR 确认 Ready 后，才允许发送音频：
 
 ```json
 {
@@ -89,8 +101,7 @@ WebSocket 升级后必须在 3 秒内发送：
   "stream_id": "9b4a…",
   "epoch": 1,
   "next_sample_offset": 0,
-  "resume_token": "<rotated-token>",
-  "expires_at": "2026-07-26T12:02:00Z"
+  "committed_sample_offset": 0
 }
 ```
 
@@ -112,6 +123,8 @@ Authorization: Bearer <JWT>
 
 服务端 JSON 事件：
 
+- `attached`: 轮换后的 resume token 及过期时间
+- `ready`: owner 接收水位 `next_sample_offset` 与 ASR 提交水位 `committed_sample_offset`
 - `ack`: `next_sample_offset`
 - `transcript`: `epoch`、`segment_id`、`revision`、`text`、`is_final`、`start_ms`、`end_ms`
 - `discontinuity`: `previous_epoch`、`epoch`、`reason`
@@ -167,6 +180,7 @@ Buf 使用远程插件，不要求本机安装 `protoc`。
 | `TIDE_TENANT_MAX_STREAMS` | `1000` | Redis 中执行的租户活跃流配额 |
 | `TIDE_CREATE_RATE_PER_MIN` | `120` | 每节点、每租户的逻辑流创建速率 |
 | `TIDE_CONNECT_RATE_PER_MIN` | `6000` | 每节点、每租户的 WebSocket 挂载速率 |
+| `TIDE_ATTACH_TIMEOUT` | `3s` | hello 认证及等待 ASR Ready 的超时 |
 | `TIDE_OWNER_LEASE` | `10s` | owner 租约 |
 | `TIDE_OWNER_RENEW` | `3s` | owner 续租间隔 |
 | `TIDE_DETACH_WINDOW` | `30s` | 断线续接窗口 |

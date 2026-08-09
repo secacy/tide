@@ -40,11 +40,14 @@ func TestRedisStoreLifecycleAndOwnerLease(t *testing.T) {
 	if err != nil || !acquired || !changed || owned.Epoch != 2 {
 		t.Fatalf("owner handoff: stream=%+v acquired=%v changed=%v err=%v", owned, acquired, changed, err)
 	}
-	if err := store.UpdateOffset(t.Context(), stream.ID, attached.Generation, 640); err != nil {
+	if err := store.UpdateAcceptedOffset(t.Context(), stream.ID, "node-b", 1280); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.UpdateCommittedOffset(t.Context(), stream.ID, "node-b", 640); err != nil {
 		t.Fatal(err)
 	}
 	loaded, err := store.Get(t.Context(), stream.ID)
-	if err != nil || loaded.NextOffset != 640 {
+	if err != nil || loaded.AcceptedOffset != 1280 || loaded.CommittedOffset != 640 {
 		t.Fatalf("stored offset: stream=%+v err=%v", loaded, err)
 	}
 	if err := store.End(t.Context(), stream.ID, "clinic", "test", time.Minute); err != nil {
@@ -52,6 +55,38 @@ func TestRedisStoreLifecycleAndOwnerLease(t *testing.T) {
 	}
 	if err := store.Create(t.Context(), newTestSession("redis-two", "clinic", "other"), 1); err != nil {
 		t.Fatalf("quota was not released: %v", err)
+	}
+}
+
+func TestRedisStoreOwnerChangeResetsAcceptedToCommitted(t *testing.T) {
+	redisServer := miniredis.RunT(t)
+	store := NewRedisStore(redisServer.Addr(), "", 0)
+	t.Cleanup(func() { _ = store.Close() })
+	stream := newTestSession("redis-offset-reset", "clinic", "first")
+	if err := store.Create(t.Context(), stream, 1); err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now()
+	_, err := store.Attach(t.Context(), stream.ID, stream.TenantID, 0, "first", "second", now, time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	owned, acquired, _, err := store.AcquireOwner(t.Context(), stream.ID, "node/boot-1", "node:9090", now, time.Second)
+	if err != nil || !acquired {
+		t.Fatalf("acquire first owner: acquired=%v err=%v", acquired, err)
+	}
+	if err := store.UpdateAcceptedOffset(t.Context(), stream.ID, "node/boot-1", 1280); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.UpdateCommittedOffset(t.Context(), stream.ID, "node/boot-1", 640); err != nil {
+		t.Fatal(err)
+	}
+	owned, acquired, changed, err := store.AcquireOwner(t.Context(), stream.ID, "node/boot-2", "node:9090", now.Add(2*time.Second), time.Second)
+	if err != nil || !acquired || !changed || owned.AcceptedOffset != 640 || owned.CommittedOffset != 640 {
+		t.Fatalf("owner change did not reset watermarks: stream=%+v acquired=%v changed=%v err=%v", owned, acquired, changed, err)
+	}
+	if err := store.UpdateCommittedOffset(t.Context(), stream.ID, "node/boot-1", 1280); !errors.Is(err, ErrOwnerConflict) {
+		t.Fatalf("stale owner updated committed watermark: %v", err)
 	}
 }
 

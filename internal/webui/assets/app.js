@@ -201,13 +201,27 @@ function connectOnce() {
 
 function handleReady(message) {
   const serverOffset = BigInt(message.next_sample_offset || 0);
+  const serverCommitted = BigInt(message.committed_sample_offset || 0);
   const epoch = Number(message.epoch || 0);
+  if (serverCommitted > serverOffset) {
+    throw new Error("服务端返回了无效的音频水位");
+  }
   if (!hasConnected) {
     captureOffset = serverOffset;
-    committedOffset = serverOffset;
+    committedOffset = serverCommitted;
     nextSendOffset = serverOffset;
     hasConnected = true;
   } else {
+    if (serverCommitted > captureOffset) {
+      throw new Error(`服务端提交水位超出本地采样位置 (${serverCommitted})`);
+    }
+    if (serverCommitted > committedOffset) {
+      committedOffset = serverCommitted;
+      while (audioFrames.length && audioFrames[0].end <= committedOffset) {
+        const frame = audioFrames.shift();
+        bufferedSamples -= frame.samples;
+      }
+    }
     const sameEpoch = epoch === currentEpoch;
     const resumeOffset = sameEpoch && committedOffset > serverOffset ? committedOffset : serverOffset;
     const oldestOffset = audioFrames.length ? audioFrames[0].offset : captureOffset;
@@ -217,9 +231,6 @@ function handleReady(message) {
     nextSendOffset = resumeOffset;
   }
   currentEpoch = epoch;
-  resumeToken = message.resume_token;
-  resumeTokenExpiresAt = Date.parse(message.expires_at) || 0;
-  saveResumeToken();
   ui.offset.textContent = committedOffset.toString();
   ui.epoch.textContent = String(currentEpoch);
   reconnectStarted = 0;
@@ -232,6 +243,11 @@ function handleReady(message) {
 
 function handleServerEvent(message) {
   switch (message.type) {
+  case "attached":
+    resumeToken = message.resume_token;
+    resumeTokenExpiresAt = Date.parse(message.expires_at) || 0;
+    saveResumeToken();
+    break;
   case "transcript":
     handleTranscript(message);
     break;
