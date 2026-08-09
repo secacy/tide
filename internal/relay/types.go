@@ -33,6 +33,7 @@ type Event struct {
 	Epoch            uint64
 	PreviousEpoch    uint64
 	NextSampleOffset uint64
+	EventID          uint64
 	SegmentID        string
 	Revision         uint64
 	Text             string

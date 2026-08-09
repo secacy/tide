@@ -39,7 +39,7 @@ func (s *PeerServer) Relay(stream grpc.BidiStreamingServer[peerv1.EdgeToOwner, p
 	if current.OwnerID != s.NodeID || current.Epoch != open.Epoch {
 		return session.ErrOwnerConflict
 	}
-	bridge, err := s.Manager.Attach(current, open.Generation)
+	bridge, err := s.Manager.Attach(current, open.Generation, open.LastEventId)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func NewPeerDialer(options ...grpc.DialOption) *PeerDialer {
 	return &PeerDialer{conns: make(map[string]*grpc.ClientConn), options: options}
 }
 
-func (d *PeerDialer) Attach(ctx context.Context, ownerAddr string, stream session.Session) (Bridge, error) {
+func (d *PeerDialer) Attach(ctx context.Context, ownerAddr string, stream session.Session, lastEventID uint64) (Bridge, error) {
 	conn, err := d.connection(ownerAddr)
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func (d *PeerDialer) Attach(ctx context.Context, ownerAddr string, stream sessio
 	}
 	if err := rpc.Send(&peerv1.EdgeToOwner{Payload: &peerv1.EdgeToOwner_Open{Open: &peerv1.Open{
 		StreamId: stream.ID, TenantId: stream.TenantID, Generation: stream.Generation,
-		Epoch: stream.Epoch, LanguageCode: stream.LanguageCode,
+		Epoch: stream.Epoch, LanguageCode: stream.LanguageCode, LastEventId: lastEventID,
 	}}}); err != nil {
 		cancel()
 		return nil, fmt.Errorf("send peer open: %w", err)
@@ -256,7 +256,7 @@ func eventToProto(event Event) *peerv1.OwnerToEdge {
 		return &peerv1.OwnerToEdge{Payload: &peerv1.OwnerToEdge_Transcript{Transcript: &peerv1.Transcript{
 			Epoch: event.Epoch, SegmentId: event.SegmentID, Revision: event.Revision,
 			Text: event.Text, IsFinal: event.IsFinal, StartMs: event.StartMS, EndMs: event.EndMS,
-			ReceivedUnixNano: event.ReceivedAt.UnixNano(),
+			ReceivedUnixNano: event.ReceivedAt.UnixNano(), EventId: event.EventID,
 		}}}
 	case EventDiscontinuity:
 		return &peerv1.OwnerToEdge{Payload: &peerv1.OwnerToEdge_Discontinuity{Discontinuity: &peerv1.Discontinuity{
@@ -281,7 +281,7 @@ func protoToEvent(message *peerv1.OwnerToEdge) Event {
 			Type: EventTranscript, Epoch: value.Epoch, SegmentID: value.SegmentId,
 			Revision: value.Revision, Text: value.Text, IsFinal: value.IsFinal,
 			StartMS: value.StartMs, EndMS: value.EndMs,
-			ReceivedAt: time.Unix(0, value.ReceivedUnixNano),
+			ReceivedAt: time.Unix(0, value.ReceivedUnixNano), EventID: value.EventId,
 		}
 	case *peerv1.OwnerToEdge_Discontinuity:
 		return Event{Type: EventDiscontinuity, PreviousEpoch: payload.Discontinuity.PreviousEpoch, Epoch: payload.Discontinuity.Epoch, Reason: payload.Discontinuity.Reason}

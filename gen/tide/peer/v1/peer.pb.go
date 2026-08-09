@@ -126,6 +126,7 @@ type Open struct {
 	Generation    uint64                 `protobuf:"varint,3,opt,name=generation,proto3" json:"generation,omitempty"`
 	Epoch         uint64                 `protobuf:"varint,4,opt,name=epoch,proto3" json:"epoch,omitempty"`
 	LanguageCode  string                 `protobuf:"bytes,5,opt,name=language_code,json=languageCode,proto3" json:"language_code,omitempty"`
+	LastEventId   uint64                 `protobuf:"varint,6,opt,name=last_event_id,json=lastEventId,proto3" json:"last_event_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -193,6 +194,13 @@ func (x *Open) GetLanguageCode() string {
 		return x.LanguageCode
 	}
 	return ""
+}
+
+func (x *Open) GetLastEventId() uint64 {
+	if x != nil {
+		return x.LastEventId
+	}
+	return 0
 }
 
 type Audio struct {
@@ -559,6 +567,7 @@ type Transcript struct {
 	StartMs          uint64                 `protobuf:"varint,6,opt,name=start_ms,json=startMs,proto3" json:"start_ms,omitempty"`
 	EndMs            uint64                 `protobuf:"varint,7,opt,name=end_ms,json=endMs,proto3" json:"end_ms,omitempty"`
 	ReceivedUnixNano int64                  `protobuf:"varint,8,opt,name=received_unix_nano,json=receivedUnixNano,proto3" json:"received_unix_nano,omitempty"`
+	EventId          uint64                 `protobuf:"varint,9,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -645,6 +654,13 @@ func (x *Transcript) GetEndMs() uint64 {
 func (x *Transcript) GetReceivedUnixNano() int64 {
 	if x != nil {
 		return x.ReceivedUnixNano
+	}
+	return 0
+}
+
+func (x *Transcript) GetEventId() uint64 {
+	if x != nil {
+		return x.EventId
 	}
 	return 0
 }
@@ -822,7 +838,7 @@ const file_tide_peer_v1_peer_proto_rawDesc = "" +
 	"\x04open\x18\x01 \x01(\v2\x12.tide.peer.v1.OpenH\x00R\x04open\x12+\n" +
 	"\x05audio\x18\x02 \x01(\v2\x13.tide.peer.v1.AudioH\x00R\x05audio\x12%\n" +
 	"\x03end\x18\x03 \x01(\v2\x11.tide.peer.v1.EndH\x00R\x03endB\t\n" +
-	"\apayload\"\x9b\x01\n" +
+	"\apayload\"\xbf\x01\n" +
 	"\x04Open\x12\x1b\n" +
 	"\tstream_id\x18\x01 \x01(\tR\bstreamId\x12\x1b\n" +
 	"\ttenant_id\x18\x02 \x01(\tR\btenantId\x12\x1e\n" +
@@ -830,7 +846,8 @@ const file_tide_peer_v1_peer_proto_rawDesc = "" +
 	"generation\x18\x03 \x01(\x04R\n" +
 	"generation\x12\x14\n" +
 	"\x05epoch\x18\x04 \x01(\x04R\x05epoch\x12#\n" +
-	"\rlanguage_code\x18\x05 \x01(\tR\flanguageCode\"l\n" +
+	"\rlanguage_code\x18\x05 \x01(\tR\flanguageCode\x12\"\n" +
+	"\rlast_event_id\x18\x06 \x01(\x04R\vlastEventId\"l\n" +
 	"\x05Audio\x12#\n" +
 	"\rsample_offset\x18\x01 \x01(\x04R\fsampleOffset\x12\x10\n" +
 	"\x03pcm\x18\x02 \x01(\fR\x03pcm\x12,\n" +
@@ -852,7 +869,7 @@ const file_tide_peer_v1_peer_proto_rawDesc = "" +
 	"\x12next_sample_offset\x18\x02 \x01(\x04R\x10nextSampleOffset\x126\n" +
 	"\x17committed_sample_offset\x18\x03 \x01(\x04R\x15committedSampleOffset\"3\n" +
 	"\x03Ack\x12,\n" +
-	"\x12next_sample_offset\x18\x01 \x01(\x04R\x10nextSampleOffset\"\xec\x01\n" +
+	"\x12next_sample_offset\x18\x01 \x01(\x04R\x10nextSampleOffset\"\x87\x02\n" +
 	"\n" +
 	"Transcript\x12\x14\n" +
 	"\x05epoch\x18\x01 \x01(\x04R\x05epoch\x12\x1d\n" +
@@ -863,7 +880,8 @@ const file_tide_peer_v1_peer_proto_rawDesc = "" +
 	"\bis_final\x18\x05 \x01(\bR\aisFinal\x12\x19\n" +
 	"\bstart_ms\x18\x06 \x01(\x04R\astartMs\x12\x15\n" +
 	"\x06end_ms\x18\a \x01(\x04R\x05endMs\x12,\n" +
-	"\x12received_unix_nano\x18\b \x01(\x03R\x10receivedUnixNano\"d\n" +
+	"\x12received_unix_nano\x18\b \x01(\x03R\x10receivedUnixNano\x12\x19\n" +
+	"\bevent_id\x18\t \x01(\x04R\aeventId\"d\n" +
 	"\rDiscontinuity\x12%\n" +
 	"\x0eprevious_epoch\x18\x01 \x01(\x04R\rpreviousEpoch\x12\x14\n" +
 	"\x05epoch\x18\x02 \x01(\x04R\x05epoch\x12\x16\n" +

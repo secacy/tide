@@ -278,8 +278,9 @@ func (s *Server) deleteStream(w http.ResponseWriter, r *http.Request) {
 }
 
 type helloMessage struct {
-	Type  string `json:"type"`
-	Token string `json:"token"`
+	Type        string `json:"type"`
+	Token       string `json:"token"`
+	LastEventID uint64 `json:"last_event_id"`
 }
 
 type wireEvent struct {
@@ -287,6 +288,7 @@ type wireEvent struct {
 	StreamID         string    `json:"stream_id,omitempty"`
 	Epoch            uint64    `json:"epoch,omitempty"`
 	PreviousEpoch    uint64    `json:"previous_epoch,omitempty"`
+	EventID          uint64    `json:"event_id,omitempty"`
 	NextSampleOffset *uint64   `json:"next_sample_offset,omitempty"`
 	CommittedOffset  *uint64   `json:"committed_sample_offset,omitempty"`
 	ResumeToken      string    `json:"resume_token,omitempty"`
@@ -392,10 +394,14 @@ func (s *Server) connectStream(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var bridge relay.Bridge
+	lastEventID := hello.LastEventID
+	if stream.Epoch > claims.Epoch {
+		lastEventID = 0
+	}
 	if acquired {
-		bridge, err = s.manager.Attach(stream, stream.Generation)
+		bridge, err = s.manager.Attach(stream, stream.Generation, lastEventID)
 	} else {
-		bridge, err = s.peers.Attach(ctx, stream.OwnerAddr, stream)
+		bridge, err = s.peers.Attach(ctx, stream.OwnerAddr, stream, lastEventID)
 	}
 	if err != nil {
 		s.logger.Warn("attach relay", "stream_id", stream.ID, "error", err)
@@ -592,7 +598,8 @@ func (s *Server) webSocketURL(r *http.Request, streamID string) string {
 func toWire(event relay.Event) wireEvent {
 	wire := wireEvent{
 		Type: string(event.Type), Epoch: event.Epoch, PreviousEpoch: event.PreviousEpoch,
-		SegmentID: event.SegmentID, Revision: event.Revision, Text: event.Text, IsFinal: event.IsFinal,
+		EventID: event.EventID, SegmentID: event.SegmentID, Revision: event.Revision,
+		Text: event.Text, IsFinal: event.IsFinal,
 		StartMS: event.StartMS, EndMS: event.EndMS, Code: event.Code,
 		Message: event.Message, Retryable: event.Retryable, Reason: event.Reason,
 	}

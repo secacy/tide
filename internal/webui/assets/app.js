@@ -29,6 +29,7 @@ let ending = false;
 let connectionReady = false;
 let hasConnected = false;
 let currentEpoch = 0;
+let lastEventID = 0;
 
 let captureOffset = 0n;
 let committedOffset = 0n;
@@ -63,6 +64,7 @@ function resetSessionState() {
   bufferedSamples = 0;
   audioFrames = [];
   currentEpoch = 0;
+  lastEventID = 0;
   hasConnected = false;
   connectionReady = false;
   reconnectStarted = 0;
@@ -149,7 +151,9 @@ function connectOnce() {
       reject(error);
     };
 
-    candidate.onopen = () => candidate.send(JSON.stringify({type: "hello", token: resumeToken}));
+    candidate.onopen = () => candidate.send(JSON.stringify({
+      type: "hello", token: resumeToken, last_event_id: lastEventID,
+    }));
     candidate.onmessage = event => {
       let message;
       try {
@@ -255,6 +259,7 @@ function handleServerEvent(message) {
     handleAck(BigInt(message.next_sample_offset || 0));
     break;
   case "discontinuity":
+    lastEventID = 0;
     partialSegments.clear();
     renderPartials();
     ui.epoch.textContent = String(message.epoch);
@@ -264,6 +269,8 @@ function handleServerEvent(message) {
   case "error":
     if (message.code === "connection_replaced") {
       failSession("当前录音连接已被另一个页面替换。");
+    } else if (message.code === "event_gap" || message.retryable === false) {
+      failSession(`${message.code}: ${message.message}`);
     } else {
       showError(`${message.code}: ${message.message}`);
     }
@@ -276,6 +283,11 @@ function handleServerEvent(message) {
 }
 
 function handleTranscript(message) {
+  const eventID = Number(message.event_id || 0);
+  if (eventID > 0) {
+    if (eventID <= lastEventID) return;
+    lastEventID = eventID;
+  }
   const key = `${message.epoch || currentEpoch}:${message.segment_id}`;
   const revision = Number(message.revision || 0);
   const previous = segmentVersions.get(key);

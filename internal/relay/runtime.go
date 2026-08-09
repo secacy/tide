@@ -16,6 +16,7 @@ import (
 const (
 	audioQueueFrames = 50
 	eventQueueSize   = 100
+	eventHistorySize = 96
 )
 
 type Manager struct {
@@ -61,12 +62,12 @@ func NewManager(
 	}
 }
 
-func (m *Manager) Attach(stream session.Session, generation uint64) (Bridge, error) {
+func (m *Manager) Attach(stream session.Session, generation, lastEventID uint64) (Bridge, error) {
 	for {
 		m.mu.Lock()
 		if r := m.runtimes[stream.ID]; r != nil {
 			m.mu.Unlock()
-			return r.attach(generation)
+			return r.attach(generation, lastEventID)
 		}
 		if pending := m.creating[stream.ID]; pending != nil {
 			m.mu.Unlock()
@@ -97,7 +98,7 @@ func (m *Manager) Attach(stream session.Session, generation uint64) (Bridge, err
 		if err != nil {
 			return nil, err
 		}
-		return r.attach(generation)
+		return r.attach(generation, lastEventID)
 	}
 }
 
@@ -149,14 +150,17 @@ type runtime struct {
 	end       chan string
 	done      chan struct{}
 
-	mu              sync.Mutex
-	generation      uint64
-	acceptedOffset  uint64
-	committedOffset uint64
-	events          chan Event
-	detachTimer     *time.Timer
-	closed          bool
-	preserveSession bool
+	mu               sync.Mutex
+	generation       uint64
+	acceptedOffset   uint64
+	committedOffset  uint64
+	events           chan Event
+	detachTimer      *time.Timer
+	closed           bool
+	preserveSession  bool
+	nextEventID      uint64
+	historyFloor     uint64
+	transcriptEvents []Event
 }
 
 type attachment struct {
@@ -212,7 +216,7 @@ func newRuntime(manager *Manager, stream session.Session) (*runtime, error) {
 	return r, nil
 }
 
-func (r *runtime) attach(generation uint64) (Bridge, error) {
+func (r *runtime) attach(generation, lastEventID uint64) (Bridge, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.closed {
@@ -233,6 +237,19 @@ func (r *runtime) attach(generation uint64) (Bridge, error) {
 		close(r.events)
 	}
 	events := make(chan Event, eventQueueSize)
+	if lastEventID > r.nextEventID || lastEventID < r.historyFloor {
+		events <- Event{
+			Type: EventError, Code: "event_gap",
+			Message: "transcript replay window is no longer available", Retryable: false,
+		}
+	} else {
+		for _, event := range r.transcriptEvents {
+			if event.EventID > lastEventID {
+				event.ReceivedAt = time.Time{}
+				events <- event
+			}
+		}
+	}
 	r.events = events
 	r.generation = generation
 	return &attachment{runtime: r, generation: generation, events: events}, nil
@@ -432,7 +449,22 @@ func (r *runtime) handleASR(message *asrv1.ASRToGateway) {
 func (r *runtime) publish(event Event) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if r.closed || r.events == nil {
+	if r.closed {
+		return
+	}
+	if event.Type == EventTranscript {
+		r.nextEventID++
+		event.EventID = r.nextEventID
+		r.transcriptEvents = append(r.transcriptEvents, event)
+		cutoff := time.Now().Add(-r.manager.detachWindow)
+		for len(r.transcriptEvents) > 0 &&
+			(len(r.transcriptEvents) > eventHistorySize ||
+				(!r.transcriptEvents[0].ReceivedAt.IsZero() && r.transcriptEvents[0].ReceivedAt.Before(cutoff))) {
+			r.historyFloor = r.transcriptEvents[0].EventID
+			r.transcriptEvents = r.transcriptEvents[1:]
+		}
+	}
+	if r.events == nil {
 		return
 	}
 	queued := len(r.events)

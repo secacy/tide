@@ -181,13 +181,15 @@ func TestWebSocketToASRFlow(t *testing.T) {
 		t.Fatal(err)
 	}
 	gotAck, gotTranscript := false, false
+	var lastEventID uint64
 	for !gotAck || !gotTranscript {
 		event := readWire(t, ctx, conn)
 		switch event.Type {
 		case "ack":
 			gotAck = event.NextSampleOffset == 640
 		case "transcript":
-			gotTranscript = event.Text == "mock transcript" && event.IsFinal
+			gotTranscript = event.Text == "mock transcript" && event.IsFinal && event.EventID == 1
+			lastEventID = event.EventID
 		case "error":
 			t.Fatalf("gateway error: %+v", event)
 		}
@@ -226,7 +228,9 @@ func TestWebSocketToASRFlow(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer reconnected.CloseNow()
-	if err := writeJSONWS(ctx, reconnected, map[string]string{"type": "hello", "token": rotated.ResumeToken}); err != nil {
+	if err := writeJSONWS(ctx, reconnected, map[string]any{
+		"type": "hello", "token": rotated.ResumeToken, "last_event_id": lastEventID,
+	}); err != nil {
 		t.Fatal(err)
 	}
 	reattached := readWire(t, ctx, reconnected)
@@ -253,10 +257,14 @@ func TestWebSocketToASRFlow(t *testing.T) {
 	if err := writeAudioWS(ctx, reconnected, resumed.NextSampleOffset); err != nil {
 		t.Fatal(err)
 	}
-	for {
+	gotAck, gotTranscript = false, false
+	for !gotAck || !gotTranscript {
 		event := readWire(t, ctx, reconnected)
-		if event.Type == "ack" {
-			break
+		switch event.Type {
+		case "ack":
+			gotAck = true
+		case "transcript":
+			gotTranscript = event.EventID == lastEventID+1
 		}
 	}
 	if err := writeJSONWS(ctx, reconnected, map[string]string{"type": "end"}); err != nil {
@@ -275,6 +283,7 @@ type testWireEvent struct {
 	Epoch            uint64 `json:"epoch"`
 	NextSampleOffset uint64 `json:"next_sample_offset"`
 	CommittedOffset  uint64 `json:"committed_sample_offset"`
+	EventID          uint64 `json:"event_id"`
 	ResumeToken      string `json:"resume_token"`
 	Text             string `json:"text"`
 	IsFinal          bool   `json:"is_final"`

@@ -78,7 +78,7 @@ JWT 必须包含 `iss`、`aud`、`exp`、`sub` 与 `tenant_id`。生产环境通
 WebSocket 升级后必须在 3 秒内发送：
 
 ```json
-{"type":"hello","token":"<attach-or-resume-token>"}
+{"type":"hello","token":"<attach-or-resume-token>","last_event_id":0}
 ```
 
 服务端先确认附着并返回新的、单次使用的 resume token：
@@ -126,12 +126,13 @@ Authorization: Bearer <JWT>
 - `attached`: 轮换后的 resume token 及过期时间
 - `ready`: owner 接收水位 `next_sample_offset` 与 ASR 提交水位 `committed_sample_offset`
 - `ack`: `next_sample_offset`
-- `transcript`: `epoch`、`segment_id`、`revision`、`text`、`is_final`、`start_ms`、`end_ms`
+- `transcript`: `event_id`、`epoch`、`segment_id`、`revision`、`text`、`is_final`、`start_ms`、`end_ms`
 - `discontinuity`: `previous_epoch`、`epoch`、`reason`
 - `error`: 稳定的 `code`、安全的 `message`、`retryable`
 - `ended`: `reason`
 
 客户端以 `(epoch, segment_id)` 为幂等键，只接受更新的 revision；final 不会因重放而重复追加。
+同一 owner 的短时续接会从 `hello.last_event_id` 之后重放窗口内 transcript；缓存缺口返回 `event_gap`。
 
 客户端以 `{"type":"end"}` 显式结束，也可调用：
 

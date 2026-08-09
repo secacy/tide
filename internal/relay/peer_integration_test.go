@@ -114,7 +114,7 @@ func TestPeerRelayForwardsAudioToOwner(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 	defer cancel()
-	bridge, err := dialer.Attach(ctx, stream.OwnerAddr, stream)
+	bridge, err := dialer.Attach(ctx, stream.OwnerAddr, stream, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
