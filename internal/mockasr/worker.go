@@ -15,8 +15,7 @@ import (
 
 // Config 描述 Mock ASR Worker 的行为。
 //
-// Mock Worker 不真正执行 ASR 推理，而是根据收到的音频时长，
-// 按固定规则返回可预测的 partial/final 结果。
+// Mock Worker 不真正执行 ASR 推理，而是根据收到的音频时长，按固定规则返回可预测的 partial/final 结果。
 type Config struct {
 	PartialEvery  time.Duration // 每收到多长时间的音频后返回一次 partial result
 	ResponseDelay time.Duration // 模拟 ASR 推理延迟，设置为 0 表示立即返回
@@ -115,8 +114,9 @@ func (w *Worker) sendPartial(ctx context.Context, stream asrv1.ASRService_Stream
 	}
 
 	resp := &asrv1.StreamingRecognizeResponse{
-		Text:    text,
-		IsFinal: false,
+		SegmentId: "1",
+		Text:      text,
+		IsFinal:   false,
 	}
 
 	if err := stream.Send(resp); err != nil {
@@ -133,8 +133,9 @@ func (w *Worker) sendFinal(ctx context.Context, stream asrv1.ASRService_Streamin
 	}
 
 	resp := &asrv1.StreamingRecognizeResponse{
-		Text:    w.cfg.FinalText,
-		IsFinal: true,
+		SegmentId: "1",
+		Text:      w.cfg.FinalText,
+		IsFinal:   true,
 	}
 
 	if err := stream.Send(resp); err != nil {
