@@ -3,6 +3,8 @@ package streamer
 import (
 	"context"
 	"time"
+
+	"github.com/secacy/tide-artisan/internal/audio"
 )
 
 // Pacer 用于按照音频本身的时间轴控制发送速度
@@ -19,7 +21,7 @@ func NewPacer() *Pacer {
 
 // Advance 在成功发送一个 chunk 后推进音频时间轴。
 func (p *Pacer) Advance(audioBytes int) {
-	p.audioElapsed += AudioDuration(audioBytes)
+	p.audioElapsed += audio.DurationFromBytes(audioBytes)
 }
 
 // WaitBeforeSend 等待到下一块音频应该发送的时刻。

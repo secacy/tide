@@ -95,11 +95,7 @@ func (s *Streamer) sendAudioStream(ctx context.Context, stream asrv1.ASRService_
 // sendChunk 把一个 PCM chunk 封装成 protobuf message 并发送。
 func (s *Streamer) sendChunk(stream asrv1.ASRService_StreamingRecognizeClient, audio []byte) error {
 	req := &asrv1.StreamingRecognizeRequest{
-		Payload: &asrv1.StreamingRecognizeRequest_AudioChunk{
-			AudioChunk: &asrv1.AudioChunk{
-				Data: audio,
-			},
-		},
+		Data: audio,
 	}
 	if err := stream.Send(req); err != nil {
 		return fmt.Errorf("send audio chunk (%d bytes): %w", len(audio), err)

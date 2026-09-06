@@ -23,11 +23,11 @@ const (
 
 type StreamingRecognizeRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Types that are valid to be assigned to Payload:
-	//
-	//	*StreamingRecognizeRequest_Session
-	//	*StreamingRecognizeRequest_AudioChunk
-	Payload       isStreamingRecognizeRequest_Payload `protobuf_oneof:"payload"`
+	//	oneof payload {
+	//	  StartSession session = 1;
+	//	  AudioChunk audio_chunk = 2;
+	//	}
+	Data          []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -62,205 +62,7 @@ func (*StreamingRecognizeRequest) Descriptor() ([]byte, []int) {
 	return file_proto_tide_asr_v1_asr_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *StreamingRecognizeRequest) GetPayload() isStreamingRecognizeRequest_Payload {
-	if x != nil {
-		return x.Payload
-	}
-	return nil
-}
-
-func (x *StreamingRecognizeRequest) GetSession() *StartSession {
-	if x != nil {
-		if x, ok := x.Payload.(*StreamingRecognizeRequest_Session); ok {
-			return x.Session
-		}
-	}
-	return nil
-}
-
-func (x *StreamingRecognizeRequest) GetAudioChunk() *AudioChunk {
-	if x != nil {
-		if x, ok := x.Payload.(*StreamingRecognizeRequest_AudioChunk); ok {
-			return x.AudioChunk
-		}
-	}
-	return nil
-}
-
-type isStreamingRecognizeRequest_Payload interface {
-	isStreamingRecognizeRequest_Payload()
-}
-
-type StreamingRecognizeRequest_Session struct {
-	Session *StartSession `protobuf:"bytes,1,opt,name=session,proto3,oneof"`
-}
-
-type StreamingRecognizeRequest_AudioChunk struct {
-	AudioChunk *AudioChunk `protobuf:"bytes,2,opt,name=audio_chunk,json=audioChunk,proto3,oneof"`
-}
-
-func (*StreamingRecognizeRequest_Session) isStreamingRecognizeRequest_Payload() {}
-
-func (*StreamingRecognizeRequest_AudioChunk) isStreamingRecognizeRequest_Payload() {}
-
-type StartSession struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	AudioConfig   *AudioConfig           `protobuf:"bytes,2,opt,name=audio_config,json=audioConfig,proto3" json:"audio_config,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *StartSession) Reset() {
-	*x = StartSession{}
-	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[1]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *StartSession) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*StartSession) ProtoMessage() {}
-
-func (x *StartSession) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[1]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use StartSession.ProtoReflect.Descriptor instead.
-func (*StartSession) Descriptor() ([]byte, []int) {
-	return file_proto_tide_asr_v1_asr_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *StartSession) GetSessionId() string {
-	if x != nil {
-		return x.SessionId
-	}
-	return ""
-}
-
-func (x *StartSession) GetAudioConfig() *AudioConfig {
-	if x != nil {
-		return x.AudioConfig
-	}
-	return nil
-}
-
-type AudioConfig struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Encoding      string                 `protobuf:"bytes,1,opt,name=encoding,proto3" json:"encoding,omitempty"`
-	SampleRateHz  uint32                 `protobuf:"varint,2,opt,name=sample_rate_hz,json=sampleRateHz,proto3" json:"sample_rate_hz,omitempty"`
-	Channels      uint32                 `protobuf:"varint,3,opt,name=channels,proto3" json:"channels,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AudioConfig) Reset() {
-	*x = AudioConfig{}
-	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AudioConfig) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AudioConfig) ProtoMessage() {}
-
-func (x *AudioConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AudioConfig.ProtoReflect.Descriptor instead.
-func (*AudioConfig) Descriptor() ([]byte, []int) {
-	return file_proto_tide_asr_v1_asr_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *AudioConfig) GetEncoding() string {
-	if x != nil {
-		return x.Encoding
-	}
-	return ""
-}
-
-func (x *AudioConfig) GetSampleRateHz() uint32 {
-	if x != nil {
-		return x.SampleRateHz
-	}
-	return 0
-}
-
-func (x *AudioConfig) GetChannels() uint32 {
-	if x != nil {
-		return x.Channels
-	}
-	return 0
-}
-
-type AudioChunk struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Seq           uint64                 `protobuf:"varint,1,opt,name=seq,proto3" json:"seq,omitempty"` // 从1开始，每次递增1
-	Data          []byte                 `protobuf:"bytes,2,opt,name=data,proto3" json:"data,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AudioChunk) Reset() {
-	*x = AudioChunk{}
-	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AudioChunk) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AudioChunk) ProtoMessage() {}
-
-func (x *AudioChunk) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AudioChunk.ProtoReflect.Descriptor instead.
-func (*AudioChunk) Descriptor() ([]byte, []int) {
-	return file_proto_tide_asr_v1_asr_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *AudioChunk) GetSeq() uint64 {
-	if x != nil {
-		return x.Seq
-	}
-	return 0
-}
-
-func (x *AudioChunk) GetData() []byte {
+func (x *StreamingRecognizeRequest) GetData() []byte {
 	if x != nil {
 		return x.Data
 	}
@@ -278,7 +80,7 @@ type StreamingRecognizeResponse struct {
 
 func (x *StreamingRecognizeResponse) Reset() {
 	*x = StreamingRecognizeResponse{}
-	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[4]
+	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -290,7 +92,7 @@ func (x *StreamingRecognizeResponse) String() string {
 func (*StreamingRecognizeResponse) ProtoMessage() {}
 
 func (x *StreamingRecognizeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[4]
+	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -303,7 +105,7 @@ func (x *StreamingRecognizeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamingRecognizeResponse.ProtoReflect.Descriptor instead.
 func (*StreamingRecognizeResponse) Descriptor() ([]byte, []int) {
-	return file_proto_tide_asr_v1_asr_proto_rawDescGZIP(), []int{4}
+	return file_proto_tide_asr_v1_asr_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *StreamingRecognizeResponse) GetSegmentId() string {
@@ -331,24 +133,9 @@ var File_proto_tide_asr_v1_asr_proto protoreflect.FileDescriptor
 
 const file_proto_tide_asr_v1_asr_proto_rawDesc = "" +
 	"\n" +
-	"\x1bproto/tide/asr/v1/asr.proto\x12\vtide.asr.v1\"\x99\x01\n" +
-	"\x19StreamingRecognizeRequest\x125\n" +
-	"\asession\x18\x01 \x01(\v2\x19.tide.asr.v1.StartSessionH\x00R\asession\x12:\n" +
-	"\vaudio_chunk\x18\x02 \x01(\v2\x17.tide.asr.v1.AudioChunkH\x00R\n" +
-	"audioChunkB\t\n" +
-	"\apayload\"j\n" +
-	"\fStartSession\x12\x1d\n" +
-	"\n" +
-	"session_id\x18\x01 \x01(\tR\tsessionId\x12;\n" +
-	"\faudio_config\x18\x02 \x01(\v2\x18.tide.asr.v1.AudioConfigR\vaudioConfig\"k\n" +
-	"\vAudioConfig\x12\x1a\n" +
-	"\bencoding\x18\x01 \x01(\tR\bencoding\x12$\n" +
-	"\x0esample_rate_hz\x18\x02 \x01(\rR\fsampleRateHz\x12\x1a\n" +
-	"\bchannels\x18\x03 \x01(\rR\bchannels\"2\n" +
-	"\n" +
-	"AudioChunk\x12\x10\n" +
-	"\x03seq\x18\x01 \x01(\x04R\x03seq\x12\x12\n" +
-	"\x04data\x18\x02 \x01(\fR\x04data\"j\n" +
+	"\x1bproto/tide/asr/v1/asr.proto\x12\vtide.asr.v1\"/\n" +
+	"\x19StreamingRecognizeRequest\x12\x12\n" +
+	"\x04data\x18\x01 \x01(\fR\x04data\"j\n" +
 	"\x1aStreamingRecognizeResponse\x12\x1d\n" +
 	"\n" +
 	"segment_id\x18\x01 \x01(\tR\tsegmentId\x12\x12\n" +
@@ -370,25 +157,19 @@ func file_proto_tide_asr_v1_asr_proto_rawDescGZIP() []byte {
 	return file_proto_tide_asr_v1_asr_proto_rawDescData
 }
 
-var file_proto_tide_asr_v1_asr_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_proto_tide_asr_v1_asr_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_proto_tide_asr_v1_asr_proto_goTypes = []any{
 	(*StreamingRecognizeRequest)(nil),  // 0: tide.asr.v1.StreamingRecognizeRequest
-	(*StartSession)(nil),               // 1: tide.asr.v1.StartSession
-	(*AudioConfig)(nil),                // 2: tide.asr.v1.AudioConfig
-	(*AudioChunk)(nil),                 // 3: tide.asr.v1.AudioChunk
-	(*StreamingRecognizeResponse)(nil), // 4: tide.asr.v1.StreamingRecognizeResponse
+	(*StreamingRecognizeResponse)(nil), // 1: tide.asr.v1.StreamingRecognizeResponse
 }
 var file_proto_tide_asr_v1_asr_proto_depIdxs = []int32{
-	1, // 0: tide.asr.v1.StreamingRecognizeRequest.session:type_name -> tide.asr.v1.StartSession
-	3, // 1: tide.asr.v1.StreamingRecognizeRequest.audio_chunk:type_name -> tide.asr.v1.AudioChunk
-	2, // 2: tide.asr.v1.StartSession.audio_config:type_name -> tide.asr.v1.AudioConfig
-	0, // 3: tide.asr.v1.ASRService.StreamingRecognize:input_type -> tide.asr.v1.StreamingRecognizeRequest
-	4, // 4: tide.asr.v1.ASRService.StreamingRecognize:output_type -> tide.asr.v1.StreamingRecognizeResponse
-	4, // [4:5] is the sub-list for method output_type
-	3, // [3:4] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0, // 0: tide.asr.v1.ASRService.StreamingRecognize:input_type -> tide.asr.v1.StreamingRecognizeRequest
+	1, // 1: tide.asr.v1.ASRService.StreamingRecognize:output_type -> tide.asr.v1.StreamingRecognizeResponse
+	1, // [1:2] is the sub-list for method output_type
+	0, // [0:1] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_proto_tide_asr_v1_asr_proto_init() }
@@ -396,17 +177,13 @@ func file_proto_tide_asr_v1_asr_proto_init() {
 	if File_proto_tide_asr_v1_asr_proto != nil {
 		return
 	}
-	file_proto_tide_asr_v1_asr_proto_msgTypes[0].OneofWrappers = []any{
-		(*StreamingRecognizeRequest_Session)(nil),
-		(*StreamingRecognizeRequest_AudioChunk)(nil),
-	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_tide_asr_v1_asr_proto_rawDesc), len(file_proto_tide_asr_v1_asr_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

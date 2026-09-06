@@ -52,7 +52,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	audioFile, err := os.Open("data/test.pcm")
+	audioFile, err := os.Open("data/pcm/test6s.pcm")
 	if err != nil {
 		return err
 	}

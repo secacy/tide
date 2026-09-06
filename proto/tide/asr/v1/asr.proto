@@ -10,28 +10,29 @@ service ASRService {
 }
 
 message StreamingRecognizeRequest {
-  oneof payload {
-    StartSession session = 1;
-    AudioChunk audio_chunk = 2;
-  }
+//  oneof payload {
+//    StartSession session = 1;
+//    AudioChunk audio_chunk = 2;
+//  }
+  bytes data = 1;
 }
 
-message StartSession {
-  string session_id = 1;
-  AudioConfig audio_config = 2;
-}
-
-message AudioConfig {
-  string encoding = 1;
-  uint32 sample_rate_hz = 2;
-  uint32 channels = 3;
-}
-
-
-message AudioChunk {
-  // uint64 seq = 1; // 从1开始，每次递增1
-  bytes data = 2;
-}
+//message StartSession {
+//  string session_id = 1;
+//  AudioConfig audio_config = 2;
+//}
+//
+//message AudioConfig {
+//  string encoding = 1;
+//  uint32 sample_rate_hz = 2;
+//  uint32 channels = 3;
+//}
+//
+//
+//message AudioChunk {
+//  // uint64 seq = 1; // 从1开始，每次递增1
+//  bytes data = 2;
+//}
 
 message StreamingRecognizeResponse {
   string segment_id = 1;
