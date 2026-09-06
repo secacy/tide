@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/secacy/tide-artisan/internal/audio"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/secacy/tide-artisan/internal/audio"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 )
 
@@ -35,7 +35,7 @@ func (c Config) validate() error {
 
 func New(client asrv1.ASRServiceClient, cfg Config) (*Streamer, error) {
 	if client == nil {
-		return nil, fmt.Errorf("audio service client is nil")
+		return nil, fmt.Errorf("audio service mock-client is nil")
 	}
 	if err := cfg.validate(); err != nil {
 		return nil, fmt.Errorf("invalid streamer config: %w", err)
@@ -87,12 +87,12 @@ func (s *Streamer) Stream(ctx context.Context, audio io.Reader) error {
 	return nil
 }
 
-func (s *Streamer) sendAudioStream(ctx context.Context, stream asrv1.ASRService_StreamingRecognizeClient, audio io.Reader) error {
+func (s *Streamer) sendAudioStream(ctx context.Context, stream asrv1.ASRService_StreamingRecognizeClient, audioReader io.Reader) error {
 	buf := make([]byte, s.cfg.ChunkBytes)
-	pacer := NewPacer()
+	pacer := audio.NewPacer()
 
 	for {
-		n, readErr := io.ReadFull(audio, buf)
+		n, readErr := io.ReadFull(audioReader, buf)
 		if n > 0 {
 			// 第一块立即发送，后续块按照之前已经发送的 PCM 时长进行调度。
 			if err := pacer.WaitBeforeSend(ctx); err != nil {

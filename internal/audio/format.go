@@ -10,9 +10,8 @@ const (
 	bitDepth   = 16
 	BytesDepth = bitDepth / 8
 
-	BytesPerSecond = sampleRate * channels * BytesDepth
-
-	chunkDuration = 100 * time.Millisecond
+	BytesPerSecond    = sampleRate * channels * BytesDepth
+	ChunkBytesDefault = 3200
 )
 
 // DurationFromBytes 根据 PCM 字节数计算其对应的音频时长。

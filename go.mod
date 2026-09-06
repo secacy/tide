@@ -3,6 +3,7 @@ module github.com/secacy/tide-artisan
 go 1.26
 
 require (
+	github.com/coder/websocket v1.8.15
 	golang.org/x/sync v0.22.0
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.12
