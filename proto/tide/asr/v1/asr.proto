@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package tide.asr.v1;
+
+option go_package = "github.com/secacy/tide-artisan/proto/tide/asr/v1;asrv1";
+
+service ASRService {
+  rpc StreamingRecognize(stream StreamingRecognizeRequest)
+      returns (stream StreamingRecognizeResponse);
+}
+
+message StreamingRecognizeRequest {
+  oneof payload {
+    StartSession session = 1;
+    AudioChunk audio_chunk = 2;
+  }
+}
+
+message StartSession {
+  string session_id = 1;
+  AudioConfig audio_config = 2;
+}
+
+message AudioConfig {
+  string encoding = 1;
+  uint32 sample_rate_hz = 2;
+  uint32 channels = 3;
+}
+
+
+message AudioChunk {
+  // uint64 seq = 1; // 从1开始，每次递增1
+  bytes data = 2;
+}
+
+message StreamingRecognizeResponse {
+  string segment_id = 1;
+  string text = 2;
+  bool is_final = 3;
+  // 如果后续需要定位音频、展示时间轴或测量结果延迟，可以考虑使用 audio_end_offset_ms 表示：这条结果对应的音频结束位置，相对于本次识别流音频起点的毫秒偏移。
+}
+
+
+
