@@ -43,8 +43,10 @@ func (c *Client) sendAudio(ctx context.Context, conn *websocket.Conn, source io.
 	for {
 		n, readErr := io.ReadFull(source, buf)
 		if n > 0 {
-			if err := pacer.WaitBeforeSend(ctx); err != nil {
-				return fmt.Errorf("wait before sending PCM: %w", err)
+			if c.cfg.Realtime {
+				if err := pacer.WaitBeforeSend(ctx); err != nil {
+					return fmt.Errorf("wait before sending PCM: %w", err)
+				}
 			}
 			if err := conn.Write(ctx, websocket.MessageBinary, buf[:n]); err != nil {
 				return fmt.Errorf("write PCM websocket message (%d bytes): %w", n, err)

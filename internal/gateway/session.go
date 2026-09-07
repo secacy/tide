@@ -3,21 +3,22 @@ package gateway
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io"
+	"sync"
 
 	"github.com/coder/websocket"
 	"github.com/secacy/tide-artisan/internal/wsprotocol"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
-	"golang.org/x/sync/errgroup"
 )
 
-// workerStream 描述 Gateway 真正依赖的 gRPC stream 能力。
+// workerStream 是 Gateway 对生成的 gRPC Stream 的最小依赖。
 //
-// 使用一个本地小接口，可以减少 Gateway 对 protoc 生成类型名称的依赖， 同时方便后续写单元测试。
+// 定义这个小接口的好处是：
+//   - Gateway 不依赖具体生成的 Stream 类型名；
+//   - 后续容易编写 Mock；
+//   - 明确表达本层真正使用的能力。
 type workerStream interface {
-	Send(request *asrv1.StreamingRecognizeRequest) error
+	Send(*asrv1.StreamingRecognizeRequest) error
 	Recv() (*asrv1.StreamingRecognizeResponse, error)
 	CloseSend() error
 }
@@ -25,100 +26,212 @@ type workerStream interface {
 // session 表示一个 WebSocket Connection 与一个 gRPC stream 之间的一对一桥接关系。
 type session struct {
 	ws     *websocket.Conn
-	worker workerStream
+	worker asrv1.ASRServiceClient
 }
 
-var errWorkerCompleted = errors.New("worker stream completed")
+// sessionResultKind 描述能够决定整个 Session 结果的事件。
+type sessionResultKind uint8
 
-// run 同时运行两个单向转发循环。 任意一个方向异常时，errgroup 会取消另外一个方向。
+const (
+	resultCompleted sessionResultKind = iota
+	resultWorkerFailed
+	resultClientDisconnected
+	resultProtocolViolation
+	resultServerStopping
+)
+
+// sessionResult 是 upload/download 向 session.run 汇报的结果。
+//
+// I/O goroutine 不负责决定 WebSocket 应该如何关闭。它们只负责描述“发生了什么”。
+type sessionResult struct {
+	kind sessionResultKind
+	err  error
+}
+
+// newSession 创建一个 WebSocket ↔ gRPC Session。
+func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient) *session {
+	return &session{
+		ws:     ws,
+		worker: worker,
+	}
+}
+
+// run 管理一个音频 Session 的完整生命周期。
+//
+// 它是唯一负责以下事情的位置：
+//
+//   - 判断 Session 最终结果；
+//   - 决定是否取消 gRPC；
+//   - 决定 WebSocket Close Code；
+//   - 唤醒仍然阻塞的 I/O goroutine；
+//   - 等待所有 goroutine 真正退出。
 func (s *session) run(ctx context.Context) error {
-	group, groupCtx := errgroup.WithContext(ctx)
+	if err := readStart(ctx, s.ws); err != nil {
+		_ = s.ws.Close(websocket.StatusPolicyViolation, "invalid start message")
+		return err
+	}
 
-	group.Go(func() error {
-		return s.forwardRequests(groupCtx)
-	})
+	// WebSocket I/O 和 gRPC RPC 使用不同的 Context。
+	baseCtx := context.WithoutCancel(ctx)
 
-	group.Go(func() error {
-		return s.forwardResponses(groupCtx)
-	})
+	rpcCtx, cancelRPC := context.WithCancel(baseCtx)
+	defer cancelRPC()
 
-	err := group.Wait()
-	if errors.Is(err, errWorkerCompleted) {
+	wsCtx, cancelWS := context.WithCancel(baseCtx)
+	defer cancelWS()
+
+	stream, err := s.worker.StreamingRecognize(rpcCtx)
+	if err != nil {
+		_ = s.ws.Close(websocket.StatusInternalError, "worker unavailable")
+		return fmt.Errorf("open worker stream: %w", err)
+	}
+
+	// upload 和 download 每个最多发送一个退出事件。
+	events := make(chan sessionResult, 2)
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	go func() {
+		defer wg.Done()
+		events <- s.upload(wsCtx, stream)
+	}()
+
+	go func() {
+		defer wg.Done()
+		events <- s.download(wsCtx, stream)
+	}()
+
+	// 第一个真正具有决定性的事件确定 Session 结果。
+	result := waitSessionResult(ctx, events)
+
+	// 先主动执行能够解除阻塞的 cleanup。
+	cleanupErr := s.finish(wsCtx, result, cancelRPC, cancelWS)
+
+	wg.Wait()
+
+	if result.err != nil {
+		return result.err
+	}
+	return cleanupErr
+}
+
+// readStart 校验当前 WebSocket Session 的第一条消息。
+// V1 要求第一条消息必须是 {"type":"start","version":"v1"}
+func readStart(ctx context.Context, conn *websocket.Conn) error {
+	messageType, data, err := conn.Read(ctx)
+	if err != nil {
+		return fmt.Errorf("read websocket start message: %w", err)
+	}
+
+	if messageType != websocket.MessageText {
+		return fmt.Errorf("first websocket message must be text")
+	}
+
+	var start wsprotocol.StartMessage
+	if err := json.Unmarshal(data, &start); err != nil {
+		return fmt.Errorf("decode start message: %w", err)
+	}
+
+	if start.Type != wsprotocol.MessageTypeStart {
+		return fmt.Errorf("first message must be start, got %q", start.Type)
+	}
+
+	if start.Version != "v1" {
+		return fmt.Errorf("unsupported protocol version %q", start.Version)
+	}
+
+	return nil
+}
+
+// waitSessionResult 等待第一个能够决定整个 Session 的事件。
+func waitSessionResult(ctx context.Context, events <-chan sessionResult) sessionResult {
+	select {
+	case result := <-events:
+		return result
+
+	case <-ctx.Done():
+		return sessionResult{
+			kind: resultServerStopping,
+			err:  ctx.Err(),
+		}
+	}
+}
+
+// finish 根据已经确定的 Session 结果执行收尾。
+func (s *session) finish(
+	wsCtx context.Context,
+	result sessionResult,
+	cancelRPC context.CancelFunc,
+	cancelWS context.CancelFunc,
+) error {
+	switch result.kind {
+	case resultCompleted:
+		// 确保先完成WebSocket正常关闭握手再清理剩余context
+		closeErr := s.ws.Close(websocket.StatusNormalClosure, "completed")
+
+		cancelRPC()
+		cancelWS()
+
+		if closeErr != nil {
+			return fmt.Errorf("close completed websocket session: %w", closeErr)
+		}
+
 		return nil
-	}
 
-	return err
-}
+	case resultWorkerFailed:
+		// Worker 已经失败。首先立即取消 RPC，使可能仍阻塞在 Send 的 upload 退出。
+		// 但是不要马上 cancel WebSocket Context，因为我们还需要发送 1011 close frame。
+		cancelRPC()
 
-// forwardRequests 负责 WebSocket -> gRPC 的单向转发。
-func (s *session) forwardRequests(ctx context.Context) error {
-	for {
-		messageType, data, err := s.ws.Read(ctx)
-		if err != nil {
-			return fmt.Errorf("read websocket message: %w", err)
+		closeErr := s.ws.Close(websocket.StatusInternalError, "worker failed")
+
+		cancelWS()
+
+		if closeErr != nil {
+			return fmt.Errorf("close failed websocket session: %w", closeErr)
 		}
 
-		switch messageType {
-		case websocket.MessageBinary:
-			err := s.forwardAudio(data)
-			switch {
-			case err == nil:
-				continue
-			case errors.Is(err, io.EOF):
-				// Worker 可能已经以 ResourceExhausted、InvalidArgument 等状态终止 RPC。真正的 status 将由 Recv() 获取。
-				return nil
-			default:
-				// 此时应该终止整个 session。
-				return fmt.Errorf("send PCM to worker: %w", err)
-			}
+		return nil
 
-		case websocket.MessageText:
-			end, err := isEndMessage(data)
-			if err != nil {
-				return err
-			}
-			if !end {
-				return fmt.Errorf("unexpected websocket text message")
-			}
-			if err := s.worker.CloseSend(); err != nil {
-				return fmt.Errorf("close worker send side: %w", err)
-			}
-			return nil
+	case resultProtocolViolation:
+		cancelRPC()
 
-		default:
-			return fmt.Errorf("unsupported websocket message type: %v", messageType)
+		closeErr := s.ws.Close(websocket.StatusPolicyViolation, "protocol violation")
+		cancelWS()
+
+		if closeErr != nil {
+			return fmt.Errorf("close protocol violation session: %w", closeErr)
 		}
-	}
-}
 
-// forwardAudio 立即把一个 WebSocket PCM Message 转发给 Worker。
-func (s *session) forwardAudio(data []byte) error {
-	if len(data) == 0 {
-		return fmt.Errorf("empty PCM message")
-	}
-	req := &asrv1.StreamingRecognizeRequest{
-		Data: data,
-	}
-	return s.worker.Send(req)
-}
+		return nil
 
-func isEndMessage(data []byte) (bool, error) {
-	var message struct {
-		Type wsprotocol.MessageType `json:"type"`
-	}
+	case resultClientDisconnected:
+		// Client 已经消失，没有必要再尝试 graceful close handshake。
+		cancelRPC()
+		cancelWS()
 
-	if err := json.Unmarshal(data, &message); err != nil {
-		return false, fmt.Errorf("decode websocket control message: %w", err)
-	}
+		_ = s.ws.CloseNow()
+		return nil
 
-	switch message.Type {
-	case wsprotocol.MessageTypeEnd:
-		return true, nil
+	case resultServerStopping:
+		// Server shutdown 时先停止后端 RPC，再尽量通知 WebSocket Client 服务正在退出。
+		cancelRPC()
 
-	case wsprotocol.MessageTypeStart:
-		return false, fmt.Errorf("duplicate start message")
+		closeErr := s.ws.Close(websocket.StatusGoingAway, "server shutting down")
+		cancelWS()
+
+		if closeErr != nil {
+			return fmt.Errorf("close websocket during shutdown: %w", closeErr)
+		}
+
+		return nil
 
 	default:
-		return false, fmt.Errorf("unsupported control message type %q", message.Type)
+		cancelRPC()
+		cancelWS()
+		_ = s.ws.CloseNow()
+
+		return fmt.Errorf("unknown session result: %d", result.kind)
 	}
 }

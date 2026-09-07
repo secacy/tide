@@ -69,9 +69,6 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 		switch {
 		case errors.Is(err, io.EOF):
 			// 客户端调用 CloseSend 后，服务端的 Recv() 会返回 io.EOF。Mock Worker 利用这个信号判断“本次音频已经发送完成”。
-			//
-			// 客户端已经调用 CloseSend()，表示本次音频发送完成。
-			// 此时发送最终识别结果，然后正常结束 RPC。
 			if totalBytes == 0 {
 				return status.Error(codes.InvalidArgument, "no audio received")
 			}

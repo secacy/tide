@@ -55,7 +55,7 @@ func (c *Client) handleTextMessage(data []byte) error {
 		// 示例阶段直接输出。
 		//
 		// 后续可以进一步抽成 ResultHandler，让 WebSocket transport 不再依赖 stdout。
-		fmt.Printf("result text=%q final=%v\n", result.Text, result.Final)
+		fmt.Printf("result text=%q final=%v\n", result.Text, result.IsFinal)
 
 		return nil
 

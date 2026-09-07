@@ -22,9 +22,10 @@ type EndMessage struct {
 
 // ResultMessage 表示 Gateway 返回给客户端的识别结果。
 type ResultMessage struct {
-	Type  MessageType `json:"type"`
-	Text  string      `json:"text"`  // Mock Worker 返回的文本结果
-	Final bool        `json:"final"` // 该结果是否为最终结果
+	Type      MessageType `json:"type"`
+	SegmentID string      `json:"segmentId"`
+	Text      string      `json:"text"`    // Mock Worker 返回的文本结果
+	IsFinal   bool        `json:"isFinal"` // 该结果是否为最终结果
 }
 
 // ErrorMessage 表示 Gateway 返回的业务或后端错误。
