@@ -71,20 +71,29 @@ func (s *session) run(ctx context.Context) error {
 		return err
 	}
 
-	// WebSocket I/O 和 gRPC RPC 使用不同的 Context。
-	baseCtx := context.WithoutCancel(ctx)
-
-	rpcCtx, cancelRPC := context.WithCancel(baseCtx)
+	// RPC 从建流阶段起就响应应用取消；WebSocket 保留独立的收尾时间，
+	// 由 finish 在发送关闭帧后取消其 I/O。
+	rpcCtx, cancelRPC := context.WithCancel(ctx)
 	defer cancelRPC()
 
-	wsCtx, cancelWS := context.WithCancel(baseCtx)
+	wsCtx, cancelWS := context.WithCancel(context.WithoutCancel(ctx))
 	defer cancelWS()
 
 	stream, err := s.worker.StreamingRecognize(rpcCtx)
 	if err != nil {
-		_ = s.ws.Close(websocket.StatusInternalError, "worker unavailable")
-		return fmt.Errorf("open worker stream: %w", err)
+		result := sessionResult{
+			kind: resultWorkerFailed,
+			err:  fmt.Errorf("open worker stream: %w", err),
+		}
+		if ctx.Err() != nil {
+			result = sessionResult{kind: resultServerStopping, err: ctx.Err()}
+		}
+		_ = s.finish(wsCtx, result, cancelRPC, cancelWS)
+		return result.err
 	}
+
+	// 只有 upload 能关闭它，表示已收到合法的 End。
+	inputEnded := make(chan struct{})
 
 	// upload 和 download 每个最多发送一个退出事件。
 	events := make(chan sessionResult, 2)
@@ -94,7 +103,7 @@ func (s *session) run(ctx context.Context) error {
 
 	go func() {
 		defer wg.Done()
-		events <- s.upload(wsCtx, stream)
+		events <- s.upload(wsCtx, stream, inputEnded)
 	}()
 
 	go func() {
@@ -103,7 +112,7 @@ func (s *session) run(ctx context.Context) error {
 	}()
 
 	// 第一个真正具有决定性的事件确定 Session 结果。
-	result := waitSessionResult(ctx, events)
+	result := waitSessionResult(ctx, events, inputEnded)
 
 	// 先主动执行能够解除阻塞的 cleanup。
 	cleanupErr := s.finish(wsCtx, result, cancelRPC, cancelWS)
@@ -145,17 +154,34 @@ func readStart(ctx context.Context, conn *websocket.Conn) error {
 }
 
 // waitSessionResult 等待第一个能够决定整个 Session 的事件。
-func waitSessionResult(ctx context.Context, events <-chan sessionResult) sessionResult {
+func waitSessionResult(ctx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}) sessionResult {
+	var result sessionResult
 	select {
-	case result := <-events:
-		return result
-
+	case result = <-events:
 	case <-ctx.Done():
+	}
+
+	// 应用取消和 RPC 的取消错误可能同时到达。统一归类为服务停止，
+	// 避免 select 的调度顺序让关闭码在 1001 和 1011 之间变化。
+	if err := ctx.Err(); err != nil {
 		return sessionResult{
 			kind: resultServerStopping,
-			err:  ctx.Err(),
+			err:  err,
 		}
 	}
+
+	if result.kind == resultCompleted {
+		select {
+		case <-inputEnded:
+			// download 已确认 Worker 正常 EOF，且此前的结果都已转发。
+		default:
+			return sessionResult{
+				kind: resultWorkerFailed,
+				err:  fmt.Errorf("worker completed before client end"),
+			}
+		}
+	}
+	return result
 }
 
 // finish 根据已经确定的 Session 结果执行收尾。

@@ -25,6 +25,7 @@ func (s *session) download(ctx context.Context, stream workerStream) sessionResu
 
 		switch {
 		case errors.Is(err, io.EOF):
+			// RPC 正常结束；是否满足会话成功条件，由协调者结合 End 判断。
 			return sessionResult{
 				kind: resultCompleted,
 			}

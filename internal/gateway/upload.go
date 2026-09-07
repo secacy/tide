@@ -12,10 +12,8 @@ import (
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 )
 
-var errClientDisconnected = errors.New("websocket client disconnected")
-
 // upload 负责 WebSocket -> gRPC 方向。
-func (s *session) upload(ctx context.Context, stream workerStream) sessionResult {
+func (s *session) upload(ctx context.Context, stream workerStream, inputEnded chan<- struct{}) sessionResult {
 	for {
 		messageType, data, err := s.ws.Read(ctx)
 		if err != nil {
@@ -44,6 +42,9 @@ func (s *session) upload(ctx context.Context, stream workerStream) sessionResult
 			if err := parseEnd(data); err != nil {
 				return protocolViolation(err)
 			}
+
+			// 必须先记录 End，再半关闭 RPC；Worker 可能立即返回最终 EOF。
+			close(inputEnded)
 
 			// End 只关闭 gRPC Request 方向。
 			// 即使 CloseSend 返回错误，最终 RPC Status 仍应该尽量让 download/Recv 来确定。
@@ -76,51 +77,6 @@ func (s *session) waitAfterSendEOF(ctx context.Context) sessionResult {
 			return clientDisconnected(err)
 		}
 	}
-}
-
-// forwardAudioUntilEnd 持续读取 WebSocket 消息。
-//
-// 返回 nil 表示已经正常收到 End。
-func (s *session) forwardAudioUntilEnd(ctx context.Context, stream asrv1.ASRService_StreamingRecognizeClient) error {
-	for {
-		messageType, data, err := s.ws.Read(ctx)
-		if err != nil {
-			if ctx.Err() != nil {
-				return ctx.Err()
-			}
-			return fmt.Errorf("%w: %v", errClientDisconnected, err)
-		}
-
-		switch messageType {
-		case websocket.MessageBinary:
-			if err := forwardAudio(stream, data); err != nil {
-				return err
-			}
-
-		case websocket.MessageText:
-			if err := parseEnd(data); err != nil {
-				return err
-			}
-			return nil
-
-		default:
-			return fmt.Errorf("unsupported websocket message type: %v", messageType)
-		}
-	}
-}
-
-// forwardAudio 把一个 PCM WebSocket Message 立即转发给 Worker。
-func forwardAudio(stream asrv1.ASRService_StreamingRecognizeClient, data []byte) error {
-	if len(data) == 0 {
-		return fmt.Errorf("empty PCM message")
-	}
-	request := &asrv1.StreamingRecognizeRequest{
-		Data: data,
-	}
-	if err := stream.Send(request); err != nil {
-		return fmt.Errorf("send PCM to worker: %w", err)
-	}
-	return nil
 }
 
 // parseEnd 校验音频阶段收到的 Text Message 是否为 End。
