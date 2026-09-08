@@ -25,9 +25,9 @@ type workerStream interface {
 
 // session 表示一个 WebSocket Connection 与一个 gRPC stream 之间的一对一桥接关系。
 type session struct {
-	id     string
-	ws     *websocket.Conn
-	worker asrv1.ASRServiceClient
+	id     string                 // 标识本次实时会话，在登记前确定
+	ws     *websocket.Conn        // 本会话的客户端连接
+	worker asrv1.ASRServiceClient // 用于创建本会话的后端识别流
 }
 
 // sessionResultKind 描述能够决定整个 Session 结果的事件。
@@ -49,10 +49,21 @@ type sessionResult struct {
 	err  error
 }
 
-// newSession 创建一个 WebSocket ↔ gRPC Session。
-func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient) *session {
+// // newSession 创建一个 WebSocket ↔ gRPC Session。
+// func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient) *session {
+// 	return &session{
+// 		ws:     ws,
+// 		worker: worker,
+// 	}
+// }
+
+// newSession 创建一个尚未绑定客户端连接的会话。
+//
+// 此函数只初始化会话对象，不建立 WebSocket 或 gRPC 连接。
+// 调用方必须在绑定 WebSocket 后，才能调用 run。
+func newSession(id string, worker asrv1.ASRServiceClient) *session {
 	return &session{
-		ws:     ws,
+		id:     id,
 		worker: worker,
 	}
 }

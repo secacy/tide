@@ -47,6 +47,7 @@ func run(ctx context.Context) error {
 
 	wsGateway, err := gateway.New(ctx, workerClient, gateway.Config{
 		MaxMessageBytes: 1024 * 1024,
+		MaxSessions:     100,
 	})
 	if err != nil {
 		return fmt.Errorf("create gateway: %w", err)
