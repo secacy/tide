@@ -25,6 +25,7 @@ type workerStream interface {
 
 // session 表示一个 WebSocket Connection 与一个 gRPC stream 之间的一对一桥接关系。
 type session struct {
+	id     string
 	ws     *websocket.Conn
 	worker asrv1.ASRServiceClient
 }
