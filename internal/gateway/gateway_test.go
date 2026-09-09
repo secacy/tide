@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -27,7 +28,7 @@ import (
 func TestGatewayRejectsInvalidCapacity(t *testing.T) {
 	worker := &unusedGatewayWorker{}
 	for _, limit := range []int{0, -1} {
-		g, err := New(context.Background(), worker, Config{MaxSessions: limit})
+		g, err := New(context.Background(), worker, nil, Config{MaxSessions: limit})
 		if g != nil || !errors.Is(err, errInvalidMaxSessions) {
 			t.Fatalf("New(MaxSessions=%d) = (%v, %v), want invalid capacity", limit, g, err)
 		}
@@ -37,13 +38,14 @@ func TestGatewayRejectsInvalidCapacity(t *testing.T) {
 // 在升级失败响应写出时检查登记，证明失败的升级流程也受到管理。
 func TestGatewayRegistersBeforeUpgradeAndReleasesFailure(t *testing.T) {
 	worker := &unusedGatewayWorker{}
-	g, err := New(context.Background(), worker, Config{MaxSessions: 1})
+	g, err := New(context.Background(), worker, nil, Config{MaxSessions: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
 	ids := make(map[string]bool)
 	for range 2 {
 		observed := false
+		var registered *session
 		response := &observedGatewayResponse{
 			ResponseRecorder: httptest.NewRecorder(),
 			beforeHeader: func() {
@@ -55,6 +57,7 @@ func TestGatewayRegistersBeforeUpgradeAndReleasesFailure(t *testing.T) {
 				if sessions[0].ws != nil {
 					t.Fatal("failed upgrade unexpectedly bound a WebSocket")
 				}
+				registered = sessions[0]
 				if ids[sessions[0].id] {
 					t.Fatal("successive requests reused a session ID")
 				}
@@ -67,6 +70,9 @@ func TestGatewayRegistersBeforeUpgradeAndReleasesFailure(t *testing.T) {
 			t.Fatalf("upgrade rejection = %d, observed registration = %v", response.Code, observed)
 		}
 		assertRegistrySessions(t, g.registry)
+		if registered == nil || registered.ctx.Err() == nil {
+			t.Fatal("failed upgrade did not release the Session Context")
+		}
 	}
 	if worker.calls.Load() != 0 {
 		t.Fatal("failed upgrade opened a Worker stream")
@@ -200,7 +206,8 @@ func TestGatewayStopAcceptingPreservesExistingSession(t *testing.T) {
 	h := newGatewayHarness(t, worker, 1)
 	conn := h.mustDial(t)
 	id := h.onlySessionID(t)
-	h.gateway.registry.stopAccepting()
+	h.gateway.StopAccepting()
+	h.gateway.StopAccepting() // 重复停止不会影响已有会话。
 	h.expectHTTPStatus(t, http.StatusServiceUnavailable)
 	h.waitHandlers(t, 1)
 	if got := h.onlySessionID(t); got != id {
@@ -214,7 +221,110 @@ func TestGatewayStopAcceptingPreservesExistingSession(t *testing.T) {
 	h.expectClose(t, conn, websocket.StatusNormalClosure)
 	h.waitHandlers(t, 1)
 	assertRegistrySessions(t, h.gateway.registry)
-	assertRegistryWaitCompleted(t, h.gateway.registry)
+	if err := h.gateway.Wait(h.ctx); err != nil {
+		t.Fatalf("Wait after session cleanup: %v", err)
+	}
+}
+
+// 取消或耗尽等待预算后，原有连接仍应继续接收识别结果并正常完成。
+func TestGatewayWaitCancellationPreservesStreamingSession(t *testing.T) {
+	for _, deadline := range []bool{false, true} {
+		name := "canceled"
+		if deadline {
+			name = "deadline_exceeded"
+		}
+		t.Run(name, func(t *testing.T) {
+			worker := startGatewayWorker(t, mockasr.New(mockasr.Config{
+				PartialEvery: 100 * time.Millisecond,
+				PartialTexts: []string{"first", "second"},
+				FinalText:    "final",
+			}))
+			h := newGatewayHarness(t, worker, 1)
+			conn := h.mustDial(t)
+			id := h.onlySessionID(t)
+			h.write(t, conn, websocket.MessageText, []byte(`{"type":"start","version":"v1"}`))
+			h.write(t, conn, websocket.MessageBinary, make([]byte, 3200))
+			h.expectResult(t, conn, "first", false)
+			h.gateway.StopAccepting()
+
+			// 显式取消或使用已过期的期限，无需通过 sleep 猜测超时发生的时刻。
+			waitCtx, cancel := context.WithCancel(h.ctx)
+			want := context.Canceled
+			if deadline {
+				cancel()
+				waitCtx, cancel = context.WithDeadline(h.ctx, time.Now().Add(-time.Second))
+				want = context.DeadlineExceeded
+			} else {
+				cancel()
+			}
+			defer cancel()
+			if err := h.gateway.Wait(waitCtx); !errors.Is(err, want) {
+				t.Fatalf("Wait = %v, want %v while session remains active", err, want)
+			}
+			if got := h.onlySessionID(t); got != id {
+				t.Fatalf("Wait changed active session: %q -> %q", id, got)
+			}
+
+			// 不仅检查登记仍在，还确认取消等待后真实音频链路继续工作。
+			h.write(t, conn, websocket.MessageBinary, make([]byte, 3200))
+			h.expectResult(t, conn, "second", false)
+			h.write(t, conn, websocket.MessageText, []byte(`{"type":"end"}`))
+			h.expectResult(t, conn, "final", true)
+			h.expectClose(t, conn, websocket.StatusNormalClosure)
+			h.waitHandlers(t, 1)
+			if err := h.gateway.Wait(h.ctx); err != nil {
+				t.Fatalf("Wait with fresh budget after cleanup: %v", err)
+			}
+			assertRegistrySessions(t, h.gateway.registry)
+		})
+	}
+}
+
+// 多个等待者必须等待全部会话注销，不能在第一个会话结束时完成排空。
+func TestGatewayWaitersCompleteAfterLastSession(t *testing.T) {
+	worker := startGatewayWorker(t, mockasr.New(mockasr.Config{FinalText: "final"}))
+	h := newGatewayHarness(t, worker, 2)
+	first, last := h.mustDial(t), h.mustDial(t)
+	h.gateway.StopAccepting()
+
+	const waiters = 8
+	results := make(chan error, waiters)
+	for range waiters {
+		go func() { results <- h.gateway.Wait(h.ctx) }()
+	}
+
+	h.write(t, first, websocket.MessageText, []byte(`{"type":"start","version":"v1"}`))
+	h.write(t, first, websocket.MessageBinary, []byte{0, 0})
+	h.write(t, first, websocket.MessageText, []byte(`{"type":"end"}`))
+	h.expectResult(t, first, "final", true)
+	h.expectClose(t, first, websocket.StatusNormalClosure)
+	h.waitHandlers(t, 1)
+	h.onlySessionID(t) // 第二个会话仍在等待 start。
+	assertRegistryNotDrained(t, h.gateway.registry)
+	select {
+	case err := <-results:
+		t.Fatalf("Wait returned before last session completed: %v", err)
+	default:
+	}
+
+	h.write(t, last, websocket.MessageText, []byte(`{"type":"start","version":"v1"}`))
+	h.write(t, last, websocket.MessageBinary, []byte{0, 0})
+	h.write(t, last, websocket.MessageText, []byte(`{"type":"end"}`))
+	h.expectResult(t, last, "final", true)
+	h.expectClose(t, last, websocket.StatusNormalClosure)
+	for range waiters {
+		select {
+		case err := <-results:
+			if err != nil {
+				t.Fatalf("Wait after final session: %v", err)
+			}
+			// Wait 的返回本身应保证注销已完成，不依赖 handler 完成通知。
+			assertRegistrySessions(t, h.gateway.registry)
+		case <-h.ctx.Done():
+			t.Fatal("waiters did not complete after final session")
+		}
+	}
+	h.waitHandlers(t, 1)
 }
 
 // 同时发起真实 WebSocket 握手；全部尝试完成前保留成功连接，防止名额复用干扰断言。
@@ -343,8 +453,9 @@ func newGatewayHarness(t *testing.T, worker asrv1.ASRServiceClient, capacity int
 	t.Helper()
 	appCtx, cancelApp := context.WithCancel(context.Background())
 	t.Cleanup(cancelApp)
-	// 生命周期测试无需输出日志；测试显式注入日志器，避免依赖全局日志配置。
-	g, err := New(appCtx, worker, Config{MaxSessions: capacity})
+	// 生命周期测试显式注入静默日志器，避免依赖全局日志配置。
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	g, err := New(appCtx, worker, logger, Config{MaxSessions: capacity})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -366,7 +477,7 @@ func newGatewayHarness(t *testing.T, worker asrv1.ASRServiceClient, capacity int
 	}}
 	h.client = &http.Client{Transport: transport}
 	t.Cleanup(func() {
-		g.registry.stopAccepting()
+		g.StopAccepting()
 		cancelApp()
 		_ = server.Close()
 		_ = listener.Close()
@@ -374,7 +485,7 @@ func newGatewayHarness(t *testing.T, worker asrv1.ASRServiceClient, capacity int
 		cleanupCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Second)
 		defer cleanupCancel()
 		awaitGatewaySignal(t, cleanupCtx, serverDone, "HTTP server exited")
-		if err := g.registry.wait(cleanupCtx); err != nil {
+		if err := g.Wait(cleanupCtx); err != nil {
 			t.Errorf("Gateway cleanup left registered sessions: %v", err)
 		}
 	})

@@ -3,7 +3,9 @@ package gateway
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net"
 	"sync"
 
 	"github.com/coder/websocket"
@@ -26,19 +28,29 @@ type workerStream interface {
 // session 表示一个 WebSocket Connection 与一个 gRPC stream 之间的一对一桥接关系。
 type session struct {
 	id     string                 // 标识本次实时会话，在登记前确定
-	ws     *websocket.Conn        // 本会话的客户端连接
+	ws     *websocket.Conn        // 接入流程在 run 前绑定一次；负责消息读写和关闭握手，abort 不访问此字段。
 	worker asrv1.ASRServiceClient // 用于创建本会话的后端识别流
+
+	ctx       context.Context         // 控制本会话的识别工作，在创建会话时确定
+	cancel    context.CancelCauseFunc // 取消本会话并记录取消原因。强制停止时传入 errSessionAborted，正常释放时传入 nil。
+	controlMu sync.Mutex              // 保护 aborted 和 transport。持锁期间不得进行网络操作，也不得等待会话退出。
+	aborted   bool                    // 表示已经请求强制停止，只能从 false 变为 true。
+	transport net.Conn                // 升级接管的底层连接，只绑定一次；用于强制中断网络读写和关闭握手。
 }
+
+// errSessionAborted 表示会话收到显式的强制停止请求。
+var errSessionAborted = errors.New("session aborted")
 
 // sessionResultKind 描述能够决定整个 Session 结果的事件。
 type sessionResultKind uint8
 
 const (
-	resultCompleted sessionResultKind = iota
-	resultWorkerFailed
-	resultClientDisconnected
-	resultProtocolViolation
-	resultServerStopping
+	resultCompleted          sessionResultKind = iota // 客户端已结束输入，Worker 正常完成。
+	resultWorkerFailed                                // Worker 建流或识别失败。
+	resultClientDisconnected                          // 客户端连接断开。
+	resultProtocolViolation                           // 客户端违反会话协议。
+	resultServerStopping                              // 父 Context 取消，服务正在停止。
+	resultAborted                                     // 会话收到显式强制停止请求。
 )
 
 // sessionResult 是 upload/download 向 session.run 汇报的结果。
@@ -49,26 +61,23 @@ type sessionResult struct {
 	err  error
 }
 
-// // newSession 创建一个 WebSocket ↔ gRPC Session。
-// func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient) *session {
-// 	return &session{
-// 		ws:     ws,
-// 		worker: worker,
-// 	}
-// }
-
-// newSession 创建一个尚未绑定客户端连接的会话。
+// newSession 创建尚未绑定连接的会话，并建立独立的取消范围。
 //
-// 此函数只初始化会话对象，不建立 WebSocket 或 gRPC 连接。
-// 调用方必须在绑定 WebSocket 后，才能调用 run。
-func newSession(id string, worker asrv1.ASRServiceClient) *session {
+// parent 必须非 nil，应传入 Gateway 的生命周期 Context。
+// 调用方负责在所有退出路径释放该会话的 Context。
+func newSession(parent context.Context, id string, worker asrv1.ASRServiceClient) *session {
+	ctx, cancel := context.WithCancelCause(parent)
 	return &session{
 		id:     id,
+		ctx:    ctx,
+		cancel: cancel,
 		worker: worker,
 	}
 }
 
 // run 管理一个音频 Session 的完整生命周期。
+// 使用构造时确定的 s.ctx，每个 Session 只调用一次，调用前必须绑定 ws。
+// 返回前等待内部 I/O goroutine 退出；Context 释放和注销由接入流程负责。
 //
 // 它是唯一负责以下事情的位置：
 //
@@ -77,10 +86,20 @@ func newSession(id string, worker asrv1.ASRServiceClient) *session {
 //   - 决定 WebSocket Close Code；
 //   - 唤醒仍然阻塞的 I/O goroutine；
 //   - 等待所有 goroutine 真正退出。
-func (s *session) run(ctx context.Context) error {
+func (s *session) run() error {
+	ctx := s.ctx
+	if result, canceled := cancellationResult(ctx); canceled {
+		return result.err
+	}
 	if err := readStart(ctx, s.ws); err != nil {
+		if result, canceled := cancellationResult(ctx); canceled {
+			return result.err
+		}
 		_ = s.ws.Close(websocket.StatusPolicyViolation, "invalid start message")
 		return err
+	}
+	if result, canceled := cancellationResult(ctx); canceled {
+		return result.err
 	}
 
 	// RPC 从建流阶段起就响应应用取消；WebSocket 保留独立的收尾时间，
@@ -97,8 +116,8 @@ func (s *session) run(ctx context.Context) error {
 			kind: resultWorkerFailed,
 			err:  fmt.Errorf("open worker stream: %w", err),
 		}
-		if ctx.Err() != nil {
-			result = sessionResult{kind: resultServerStopping, err: ctx.Err()}
+		if canceledResult, canceled := cancellationResult(ctx); canceled {
+			result = canceledResult
 		}
 		_ = s.finish(wsCtx, result, cancelRPC, cancelWS)
 		return result.err
@@ -173,13 +192,10 @@ func waitSessionResult(ctx context.Context, events <-chan sessionResult, inputEn
 	case <-ctx.Done():
 	}
 
-	// 应用取消和 RPC 的取消错误可能同时到达。统一归类为服务停止，
-	// 避免 select 的调度顺序让关闭码在 1001 和 1011 之间变化。
-	if err := ctx.Err(); err != nil {
-		return sessionResult{
-			kind: resultServerStopping,
-			err:  err,
-		}
+	// 取消和它引发的 I/O 错误可能同时到达，使用取消原因统一分类。
+	// 结果选定后，收尾期间的后续取消不会重新覆盖这个决定。
+	if canceledResult, canceled := cancellationResult(ctx); canceled {
+		return canceledResult
 	}
 
 	if result.kind == resultCompleted {
@@ -249,6 +265,13 @@ func (s *session) finish(
 		cancelRPC()
 		cancelWS()
 
+		_ = s.ws.CloseNow()
+		return nil
+
+	case resultAborted:
+		// abort 负责底层连接中断，这里取消剩余 I/O 并清理 WebSocket 对象。
+		cancelRPC()
+		cancelWS()
 		_ = s.ws.CloseNow()
 		return nil
 

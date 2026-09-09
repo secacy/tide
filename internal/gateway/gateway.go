@@ -68,10 +68,11 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, logger *slog.Logger
 // Session 返回后，先完成连接兜底清理，再注销并释放名额。
 func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sessionID := rand.Text()
-	s := newSession(sessionID, g.worker)
+	s := newSession(g.ctx, sessionID, g.worker)
 	// 使用局部日志器关联当前接入过程，避免并发请求串用会话字段。
 	sessionLogger := g.logger.With("session_id", s.id)
 	if err := g.registry.register(s); err != nil {
+		s.cancel(nil)
 		if errors.Is(err, errSessionLimit) || errors.Is(err, errRegistryStopping) {
 			sessionLogger.Info("session admission rejected", "error", err)
 		} else {
@@ -80,9 +81,13 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeRegisterError(w, err)
 		return
 	}
-	defer g.registry.unregister(s)
+	defer func() {
+		// 后登记的连接清理 defer 先执行，再释放 Context 和会话名额。
+		s.cancel(nil)
+		g.registry.unregister(s)
+	}()
 
-	conn, err := websocket.Accept(w, r, nil)
+	conn, err := websocket.Accept(wrapSessionResponseWriter(w, s), r, nil)
 	if err != nil {
 		sessionLogger.Debug("websocket upgrade failed", "error", err)
 		return
@@ -97,7 +102,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// run 返回后，外层 defer 还会继续清理连接并注销会话。
 	// 当前返回值也包含客户端断开等情况，暂不将所有错误归类为服务故障。
-	if err := s.run(g.ctx); err != nil {
+	if err := s.run(); err != nil {
 		sessionLogger.Info("session run ended", "error", err)
 	} else {
 		sessionLogger.Info("session run ended")
