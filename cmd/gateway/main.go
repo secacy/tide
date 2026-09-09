@@ -14,15 +14,15 @@ import (
 
 	"github.com/secacy/tide-artisan/internal/gateway"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
-	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
-	gatewayAddr     = ":8080"           // WebSocket Gateway 对外监听地址
-	workerAddr      = "localhost:50051" // gRPC Mock Worker 地址
-	shutdownTimeout = 5 * time.Second   // HTTP Server 优雅关闭的最长等待时间
+	gatewayAddr    = ":8080"           // WebSocket Gateway 对外监听地址
+	workerAddr     = "localhost:50051" // gRPC Mock Worker 地址
+	drainTimeout   = 5 * time.Second   // HTTP 关闭和会话自然排空共享的时间预算
+	cleanupTimeout = 2 * time.Second   // 强制停止后的清理等待预算
 )
 
 func main() {
@@ -32,9 +32,9 @@ func main() {
 	})).With("service", "tide-gateway")
 
 	// SIGINT 对应 Ctrl+C，SIGTERM 通常用于容器或进程管理器停止服务。
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	stopCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 
-	err := run(ctx, logger)
+	err := run(stopCtx, logger)
 	// os.Exit 不执行 defer，因此在决定退出码前释放信号通知资源。
 	stop()
 	if err != nil {
@@ -43,8 +43,9 @@ func main() {
 	}
 }
 
-// run 组装应用依赖，并向各组件传入从非 nil 基础日志器派生的日志器。
-func run(ctx context.Context, logger *slog.Logger) error {
+// run 组装应用依赖；stopCtx 只触发关闭，logger 必须非 nil。
+// serve 完成关闭编排后，才释放会话 Context 和共享 gRPC 连接。
+func run(stopCtx context.Context, logger *slog.Logger) error {
 	grpcConn, err := grpc.NewClient(workerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("create worker grpc client: %w", err)
@@ -56,7 +57,11 @@ func run(ctx context.Context, logger *slog.Logger) error {
 	gatewayLogger := logger.With("component", "gateway")
 	httpLogger := logger.With("component", "http")
 
-	wsGateway, err := gateway.New(ctx, workerClient, gatewayLogger, gateway.Config{
+	// sessionCtx 控制会话生命周期；退出信号只触发关闭编排，不直接取消正在自然排空的会话。
+	sessionCtx, cancelSessions := context.WithCancel(context.Background())
+	defer cancelSessions()
+
+	wsGateway, err := gateway.New(sessionCtx, workerClient, gatewayLogger, gateway.Config{
 		MaxMessageBytes: 1024 * 1024,
 		MaxSessions:     100,
 	})
@@ -72,7 +77,16 @@ func run(ctx context.Context, logger *slog.Logger) error {
 		ErrorLog: slog.NewLogLogger(httpLogger.Handler(), slog.LevelError),
 	}
 
-	return serve(ctx, server, httpLogger)
+	listener, err := net.Listen("tcp", server.Addr)
+	if err != nil {
+		return fmt.Errorf("listen on %s: %w", server.Addr, err)
+	}
+	defer listener.Close() // 覆盖 serve 启动前校验失败等退出路径。
+
+	return serve(stopCtx, server, listener, wsGateway, httpLogger, shutdownConfig{
+		DrainTimeout:   drainTimeout,
+		CleanupTimeout: cleanupTimeout,
+	})
 }
 
 // routes 负责声明 Gateway 暴露的 HTTP 接口。
@@ -91,45 +105,60 @@ func routes(wsGateway http.Handler) http.Handler {
 	return mux
 }
 
-// serve 管理 HTTP Server 的完整生命周期。
-// logger 必须非 nil，用于记录 HTTP 服务启动和关闭事件。
+// serve 运行 HTTP 服务，收到 stopCtx 取消或 Serve 返回后执行关闭编排。
 //
-// 它同时处理两个事件：
-//  1. HTTP Server 自身发生异常；
-//  2. 应用 Context 被取消，需要优雅关闭。
-func serve(ctx context.Context, server *http.Server, logger *slog.Logger) error {
-	listener, err := net.Listen("tcp", server.Addr)
-	if err != nil {
-		return fmt.Errorf("listen on %s: %w", server.Addr, err)
+// listener 已由调用方创建，交给 HTTP Server 使用。
+// 返回前收集 Serve 的结果，并完成关闭编排。
+// stopCtx 仅用于触发关闭，不作为会话或排空等待的 Context。
+// 所有依赖必须非 nil；配置无效时不启动服务，Listener 由调用方清理。
+func serve(stopCtx context.Context, server *http.Server, listener net.Listener, sessions gatewayLifecycle, logger *slog.Logger, cfg shutdownConfig) error {
+	if err := cfg.validate(); err != nil {
+		return err
+	}
+	logger.Info("http server listening", "address", listener.Addr().String())
+	// 缓冲允许 Serve 在协调者执行关闭流程时提交结果。
+	serveErrCh := make(chan error, 1)
+	go func() {
+		serveErrCh <- server.Serve(listener)
+	}()
+	var (
+		serveErr      error
+		serveResultIn bool
+	)
+
+	select {
+	case <-stopCtx.Done():
+		logger.Info("gateway shutdown started", "trigger", "stop_context")
+	case serveErr = <-serveErrCh:
+		serveResultIn = true
+		logger.Info("gateway shutdown started", "trigger", "serve_returned", "serve_error", serveErr)
 	}
 
-	logger.Info("http server listening", "address", listener.Addr().String())
+	// 无论是谁触发退出，都只执行一次完整关闭编排。
+	shutdownErr := shutdownServer(server, sessions, logger, cfg)
+	// 收取唯一的 Serve 结果，避免监听异常被关闭结果覆盖。
+	if !serveResultIn {
+		serveErr = <-serveErrCh
+	}
 
-	group, groupCtx := errgroup.WithContext(ctx)
+	if errors.Is(serveErr, http.ErrServerClosed) {
+		serveErr = nil
+	}
 
-	// HTTP Server 主循环
-	group.Go(func() error {
-		err := server.Serve(listener)
-		// Shutdown 会让 Serve 返回 http.ErrServerClosed。这是预期的正常退出，不应该作为错误返回。
-		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			return fmt.Errorf("serve HTTP: %w", err)
-		}
-		return nil
-	})
+	var errs []error
 
-	// 等待应用退出
-	group.Go(func() error {
-		<-groupCtx.Done()
-		logger.Info("http server shutting down")
-		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-		defer cancel()
-		if err := server.Shutdown(shutdownCtx); err != nil {
-			return fmt.Errorf("shutdown HTTP server: %w", err)
-		}
-		// HTTP 服务关闭不代表所有 WebSocket 会话已经完成清理。
-		logger.Info("http server shutdown completed")
-		return nil
-	})
+	if serveErr != nil {
+		errs = append(errs, fmt.Errorf("serve HTTP: %w", serveErr))
+	}
 
-	return group.Wait()
+	if shutdownErr != nil {
+		errs = append(errs, fmt.Errorf("shutdown gateway: %w", shutdownErr))
+	}
+
+	if len(errs) != 0 {
+		return errors.Join(errs...)
+	}
+
+	logger.Info("gateway stopped")
+	return nil
 }

@@ -16,7 +16,7 @@ go run cmd/asr-worker/main.go
 ```
 
 ```bash
-go run cmd/gateway/main.go
+go run ./cmd/gateway
 ```
 
 ```bash
