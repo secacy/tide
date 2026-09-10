@@ -27,7 +27,7 @@ type StreamingRecognizeRequest struct {
 	//	  StartSession session = 1;
 	//	  AudioChunk audio_chunk = 2;
 	//	}
-	Data          []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	Data          []byte `protobuf:"bytes,1,opt,name=testdata,proto3" json:"testdata,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

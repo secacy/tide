@@ -1,3 +1,24 @@
+## 运行
+```bash
+go run ./cmd/mock-asr
+```
+
+```bash
+go run ./cmd/gateway
+```
+
+```bash
+go run ./cmd/ws-client
+```
+
+
+## protoc代码生成
+```
+protoc --go_out=. --go_opt=paths=source_relative \
+    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+    routeguide/route_guide.proto
+```
+
 ## wav转pcm
 ```bash
 ffmpeg \
@@ -9,24 +30,3 @@ ffmpeg \
   "data/pcm/test3s.pcm"
 ```
 
-
-## 运行
-```bash
-go run cmd/asr-worker/main.go
-```
-
-```bash
-go run ./cmd/gateway
-```
-
-```bash
-go run cmd/ws-client/main.go
-```
-
-
-## protoc代码生成
-```
-protoc --go_out=. --go_opt=paths=source_relative \
-    --go-grpc_out=. --go-grpc_opt=paths=source_relative \
-    routeguide/route_guide.proto
-```

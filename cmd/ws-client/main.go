@@ -35,7 +35,7 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	f, err := os.Open("data/pcm/test6s.pcm")
+	f, err := os.Open("testdata/pcm/test6s.pcm")
 	if err != nil {
 		return err
 	}
