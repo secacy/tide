@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/coder/websocket"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
@@ -16,6 +17,10 @@ import (
 type Config struct {
 	MaxMessageBytes int64 // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
 	MaxSessions     int   // Gateway 同时管理的最大会话数
+
+	AudioQueueMaxBytes  int           // 限制队列内等待发送的音频总字节数，不包含正在发送的音频。
+	AudioQueueMaxChunks int           // 限制队列内的音频块数量，防止大量小消息产生过多管理开销。
+	ResultWriteTimeout  time.Duration // 限制单次转录结果写入 WebSocket 的等待时间。
 }
 
 // Gateway 把 WebSocket 音频流桥接到 gRPC Worker。
@@ -32,6 +37,7 @@ type Gateway struct {
 // ctx 应该是应用级生命周期 Context。
 // 服务关闭时取消 ctx，可以同时结束所有正在运行的 WebSocket session。
 // logger 为 nil 时使用 slog.Default。cfg.MaxSessions 必须大于零。
+// 音频队列容量和结果写入期限为零时使用实验初值，负数视为配置错误。
 func New(ctx context.Context, worker asrv1.ASRServiceClient, logger *slog.Logger, cfg Config) (*Gateway, error) {
 	if ctx == nil {
 		return nil, fmt.Errorf("gateway context is nil")
@@ -41,6 +47,19 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, logger *slog.Logger
 	}
 	if cfg.MaxMessageBytes <= 0 {
 		cfg.MaxMessageBytes = 1024 * 1024 // 1 MiB
+	}
+	if cfg.AudioQueueMaxBytes < 0 || cfg.AudioQueueMaxChunks < 0 || cfg.ResultWriteTimeout < 0 {
+		return nil, fmt.Errorf("audio queue limits and result write timeout must not be negative")
+	}
+	// 以下是可调的实验初值，不代表已验证的容量或延迟保证。
+	if cfg.AudioQueueMaxBytes == 0 {
+		cfg.AudioQueueMaxBytes = 64_000 // 当前 PCM 格式约 2 秒音频。
+	}
+	if cfg.AudioQueueMaxChunks == 0 {
+		cfg.AudioQueueMaxChunks = 128
+	}
+	if cfg.ResultWriteTimeout == 0 {
+		cfg.ResultWriteTimeout = 2 * time.Second
 	}
 	registry, err := newSessionRegistry(cfg.MaxSessions)
 	if err != nil {
