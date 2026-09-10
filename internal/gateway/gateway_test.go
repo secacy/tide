@@ -451,11 +451,16 @@ type gatewayHarness struct {
 
 func newGatewayHarness(t *testing.T, worker asrv1.ASRServiceClient, capacity int) *gatewayHarness {
 	t.Helper()
+	return newGatewayHarnessWithConfig(t, worker, Config{MaxSessions: capacity})
+}
+
+func newGatewayHarnessWithConfig(t *testing.T, worker asrv1.ASRServiceClient, cfg Config) *gatewayHarness {
+	t.Helper()
 	appCtx, cancelApp := context.WithCancel(context.Background())
 	t.Cleanup(cancelApp)
 	// 生命周期测试显式注入静默日志器，避免依赖全局日志配置。
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	g, err := New(appCtx, worker, logger, Config{MaxSessions: capacity})
+	g, err := New(appCtx, worker, logger, cfg)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -12,47 +12,58 @@ import (
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 )
 
-// upload 负责 WebSocket -> gRPC 方向。
-func (s *session) upload(ctx context.Context, stream workerStream, inputEnded chan<- struct{}) sessionResult {
+// readAudio 独占 WebSocket 读取；只尝试入队，不等待 Worker 或队列空位。
+// 仅合法 End 关闭队列输入；异常退出由协调者取消 Sender。
+func (s *session) readAudio(ctx context.Context, queue *audioQueue) sessionResult {
 	for {
 		messageType, data, err := s.ws.Read(ctx)
 		if err != nil {
 			return clientDisconnected(err)
 		}
-
 		switch messageType {
 		case websocket.MessageBinary:
-			err := stream.Send(&asrv1.StreamingRecognizeRequest{
-				Data: data,
-			})
-			switch {
-			case err == nil:
-				continue
-			case errors.Is(err, io.EOF):
-				// Send 返回 io.EOF 不表示 RPC 的最终状态。Worker 可能已经拒绝请求，而真正的 gRPC Status 要由 download 中的 Recv 得到。
-				return s.waitAfterSendEOF(ctx)
-			default:
-				return sessionResult{
-					kind: resultWorkerFailed,
-					err:  fmt.Errorf("send audio to worker: %w", err),
+			if err := queue.tryPush(data); err != nil {
+				if errors.Is(err, errAudioQueueFull) {
+					return sessionResult{kind: resultOverloaded, err: err}
 				}
+				return protocolViolation(err)
 			}
-
 		case websocket.MessageText:
 			if err := parseEnd(data); err != nil {
 				return protocolViolation(err)
 			}
-
-			// 必须先记录 End，再半关闭 RPC；Worker 可能立即返回最终 EOF。
-			close(inputEnded)
-
-			// End 只关闭 gRPC Request 方向。
-			// 即使 CloseSend 返回错误，最终 RPC Status 仍应该尽量让 download/Recv 来确定。
-			_ = stream.CloseSend()
+			queue.closeInput()
 			return s.waitAfterEnd(ctx)
-
 		default:
 			return protocolViolation(fmt.Errorf("unsupported websocket message type: %v", messageType))
+		}
+	}
+}
+
+// sendAudio 独占 Send 和 CloseSend。ctx 使用 RPC 的取消范围，
+// 从而在协调者取消 RPC 后立即解除空队列等待，无需等待 WebSocket 关闭握手。
+func sendAudio(ctx context.Context, stream workerStream, queue *audioQueue, requestClosing chan<- struct{}) sessionResult {
+	for {
+		data, err := queue.pop(ctx)
+		if errors.Is(err, io.EOF) {
+			close(requestClosing)
+			if err := stream.CloseSend(); err != nil {
+				return sessionResult{kind: resultSendStopped, err: fmt.Errorf("close worker input: %w", err)}
+			}
+			return sessionResult{kind: resultInputSent}
+		}
+		if err != nil {
+			return sessionResult{kind: resultWorkerFailed, err: fmt.Errorf("wait for audio: %w", err)}
+		}
+		err = stream.Send(&asrv1.StreamingRecognizeRequest{Data: data})
+		switch {
+		case err == nil:
+			continue
+		case errors.Is(err, io.EOF):
+			// Send EOF 只表示不能继续发送；保留 Reader，由 Recv 判断 RPC 状态。
+			return sessionResult{kind: resultSendStopped, err: fmt.Errorf("worker stopped accepting audio: %w", err)}
+		default:
+			return sessionResult{kind: resultWorkerFailed, err: fmt.Errorf("send audio to worker: %w", err)}
 		}
 	}
 }
@@ -67,16 +78,6 @@ func (s *session) waitAfterEnd(ctx context.Context) sessionResult {
 	}
 
 	return protocolViolation(fmt.Errorf("message received after end: %v", messageType))
-}
-
-// waitAfterSendEOF 在 gRPC Send 返回 io.EOF 后继续保持WebSocket 读取能力。
-func (s *session) waitAfterSendEOF(ctx context.Context) sessionResult {
-	for {
-		_, _, err := s.ws.Read(ctx)
-		if err != nil {
-			return clientDisconnected(err)
-		}
-	}
 }
 
 // parseEnd 校验音频阶段收到的 Text Message 是否为 End。

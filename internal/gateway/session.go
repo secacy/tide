@@ -41,19 +41,23 @@ type session struct {
 // errSessionAborted 表示会话收到显式的强制停止请求。
 var errSessionAborted = errors.New("session aborted")
 
-// sessionResultKind 描述能够决定整个 Session 结果的事件。
+// sessionResultKind 区分会话失败、Worker 完成以及 Sender 的阶段事件。
 type sessionResultKind uint8
 
 const (
-	resultCompleted          sessionResultKind = iota // 客户端已结束输入，Worker 正常完成。
+	resultCompleted          sessionResultKind = iota // download 已读取 Worker 正常 EOF，协调者仍需确认 Sender 完成。
 	resultWorkerFailed                                // Worker 建流或识别失败。
 	resultClientDisconnected                          // 客户端连接断开。
 	resultProtocolViolation                           // 客户端违反会话协议。
 	resultServerStopping                              // 父 Context 取消，服务正在停止。
 	resultAborted                                     // 会话收到显式强制停止请求。
+	resultOverloaded                                  // 音频积压达到上限，无法继续接纳音频。
+	resultWriteTimedOut                               // 单次结果写入超过等待期限。
+	resultInputSent                                   // Sender 已排空并完成 CloseSend；尚不代表 Worker 完成。
+	resultSendStopped                                 // Send EOF 或 CloseSend 失败，等待 Recv 给出 RPC 最终状态。
 )
 
-// sessionResult 是 upload/download 向 session.run 汇报的结果。
+// sessionResult 是 Reader、Sender、download 向 session.run 汇报的事件。
 //
 // I/O goroutine 不负责决定 WebSocket 应该如何关闭。它们只负责描述“发生了什么”。
 type sessionResult struct {
@@ -77,6 +81,7 @@ func newSession(parent context.Context, id string, worker asrv1.ASRServiceClient
 
 // run 管理一个音频 Session 的完整生命周期。
 // 使用构造时确定的 s.ctx，每个 Session 只调用一次，调用前必须绑定 ws。
+// cfg 必须已经由 Gateway.New 填充默认值并校验。
 // 返回前等待内部 I/O goroutine 退出；Context 释放和注销由接入流程负责。
 //
 // 它是唯一负责以下事情的位置：
@@ -86,10 +91,14 @@ func newSession(parent context.Context, id string, worker asrv1.ASRServiceClient
 //   - 决定 WebSocket Close Code；
 //   - 唤醒仍然阻塞的 I/O goroutine；
 //   - 等待所有 goroutine 真正退出。
-func (s *session) run() error {
+func (s *session) run(cfg Config) error {
 	ctx := s.ctx
 	if result, canceled := cancellationResult(ctx); canceled {
 		return result.err
+	}
+	queue, err := newAudioQueue(cfg.AudioQueueMaxBytes, cfg.AudioQueueMaxChunks)
+	if err != nil {
+		return err // 调用方必须提供经 Gateway.New 校验的配置。
 	}
 	if err := readStart(ctx, s.ws); err != nil {
 		if result, canceled := cancellationResult(ctx); canceled {
@@ -123,32 +132,44 @@ func (s *session) run() error {
 		return result.err
 	}
 
-	// 只有 upload 能关闭它，表示已收到合法的 End。
-	inputEnded := make(chan struct{})
+	// Sender 排空后、调用 CloseSend 前关闭。Worker EOF 可以先于 CloseSend 返回，
+	// 因而“开始半关闭”和“半关闭调用返回”必须分开观察。
+	requestClosing := make(chan struct{})
 
-	// upload 和 download 每个最多发送一个退出事件。
-	events := make(chan sessionResult, 2)
+	// 三个执行流各汇报一次，即使协调者已选定结果也不会阻塞退出。
+	events := make(chan sessionResult, 3)
 
 	var wg sync.WaitGroup
-	wg.Add(2)
+	wg.Add(3)
 
 	go func() {
 		defer wg.Done()
-		events <- s.upload(wsCtx, stream, inputEnded)
+		events <- s.readAudio(wsCtx, queue)
 	}()
 
 	go func() {
 		defer wg.Done()
-		events <- s.download(wsCtx, stream)
+		events <- sendAudio(rpcCtx, stream, queue, requestClosing)
+	}()
+	var downloaded sessionResult // 仅 download 写入，协调者在 wg.Wait 后读取。
+	go func() {
+		defer wg.Done()
+		downloaded = s.download(wsCtx, stream, cfg.ResultWriteTimeout)
+		events <- downloaded
 	}()
 
 	// 第一个真正具有决定性的事件确定 Session 结果。
-	result := waitSessionResult(ctx, events, inputEnded)
+	result := waitSessionResult(ctx, events, requestClosing)
 
 	// 先主动执行能够解除阻塞的 cleanup。
 	cleanupErr := s.finish(wsCtx, result, cancelRPC, cancelWS)
 
 	wg.Wait()
+	// WebSocket 写入超时也会关闭连接，Reader 可能先汇报断开。
+	// 保留先选定的失败，同时补充已经确认的写入超时，避免日志丢失具体原因。
+	if result.kind == resultClientDisconnected && downloaded.kind == resultWriteTimedOut {
+		result.err = errors.Join(result.err, downloaded.err)
+	}
 
 	if result.err != nil {
 		return result.err
@@ -185,31 +206,42 @@ func readStart(ctx context.Context, conn *websocket.Conn) error {
 }
 
 // waitSessionResult 等待第一个能够决定整个 Session 的事件。
-func waitSessionResult(ctx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}) sessionResult {
-	var result sessionResult
-	select {
-	case result = <-events:
-	case <-ctx.Done():
-	}
-
-	// 取消和它引发的 I/O 错误可能同时到达，使用取消原因统一分类。
-	// 结果选定后，收尾期间的后续取消不会重新覆盖这个决定。
-	if canceledResult, canceled := cancellationResult(ctx); canceled {
-		return canceledResult
-	}
-
-	if result.kind == resultCompleted {
+func waitSessionResult(ctx context.Context, events <-chan sessionResult, requestClosing <-chan struct{}) sessionResult {
+	inputSent, workerCompleted := false, false
+	var sendErr error
+	for {
+		var result sessionResult
 		select {
-		case <-inputEnded:
-			// download 已确认 Worker 正常 EOF，且此前的结果都已转发。
+		case result = <-events:
+		case <-ctx.Done():
+		}
+		if canceled, ok := cancellationResult(ctx); ok {
+			return canceled
+		}
+		switch result.kind {
+		case resultInputSent:
+			inputSent = true
+		case resultSendStopped:
+			sendErr = result.err
+		case resultCompleted:
+			select {
+			case <-requestClosing:
+				workerCompleted = true
+			default:
+				return sessionResult{kind: resultWorkerFailed, err: fmt.Errorf("worker completed before audio drain and request half-close")}
+			}
 		default:
-			return sessionResult{
-				kind: resultWorkerFailed,
-				err:  fmt.Errorf("worker completed before client end"),
+			return result
+		}
+		if workerCompleted {
+			if sendErr != nil {
+				return sessionResult{kind: resultWorkerFailed, err: sendErr}
+			}
+			if inputSent {
+				return sessionResult{kind: resultCompleted}
 			}
 		}
 	}
-	return result
 }
 
 // finish 根据已经确定的 Session 结果执行收尾。
@@ -260,7 +292,13 @@ func (s *session) finish(
 
 		return nil
 
-	case resultClientDisconnected:
+	case resultOverloaded:
+		cancelRPC() // 先解除 Sender 的 Send/pop 等待，再尝试通知客户端。
+		closeErr := s.ws.Close(websocket.StatusTryAgainLater, "audio queue full")
+		cancelWS()
+		return closeErr
+
+	case resultClientDisconnected, resultWriteTimedOut:
 		// Client 已经消失，没有必要再尝试 graceful close handshake。
 		cancelRPC()
 		cancelWS()

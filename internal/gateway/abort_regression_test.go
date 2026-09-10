@@ -42,7 +42,9 @@ func TestSessionRunPreservesEarlyCancellationCause(t *testing.T) {
 				deadline, _ := ctx.Deadline()
 				_ = peer.SetDeadline(deadline)
 				finished := make(chan error, 1)
-				go func() { finished <- s.run() }()
+				go func() {
+					finished <- s.run(Config{AudioQueueMaxBytes: 64_000, AudioQueueMaxChunks: 128, ResultWriteTimeout: 2 * time.Second})
+				}()
 				awaitGatewaySignal(t, ctx, reading, "Session entered initial read")
 				if stage == "opening_worker" {
 					writeRawClientFrame(t, peer, 1, []byte(`{"type":"start","version":"v1"}`))
@@ -89,7 +91,9 @@ func TestSessionAbortDuringFailureCleanupPreservesWorkerError(t *testing.T) {
 	deadline, _ := ctx.Deadline()
 	_ = peer.SetDeadline(deadline)
 	finished := make(chan error, 1)
-	go func() { finished <- s.run() }()
+	go func() {
+		finished <- s.run(Config{AudioQueueMaxBytes: 64_000, AudioQueueMaxChunks: 128, ResultWriteTimeout: 2 * time.Second})
+	}()
 	writeRawClientFrame(t, peer, 1, []byte(`{"type":"start","version":"v1"}`))
 	opcode, _ := readRawServerFrame(t, peer)
 	if opcode != 8 {

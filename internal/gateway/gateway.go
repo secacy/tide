@@ -121,7 +121,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// run 返回后，外层 defer 还会继续清理连接并注销会话。
 	// 当前返回值也包含客户端断开等情况，暂不将所有错误归类为服务故障。
-	if err := s.run(); err != nil {
+	if err := s.run(g.cfg); err != nil {
 		sessionLogger.Info("session run ended", "error", err)
 	} else {
 		sessionLogger.Info("session run ended")

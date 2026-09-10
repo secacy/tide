@@ -26,9 +26,9 @@ func TestExperimentSlowWebSocketWrite(t *testing.T) {
 	if os.Getenv("TIDE_RUN_EXPERIMENTS") != "1" {
 		t.Skip("set TIDE_RUN_EXPERIMENTS=1 to run EXP-002")
 	}
-	for _, trigger := range []string{"client_close", "gateway_abort", "worker_error_ready"} {
+	for _, trigger := range []string{"client_close", "gateway_abort", "worker_error_ready", "write_timeout", "worker_error_until_timeout"} {
 		t.Run(trigger, func(t *testing.T) {
-			ctx, cancelTest := context.WithTimeout(context.Background(), 3*time.Second)
+			ctx, cancelTest := context.WithTimeout(context.Background(), 4*time.Second)
 			defer cancelTest()
 			audioReceived, terminalReady := make(chan struct{}), make(chan struct{})
 			rpcCanceled := make(chan time.Time, 1)
@@ -114,7 +114,10 @@ func TestExperimentSlowWebSocketWrite(t *testing.T) {
 			if header[0]&0xf != 1 {
 				t.Fatalf("expected a text result frame, got %v", header)
 			}
-			const window = 100 * time.Millisecond
+			window := 100 * time.Millisecond
+			if trigger == "write_timeout" || trigger == "worker_error_until_timeout" {
+				window = 3 * time.Second // 覆盖默认 2 秒写入期限，不依赖外部 Abort。
+			}
 			started := time.Now()
 			timer := time.NewTimer(window)
 			defer timer.Stop()
@@ -123,8 +126,10 @@ func TestExperimentSlowWebSocketWrite(t *testing.T) {
 				_ = peer.Close()
 			case "gateway_abort":
 				g.Abort()
-			case "worker_error_ready":
+			case "worker_error_ready", "worker_error_until_timeout":
 				close(terminalReady)
+			case "write_timeout":
+				// 保持连接、不读结果，等待配置的写入期限自行结束会话。
 			}
 			var rpcMS, handlerMS *float64
 		observe:
@@ -150,6 +155,7 @@ func TestExperimentSlowWebSocketWrite(t *testing.T) {
 				"rpc_cancel_ms":  rpcMS, "handler_done_ms": handlerMS,
 				"registered_at_observation": len(g.registry.snapshot()),
 				"recv_calls_at_observation": recvCalls.Load(),
+				"write_timeout_ms":          g.cfg.ResultWriteTimeout.Milliseconds(),
 			}
 			// 观测后的兜底动作不计入前面的 cancellation/handler 时间。
 			g.Abort()

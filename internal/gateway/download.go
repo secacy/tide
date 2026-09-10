@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/secacy/tide-artisan/internal/wsprotocol"
@@ -19,7 +20,7 @@ import (
 //	Recv() == nil -> 普通 Worker response
 //	Recv() == io.EOF -> RPC 正常完成
 //	Recv() == gRPC status error -> RPC 失败
-func (s *session) download(ctx context.Context, stream workerStream) sessionResult {
+func (s *session) download(ctx context.Context, stream workerStream, writeTimeout time.Duration) sessionResult {
 	for {
 		response, err := stream.Recv()
 
@@ -37,7 +38,15 @@ func (s *session) download(ctx context.Context, stream workerStream) sessionResu
 		}
 
 		message := toResultMessage(response)
-		if err := writeJSON(ctx, s.ws, message); err != nil {
+		// 每个结果单独计时，成功后立即释放计时器，不占用下一条结果的预算。
+		writeCtx, cancel := context.WithTimeout(ctx, writeTimeout)
+		err = writeJSON(writeCtx, s.ws, message)
+		writeCtxErr := writeCtx.Err()
+		cancel()
+		if err != nil {
+			if errors.Is(writeCtxErr, context.DeadlineExceeded) {
+				return sessionResult{kind: resultWriteTimedOut, err: fmt.Errorf("%w after %s: %w", errResultWriteTimeout, writeTimeout, err)}
+			}
 			return sessionResult{
 				kind: resultClientDisconnected,
 				err:  fmt.Errorf("write result to websocket: %w", err),
@@ -45,6 +54,9 @@ func (s *session) download(ctx context.Context, stream workerStream) sessionResu
 		}
 	}
 }
+
+// errResultWriteTimeout 表示会话因持续无法发送转录结果而失败。
+var errResultWriteTimeout = errors.New("result write timed out")
 
 // toResultMessage 将 Worker 的 gRPC 响应转换为 WebSocket 协议消息。
 func toResultMessage(response *asrv1.StreamingRecognizeResponse) wsprotocol.ResultMessage {
