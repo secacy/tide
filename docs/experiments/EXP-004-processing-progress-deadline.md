@@ -8,7 +8,7 @@ Related: [EXP-003](EXP-003-streaming-load.md), [ADR-002](../adr/ADR-002-streamin
 
 已接纳音频尚未确认处理的时间达到 3 秒时，仅限制队列等待和 Send 停滞能否及时退出？处理进度监测能否覆盖这两个局部指标之外的积压，同时容忍短暂抖动、静音和批量进度确认？音频全部处理完之后，是否仍需要独立的 End 完成期限？
 
-本轮是候选方案实验，不是新 ADR 的实施结果。生产协议、默认参数和退出语义保持不变。
+前述 commit 的部分是候选方案实验，没有修改当时的生产协议、默认参数或退出语义。后续正式实现及其对照见本文末尾「Production validation」；原始候选数据保持不变。
 
 ## Hypothesis
 
@@ -136,6 +136,45 @@ normal 三组回显延迟 P95 均为 8 ms；jitter 为 283–290 ms，短暂停�
 
 ## Follow-up
 
-在对话中确认是否采用处理进度监测与独立 End 期限，再写最终 ADR、实现生产协议和监测逻辑。保持“不静默丢弃后继续报告成功、失败尾部不保证自动补全”的约定，明确客户端能够观察的失败原因与整次会话完整性。
+方案已由 [ADR-003](../adr/ADR-003-processing-progress-deadline.md) 确认，正式实现与对照如下。保持“不静默丢弃后继续报告成功、失败尾部不保证自动补全”的约定。
 
-正式实现后重跑以上负载，并补充协议进度边界、真实 TCP 慢读和清理竞争等验证。M4 继续进行中。
+协议进度边界和以上负载已补充验证；真实 TCP 慢读及更广的清理竞争场景继续验证。M4 继续进行中。
+
+## Production validation
+
+Commit: `08a7db1bfad548bb4189a4979a1d849462a6db8a`。正式使用原生 `audio_seq` 与 `ProcessingProgress`；固定容量的时间记录表随确认释放，默认最多 4096 块。现有协调者复用一个计时器管理实际截止时刻，没有独立的生产 watchdog goroutine。
+
+沿用上文七种工作负载，各运行两次，共 14 次。对照仍用相同内存传输、流窗口、输入节奏和模拟处理耗时，关闭 race detector。变更包括原生消息编码、有限进度表和生产计时/退出逻辑，不能将原型与生产间的细小耗时差异归因于单一优化。
+
+实验 overlay 只负责观察队列、成功处理的确认及协调者选定的超时，不触发生产期限。历史原型用 10 ms watchdog；生产对照记录协调者实际选定超时的时间，并在该时刻补采未确认年龄。正常路径仍按 10 ms 采样，因此两种峰值的精度边界不同。本轮进度与队列均未触及进度表的 4096 块上限，表容量耗尽与复用由回归测试验证。
+
+| 场景 | 正式实现结果（每组两次） |
+| --- | --- |
+| normal | 全部正常完成，回显 P95 8 ms |
+| jitter | 全部正常完成，回显 P95 286–288 ms |
+| silence | 全部正常完成，无 partial，不计算出字百分位 |
+| batched_progress | 全部正常完成，未确认年龄采样峰值约 0.980 秒 |
+| slow | 启动后约 4.941 秒以 1013 / processing_timeout 退出；最早未确认等待 3000.014–3000.497 ms |
+| stalled_one | 启动后约 3.001 秒以 1013 / processing_timeout 退出 |
+| end_hang | End 后 5000.166–5000.510 ms 以 1011 / end_timeout 退出 |
+
+8 次正常完成、6 次期限退出，没有观测窗截断。全部 Gateway/Worker handler 退出且注册表归零，计数、源码摘要和时间连续性检查通过，没有排除或补跑正式样本。期限选定至清理为 0.139–0.381 ms，仅代表当前配合关闭的内存传输场景。slow 退出时仍有 150–151 块已接纳音频未获确认，失败尾部未消失。
+
+生产结果支持期限、静音和批量确认的实现与决策一致；不证明真实出字 P95 ≤ 1 秒，也不证明真实网络的清理耗时。原来关于处理确认语义、结果写入阻塞、观测开销和样本数量的限制仍适用。
+
+常规全量 race、包含实验构建的 vet，以及七场景生产对照 race 检查通过。回归测试补充：确认先于 Send 返回、重复/倒退/越界/混装/缺失确认、时间表容量及复用、迟到确认不可掩盖过期、无新输入时期限唤醒、End 不续期、并发进度与正常收尾；Mock Worker 的连续序号与无 partial 时的独立确认也有覆盖。
+
+复现（上述正式实现 commit，依赖已缓存）：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+python3 scripts/run_deadline_experiment.py --production --count 2 \
+  --output /tmp/tide-exp004-production.jsonl
+
+PYTHONDONTWRITEBYTECODE=1 python3 scripts/summarize_deadline_experiment.py \
+  /tmp/tide-exp004-production.jsonl --output /tmp/tide-exp004-production-summary.json
+```
+
+历史三策略对照须检出开头的 `2cb261b`；当前运行器要求 `--production`，避免将新生产期限混入旧候选组。
+
+数据：[14 次原始运行](results/EXP-004-production-deadlines.jsonl)、[源码与运行元数据](results/EXP-004-production-deadlines.jsonl.meta.json)、[机器可读汇总](results/EXP-004-production-summary.json)。
