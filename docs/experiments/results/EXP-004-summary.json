@@ -1,0 +1,1394 @@
+{
+  "batched_progress/baseline": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5987.148375,
+      "max": 5990.341292
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 6.060125,
+      "max": 7.925792
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 979.833333,
+      "max": 989.587292
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 1.148417,
+      "max": 2.031083
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 300,
+      "max": 300
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 8,
+      "max": 8
+    }
+  },
+  "batched_progress/local": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5987.0605,
+      "max": 5987.086583
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 5.996083,
+      "max": 6.100834
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 979.775542,
+      "max": 979.862833
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 1.368292,
+      "max": 1.61475
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 300,
+      "max": 300
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 8,
+      "max": 8
+    }
+  },
+  "batched_progress/progress": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5987.013833,
+      "max": 5988.072166
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 5.843417,
+      "max": 6.883125
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 979.529417,
+      "max": 979.859209
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.463958,
+      "max": 1.731333
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 300,
+      "max": 300
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 8,
+      "max": 8
+    }
+  },
+  "end_hang/baseline": {
+    "runs": 2,
+    "outcomes": {
+      "observation_end": 2
+    },
+    "close_codes": {
+      "1001": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 2,
+    "elapsed_ms": {
+      "min": 8001.464792,
+      "max": 8002.474209
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 7020.019,
+      "max": 7021.2515
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 0,
+      "max": 4.810083
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.101292,
+      "max": 1.294334
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 50,
+      "max": 50
+    },
+    "admitted": {
+      "min": 50,
+      "max": 50
+    },
+    "processed": {
+      "min": 50,
+      "max": 50
+    },
+    "acknowledged": {
+      "min": 50,
+      "max": 50
+    },
+    "results": {
+      "min": 50,
+      "max": 50
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 8,
+      "max": 8
+    }
+  },
+  "end_hang/local": {
+    "runs": 2,
+    "outcomes": {
+      "end_timeout": 2
+    },
+    "close_codes": {
+      "1001": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5991.380042,
+      "max": 5991.468792
+    },
+    "trigger_ms": {
+      "min": 5989.984376,
+      "max": 5989.991292
+    },
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 5009.900542,
+      "max": 5010.231875
+    },
+    "trigger_to_cleanup_ms": {
+      "min": 1.38875,
+      "max": 1.484416
+    },
+    "oldest_unacknowledged_peak_ms": {
+      "min": 0,
+      "max": 7.013125
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.149708,
+      "max": 1.105333
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 50,
+      "max": 50
+    },
+    "admitted": {
+      "min": 50,
+      "max": 50
+    },
+    "processed": {
+      "min": 50,
+      "max": 50
+    },
+    "acknowledged": {
+      "min": 50,
+      "max": 50
+    },
+    "results": {
+      "min": 50,
+      "max": 50
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 9,
+      "max": 9
+    }
+  },
+  "end_hang/progress": {
+    "runs": 2,
+    "outcomes": {
+      "end_timeout": 2
+    },
+    "close_codes": {
+      "1001": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5990.662625,
+      "max": 5991.472458
+    },
+    "trigger_ms": {
+      "min": 5989.975083,
+      "max": 5989.994251
+    },
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 5009.526791,
+      "max": 5010.376583
+    },
+    "trigger_to_cleanup_ms": {
+      "min": 0.668374,
+      "max": 1.497375
+    },
+    "oldest_unacknowledged_peak_ms": {
+      "min": 0,
+      "max": 8.906083
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.068167,
+      "max": 0.187917
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 50,
+      "max": 50
+    },
+    "admitted": {
+      "min": 50,
+      "max": 50
+    },
+    "processed": {
+      "min": 50,
+      "max": 50
+    },
+    "acknowledged": {
+      "min": 50,
+      "max": 50
+    },
+    "results": {
+      "min": 50,
+      "max": 50
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 8,
+      "max": 8
+    }
+  },
+  "jitter/baseline": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5988.38825,
+      "max": 5988.486833
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 6.968792,
+      "max": 7.146584
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 498.912292,
+      "max": 499.81875
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.134417,
+      "max": 2.063792
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 300,
+      "max": 300
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 284,
+      "max": 290
+    }
+  },
+  "jitter/local": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5988.379917,
+      "max": 5988.963833
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 7.268375,
+      "max": 7.71775
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 499.562501,
+      "max": 499.774625
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.854958,
+      "max": 1.929166
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 300,
+      "max": 300
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 284,
+      "max": 286
+    }
+  },
+  "jitter/progress": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5987.188042,
+      "max": 5989.725
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 6.06725,
+      "max": 7.441667
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 499.797542,
+      "max": 499.798
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.1795,
+      "max": 1.223875
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 300,
+      "max": 300
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 283,
+      "max": 285
+    }
+  },
+  "normal/baseline": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5988.001666,
+      "max": 5988.963209
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 6.94875,
+      "max": 7.674459
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 0,
+      "max": 6.381166
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 1.220583,
+      "max": 1.331875
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 300,
+      "max": 300
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 8,
+      "max": 8
+    }
+  },
+  "normal/local": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5988.208083,
+      "max": 5989.79375
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 6.9485,
+      "max": 7.5965
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 7.703708,
+      "max": 8.226208
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 1.283959,
+      "max": 1.623875
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 300,
+      "max": 300
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 8,
+      "max": 8
+    }
+  },
+  "normal/progress": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5986.666375,
+      "max": 5988.937959
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 6.243417,
+      "max": 7.743209
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 8.796542,
+      "max": 8.829917
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 1.044167,
+      "max": 1.744375
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 300,
+      "max": 300
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": {
+      "min": 8,
+      "max": 8
+    }
+  },
+  "silence/baseline": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5986.416958,
+      "max": 5988.968792
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 6.08275,
+      "max": 7.739459
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 2.580833,
+      "max": 7.876291
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.365791,
+      "max": 1.644125
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 0,
+      "max": 0
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": null
+  },
+  "silence/local": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5987.441375,
+      "max": 5988.428875
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 6.470042,
+      "max": 7.3325
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 5.497292,
+      "max": 8.755583
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.841875,
+      "max": 2.229625
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 0,
+      "max": 0
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": null
+  },
+  "silence/progress": {
+    "runs": 2,
+    "outcomes": {
+      "completed": 2
+    },
+    "close_codes": {
+      "1000": 2
+    },
+    "age_breach_runs": 0,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 5987.189834,
+      "max": 5988.983125
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": null,
+    "end_to_cleanup_ms": {
+      "min": 6.017917,
+      "max": 7.760334
+    },
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 0,
+      "max": 7.100916
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 2.4045,
+      "max": 2.427334
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 300,
+      "max": 300
+    },
+    "admitted": {
+      "min": 300,
+      "max": 300
+    },
+    "processed": {
+      "min": 300,
+      "max": 300
+    },
+    "acknowledged": {
+      "min": 300,
+      "max": 300
+    },
+    "results": {
+      "min": 0,
+      "max": 0
+    },
+    "unacknowledged_tail": {
+      "min": 0,
+      "max": 0
+    },
+    "result_p95_ms": null
+  },
+  "slow/baseline": {
+    "runs": 2,
+    "outcomes": {
+      "queue_full": 2
+    },
+    "close_codes": {
+      "1013": 2
+    },
+    "age_breach_runs": 2,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 9723.039625,
+      "max": 9724.041875
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": {
+      "min": 4950.002209,
+      "max": 4969.973917
+    },
+    "end_to_cleanup_ms": null,
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 5879.420458,
+      "max": 5879.865083
+    },
+    "queue_age_peak_ms": {
+      "min": 1998.882751,
+      "max": 1998.926375
+    },
+    "send_max_ms": {
+      "min": 1311.363875,
+      "max": 1313.710709
+    },
+    "queue_peak_bytes": {
+      "min": 64000,
+      "max": 64000
+    },
+    "sent": {
+      "min": 487,
+      "max": 487
+    },
+    "admitted": {
+      "min": 486,
+      "max": 486
+    },
+    "processed": {
+      "min": 192,
+      "max": 192
+    },
+    "acknowledged": {
+      "min": 192,
+      "max": 192
+    },
+    "results": {
+      "min": 192,
+      "max": 192
+    },
+    "unacknowledged_tail": {
+      "min": 294,
+      "max": 294
+    },
+    "result_p95_ms": {
+      "min": 5602,
+      "max": 5608
+    }
+  },
+  "slow/local": {
+    "runs": 2,
+    "outcomes": {
+      "queue_full": 2
+    },
+    "close_codes": {
+      "1013": 2
+    },
+    "age_breach_runs": 2,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 9720.545709,
+      "max": 9721.210625
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": {
+      "min": 4949.997667,
+      "max": 4949.998542
+    },
+    "end_to_cleanup_ms": null,
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 5879.634708,
+      "max": 5888.872041
+    },
+    "queue_age_peak_ms": {
+      "min": 1998.861583,
+      "max": 1998.948833
+    },
+    "send_max_ms": {
+      "min": 1315.362125,
+      "max": 1315.432417
+    },
+    "queue_peak_bytes": {
+      "min": 64000,
+      "max": 64000
+    },
+    "sent": {
+      "min": 487,
+      "max": 487
+    },
+    "admitted": {
+      "min": 486,
+      "max": 486
+    },
+    "processed": {
+      "min": 192,
+      "max": 192
+    },
+    "acknowledged": {
+      "min": 192,
+      "max": 192
+    },
+    "results": {
+      "min": 192,
+      "max": 192
+    },
+    "unacknowledged_tail": {
+      "min": 294,
+      "max": 294
+    },
+    "result_p95_ms": {
+      "min": 5601,
+      "max": 5621
+    }
+  },
+  "slow/progress": {
+    "runs": 2,
+    "outcomes": {
+      "unprocessed_age": 2
+    },
+    "close_codes": {
+      "1001": 2
+    },
+    "age_breach_runs": 2,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 4951.4595,
+      "max": 4971.257584
+    },
+    "trigger_ms": {
+      "min": 4949.967584,
+      "max": 4969.981959
+    },
+    "first_age_breach_ms": {
+      "min": 4949.967584,
+      "max": 4969.981959
+    },
+    "end_to_cleanup_ms": null,
+    "trigger_to_cleanup_ms": {
+      "min": 1.275625,
+      "max": 1.491916
+    },
+    "oldest_unacknowledged_peak_ms": {
+      "min": 3008.776584,
+      "max": 3008.932459
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.155542,
+      "max": 0.509542
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 248,
+      "max": 249
+    },
+    "admitted": {
+      "min": 248,
+      "max": 249
+    },
+    "processed": {
+      "min": 97,
+      "max": 98
+    },
+    "acknowledged": {
+      "min": 97,
+      "max": 98
+    },
+    "results": {
+      "min": 97,
+      "max": 98
+    },
+    "unacknowledged_tail": {
+      "min": 151,
+      "max": 151
+    },
+    "result_p95_ms": {
+      "min": 2862,
+      "max": 2883
+    }
+  },
+  "stalled_one/baseline": {
+    "runs": 2,
+    "outcomes": {
+      "observation_end": 2
+    },
+    "close_codes": {
+      "1001": 2
+    },
+    "age_breach_runs": 2,
+    "censored_runs": 2,
+    "elapsed_ms": {
+      "min": 6001.307,
+      "max": 6001.490792
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": {
+      "min": 3009.992458,
+      "max": 3010.014749
+    },
+    "end_to_cleanup_ms": null,
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 5989.483874,
+      "max": 5999.585166
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.021834,
+      "max": 0.031459
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 1,
+      "max": 1
+    },
+    "admitted": {
+      "min": 1,
+      "max": 1
+    },
+    "processed": {
+      "min": 0,
+      "max": 0
+    },
+    "acknowledged": {
+      "min": 0,
+      "max": 0
+    },
+    "results": {
+      "min": 0,
+      "max": 0
+    },
+    "unacknowledged_tail": {
+      "min": 1,
+      "max": 1
+    },
+    "result_p95_ms": null
+  },
+  "stalled_one/local": {
+    "runs": 2,
+    "outcomes": {
+      "observation_end": 2
+    },
+    "close_codes": {
+      "1001": 2
+    },
+    "age_breach_runs": 2,
+    "censored_runs": 2,
+    "elapsed_ms": {
+      "min": 6001.426583,
+      "max": 6001.668167
+    },
+    "trigger_ms": null,
+    "first_age_breach_ms": {
+      "min": 3009.997792,
+      "max": 3010.013542
+    },
+    "end_to_cleanup_ms": null,
+    "trigger_to_cleanup_ms": null,
+    "oldest_unacknowledged_peak_ms": {
+      "min": 5989.500209,
+      "max": 5989.631542
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.012917,
+      "max": 0.037416
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 1,
+      "max": 1
+    },
+    "admitted": {
+      "min": 1,
+      "max": 1
+    },
+    "processed": {
+      "min": 0,
+      "max": 0
+    },
+    "acknowledged": {
+      "min": 0,
+      "max": 0
+    },
+    "results": {
+      "min": 0,
+      "max": 0
+    },
+    "unacknowledged_tail": {
+      "min": 1,
+      "max": 1
+    },
+    "result_p95_ms": null
+  },
+  "stalled_one/progress": {
+    "runs": 2,
+    "outcomes": {
+      "unprocessed_age": 2
+    },
+    "close_codes": {
+      "1001": 2
+    },
+    "age_breach_runs": 2,
+    "censored_runs": 0,
+    "elapsed_ms": {
+      "min": 3011.438042,
+      "max": 3011.983125
+    },
+    "trigger_ms": {
+      "min": 3010.010416,
+      "max": 3010.022709
+    },
+    "first_age_breach_ms": {
+      "min": 3010.010416,
+      "max": 3010.022709
+    },
+    "end_to_cleanup_ms": null,
+    "trigger_to_cleanup_ms": {
+      "min": 1.415333,
+      "max": 1.972709
+    },
+    "oldest_unacknowledged_peak_ms": {
+      "min": 3009.560501,
+      "max": 3009.597125
+    },
+    "queue_age_peak_ms": {
+      "min": 0,
+      "max": 0
+    },
+    "send_max_ms": {
+      "min": 0.027791,
+      "max": 0.030167
+    },
+    "queue_peak_bytes": {
+      "min": 640,
+      "max": 640
+    },
+    "sent": {
+      "min": 1,
+      "max": 1
+    },
+    "admitted": {
+      "min": 1,
+      "max": 1
+    },
+    "processed": {
+      "min": 0,
+      "max": 0
+    },
+    "acknowledged": {
+      "min": 0,
+      "max": 0
+    },
+    "results": {
+      "min": 0,
+      "max": 0
+    },
+    "unacknowledged_tail": {
+      "min": 1,
+      "max": 1
+    },
+    "result_p95_ms": null
+  }
+}
