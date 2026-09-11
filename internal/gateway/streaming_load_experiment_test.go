@@ -99,6 +99,7 @@ type loadMetrics struct {
 	workerActive                                     atomic.Int64
 	workerPeak                                       atomic.Int64
 	workerFinished                                   chan struct{}
+	pool                                             *loadProcessingPool // nil 保持 EXP-003 各流独立处理；EXP-006 注入共享能力。
 }
 
 func loadQueuePush(q *audioQueue) {
@@ -201,6 +202,9 @@ func TestExperimentStreamingLoad(t *testing.T) {
 }
 
 type loadClientResult struct {
+	id             int
+	finishedMS     int64
+	reason         string
 	code           websocket.StatusCode
 	sent, received int
 	final          bool
@@ -208,9 +212,15 @@ type loadClientResult struct {
 }
 
 func runStreamingLoad(t *testing.T, cfg loadCase) {
+	runStreamingLoadWithPool(t, cfg, nil)
+}
+
+// pool 只控制实验 Worker 的共享处理能力，不改变生产 Gateway 的调度。
+func runStreamingLoadWithPool(t *testing.T, cfg loadCase, pool *loadProcessingPool) {
 	ctx, cancel := context.WithTimeout(t.Context(), cfg.duration*3+10*time.Second)
 	defer cancel()
 	m := &loadMetrics{queues: make(map[*audioQueue]*loadQueueTrace), workerFinished: make(chan struct{}, 1)}
+	m.pool = pool
 	loadObserver.Store(m)
 	t.Cleanup(func() { loadObserver.Store(nil) })
 	worker := startLoadWorker(t, cfg, m)
@@ -228,17 +238,22 @@ func runStreamingLoad(t *testing.T, cfg loadCase) {
 	var idle runtime.MemStats
 	runtime.ReadMemStats(&idle)
 	idleGoroutines := runtime.NumGoroutine()
+	cpuStart := 0.0
+	if pool != nil {
+		cpuStart = loadProcessCPUSeconds(t)
+	}
 	epoch := time.Now()
 	completed := make(chan loadClientResult, cfg.concurrency)
 	for id, conn := range connections {
 		go func() { completed <- runLoadClient(ctx, conn, id, chunks, interval, epoch, m) }()
 	}
 	type sample struct {
-		AtMS       int64  `json:"at_ms"`
-		Sessions   int    `json:"sessions"`
-		QueueBytes int    `json:"queue_bytes"`
-		Heap       uint64 `json:"heap_alloc"`
-		Goroutines int    `json:"goroutines"`
+		AtMS       int64          `json:"at_ms"`
+		Sessions   int            `json:"sessions"`
+		QueueBytes int            `json:"queue_bytes"`
+		Heap       uint64         `json:"heap_alloc"`
+		Goroutines int            `json:"goroutines"`
+		Pool       map[string]any `json:"pool,omitempty"`
 	}
 	series := make([]sample, 0, int(cfg.duration/(200*time.Millisecond))+32)
 	peakHeap, peakGoroutines := idle.HeapAlloc, idleGoroutines
@@ -250,7 +265,11 @@ func runStreamingLoad(t *testing.T, cfg loadCase) {
 		m.mu.Unlock()
 		n := runtime.NumGoroutine()
 		peakHeap, peakGoroutines = max(peakHeap, mem.HeapAlloc), max(peakGoroutines, n)
-		series = append(series, sample{time.Since(epoch).Milliseconds(), len(h.gateway.registry.snapshot()), queued, mem.HeapAlloc, n})
+		var state map[string]any
+		if pool != nil {
+			state = pool.snapshot(false, time.Since(epoch))
+		}
+		series = append(series, sample{time.Since(epoch).Milliseconds(), len(h.gateway.registry.snapshot()), queued, mem.HeapAlloc, n, state})
 	}
 	sampleNow()
 	ticker := time.NewTicker(200 * time.Millisecond)
@@ -280,6 +299,10 @@ func runStreamingLoad(t *testing.T, cfg loadCase) {
 	}
 	sampleNow()
 	elapsed := time.Since(epoch)
+	cpuSeconds := 0.0
+	if pool != nil {
+		cpuSeconds = loadProcessCPUSeconds(t) - cpuStart
+	}
 	closeCodes := make(map[string]int)
 	sent, received, succeeded := 0, 0, 0
 	var failures []string
@@ -319,6 +342,18 @@ func runStreamingLoad(t *testing.T, cfg loadCase) {
 		"goroutines_idle": idleGoroutines, "goroutines_peak_sampled": peakGoroutines, "goroutines_after_sessions": runtime.NumGoroutine(),
 		"go_version": runtime.Version(), "goos": runtime.GOOS, "goarch": runtime.GOARCH, "num_cpu": runtime.NumCPU(), "gomaxprocs": runtime.GOMAXPROCS(0),
 		"metrics": metrics, "series": series,
+	}
+	if pool != nil {
+		result["experiment"] = "EXP-006"
+		result["process_cpu_seconds"] = cpuSeconds
+		result["process_average_cpu_cores"] = cpuSeconds / elapsed.Seconds()
+		result["pool"] = pool.snapshot(true, elapsed)
+		clients := make([]map[string]any, 0, len(results))
+		for _, r := range results {
+			clients = append(clients, map[string]any{"id": r.id, "finished_ms": r.finishedMS, "code": int(r.code), "reason": r.reason, "sent": r.sent, "received": r.received})
+		}
+		result["clients"] = clients
+		pool.assertDrained(t)
 	}
 	encoded, err := json.Marshal(result)
 	if err != nil {
@@ -369,11 +404,15 @@ func runLoadClient(ctx context.Context, conn *websocket.Conn, id, chunks int, in
 		}
 		result.err = conn.Write(sendCtx, websocket.MessageText, []byte(`{"type":"end"}`))
 	}()
-	result := loadClientResult{}
+	result := loadClientResult{id: id}
 	for {
 		_, data, err := conn.Read(ctx)
 		if err != nil {
 			result.code = websocket.CloseStatus(err)
+			var closeErr websocket.CloseError
+			if errors.As(err, &closeErr) {
+				result.reason = closeErr.Reason
+			}
 			break
 		}
 		var response wsprotocol.ResultMessage
@@ -414,10 +453,11 @@ func runLoadClient(ctx context.Context, conn *websocket.Conn, id, chunks int, in
 	if result.code != websocket.StatusNormalClosure && result.code != websocket.StatusTryAgainLater {
 		result.err = fmt.Sprintf("unexpected close %d: send=%v", result.code, sent.err)
 	}
+	result.finishedMS = time.Since(epoch).Milliseconds()
 	return result
 }
 
-// loadWorker 为每个 RPC 独立模拟耗时，不模拟共享模型的 CPU/GPU 容量。
+// loadWorker 默认每个 RPC 独立模拟耗时；可注入实验用共享槽位，仍不执行真实推理。
 type loadWorker struct {
 	asrv1.UnimplementedASRServiceServer
 	cfg     loadCase
@@ -455,7 +495,12 @@ func (w *loadWorker) StreamingRecognize(stream asrv1.ASRService_StreamingRecogni
 		if w.cfg.jitter && seq%100 == 50 {
 			delay = 500 * time.Millisecond
 		}
-		if err = loadWait(stream.Context(), delay); err != nil {
+		if w.metrics.pool == nil {
+			err = loadWait(stream.Context(), delay)
+		} else {
+			err = w.metrics.pool.process(stream.Context(), delay)
+		}
+		if err != nil {
 			return err
 		}
 		if req.AudioSeq != seq+1 {
