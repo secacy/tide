@@ -1,0 +1,76 @@
+{
+  "wall_elapsed_gap_threshold_seconds": 1,
+  "selected": [
+    {
+      "file": "EXP-003-jitter-8.jsonl",
+      "samples": 3,
+      "timing_gaps": []
+    },
+    {
+      "file": "EXP-003-normal-1-rerun.jsonl",
+      "samples": 3,
+      "timing_gaps": []
+    },
+    {
+      "file": "EXP-003-normal-32.jsonl",
+      "samples": 3,
+      "timing_gaps": []
+    },
+    {
+      "file": "EXP-003-normal-8-rerun.jsonl",
+      "samples": 3,
+      "timing_gaps": []
+    },
+    {
+      "file": "EXP-003-slow-8.jsonl",
+      "samples": 3,
+      "timing_gaps": []
+    },
+    {
+      "file": "EXP-003-sustained-8-rerun.jsonl",
+      "samples": 1,
+      "timing_gaps": []
+    }
+  ],
+  "excluded": [
+    {
+      "file": "EXP-003-normal-1.jsonl",
+      "samples": 3,
+      "timing_gaps": [
+        {
+          "test": "TestExperimentStreamingLoad/normal_1",
+          "round": 2,
+          "wall_seconds": 975.433437,
+          "reported_elapsed_seconds": 7.99,
+          "gap_seconds": 967.443437
+        }
+      ]
+    },
+    {
+      "file": "EXP-003-normal-8.jsonl",
+      "samples": 3,
+      "timing_gaps": [
+        {
+          "test": "TestExperimentStreamingLoad/normal_8",
+          "round": 2,
+          "wall_seconds": 906.849206,
+          "reported_elapsed_seconds": 7.99,
+          "gap_seconds": 898.859206
+        }
+      ]
+    },
+    {
+      "file": "EXP-003-sustained-8.jsonl",
+      "samples": 1,
+      "timing_gaps": [
+        {
+          "test": "TestExperimentStreamingLoad/sustained_8",
+          "round": 1,
+          "wall_seconds": 65.33693,
+          "reported_elapsed_seconds": 60,
+          "gap_seconds": 5.336929999999995
+        }
+      ]
+    }
+  ]
+}

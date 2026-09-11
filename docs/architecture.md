@@ -58,4 +58,6 @@ Send EOF 仅表示发送停止，不能当作 RPC 成功。Send EOF 或 CloseSen
 
 [EXP-001](experiments/EXP-001-send-stall-disconnect.md) 验证了 Send 停滞时的断开退出及两种容量上限触发的过载失败。[EXP-002](experiments/EXP-002-slow-websocket-write.md) 验证了慢写期间的客户端关闭、Abort 和写入期限退出。回归测试覆盖顺序、结束协调和并发取消。
 
-这些是局部故障验证，不是生产容量 benchmark。当前仍没有 Start/建流专用期限、覆盖所有 Worker 停滞的期限、静默断网心跳发现、结果持久化或恢复协议。持续音频、多会话与真实慢读负载下的资源趋势和稳定容量尚未验证。
+[EXP-003](experiments/EXP-003-streaming-load.md) 完成了 1/8/32 会话短负载和 8 会话一分钟连续输入的初测，并验证 Worker 抖动与持续变慢时的表现。应用队列较短时，gRPC 内部仍可能积压，当前队列上限不构成端到端延迟保证。
+
+这些是局部故障与受控负载验证，不是生产容量结论。当前仍没有 Start/建流专用期限、覆盖所有 Worker 停滞的期限、静默断网心跳发现、结果持久化或恢复协议。真实慢读、临床量级会话时长及共享模型资源下的稳定容量尚未验证。

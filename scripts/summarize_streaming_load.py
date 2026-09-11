@@ -3,16 +3,39 @@
 
 import argparse
 from collections import defaultdict
+from datetime import datetime
 import json
 from pathlib import Path
 
 
-def records(path):
+def timing_gaps(events):
+    """Flag >1s disagreement between subtest wall-clock spans and reported elapsed time."""
+    started, rounds, gaps = {}, defaultdict(int), []
+    for event in events:
+        name = event.get("Test", "")
+        if "/" not in name:
+            continue
+        if event.get("Action") == "run":
+            rounds[name] += 1
+            started[name] = datetime.fromisoformat(event["Time"])
+        elif event.get("Action") == "pass" and name in started:
+            wall = (datetime.fromisoformat(event["Time"]) - started[name]).total_seconds()
+            elapsed = event["Elapsed"]
+            if abs(wall - elapsed) > 1:
+                gaps.append({"test": name, "round": rounds[name], "wall_seconds": wall,
+                             "reported_elapsed_seconds": elapsed, "gap_seconds": wall - elapsed})
+    return gaps
+
+
+def records(path, strict_timing=False):
     buffers = defaultdict(str)
     result = []
     events = [json.loads(line) for line in path.read_text().splitlines()]
     if not events or events[-1].get("Action") != "pass":
         raise ValueError(f"experiment did not pass: {path}")
+    gaps = timing_gaps(events)
+    if strict_timing and gaps:
+        raise ValueError(f"timing continuity uncertain: {path}: {gaps}")
     for event in events:
         key = event.get("Test", "")
         buffers[key] += event.get("Output", "")
@@ -29,8 +52,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("inputs", nargs="+", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--strict-timing", action="store_true", help="Reject runs with wall/elapsed gaps greater than 1s")
     args = parser.parse_args()
-    samples = [record for path in args.inputs for record in records(path)]
+    samples = [record for path in args.inputs for record in records(path, args.strict_timing)]
     grouped = defaultdict(list)
     for record in samples:
         grouped[record["case"]].append(record)
