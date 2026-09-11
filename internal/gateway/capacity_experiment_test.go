@@ -16,7 +16,11 @@ import (
 // 每条 RPC 最多持有一个等待/处理中的块；槽位按块借用，结果发送前释放。
 // channel 不承诺业务级公平性；模拟等待可取消，不创建每块 goroutine。
 type loadProcessingPool struct {
-	slots                                                   chan struct{}
+	slots chan struct{}
+	// pauseAt/pauseFor 在启动流之前配置；仅 EXP-007 模拟一次共享处理暂停。
+	pauseAt                                                 time.Time
+	pauseFor                                                time.Duration
+	pauseHits                                               int
 	mu                                                      sync.Mutex
 	waiting, active, peakWaiting, peakActive                int
 	started, processed, canceledWaiting, canceledProcessing int
@@ -55,6 +59,10 @@ func (p *loadProcessingPool) process(ctx context.Context, delay time.Duration) e
 	p.active++
 	p.peakActive = max(p.peakActive, p.active)
 	p.wait.add(held.Sub(started))
+	if now := time.Now(); !p.pauseAt.IsZero() && !now.Before(p.pauseAt) && now.Before(p.pauseAt.Add(p.pauseFor)) {
+		delay += p.pauseAt.Add(p.pauseFor).Sub(now)
+		p.pauseHits++
+	}
 	p.mu.Unlock()
 	// 即使获取槽位与取消同时就绪，也必须在工作前重新检查取消。
 	err := ctx.Err()
@@ -81,7 +89,7 @@ func (p *loadProcessingPool) snapshot(full bool, elapsed time.Duration) map[stri
 	p.mu.Lock()
 	defer p.mu.Unlock()
 	r := map[string]any{"slots": cap(p.slots), "waiting": p.waiting, "active": p.active,
-		"peak_waiting": p.peakWaiting, "peak_active": p.peakActive, "started": p.started,
+		"pause_hits": p.pauseHits, "peak_waiting": p.peakWaiting, "peak_active": p.peakActive, "started": p.started,
 		"processed": p.processed, "canceled_waiting": p.canceledWaiting, "canceled_processing": p.canceledProcessing,
 		"held_ms": float64(p.service.total) / float64(time.Millisecond)}
 	if full {

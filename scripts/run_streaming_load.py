@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run EXP-003 or EXP-006 with test-only observation; never rewrite production files."""
+"""Run EXP-003, EXP-006 or EXP-007 with test-only observation; never rewrite production files."""
 
 import argparse
 import hashlib
@@ -12,7 +12,7 @@ import tempfile
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--experiment", choices=("streaming", "capacity"), default="streaming")
+    parser.add_argument("--experiment", choices=("streaming", "capacity", "admission"), default="streaming")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--case", default=".*", help="Go subtest name regular expression")
     parser.add_argument("--count", type=int, default=1)
@@ -61,7 +61,7 @@ def main():
             env["TIDE_LOAD_DURATION_MS"] = str(args.duration_ms)
         else:
             env.pop("TIDE_LOAD_DURATION_MS", None)
-        test_name = "TestExperimentSharedCapacity" if args.experiment == "capacity" else "TestExperimentStreamingLoad"
+        test_name = {"streaming": "TestExperimentStreamingLoad", "capacity": "TestExperimentSharedCapacity", "admission": "TestExperimentAdmissionProtection"}[args.experiment]
         command = ["go", "test", "-mod=readonly", "-tags=tide_load", "-overlay", str(overlay_file),
                    "./internal/gateway", "-run", f"^{test_name}$/^{args.case}$",
                    f"-count={args.count}", "-timeout=15m", "-json"]

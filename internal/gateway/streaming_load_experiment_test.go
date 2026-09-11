@@ -96,6 +96,7 @@ type loadMetrics struct {
 	maxSessionBytes, maxSessionChunks                int
 	enqueued, dequeued, abandoned                    int
 	workerReceived                                   atomic.Int64
+	workerOpened                                     atomic.Int64 // 创建 RPC 的尝试数，用于接入拒绝验证。
 	workerActive                                     atomic.Int64
 	workerPeak                                       atomic.Int64
 	workerFinished                                   chan struct{}
@@ -554,6 +555,7 @@ type loadWorkerClient struct {
 }
 
 func (c *loadWorkerClient) StreamingRecognize(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[asrv1.StreamingRecognizeRequest, asrv1.StreamingRecognizeResponse], error) {
+	c.metrics.workerOpened.Add(1)
 	stream, err := c.ASRServiceClient.StreamingRecognize(ctx, opts...)
 	if err != nil {
 		return nil, err
