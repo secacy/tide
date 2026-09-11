@@ -1,0 +1,287 @@
+{
+  "abort": {
+    "runs": 3,
+    "session_errors": [
+      "session aborted",
+      "session aborted",
+      "session aborted"
+    ],
+    "observed_close_codes": [
+      0,
+      0,
+      0
+    ],
+    "elapsed_ms": {
+      "min": 104.953292,
+      "max": 107.862625
+    },
+    "socket_block_confirmed_ms": {
+      "min": 104.441875,
+      "max": 107.627417
+    },
+    "rpc_cancel_ms": {
+      "min": 104.554459,
+      "max": 107.729708
+    },
+    "rpc_cancel_to_cleanup_ms": {
+      "min": 0.132917,
+      "max": 0.398833
+    },
+    "worker_exit_ms": {
+      "min": 1.213709,
+      "max": 2.814375
+    },
+    "action_to_rpc_cancel_ms": {
+      "min": 0.101708,
+      "max": 0.1645
+    },
+    "socket_write_max_ms": {
+      "min": 100.437833,
+      "max": 101.31775
+    },
+    "frames_read": {
+      "min": 0,
+      "max": 0
+    },
+    "payload_bytes_read": {
+      "min": 0,
+      "max": 0
+    }
+  },
+  "client_reset": {
+    "runs": 3,
+    "session_errors": [
+      "websocket client disconnected: failed to get reader: failed to read frame header: read tcp4 127.0.0.1:62883->127.0.0.1:62884: read: connection reset by peer",
+      "websocket client disconnected: failed to get reader: failed to read frame header: read tcp4 127.0.0.1:62954->127.0.0.1:62956: read: connection reset by peer",
+      "websocket client disconnected: failed to get reader: failed to read frame header: read tcp4 127.0.0.1:63051->127.0.0.1:63052: read: connection reset by peer"
+    ],
+    "observed_close_codes": [
+      0,
+      0,
+      0
+    ],
+    "elapsed_ms": {
+      "min": 107.579458,
+      "max": 109.842584
+    },
+    "socket_block_confirmed_ms": {
+      "min": 106.940834,
+      "max": 107.987167
+    },
+    "rpc_cancel_ms": {
+      "min": 107.462917,
+      "max": 109.723959
+    },
+    "rpc_cancel_to_cleanup_ms": {
+      "min": 0.116541,
+      "max": 0.125833
+    },
+    "worker_exit_ms": {
+      "min": 1.575917,
+      "max": 2.468167
+    },
+    "action_to_rpc_cancel_ms": {
+      "min": 0.446042,
+      "max": 2.782042
+    },
+    "socket_write_max_ms": {
+      "min": 101.9085,
+      "max": 103.768958
+    },
+    "frames_read": {
+      "min": 0,
+      "max": 0
+    },
+    "payload_bytes_read": {
+      "min": 0,
+      "max": 0
+    }
+  },
+  "end_timeout": {
+    "runs": 3,
+    "session_errors": [
+      "end_timeout",
+      "end_timeout",
+      "end_timeout"
+    ],
+    "observed_close_codes": [
+      0,
+      0,
+      0
+    ],
+    "elapsed_ms": {
+      "min": 8003.348792,
+      "max": 8005.052208
+    },
+    "socket_block_confirmed_ms": {
+      "min": 105.460417,
+      "max": 108.056625
+    },
+    "rpc_cancel_ms": {
+      "min": 5000.881209,
+      "max": 5002.59875
+    },
+    "rpc_cancel_to_cleanup_ms": {
+      "min": 3002.453458,
+      "max": 3002.745958
+    },
+    "worker_exit_ms": {
+      "min": 1.477625,
+      "max": 2.697583
+    },
+    "action_to_rpc_cancel_ms": null,
+    "socket_write_max_ms": {
+      "min": 7997.716417,
+      "max": 7998.863833
+    },
+    "frames_read": {
+      "min": 0,
+      "max": 0
+    },
+    "payload_bytes_read": {
+      "min": 0,
+      "max": 0
+    }
+  },
+  "processing_timeout": {
+    "runs": 3,
+    "session_errors": [
+      "processing_timeout",
+      "processing_timeout",
+      "processing_timeout"
+    ],
+    "observed_close_codes": [
+      0,
+      0,
+      0
+    ],
+    "elapsed_ms": {
+      "min": 8002.15525,
+      "max": 8002.38025
+    },
+    "socket_block_confirmed_ms": {
+      "min": 105.2495,
+      "max": 107.4015
+    },
+    "rpc_cancel_ms": {
+      "min": 3001.377,
+      "max": 3001.81625
+    },
+    "rpc_cancel_to_cleanup_ms": {
+      "min": 5000.564,
+      "max": 5000.77825
+    },
+    "worker_exit_ms": {
+      "min": 3001.489584,
+      "max": 3001.890834
+    },
+    "action_to_rpc_cancel_ms": null,
+    "socket_write_max_ms": {
+      "min": 7995.634416,
+      "max": 7998.502125
+    },
+    "frames_read": {
+      "min": 0,
+      "max": 0
+    },
+    "payload_bytes_read": {
+      "min": 0,
+      "max": 0
+    }
+  },
+  "resume": {
+    "runs": 3,
+    "session_errors": [
+      "",
+      "",
+      ""
+    ],
+    "observed_close_codes": [
+      1000,
+      1000,
+      1000
+    ],
+    "elapsed_ms": {
+      "min": 518.787708,
+      "max": 521.651084
+    },
+    "socket_block_confirmed_ms": {
+      "min": 106.37275,
+      "max": 106.968792
+    },
+    "rpc_cancel_ms": {
+      "min": 518.783833,
+      "max": 521.403542
+    },
+    "rpc_cancel_to_cleanup_ms": {
+      "min": 0.003875,
+      "max": 0.247542
+    },
+    "worker_exit_ms": {
+      "min": 1.877667,
+      "max": 2.171167
+    },
+    "action_to_rpc_cancel_ms": {
+      "min": 12.170333,
+      "max": 13.407917
+    },
+    "socket_write_max_ms": {
+      "min": 512.588375,
+      "max": 515.308958
+    },
+    "frames_read": {
+      "min": 3,
+      "max": 3
+    },
+    "payload_bytes_read": {
+      "min": 1048707,
+      "max": 1048707
+    }
+  },
+  "write_timeout": {
+    "runs": 3,
+    "session_errors": [
+      "result write timed out after 2s: write websocket message: failed to write msg: failed to write frame: context deadline exceeded",
+      "result write timed out after 2s: write websocket message: failed to write msg: failed to write frame: context deadline exceeded",
+      "result write timed out after 2s: write websocket message: failed to write msg: failed to write frame: context deadline exceeded"
+    ],
+    "observed_close_codes": [
+      0,
+      0,
+      0
+    ],
+    "elapsed_ms": {
+      "min": 2003.21,
+      "max": 2008.487292
+    },
+    "socket_block_confirmed_ms": {
+      "min": 103.962417,
+      "max": 108.002
+    },
+    "rpc_cancel_ms": {
+      "min": 2003.010125,
+      "max": 2008.283167
+    },
+    "rpc_cancel_to_cleanup_ms": {
+      "min": 0.199875,
+      "max": 0.403
+    },
+    "worker_exit_ms": {
+      "min": 1.225625,
+      "max": 3.699125
+    },
+    "action_to_rpc_cancel_ms": null,
+    "socket_write_max_ms": {
+      "min": 1999.001125,
+      "max": 1999.815666
+    },
+    "frames_read": {
+      "min": 0,
+      "max": 0
+    },
+    "payload_bytes_read": {
+      "min": 0,
+      "max": 0
+    }
+  }
+}

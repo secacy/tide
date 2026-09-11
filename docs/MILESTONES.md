@@ -76,13 +76,16 @@ M5–M7 是后续建议路线，具体目标和验收数值在进入阶段时共
 - [x] EXP-004 对比局部期限与处理进度监测，验证短暂抖动、模拟静音、批量进度、单块停滞和 End 后无 EOF 的行为。
 - [x] ADR-003 确认处理进度监测与独立 End 期限；已实现原生 Worker 进度协议、有限记录表、协调者计时和明确的超时关闭原因。
 - [x] 正式实现重跑 EXP-004 七场景各两次，验证持续停滞、静音、批量确认和 End 后不返回 EOF；补充协议边界与并发进度测试。
-- [ ] 补充真实 TCP 慢读及更广的断开/取消竞争场景，验证期限触发后的取消和资源释放目标。
+- [x] EXP-005 补充真实 loopback TCP 慢读、恢复读取、RST、Abort，以及不同期限先触发的清理对照，共 18 次正式运行。
+- [ ] 基于 EXP-005 确认异常收尾预算及关闭通知取舍；如需改变策略，记录最终 ADR、实现并重跑清理实验。
 
 **当前证据：** 历史 EXP-003 最终采用 16 轮、179 个会话：155 个正常完成，24 个按预期过载退出，清理后登记数均为零。但慢 Worker 下，已返回结果最大延迟约 5.64 秒；**队列可容纳 2 秒音频，不等于端到端延迟上限为 2 秒**。原有队列与写入参数保持不变。
 
 EXP-004 的 42 次候选实验说明局部期限未覆盖已离开队列且 Send 已返回的音频停滞。方案确认并实现后，又完成 14 次生产对照：8 次正常完成、6 次期限退出，约 3 秒未确认等待或 5 秒 End 等待触发，全部清理后登记数归零。更早取消仍有未完成尾部，真实出字 P95 目标尚未验证。进度确认是新的必需 Worker 语义，Gateway 与 Worker 需要配套升级。
 
-**关联：** [ADR-002](adr/ADR-002-streaming-io-backpressure.md)、[ADR-003](adr/ADR-003-processing-progress-deadline.md)、[EXP-001](experiments/EXP-001-send-stall-disconnect.md)、[EXP-002](experiments/EXP-002-slow-websocket-write.md)、[EXP-003](experiments/EXP-003-streaming-load.md)、[EXP-004](experiments/EXP-004-processing-progress-deadline.md)。
+EXP-005 的默认 2 秒写入配置正常退出并释放；写入期限扩大到 8 秒时，处理/End 期限仍能在约 3/5 秒取消 RPC，但会话接近第 8 秒才注销。已有取消目标没有因此被推翻，异常资源释放仍有独立的取舍需要确认，故 M4 尚未收尾。
+
+**关联：** [ADR-002](adr/ADR-002-streaming-io-backpressure.md)、[ADR-003](adr/ADR-003-processing-progress-deadline.md)、[EXP-001](experiments/EXP-001-send-stall-disconnect.md)、[EXP-002](experiments/EXP-002-slow-websocket-write.md)、[EXP-003](experiments/EXP-003-streaming-load.md)、[EXP-004](experiments/EXP-004-processing-progress-deadline.md)、[EXP-005](experiments/EXP-005-tcp-slow-client-cleanup.md)。
 
 ## M5 — 容量评估与 Worker 调度
 
@@ -133,6 +136,6 @@ EXP-004 的 42 次候选实验说明局部期限未覆盖已离开队列且 Send
 
 当前已有结构化日志、回归测试和实验用指标采集；尚未形成在线服务的完整指标体系。随 M4–M7 的验证需求补充活跃会话、拒绝与退出原因、排队与处理延迟、资源及恢复指标，并控制采集开销。实验 hook 不等于生产监控。
 
-**下一任务仍属于 M4：** 用真实 TCP 慢读与断开/取消场景验证已实现的写入、处理进度和 End 期限之间的交互及资源释放。若暴露需要改变设计或语义的重要问题，先记录实验、讨论方案，再决定是否新增或替代 ADR。暂不开始 Worker 调度或恢复协议。
+**下一任务仍属于 M4：** 在对话中确认是否为异常收尾设置独立预算，以及预算耗尽后强制断开、可能无法送达关闭原因的取舍。确认后再写 ADR、实现和对照验证；暂不开始 Worker 调度或恢复协议。
 
 涉及重要设计或语义选择时遵循 [文档工作流](README.md)：对话讨论及必要基线实验 → 确认选择 → 最终 ADR → 实现与验证。普通实现、一般 bug 修复和本次进度整理不单独创建 ADR。

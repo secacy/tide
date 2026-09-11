@@ -59,6 +59,8 @@ EXP-001/002 已记录基线与本方案的对照结果：上行 Send 停滞时�
 
 回归测试覆盖 FIFO、容量计量、End 后排空、空输入、Send/CloseSend 错误、提前 EOF、正常 final、每条结果独立计时，以及取消与收尾；全量 race 和 vet 通过。
 
-[EXP-003](../experiments/EXP-003-streaming-load.md) 补充了持续音频、多会话、短暂抖动与持续慢 Worker 的局部负载验证。结果支持队列上界和过载退出语义，也说明应用队列上界不能约束 gRPC 缓冲及 Worker 处理带来的总延迟。真实 TCP 慢读、临床量级会话时长、共享计算资源瓶颈和默认参数选择仍需验证。
+[EXP-003](../experiments/EXP-003-streaming-load.md) 补充了持续音频、多会话、短暂抖动与持续慢 Worker 的局部负载验证。结果支持队列上界和过载退出语义，也说明应用队列上界不能约束 gRPC 缓冲及 Worker 处理带来的总延迟。
+
+[EXP-005](../experiments/EXP-005-tcp-slow-client-cleanup.md) 在 ADR-003 实现后补充真实 loopback TCP 慢读：默认 2 秒写入期限能退出，短暂停读后恢复能正常完成；扩大写入期限时，其他失败的关闭握手仍可能延迟资源释放。临床量级会话时长、共享计算资源瓶颈和默认参数选择仍需验证。
 
 实验观察窗不等同于业务 SLO，局部故障实验不作为并发容量结论。
