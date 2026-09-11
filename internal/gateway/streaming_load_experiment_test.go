@@ -458,6 +458,12 @@ func (w *loadWorker) StreamingRecognize(stream asrv1.ASRService_StreamingRecogni
 		if err = loadWait(stream.Context(), delay); err != nil {
 			return err
 		}
+		if req.AudioSeq != seq+1 {
+			return fmt.Errorf("unexpected audio sequence %d", req.AudioSeq)
+		}
+		if err = stream.Send(&asrv1.StreamingRecognizeResponse{Progress: &asrv1.ProcessingProgress{ProcessedThroughSeq: req.AudioSeq}}); err != nil {
+			return err
+		}
 		text := fmt.Sprintf("%d:%d", binary.LittleEndian.Uint64(req.Data[16:]), binary.LittleEndian.Uint64(req.Data[8:]))
 		if err = stream.Send(&asrv1.StreamingRecognizeResponse{SegmentId: strconv.FormatUint(seq, 10), Text: text}); err != nil {
 			return err

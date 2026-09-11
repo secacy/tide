@@ -61,7 +61,7 @@ func TestSessionEndDrainsBeforeHalfClose(t *testing.T) {
 	entered, release, halfClosed := make(chan struct{}), make(chan struct{}), make(chan struct{})
 	var sends atomic.Int32
 	worker := &controlledWorkerClient{open: func(ctx context.Context) (grpc.BidiStreamingClient[asrv1.StreamingRecognizeRequest, asrv1.StreamingRecognizeResponse], error) {
-		firstResult := true
+		firstResult, progressSent := true, false
 		return &controlledWorkerStream{
 			ctx: ctx,
 			send: func(req *asrv1.StreamingRecognizeRequest) error {
@@ -92,6 +92,10 @@ func TestSessionEndDrainsBeforeHalfClose(t *testing.T) {
 				case <-ctx.Done():
 					return nil, ctx.Err()
 				}
+				if !progressSent {
+					progressSent = true
+					return &asrv1.StreamingRecognizeResponse{Progress: &asrv1.ProcessingProgress{ProcessedThroughSeq: 3}}, nil
+				}
 				if firstResult {
 					firstResult = false
 					return &asrv1.StreamingRecognizeResponse{SegmentId: "1", Text: "final", IsFinal: true}, nil
@@ -101,7 +105,7 @@ func TestSessionEndDrainsBeforeHalfClose(t *testing.T) {
 		}, nil
 	}}
 	s, peer, _ := newDirectSession(t, context.Background(), worker)
-	finished := runDirectStreamingTest(t, s, Config{AudioQueueMaxBytes: 4, AudioQueueMaxChunks: 2, ResultWriteTimeout: time.Second})
+	finished := runDirectStreamingTest(t, s, Config{ProcessingTimeout: 3 * time.Second, EndTimeout: 5 * time.Second, MaxUnprocessedChunks: 4096, AudioQueueMaxBytes: 4, AudioQueueMaxChunks: 2, ResultWriteTimeout: time.Second})
 	writeRawClientFrame(t, peer, 1, []byte(`{"type":"start","version":"v1"}`))
 	writeRawClientFrame(t, peer, 2, []byte{1, 0})
 	awaitGatewaySignal(t, t.Context(), entered, "first Send entered")
@@ -186,7 +190,7 @@ func TestSessionCompletionEventOrdering(t *testing.T) {
 			}
 			ctx, cancel := context.WithTimeout(t.Context(), time.Second)
 			defer cancel()
-			got := waitSessionResult(ctx, events, closing)
+			got := waitSessionResult(ctx, events, closing, nil)
 			if got.kind != tc.want || !errors.Is(got.err, tc.err) {
 				t.Fatalf("result = %+v, want %v / %v", got, tc.want, tc.err)
 			}
@@ -202,7 +206,7 @@ func TestSessionCompletionWaitsForSender(t *testing.T) {
 	events <- sessionResult{kind: resultCompleted}
 	ctx, cancel := context.WithTimeout(t.Context(), 20*time.Millisecond)
 	defer cancel()
-	got := waitSessionResult(ctx, events, closing)
+	got := waitSessionResult(ctx, events, closing, nil)
 	if got.kind != resultServerStopping || !errors.Is(got.err, context.DeadlineExceeded) {
 		t.Fatalf("completed before Sender returned: %+v", got)
 	}
@@ -313,7 +317,7 @@ func TestSessionWriteTimeoutCancelsWorker(t *testing.T) {
 		}, nil
 	}}
 	s, peer, _ := newDirectSession(t, context.Background(), worker)
-	finished := runDirectStreamingTest(t, s, Config{AudioQueueMaxBytes: 32, AudioQueueMaxChunks: 4, ResultWriteTimeout: 50 * time.Millisecond})
+	finished := runDirectStreamingTest(t, s, Config{ProcessingTimeout: 3 * time.Second, EndTimeout: 5 * time.Second, MaxUnprocessedChunks: 4096, AudioQueueMaxBytes: 32, AudioQueueMaxChunks: 4, ResultWriteTimeout: 50 * time.Millisecond})
 	writeRawClientFrame(t, peer, 1, []byte(`{"type":"start","version":"v1"}`))
 	writeRawClientFrame(t, peer, 2, []byte{0, 0})
 	if _, err := io.ReadFull(peer, make([]byte, 2)); err != nil {

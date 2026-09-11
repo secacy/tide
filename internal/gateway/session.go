@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/secacy/tide-artisan/internal/wsprotocol"
@@ -52,6 +53,8 @@ const (
 	resultServerStopping                              // 父 Context 取消，服务正在停止。
 	resultAborted                                     // 会话收到显式强制停止请求。
 	resultOverloaded                                  // 音频积压达到上限，无法继续接纳音频。
+	resultProcessingTimedOut                          // 最早未确认处理音频超过期限。
+	resultEndTimedOut                                 // End 后超过完成期限。
 	resultWriteTimedOut                               // 单次结果写入超过等待期限。
 	resultInputSent                                   // Sender 已排空并完成 CloseSend；尚不代表 Worker 完成。
 	resultSendStopped                                 // Send EOF 或 CloseSend 失败，等待 Recv 给出 RPC 最终状态。
@@ -100,6 +103,11 @@ func (s *session) run(cfg Config) error {
 	if err != nil {
 		return err // 调用方必须提供经 Gateway.New 校验的配置。
 	}
+	progress, err := newProcessingProgress(cfg.MaxUnprocessedChunks, cfg.ProcessingTimeout, cfg.EndTimeout)
+	if err != nil {
+		return err
+	}
+	queue.progress = progress
 	if err := readStart(ctx, s.ws); err != nil {
 		if result, canceled := cancellationResult(ctx); canceled {
 			return result.err
@@ -154,12 +162,12 @@ func (s *session) run(cfg Config) error {
 	var downloaded sessionResult // 仅 download 写入，协调者在 wg.Wait 后读取。
 	go func() {
 		defer wg.Done()
-		downloaded = s.download(wsCtx, stream, cfg.ResultWriteTimeout)
+		downloaded = s.download(wsCtx, stream, cfg.ResultWriteTimeout, progress)
 		events <- downloaded
 	}()
 
 	// 第一个真正具有决定性的事件确定 Session 结果。
-	result := waitSessionResult(ctx, events, requestClosing)
+	result := waitSessionResult(ctx, events, requestClosing, progress)
 
 	// 先主动执行能够解除阻塞的 cleanup。
 	cleanupErr := s.finish(wsCtx, result, cancelRPC, cancelWS)
@@ -206,14 +214,39 @@ func readStart(ctx context.Context, conn *websocket.Conn) error {
 }
 
 // waitSessionResult 等待第一个能够决定整个 Session 的事件。
-func waitSessionResult(ctx context.Context, events <-chan sessionResult, requestClosing <-chan struct{}) sessionResult {
+func waitSessionResult(ctx context.Context, events <-chan sessionResult, requestClosing <-chan struct{}, progress *processingProgress) sessionResult {
 	inputSent, workerCompleted := false, false
 	var sendErr error
+	timer := time.NewTimer(time.Hour)
+	timer.Stop()
+	defer timer.Stop()
+	var changed <-chan struct{}
+	if progress != nil {
+		changed = progress.changed
+	}
 	for {
+		deadline, err := progress.status(time.Now())
+		if canceled, ok := cancellationResult(ctx); ok {
+			return canceled
+		}
+		if err != nil {
+			return processingFailure(err)
+		}
+		var expired <-chan time.Time
+		if !deadline.IsZero() {
+			timer.Reset(time.Until(deadline))
+			expired = timer.C
+		} else {
+			timer.Stop()
+		}
 		var result sessionResult
 		select {
 		case result = <-events:
 		case <-ctx.Done():
+		case <-changed:
+			continue
+		case <-expired:
+			continue
 		}
 		if canceled, ok := cancellationResult(ctx); ok {
 			return canceled
@@ -238,6 +271,9 @@ func waitSessionResult(ctx context.Context, events <-chan sessionResult, request
 				return sessionResult{kind: resultWorkerFailed, err: sendErr}
 			}
 			if inputSent {
+				if err := progress.complete(time.Now()); err != nil {
+					return processingFailure(err)
+				}
 				return sessionResult{kind: resultCompleted}
 			}
 		}
@@ -292,9 +328,23 @@ func (s *session) finish(
 
 		return nil
 
+	case resultProcessingTimedOut, resultEndTimedOut:
+		cancelRPC()
+		code, reason := websocket.StatusTryAgainLater, "processing_timeout"
+		if result.kind == resultEndTimedOut {
+			code, reason = websocket.StatusInternalError, "end_timeout"
+		}
+		closeErr := s.ws.Close(code, reason)
+		cancelWS()
+		return closeErr
+
 	case resultOverloaded:
 		cancelRPC() // 先解除 Sender 的 Send/pop 等待，再尝试通知客户端。
-		closeErr := s.ws.Close(websocket.StatusTryAgainLater, "audio queue full")
+		reason := "audio queue full"
+		if errors.Is(result.err, errProgressCapacity) {
+			reason = "progress_capacity"
+		}
+		closeErr := s.ws.Close(websocket.StatusTryAgainLater, reason)
 		cancelWS()
 		return closeErr
 

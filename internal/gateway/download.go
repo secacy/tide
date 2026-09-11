@@ -20,7 +20,7 @@ import (
 //	Recv() == nil -> 普通 Worker response
 //	Recv() == io.EOF -> RPC 正常完成
 //	Recv() == gRPC status error -> RPC 失败
-func (s *session) download(ctx context.Context, stream workerStream, writeTimeout time.Duration) sessionResult {
+func (s *session) download(ctx context.Context, stream workerStream, writeTimeout time.Duration, progress *processingProgress) sessionResult {
 	for {
 		response, err := stream.Recv()
 
@@ -37,6 +37,18 @@ func (s *session) download(ctx context.Context, stream workerStream, writeTimeou
 			}
 		}
 
+		if response == nil {
+			return processingFailure(fmt.Errorf("%w: nil response", errInvalidProgress))
+		}
+		if response.Progress != nil {
+			if response.SegmentId != "" || response.Text != "" || response.IsFinal {
+				return processingFailure(fmt.Errorf("%w: mixed progress and result", errInvalidProgress))
+			}
+			if err := progress.acknowledge(response.Progress.ProcessedThroughSeq, time.Now()); err != nil {
+				return processingFailure(err)
+			}
+			continue
+		}
 		message := toResultMessage(response)
 		// 每个结果单独计时，成功后立即释放计时器，不占用下一条结果的预算。
 		writeCtx, cancel := context.WithTimeout(ctx, writeTimeout)

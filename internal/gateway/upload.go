@@ -23,6 +23,9 @@ func (s *session) readAudio(ctx context.Context, queue *audioQueue) sessionResul
 		switch messageType {
 		case websocket.MessageBinary:
 			if err := queue.tryPush(data); err != nil {
+				if errors.Is(err, errProgressCapacity) || errors.Is(err, errProcessingTimeout) || errors.Is(err, errEndTimeout) {
+					return processingFailure(err)
+				}
 				if errors.Is(err, errAudioQueueFull) {
 					return sessionResult{kind: resultOverloaded, err: err}
 				}
@@ -43,6 +46,7 @@ func (s *session) readAudio(ctx context.Context, queue *audioQueue) sessionResul
 // sendAudio 独占 Send 和 CloseSend。ctx 使用 RPC 的取消范围，
 // 从而在协调者取消 RPC 后立即解除空队列等待，无需等待 WebSocket 关闭握手。
 func sendAudio(ctx context.Context, stream workerStream, queue *audioQueue, requestClosing chan<- struct{}) sessionResult {
+	var seq uint64
 	for {
 		data, err := queue.pop(ctx)
 		if errors.Is(err, io.EOF) {
@@ -55,7 +59,11 @@ func sendAudio(ctx context.Context, stream workerStream, queue *audioQueue, requ
 		if err != nil {
 			return sessionResult{kind: resultWorkerFailed, err: fmt.Errorf("wait for audio: %w", err)}
 		}
-		err = stream.Send(&asrv1.StreamingRecognizeRequest{Data: data})
+		seq++
+		if err := queue.progress.startSend(seq); err != nil {
+			return processingFailure(err)
+		}
+		err = stream.Send(&asrv1.StreamingRecognizeRequest{Data: data, AudioSeq: seq})
 		switch {
 		case err == nil:
 			continue

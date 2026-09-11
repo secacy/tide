@@ -16,8 +16,14 @@ def main():
     parser.add_argument('--scenario', default='.*')
     parser.add_argument('--policy', default='.*')
     parser.add_argument('--count', type=int, default=1)
+    parser.add_argument('--production', action='store_true', help='Measure production deadlines using native progress; historical policies require commit 2cb261b')
     parser.add_argument('--race', action='store_true')
     args = parser.parse_args()
+    if not args.production:
+        parser.error('use --production; historical policy comparison is reproducible at commit 2cb261b')
+    if args.policy not in ('.*', 'production'):
+        parser.error('current build measures only the production policy')
+    args.policy = 'production'
     if args.count < 1:
         parser.error('count must be positive')
     root = Path(__file__).resolve().parents[1]
@@ -32,7 +38,11 @@ def main():
             ('\t\t\tchunk := q.slots[q.head]\n', '\t\t\tdeadlinePop()\n\t\t\tchunk := q.slots[q.head]\n'),
             ('\t\tq.closed = true\n', '\t\tq.closed = true\n\t\tdeadlineEnd()\n'),
         ],
+        'internal/gateway/processing_progress.go': [
+            ('p.notifyLocked()\n\treturn nil\n}\n\n// end', 'p.notifyLocked()\n\tdeadlineAcknowledged(p.acknowledged)\n\treturn nil\n}\n\n// end'),
+        ],
         'internal/gateway/session.go': [
+            (') error {\n\tswitch result.kind {', ') error {\n\tdeadlineDecision(result)\n\tswitch result.kind {'),
             ('\tctx := s.ctx\n', '\tdefer deadlineWatch(s)()\n\tctx := s.ctx\n'),
         ],
     }
@@ -61,13 +71,14 @@ def main():
             command.insert(2, '-race')
         env = os.environ.copy()
         env['TIDE_RUN_EXPERIMENTS'] = '1'
+        env['TIDE_DEADLINE_PRODUCTION'] = '1'
         sources = [root / 'go.mod', root / 'go.sum', Path(__file__).resolve()]
         sources += sorted((root / 'internal').rglob('*.go')) + sorted((root / 'proto').rglob('*.go'))
         metadata = {
             'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
             'source_sha256': {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},
             'overlay_sha256': overlay_hashes, 'command': command,
-            'scenario': args.scenario, 'policy': args.policy, 'count': args.count, 'race': args.race,
+            'production': args.production, 'scenario': args.scenario, 'policy': args.policy, 'count': args.count, 'race': args.race,
             'platform': platform.platform(), 'logical_cpu_count': os.cpu_count(),
             'go_version': subprocess.check_output(['go', 'version'], text=True).strip(),
             'environment': {key: env.get(key) for key in ('GOCACHE', 'GOPROXY', 'GOSUMDB', 'GOGC', 'GOMEMLIMIT', 'GOMAXPROCS')},

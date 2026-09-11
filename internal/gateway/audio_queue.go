@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 )
 
 var (
@@ -17,7 +18,8 @@ var (
 // audioQueue 保存等待发送的音频，供一个 Reader 生产、一个 Sender 消费。
 // 必须通过 newAudioQueue 创建，使用后不能复制；不负责会话取消或网络 I/O。
 type audioQueue struct {
-	mu sync.Mutex // 保护以下队列状态；等待通知时必须释放。
+	progress *processingProgress // 启动 I/O 前绑定；可选，仅独立队列测试为 nil。
+	mu       sync.Mutex          // 保护以下队列状态；等待通知时必须释放。
 
 	slots    [][]byte // 固定槽位，只保存队列拥有的音频副本。
 	head     int      // 下一次出队的位置。
@@ -64,6 +66,9 @@ func (q *audioQueue) tryPush(data []byte) error {
 	}
 	chunk := make([]byte, len(data))
 	copy(chunk, data)
+	if err := q.progress.admit(time.Now()); err != nil {
+		return err
+	}
 	q.slots[(q.head+q.count)%len(q.slots)] = chunk
 	q.count++
 	q.bytes += len(chunk)
@@ -113,6 +118,7 @@ func (q *audioQueue) closeInput() {
 	defer q.mu.Unlock()
 	if !q.closed {
 		q.closed = true
+		q.progress.end(time.Now())
 		q.notifyLocked()
 	}
 }

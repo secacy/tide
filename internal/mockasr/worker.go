@@ -58,6 +58,7 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 	ctx := stream.Context()
 
 	var (
+		processedSeq  uint64               // 最近完成处理并发送确认的连续水位。
 		totalBytes    int                  // 本次 stream 到目前为止收到的 PCM 总字节数
 		partialIndex  int                  // 下一次应该返回哪个 partial 文本
 		nextPartialAt = w.cfg.PartialEvery // 下一次 partial 应该出现在音频时间轴的哪个位置
@@ -83,9 +84,12 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 			return status.Errorf(codes.Internal, "receive audio: %v", err)
 		}
 
+		if req.GetAudioSeq() != processedSeq+1 {
+			return status.Error(codes.InvalidArgument, "audio_seq must be consecutive from 1")
+		}
 		audioChunk := req.GetData()
 		if len(audioChunk) == 0 {
-			continue
+			return status.Error(codes.InvalidArgument, "empty audio chunk")
 		}
 		if len(audioChunk)%audio.BytesDepth != 0 {
 			return status.Errorf(codes.InvalidArgument, "invalid PCM chunk size %d: must align to %d-byte samples", len(audioChunk), audio.BytesDepth)
@@ -99,6 +103,11 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 			}
 			partialIndex++
 			nextPartialAt += w.cfg.PartialEvery
+		}
+		// 本块模拟处理完成后独立确认；没有 partial 的静音/短块也推进水位。
+		processedSeq = req.GetAudioSeq()
+		if err := stream.Send(&asrv1.StreamingRecognizeResponse{Progress: &asrv1.ProcessingProgress{ProcessedThroughSeq: processedSeq}}); err != nil {
+			return err
 		}
 	}
 }

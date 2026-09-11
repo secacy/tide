@@ -15,20 +15,20 @@ func TestGatewayStreamingConfig(t *testing.T) {
 		{
 			name: "defaults",
 			cfg:  Config{MaxSessions: 1},
-			want: Config{MaxSessions: 1, MaxMessageBytes: 1024 * 1024,
+			want: Config{ProcessingTimeout: 3 * time.Second, EndTimeout: 5 * time.Second, MaxUnprocessedChunks: 4096, MaxSessions: 1, MaxMessageBytes: 1024 * 1024,
 				AudioQueueMaxBytes: 64_000, AudioQueueMaxChunks: 128, ResultWriteTimeout: 2 * time.Second},
 		},
 		{
 			name: "explicit",
-			cfg: Config{MaxSessions: 2, MaxMessageBytes: 4096,
+			cfg: Config{ProcessingTimeout: time.Second, EndTimeout: 2 * time.Second, MaxUnprocessedChunks: 42, MaxSessions: 2, MaxMessageBytes: 4096,
 				AudioQueueMaxBytes: 8000, AudioQueueMaxChunks: 8, ResultWriteTimeout: 250 * time.Millisecond},
-			want: Config{MaxSessions: 2, MaxMessageBytes: 4096,
+			want: Config{ProcessingTimeout: time.Second, EndTimeout: 2 * time.Second, MaxUnprocessedChunks: 42, MaxSessions: 2, MaxMessageBytes: 4096,
 				AudioQueueMaxBytes: 8000, AudioQueueMaxChunks: 8, ResultWriteTimeout: 250 * time.Millisecond},
 		},
 		{
 			name: "partial override",
 			cfg:  Config{MaxSessions: 1, AudioQueueMaxChunks: 1},
-			want: Config{MaxSessions: 1, MaxMessageBytes: 1024 * 1024,
+			want: Config{ProcessingTimeout: 3 * time.Second, EndTimeout: 5 * time.Second, MaxUnprocessedChunks: 4096, MaxSessions: 1, MaxMessageBytes: 1024 * 1024,
 				AudioQueueMaxBytes: 64_000, AudioQueueMaxChunks: 1, ResultWriteTimeout: 2 * time.Second},
 		},
 	} {
@@ -53,6 +53,9 @@ func TestGatewayRejectsNegativeStreamingConfig(t *testing.T) {
 		{MaxSessions: 1, AudioQueueMaxBytes: -1},
 		{MaxSessions: 1, AudioQueueMaxChunks: -1},
 		{MaxSessions: 1, ResultWriteTimeout: -time.Nanosecond},
+		{MaxSessions: 1, ProcessingTimeout: -time.Nanosecond},
+		{MaxSessions: 1, EndTimeout: -time.Nanosecond},
+		{MaxSessions: 1, MaxUnprocessedChunks: -1},
 	} {
 		g, err := New(context.Background(), &unusedGatewayWorker{}, nil, cfg)
 		if g != nil || err == nil {

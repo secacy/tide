@@ -116,7 +116,7 @@ func TestSessionCancellationCause(t *testing.T) {
 			t.Fatalf("cancellation result = %+v, canceled=%v", result, canceled)
 		}
 		// 已经取消时 run 不得读取尚未绑定的 ws，也不得尝试建流。
-		if err := s.run(Config{AudioQueueMaxBytes: 64_000, AudioQueueMaxChunks: 128, ResultWriteTimeout: 2 * time.Second}); !errors.Is(err, wantCause) {
+		if err := s.run(Config{ProcessingTimeout: 3 * time.Second, EndTimeout: 5 * time.Second, MaxUnprocessedChunks: 4096, AudioQueueMaxBytes: 64_000, AudioQueueMaxChunks: 128, ResultWriteTimeout: 2 * time.Second}); !errors.Is(err, wantCause) {
 			t.Fatalf("run after cancellation = %v, want %v", err, wantCause)
 		}
 	}

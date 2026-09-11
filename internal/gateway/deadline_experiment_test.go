@@ -126,7 +126,7 @@ func deadlineWatch(s *session) func() {
 				if m.mode == "progress" && oldest >= 3*time.Second {
 					reason = "unprocessed_age"
 				}
-				if m.mode != "baseline" && !m.ended.IsZero() && now.Sub(m.ended) >= 5*time.Second {
+				if (m.mode == "local" || m.mode == "progress") && !m.ended.IsZero() && now.Sub(m.ended) >= 5*time.Second {
 					reason = "end_timeout"
 				}
 				if reason != "" && m.reason == "" {
@@ -149,11 +149,14 @@ func TestExperimentDeadline(t *testing.T) {
 	if os.Getenv("TIDE_RUN_EXPERIMENTS") != "1" {
 		t.Skip("explicit experiment opt-in required")
 	}
+	if os.Getenv("TIDE_DEADLINE_PRODUCTION") != "1" {
+		t.Skip("historical policies: checkout 2cb261b; current build requires --production")
+	}
 	if !deadlineOverlayEnabled {
 		t.Fatal("use scripts/run_deadline_experiment.py")
 	}
 	for _, scenario := range []string{"normal", "jitter", "slow", "silence", "batched_progress", "stalled_one", "end_hang"} {
-		for _, mode := range []string{"baseline", "local", "progress"} {
+		for _, mode := range []string{"production"} {
 			t.Run(scenario+"/"+mode, func(t *testing.T) { runDeadlineTrial(t, scenario, mode) })
 		}
 	}
@@ -332,6 +335,9 @@ func (w *deadlineWorker) StreamingRecognize(stream asrv1.ASRService_StreamingRec
 	defer close(w.m.workerDone)
 	count := 0
 	ack := func() error {
+		if w.m.mode == "production" {
+			return stream.Send(&asrv1.StreamingRecognizeResponse{Progress: &asrv1.ProcessingProgress{ProcessedThroughSeq: uint64(count)}})
+		}
 		return stream.Send(&asrv1.StreamingRecognizeResponse{SegmentId: "__exp_progress", Text: strconv.Itoa(count)})
 	}
 	for {
@@ -349,7 +355,7 @@ func (w *deadlineWorker) StreamingRecognize(stream asrv1.ASRService_StreamingRec
 		if err != nil {
 			return err
 		}
-		if len(req.Data) != 640 || int(binary.LittleEndian.Uint64(req.Data)) != count {
+		if len(req.Data) != 640 || int(binary.LittleEndian.Uint64(req.Data)) != count || req.AudioSeq != uint64(count+1) {
 			return errors.New("audio order mismatch")
 		}
 		if w.m.scenario == "stalled_one" {
@@ -444,5 +450,43 @@ func (s *deadlineStream) Recv() (*asrv1.StreamingRecognizeResponse, error) {
 		}
 		s.m.acknowledged = ack
 		s.m.mu.Unlock()
+	}
+}
+
+// deadlineAcknowledged 只在生产进度检查成功后观测确认，迟到确认不进入统计。
+func deadlineAcknowledged(seq uint64) {
+	if m := deadlineObserver.Load(); m != nil && m.mode == "production" {
+		m.mu.Lock()
+		m.acknowledged = int(seq)
+		m.mu.Unlock()
+	}
+}
+
+// deadlineDecision 记录生产协调者选定的超时，不替它触发取消。
+func deadlineDecision(result sessionResult) {
+	m := deadlineObserver.Load()
+	if m == nil || m.mode != "production" {
+		return
+	}
+	reason := ""
+	switch result.kind {
+	case resultProcessingTimedOut:
+		reason = "unprocessed_age"
+	case resultEndTimedOut:
+		reason = "end_timeout"
+	}
+	if reason == "" {
+		return
+	}
+	now := time.Now()
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.reason, m.triggered = reason, now
+	if m.acknowledged < len(m.arrivals) {
+		age := now.Sub(m.arrivals[m.acknowledged])
+		m.oldestPeak = max(m.oldestPeak, age)
+		if age >= 3*time.Second && m.breach.IsZero() {
+			m.breach = now
+		}
 	}
 }
