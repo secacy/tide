@@ -1,0 +1,530 @@
+{
+  "shared_4_20000ms": {
+    "runs": 2,
+    "concurrency": 4,
+    "input_ms": 20000,
+    "normal_complete": [
+      4,
+      4
+    ],
+    "close_codes": [
+      {
+        "1000": 4
+      },
+      {
+        "1000": 4
+      }
+    ],
+    "close_reasons": [
+      {},
+      {}
+    ],
+    "end_to_end_p95_ms": {
+      "min": 13,
+      "max": 13
+    },
+    "end_to_end_max_ms": {
+      "min": 21.831958,
+      "max": 34.988708
+    },
+    "pre_exit_processed_per_second_2_to_5s": {
+      "min": 200.06668889629876,
+      "max": 200.133422281521
+    },
+    "slot_wait_p95_ms": {
+      "min": 1,
+      "max": 1
+    },
+    "slot_hold_mean_ms": {
+      "min": 11.067909215,
+      "max": 11.108265755
+    },
+    "slot_occupancy_ratio": {
+      "min": 0.5535996986813954,
+      "max": 0.5556094514729613
+    },
+    "first_failure_ms": null,
+    "queue_wait_p95_ms": {
+      "min": 1,
+      "max": 1
+    },
+    "queue_peak_bytes_per_session": {
+      "min": 640,
+      "max": 640
+    },
+    "schedule_lateness_p99_ms": {
+      "min": 4,
+      "max": 4
+    },
+    "unreturned_sent_chunks": [
+      0,
+      0
+    ],
+    "heap_peak_bytes": {
+      "min": 8661304,
+      "max": 9108936
+    },
+    "process_average_cpu_cores": {
+      "min": 0.053045269837569964,
+      "max": 0.054194583964201966
+    },
+    "registered_after_cleanup": [
+      0,
+      0
+    ]
+  },
+  "shared_6_20000ms": {
+    "runs": 2,
+    "concurrency": 6,
+    "input_ms": 20000,
+    "normal_complete": [
+      6,
+      6
+    ],
+    "close_codes": [
+      {
+        "1000": 6
+      },
+      {
+        "1000": 6
+      }
+    ],
+    "close_reasons": [
+      {},
+      {}
+    ],
+    "end_to_end_p95_ms": {
+      "min": 22,
+      "max": 23
+    },
+    "end_to_end_max_ms": {
+      "min": 29.313166,
+      "max": 31.266125
+    },
+    "pre_exit_processed_per_second_2_to_5s": {
+      "min": 300.0,
+      "max": 300.10003334444815
+    },
+    "slot_wait_p95_ms": {
+      "min": 11,
+      "max": 11
+    },
+    "slot_hold_mean_ms": {
+      "min": 10.527425807333334,
+      "max": 10.667203434333334
+    },
+    "slot_occupancy_ratio": {
+      "min": 0.7894526027966112,
+      "max": 0.7998754249265466
+    },
+    "first_failure_ms": null,
+    "queue_wait_p95_ms": {
+      "min": 1,
+      "max": 1
+    },
+    "queue_peak_bytes_per_session": {
+      "min": 640,
+      "max": 640
+    },
+    "schedule_lateness_p99_ms": {
+      "min": 4,
+      "max": 5
+    },
+    "unreturned_sent_chunks": [
+      0,
+      0
+    ],
+    "heap_peak_bytes": {
+      "min": 9873584,
+      "max": 10085192
+    },
+    "process_average_cpu_cores": {
+      "min": 0.06369228253303268,
+      "max": 0.07797313185059745
+    },
+    "registered_after_cleanup": [
+      0,
+      0
+    ]
+  },
+  "shared_8_20000ms": {
+    "runs": 2,
+    "concurrency": 8,
+    "input_ms": 20000,
+    "normal_complete": [
+      8,
+      8
+    ],
+    "close_codes": [
+      {
+        "1000": 8
+      },
+      {
+        "1000": 8
+      }
+    ],
+    "close_reasons": [
+      {},
+      {}
+    ],
+    "end_to_end_p95_ms": {
+      "min": 1675,
+      "max": 1897
+    },
+    "end_to_end_max_ms": {
+      "min": 1790.674709,
+      "max": 2014.6605
+    },
+    "pre_exit_processed_per_second_2_to_5s": {
+      "min": 364.0,
+      "max": 365.3333333333333
+    },
+    "slot_wait_p95_ms": {
+      "min": 12,
+      "max": 13
+    },
+    "slot_hold_mean_ms": {
+      "min": 10.85240064125,
+      "max": 10.950332230874999
+    },
+    "slot_occupancy_ratio": {
+      "min": 0.9957032032812017,
+      "max": 0.9969459910530799
+    },
+    "first_failure_ms": null,
+    "queue_wait_p95_ms": {
+      "min": 1,
+      "max": 1
+    },
+    "queue_peak_bytes_per_session": {
+      "min": 640,
+      "max": 640
+    },
+    "schedule_lateness_p99_ms": {
+      "min": 3,
+      "max": 4
+    },
+    "unreturned_sent_chunks": [
+      0,
+      0
+    ],
+    "heap_peak_bytes": {
+      "min": 11774416,
+      "max": 11986216
+    },
+    "process_average_cpu_cores": {
+      "min": 0.07135121201586066,
+      "max": 0.07970457791233812
+    },
+    "registered_after_cleanup": [
+      0,
+      0
+    ]
+  },
+  "shared_12_20000ms": {
+    "runs": 2,
+    "concurrency": 12,
+    "input_ms": 20000,
+    "normal_complete": [
+      4,
+      4
+    ],
+    "close_codes": [
+      {
+        "1000": 4,
+        "1013": 8
+      },
+      {
+        "1000": 4,
+        "1013": 8
+      }
+    ],
+    "close_reasons": [
+      {
+        "processing_timeout": 8
+      },
+      {
+        "processing_timeout": 8
+      }
+    ],
+    "end_to_end_p95_ms": {
+      "min": 2784,
+      "max": 2789
+    },
+    "end_to_end_max_ms": {
+      "min": 2996.328917,
+      "max": 3000.065791
+    },
+    "pre_exit_processed_per_second_2_to_5s": {
+      "min": 365.3333333333333,
+      "max": 369.45648549516505
+    },
+    "slot_wait_p95_ms": {
+      "min": 23,
+      "max": 24
+    },
+    "slot_hold_mean_ms": {
+      "min": 10.907356720768185,
+      "max": 10.91939547453862
+    },
+    "slot_occupancy_ratio": {
+      "min": 0.7990504030923763,
+      "max": 0.8024224360228116
+    },
+    "first_failure_ms": {
+      "min": 7600,
+      "max": 7681
+    },
+    "queue_wait_p95_ms": {
+      "min": 1,
+      "max": 1
+    },
+    "queue_peak_bytes_per_session": {
+      "min": 640,
+      "max": 1280
+    },
+    "schedule_lateness_p99_ms": {
+      "min": 3,
+      "max": 4
+    },
+    "unreturned_sent_chunks": [
+      1206,
+      1206
+    ],
+    "heap_peak_bytes": {
+      "min": 14588072,
+      "max": 14787272
+    },
+    "process_average_cpu_cores": {
+      "min": 0.065566589681875,
+      "max": 0.0802912463010896
+    },
+    "registered_after_cleanup": [
+      0,
+      0
+    ]
+  },
+  "shared_16_20000ms": {
+    "runs": 2,
+    "concurrency": 16,
+    "input_ms": 20000,
+    "normal_complete": [
+      4,
+      4
+    ],
+    "close_codes": [
+      {
+        "1000": 4,
+        "1013": 12
+      },
+      {
+        "1000": 4,
+        "1013": 12
+      }
+    ],
+    "close_reasons": [
+      {
+        "processing_timeout": 12
+      },
+      {
+        "processing_timeout": 12
+      }
+    ],
+    "end_to_end_p95_ms": {
+      "min": 2755,
+      "max": 2757
+    },
+    "end_to_end_max_ms": {
+      "min": 2995.743666,
+      "max": 2995.926916
+    },
+    "pre_exit_processed_per_second_2_to_5s": {
+      "min": 359.88003998667114,
+      "max": 366.78892964321443
+    },
+    "slot_wait_p95_ms": {
+      "min": 34,
+      "max": 35
+    },
+    "slot_hold_mean_ms": {
+      "min": 10.995901165790904,
+      "max": 11.053344949918047
+    },
+    "slot_occupancy_ratio": {
+      "min": 0.7588694379751891,
+      "max": 0.7589180826372663
+    },
+    "first_failure_ms": {
+      "min": 5462,
+      "max": 5501
+    },
+    "queue_wait_p95_ms": {
+      "min": 1,
+      "max": 1
+    },
+    "queue_peak_bytes_per_session": {
+      "min": 640,
+      "max": 640
+    },
+    "schedule_lateness_p99_ms": {
+      "min": 4,
+      "max": 5
+    },
+    "unreturned_sent_chunks": [
+      1808,
+      1810
+    ],
+    "heap_peak_bytes": {
+      "min": 16982136,
+      "max": 17387424
+    },
+    "process_average_cpu_cores": {
+      "min": 0.07344188720423582,
+      "max": 0.08849296523567592
+    },
+    "registered_after_cleanup": [
+      0,
+      0
+    ]
+  },
+  "shared_6_60000ms": {
+    "runs": 1,
+    "concurrency": 6,
+    "input_ms": 60000,
+    "normal_complete": [
+      6
+    ],
+    "close_codes": [
+      {
+        "1000": 6
+      }
+    ],
+    "close_reasons": [
+      {}
+    ],
+    "end_to_end_p95_ms": {
+      "min": 22,
+      "max": 22
+    },
+    "end_to_end_max_ms": {
+      "min": 25.583,
+      "max": 25.583
+    },
+    "pre_exit_processed_per_second_2_to_5s": {
+      "min": 300.10003334444815,
+      "max": 300.10003334444815
+    },
+    "slot_wait_p95_ms": {
+      "min": 11,
+      "max": 11
+    },
+    "slot_hold_mean_ms": {
+      "min": 10.442355662222223,
+      "max": 10.442355662222223
+    },
+    "slot_occupancy_ratio": {
+      "min": 0.7831512722806313,
+      "max": 0.7831512722806313
+    },
+    "first_failure_ms": null,
+    "queue_wait_p95_ms": {
+      "min": 1,
+      "max": 1
+    },
+    "queue_peak_bytes_per_session": {
+      "min": 640,
+      "max": 640
+    },
+    "schedule_lateness_p99_ms": {
+      "min": 3,
+      "max": 3
+    },
+    "unreturned_sent_chunks": [
+      0
+    ],
+    "heap_peak_bytes": {
+      "min": 10074352,
+      "max": 10074352
+    },
+    "process_average_cpu_cores": {
+      "min": 0.08302875686955549,
+      "max": 0.08302875686955549
+    },
+    "registered_after_cleanup": [
+      0
+    ]
+  },
+  "shared_8_60000ms": {
+    "runs": 1,
+    "concurrency": 8,
+    "input_ms": 60000,
+    "normal_complete": [
+      5
+    ],
+    "close_codes": [
+      {
+        "1000": 5,
+        "1013": 3
+      }
+    ],
+    "close_reasons": [
+      {
+        "processing_timeout": 3
+      }
+    ],
+    "end_to_end_p95_ms": {
+      "min": 2818,
+      "max": 2818
+    },
+    "end_to_end_max_ms": {
+      "min": 3000.722958,
+      "max": 3000.722958
+    },
+    "pre_exit_processed_per_second_2_to_5s": {
+      "min": 370.6666666666667,
+      "max": 370.6666666666667
+    },
+    "slot_wait_p95_ms": {
+      "min": 12,
+      "max": 12
+    },
+    "slot_hold_mean_ms": {
+      "min": 10.725453775418181,
+      "max": 10.725453775418181
+    },
+    "slot_occupancy_ratio": {
+      "min": 0.9216756626932862,
+      "max": 0.9216756626932862
+    },
+    "first_failure_ms": {
+      "min": 40480,
+      "max": 40480
+    },
+    "queue_wait_p95_ms": {
+      "min": 1,
+      "max": 1
+    },
+    "queue_peak_bytes_per_session": {
+      "min": 640,
+      "max": 640
+    },
+    "schedule_lateness_p99_ms": {
+      "min": 3,
+      "max": 3
+    },
+    "unreturned_sent_chunks": [
+      452
+    ],
+    "heap_peak_bytes": {
+      "min": 12911672,
+      "max": 12911672
+    },
+    "process_average_cpu_cores": {
+      "min": 0.09397209698993113,
+      "max": 0.09397209698993113
+    },
+    "registered_after_cleanup": [
+      0
+    ]
+  }
+}

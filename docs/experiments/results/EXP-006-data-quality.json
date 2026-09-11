@@ -1,0 +1,35 @@
+{
+  "EXP-006-shared-capacity.jsonl": {
+    "sha256": "26a9e69902c93d206bdea743d7a3747bb605e78f0fc065e9074e81ceaa08bd63",
+    "commit": "35d774d6eee7dabca5f2967b8e2b8dbad70d908c",
+    "cases": {
+      "shared_4": 2,
+      "shared_6": 2,
+      "shared_8": 2,
+      "shared_12": 2,
+      "shared_16": 2
+    },
+    "source_files_verified": 39,
+    "overlay_files_verified": 2,
+    "timing_gaps": [],
+    "accounting_and_cleanup_passed": true,
+    "sessions": 92,
+    "completed_sessions": 52,
+    "failed_sessions": 40
+  },
+  "EXP-006-shared-capacity-sustained.jsonl": {
+    "sha256": "870a235b7de4050ad3edc02a8fca236231cc65efb687eabce32f0a3d71ef02c4",
+    "commit": "35d774d6eee7dabca5f2967b8e2b8dbad70d908c",
+    "cases": {
+      "shared_6": 1,
+      "shared_8": 1
+    },
+    "source_files_verified": 39,
+    "overlay_files_verified": 2,
+    "timing_gaps": [],
+    "accounting_and_cleanup_passed": true,
+    "sessions": 14,
+    "completed_sessions": 11,
+    "failed_sessions": 3
+  }
+}
