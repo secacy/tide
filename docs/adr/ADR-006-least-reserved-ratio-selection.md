@@ -48,4 +48,4 @@ Related: [ADR-005](ADR-005-worker-reservation-lifecycle.md), [EXP-008](../experi
 
 [Pool 测试](../../internal/gateway/worker_pool_test.go) 与[接入测试](../../internal/gateway/worker_admission_test.go) 覆盖分配、并发容量、释放、停止接入和固定路由；相关 race 检查及 vet 已在实现阶段通过。本次确认推荐并记录决策，不改变算法执行路径。
 
-实验配额 2/6 尚未标定为安全容量。六秒 Mock 回显、逻辑重放和微基准支持本次策略选择，不能证明长期稳定容量、真实 ASR 延迟或生产就绪；持续负载及容量余量仍属于 M5 后续验证。
+实验配额 2/6 尚未标定为安全容量。六秒 Mock 回显、逻辑重放和微基准支持本次策略选择，不能证明长期稳定容量、真实 ASR 延迟或生产就绪；后续持续负载与容量余量由 [EXP-009](../experiments/EXP-009-multi-worker-capacity.md) 验证，对应配额取舍见 [ADR-007](ADR-007-experimental-capacity-margin.md)。

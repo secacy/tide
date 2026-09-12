@@ -2,7 +2,7 @@
 
 Updated: 2026-09-12
 Source: e92c1288afad46f0f6da05b3375d851a80a94709
-Related: [ADR-002](adr/ADR-002-streaming-io-backpressure.md), [ADR-003](adr/ADR-003-processing-progress-deadline.md), [ADR-004](adr/ADR-004-admission-protection.md), [ADR-005](adr/ADR-005-worker-reservation-lifecycle.md), [ADR-006](adr/ADR-006-least-reserved-ratio-selection.md)
+Related: [ADR-002](adr/ADR-002-streaming-io-backpressure.md), [ADR-003](adr/ADR-003-processing-progress-deadline.md), [ADR-004](adr/ADR-004-admission-protection.md), [ADR-005](adr/ADR-005-worker-reservation-lifecycle.md), [ADR-006](adr/ADR-006-least-reserved-ratio-selection.md), [ADR-007](adr/ADR-007-experimental-capacity-margin.md)
 
 ## 系统边界
 
@@ -102,6 +102,6 @@ Send EOF 仅表示发送停止，不能当作 RPC 成功。Send EOF 或 CloseSen
 
 [EXP-008](experiments/EXP-008-worker-selection.md) 验证固定 Worker 预留和两种候选分配的行为：异构组中最小预留比例改善本轮短负载回显延迟，同容量组表现接近；32 个流式会话全部正常完成并归还名额。逻辑重放、短回显和微基准不代表长期或真实模型容量，[ADR-006](adr/ADR-006-least-reserved-ratio-selection.md) 据此确认当前推荐最小预留比例策略。
 
-[EXP-009](experiments/EXP-009-multi-worker-capacity.md) 延长多 Worker 容量验证：配额 1/3 在本机 Mock 下完成四会话五分钟正常输入，并在两轮周期暂停中确认十次恢复；1/4 正常负载达标但有三次暂停恢复未确认，1/5 出现处理超时。持续降速时 B 仍失败，A 在本实验中正常完成。全部名额与活动流最终清理；这些事实形成实验容量建议，不改变当前生产默认配置，也不代表最大稳定容量。
+[EXP-009](experiments/EXP-009-multi-worker-capacity.md) 延长多 Worker 容量验证：配额 1/3 在本机 Mock 下完成四会话五分钟正常输入，并在两轮周期暂停中确认十次恢复；1/4 正常负载达标但有三次暂停恢复未确认，1/5 出现处理超时。持续降速时 B 仍失败，A 在本实验中正常完成。全部名额与活动流最终清理；[ADR-007](adr/ADR-007-experimental-capacity-margin.md) 据此确认 1/3 为上述模拟条件下的保守实验配额，1/4 保留为正常负载下的较高利用率候选。该决策不改变应用启动默认值，也不代表最大稳定容量。M5 按此实验与基础范围收尾，恢复协议尚待 M6 设计。
 
 当前仍没有 Start/建流专用期限、静默断网心跳发现、结果持久化或恢复协议。无未确认音频且未 End 的连接不会仅因无文字输出而超时。WAN/TLS 慢读、临床量级会话时长及共享模型资源下的稳定容量尚未验证；正常转录可见延迟 P95 目标 1 秒仍需真实模型验证。

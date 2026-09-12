@@ -44,6 +44,8 @@ TIDE_GATEWAY_CONFIG=./gateway.json go run ./cmd/gateway
 
 显式停止某 Worker 新预留使用应用内 `pool.StopAccepting(workerID)`；没有新增管理 HTTP 接口，也不自动检测健康。配置成功及 `/healthz` 不代表后端可达。应用创建的 gRPC 连接在关闭编排结束后关闭。
 
+[ADR-007](adr/ADR-007-experimental-capacity-margin.md) 确认的 1/3 配额仅适用于 EXP-009 指定的共享槽位、12 ms 模拟处理和输入负载。复现该容量验证应使用 [EXP-009 的实验命令](experiments/EXP-009-multi-worker-capacity.md)，不能把上述启动示例当作同一工作负载。
+
 命令行 Mock 仍按各 RPC 独立模拟处理；共享处理槽位由实验 Worker 提供，不能用这里的两个 Mock 进程直接证明模型容量。复现实验参见 [EXP-008](experiments/EXP-008-worker-selection.md)。
 
 ## protoc代码生成
