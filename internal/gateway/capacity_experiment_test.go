@@ -17,7 +17,10 @@ import (
 // channel 不承诺业务级公平性；模拟等待可取消，不创建每块 goroutine。
 type loadProcessingPool struct {
 	slots chan struct{}
-	// pauseAt/pauseFor 在启动流之前配置；仅 EXP-007 模拟一次共享处理暂停。
+	// 故障时序在启动流前固定：EXP-007 单次暂停，EXP-009 周期暂停或持续降速。
+	pauseEvery                                              time.Duration // 零值表示单次暂停。
+	slowAt                                                  time.Time
+	slowDelay                                               time.Duration
 	pauseAt                                                 time.Time
 	pauseFor                                                time.Duration
 	pauseHits                                               int
@@ -59,8 +62,9 @@ func (p *loadProcessingPool) process(ctx context.Context, delay time.Duration) e
 	p.active++
 	p.peakActive = max(p.peakActive, p.active)
 	p.wait.add(held.Sub(started))
-	if now := time.Now(); !p.pauseAt.IsZero() && !now.Before(p.pauseAt) && now.Before(p.pauseAt.Add(p.pauseFor)) {
-		delay += p.pauseAt.Add(p.pauseFor).Sub(now)
+	var paused bool
+	delay, paused = p.processingDelay(time.Now(), delay)
+	if paused {
 		p.pauseHits++
 	}
 	p.mu.Unlock()
@@ -81,6 +85,57 @@ func (p *loadProcessingPool) process(ctx context.Context, delay time.Duration) e
 	<-p.slots
 	p.mu.Unlock()
 	return err
+}
+
+// processingDelay 是固定故障时序的纯计算；暂停只影响窗口内取得槽位的块，
+// 已经处理的块不会被追溯暂停。实际等待仍由 process 的可取消计时器完成。
+func (p *loadProcessingPool) processingDelay(now time.Time, base time.Duration) (time.Duration, bool) {
+	if !p.slowAt.IsZero() && !now.Before(p.slowAt) {
+		base = p.slowDelay
+	}
+	if p.pauseAt.IsZero() || now.Before(p.pauseAt) {
+		return base, false
+	}
+	offset := now.Sub(p.pauseAt)
+	if p.pauseEvery > 0 {
+		offset %= p.pauseEvery
+	}
+	if offset >= p.pauseFor {
+		return base, false
+	}
+	return base + p.pauseFor - offset, true
+}
+
+// 验证窗口边缘、第二轮暂停和降速的持久性，防止错误注入制造假容量结论。
+func TestLoadProcessingFaultSchedule(t *testing.T) {
+	epoch := time.Unix(1000, 0)
+	p := newLoadProcessingPool(1)
+	p.pauseAt = epoch.Add(10 * time.Second)
+	p.pauseEvery = 10 * time.Second
+	p.pauseFor = 500 * time.Millisecond
+	for _, tc := range []struct {
+		at, want time.Duration
+		paused   bool
+	}{
+		{9 * time.Second, 12 * time.Millisecond, false}, {10 * time.Second, 512 * time.Millisecond, true},
+		{10500 * time.Millisecond, 12 * time.Millisecond, false}, {20200 * time.Millisecond, 312 * time.Millisecond, true},
+	} {
+		got, paused := p.processingDelay(epoch.Add(tc.at), 12*time.Millisecond)
+		if got != tc.want || paused != tc.paused {
+			t.Fatalf("at %v: %v %v", tc.at, got, paused)
+		}
+	}
+	p.pauseEvery = 0
+	if got, paused := p.processingDelay(epoch.Add(20*time.Second), 12*time.Millisecond); got != 12*time.Millisecond || paused {
+		t.Fatal("single pause repeated")
+	}
+	p.slowAt = epoch.Add(20 * time.Second)
+	p.slowDelay = 24 * time.Millisecond
+	for _, at := range []time.Duration{20 * time.Second, 100 * time.Second} {
+		if got, _ := p.processingDelay(epoch.Add(at), 12*time.Millisecond); got != 24*time.Millisecond {
+			t.Fatal("slowdown did not persist")
+		}
+	}
 }
 
 // snapshot 的吞吐和占用率使用整个会话窗口；series 保留累积量供分窗分析。

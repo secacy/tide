@@ -89,6 +89,9 @@ func (h *loadHistogram) summary() map[string]any {
 }
 
 type loadMetrics struct {
+	// EXP-009 客户端观测：成功写入计数与结果回调；回调在 mu 内执行，不反向取锁。
+	clientSent                                       atomic.Int64
+	onResult                                         func(time.Duration)
 	mu                                               sync.Mutex
 	queues                                           map[*audioQueue]*loadQueueTrace
 	wait, send, latency, lateness                    loadHistogram
@@ -402,6 +405,7 @@ func runLoadClient(ctx context.Context, conn *websocket.Conn, id, chunks int, in
 				return
 			}
 			result.sent++
+			m.clientSent.Add(1)
 		}
 		result.err = conn.Write(sendCtx, websocket.MessageText, []byte(`{"type":"end"}`))
 	}()
@@ -441,7 +445,11 @@ func runLoadClient(ctx context.Context, conn *websocket.Conn, id, chunks int, in
 			break
 		}
 		m.mu.Lock()
-		m.latency.add(time.Since(epoch) - time.Duration(stamp))
+		latency := time.Since(epoch) - time.Duration(stamp)
+		m.latency.add(latency)
+		if m.onResult != nil {
+			m.onResult(latency)
+		}
 		m.mu.Unlock()
 		result.received++
 	}

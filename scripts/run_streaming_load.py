@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run EXP-003, EXP-006, EXP-007 or EXP-008 with test-only observation; never rewrite production files."""
+"""Run EXP-003 and EXP-006 through EXP-009 with test-only observation; never rewrite production files."""
 
 import argparse
 import hashlib
@@ -14,15 +14,18 @@ import time
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--experiment", choices=("streaming", "capacity", "admission", "selection"), default="streaming")
+    parser.add_argument("--experiment", choices=("streaming", "capacity", "admission", "selection", "multi"), default="streaming")
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--case", default=".*", help="Go subtest name regular expression")
     parser.add_argument("--count", type=int, default=1)
     parser.add_argument("--duration-ms", type=int, help="Override input duration for smoke checks")
+    parser.add_argument("--worker-b-capacity", type=int, choices=range(1, 6), help="EXP-009 candidate B quota for fault cases")
     parser.add_argument("--race", action="store_true", help="Correctness check; do not use for samples")
     args = parser.parse_args()
     if args.count < 1 or (args.duration_ms is not None and args.duration_ms < 1):
         parser.error("count and duration must be positive")
+    if args.worker_b_capacity is not None and args.experiment != "multi":
+        parser.error("worker-b-capacity is only valid for multi")
     root = Path(__file__).resolve().parents[1]
     output = args.output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -63,7 +66,10 @@ def main():
             env["TIDE_LOAD_DURATION_MS"] = str(args.duration_ms)
         else:
             env.pop("TIDE_LOAD_DURATION_MS", None)
-        test_name = {"streaming": "TestExperimentStreamingLoad", "capacity": "TestExperimentSharedCapacity", "admission": "TestExperimentAdmissionProtection", "selection": "TestExperimentWorkerSelection"}[args.experiment]
+        env.pop("TIDE_MULTI_CAPACITY_B", None)
+        if args.worker_b_capacity is not None:
+            env["TIDE_MULTI_CAPACITY_B"] = str(args.worker_b_capacity)
+        test_name = {"streaming": "TestExperimentStreamingLoad", "capacity": "TestExperimentSharedCapacity", "admission": "TestExperimentAdmissionProtection", "selection": "TestExperimentWorkerSelection", "multi": "TestExperimentMultiCapacity"}[args.experiment]
         command = ["go", "test", "-mod=readonly", "-tags=tide_load", "-overlay", str(overlay_file),
                    "./internal/gateway", "-run", f"^{test_name}$/^{args.case}$",
                    f"-count={args.count}", "-timeout=15m", "-json"]
@@ -81,7 +87,7 @@ def main():
             "go_version": subprocess.check_output(["go", "version"], cwd=root, env=env, text=True).strip(),
             "platform": platform.platform(), "logical_cpus": os.cpu_count(),
             "experiment": args.experiment, "case": args.case, "count": args.count, "duration_override_ms": args.duration_ms,
-            "race": args.race, "command": command,
+            "race": args.race, "command": command, "worker_b_capacity": args.worker_b_capacity,
             "environment": {key: env.get(key) for key in ("GOCACHE", "GOPROXY", "GOSUMDB", "GOGC", "GOMEMLIMIT", "GOMAXPROCS")},
         }
         meta_path.write_text(json.dumps(metadata, indent=2) + "\n")
