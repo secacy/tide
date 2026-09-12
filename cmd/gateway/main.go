@@ -13,9 +13,6 @@ import (
 	"time"
 
 	"github.com/secacy/tide-artisan/internal/gateway"
-	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -46,13 +43,17 @@ func main() {
 // run 组装应用依赖；stopCtx 只触发关闭，logger 必须非 nil。
 // serve 完成关闭编排后，才释放会话 Context 和共享 gRPC 连接。
 func run(stopCtx context.Context, logger *slog.Logger) error {
-	grpcConn, err := grpc.NewClient(workerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	settings, err := readWorkerSettings(os.Getenv("TIDE_GATEWAY_CONFIG"))
 	if err != nil {
-		return fmt.Errorf("create worker grpc client: %w", err)
+		return fmt.Errorf("read Worker configuration: %w", err)
 	}
-	defer grpcConn.Close()
+	pool, closeWorkers, err := openWorkerPool(settings)
+	if err != nil {
+		return fmt.Errorf("create Worker pool: %w", err)
+	}
+	defer closeWorkers()
+	logger.Info("worker pool configured", "policy", settings.Policy, "workers", pool.Snapshot(), "max_sessions", settings.MaxSessions)
 
-	workerClient := asrv1.NewASRServiceClient(grpcConn)
 	// 组件字段在依赖组装时绑定，会话字段由 Gateway 在接入时绑定。
 	gatewayLogger := logger.With("component", "gateway")
 	httpLogger := logger.With("component", "http")
@@ -61,9 +62,9 @@ func run(stopCtx context.Context, logger *slog.Logger) error {
 	sessionCtx, cancelSessions := context.WithCancel(context.Background())
 	defer cancelSessions()
 
-	wsGateway, err := gateway.New(sessionCtx, workerClient, gatewayLogger, gateway.Config{
+	wsGateway, err := gateway.NewWithPool(sessionCtx, pool, gatewayLogger, gateway.Config{
 		MaxMessageBytes: 1024 * 1024,
-		MaxSessions:     100,
+		MaxSessions:     settings.MaxSessions,
 	})
 	if err != nil {
 		return fmt.Errorf("create gateway: %w", err)

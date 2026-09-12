@@ -19,7 +19,11 @@ func main() {
 }
 
 func run() error {
-	const address = ":50051"
+	// 允许本地启动多个独立进程；这不改变 Mock 的处理能力模型。
+	address := os.Getenv("TIDE_MOCK_ASR_ADDR")
+	if address == "" {
+		address = ":50051"
+	}
 
 	listener, err := net.Listen("tcp", address)
 	if err != nil {

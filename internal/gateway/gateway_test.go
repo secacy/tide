@@ -456,11 +456,25 @@ func newGatewayHarness(t *testing.T, worker asrv1.ASRServiceClient, capacity int
 
 func newGatewayHarnessWithConfig(t *testing.T, worker asrv1.ASRServiceClient, cfg Config) *gatewayHarness {
 	t.Helper()
+	return newGatewayHarnessFactory(t, func(ctx context.Context, logger *slog.Logger) (*Gateway, error) {
+		return New(ctx, worker, logger, cfg)
+	})
+}
+
+func newGatewayHarnessWithPool(t *testing.T, pool *WorkerPool, cfg Config) *gatewayHarness {
+	t.Helper()
+	return newGatewayHarnessFactory(t, func(ctx context.Context, logger *slog.Logger) (*Gateway, error) {
+		return NewWithPool(ctx, pool, logger, cfg)
+	})
+}
+
+func newGatewayHarnessFactory(t *testing.T, build func(context.Context, *slog.Logger) (*Gateway, error)) *gatewayHarness {
+	t.Helper()
 	appCtx, cancelApp := context.WithCancel(context.Background())
 	t.Cleanup(cancelApp)
 	// 生命周期测试显式注入静默日志器，避免依赖全局日志配置。
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	g, err := New(appCtx, worker, logger, cfg)
+	g, err := build(appCtx, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -492,6 +506,11 @@ func newGatewayHarnessWithConfig(t *testing.T, worker asrv1.ASRServiceClient, cf
 		awaitGatewaySignal(t, cleanupCtx, serverDone, "HTTP server exited")
 		if err := g.Wait(cleanupCtx); err != nil {
 			t.Errorf("Gateway cleanup left registered sessions: %v", err)
+		}
+		for _, worker := range g.pool.Snapshot() {
+			if worker.Reserved != 0 {
+				t.Errorf("Worker reservation leaked: %+v", worker)
+			}
 		}
 	})
 	return h

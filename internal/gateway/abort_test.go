@@ -156,6 +156,9 @@ func TestGatewayAbortWaitsForIOExitBeforeUnregister(t *testing.T) {
 		t.Fatal("session removed before I/O exited")
 	}
 	assertRegistryNotDrained(t, h.gateway.registry)
+	if got := h.gateway.pool.Snapshot()[0].Reserved; got != 1 {
+		t.Fatalf("Worker reservation released before I/O exit: %d", got)
+	}
 	releaseOnce.Do(func() { close(release) })
 	assertGatewayAborted(t, h, s)
 }

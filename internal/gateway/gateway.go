@@ -29,24 +29,38 @@ type Config struct {
 // Gateway 把 WebSocket 音频流桥接到 gRPC Worker。
 type Gateway struct {
 	ctx      context.Context
-	worker   asrv1.ASRServiceClient
+	pool     *WorkerPool
 	cfg      Config
 	registry *sessionRegistry // 保存本 Gateway 已接纳、尚未完成清理的会话。每个请求通过 register 和 unregister 获取、归还名额。
 	logger   *slog.Logger     // 基础日志器；请求通过 With 派生会话日志器，不修改此字段。
 }
 
-// New 创建一个 Gateway，并初始化会话注册表.
+// New 是单 Worker 兼容入口，为它配置与 MaxSessions 相同的配额。
 //
 // ctx 应该是应用级生命周期 Context。
 // 服务关闭时取消 ctx，可以同时结束所有正在运行的 WebSocket session。
 // logger 为 nil 时使用 slog.Default。cfg.MaxSessions 必须大于零。
 // 音频队列容量和结果写入期限为零时使用实验初值，负数视为配置错误。
 func New(ctx context.Context, worker asrv1.ASRServiceClient, logger *slog.Logger, cfg Config) (*Gateway, error) {
+	if cfg.MaxSessions <= 0 {
+		return nil, errInvalidMaxSessions
+	}
+	pool, err := NewWorkerPool([]WorkerConfig{{ID: "default", Client: worker, Capacity: cfg.MaxSessions}}, RoundRobin)
+	if err != nil {
+		return nil, err
+	}
+	return NewWithPool(ctx, pool, logger, cfg)
+}
+
+// NewWithPool 为单 Gateway 绑定固定 Worker 池，保留独立的 Gateway 会话上限。
+// 每个 Gateway 使用自己的本地账本；多个 Gateway 对同一后端的配额不会自动协调。
+// 共享客户端由应用组装层管理，应在 Gateway 排空之后关闭。
+func NewWithPool(ctx context.Context, pool *WorkerPool, logger *slog.Logger, cfg Config) (*Gateway, error) {
 	if ctx == nil {
 		return nil, fmt.Errorf("gateway context is nil")
 	}
-	if worker == nil {
-		return nil, fmt.Errorf("audio worker client is nil")
+	if pool == nil || len(pool.workers) == 0 {
+		return nil, fmt.Errorf("worker pool is not initialized")
 	}
 	if cfg.MaxMessageBytes <= 0 {
 		cfg.MaxMessageBytes = 1024 * 1024 // 1 MiB
@@ -82,7 +96,7 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, logger *slog.Logger
 	}
 	return &Gateway{
 		ctx:      ctx,
-		worker:   worker,
+		pool:     pool,
 		cfg:      cfg,
 		registry: registry,
 		logger:   logger,
@@ -99,7 +113,7 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, logger *slog.Logger
 // Session 返回后，先完成连接兜底清理，再注销并释放名额。
 func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	sessionID := rand.Text()
-	s := newSession(g.ctx, sessionID, g.worker)
+	s := newSession(g.ctx, sessionID, nil)
 	// 使用局部日志器关联当前接入过程，避免并发请求串用会话字段。
 	sessionLogger := g.logger.With("session_id", s.id)
 	if err := g.registry.register(s); err != nil {
@@ -112,11 +126,31 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeRegisterError(w, err)
 		return
 	}
+	var lease *WorkerLease
 	defer func() {
-		// 后登记的连接清理 defer 先执行，再释放 Context 和会话名额。
+		// 后登记的连接清理 defer 先执行；Worker 预留必须先于 Session 注销归还。
 		s.cancel(nil)
+		lease.Release()
 		g.registry.unregister(s)
 	}()
+
+	if s.ctx.Err() != nil {
+		http.Error(w, "gateway stopping", http.StatusServiceUnavailable)
+		return
+	}
+	var err error
+	lease, err = g.pool.TryAcquire()
+	if err != nil {
+		sessionLogger.Info("worker admission rejected", "error", err)
+		http.Error(w, "worker capacity unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	s.worker = lease.Client() // run 前只绑定一次；Abort 不读写 worker 字段。
+	sessionLogger = sessionLogger.With("worker_id", lease.WorkerID())
+	if s.ctx.Err() != nil {
+		http.Error(w, "gateway stopping", http.StatusServiceUnavailable)
+		return
+	}
 
 	conn, err := websocket.Accept(wrapSessionResponseWriter(w, s), r, nil)
 	if err != nil {
