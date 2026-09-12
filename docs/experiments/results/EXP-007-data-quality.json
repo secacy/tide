@@ -1,0 +1,77 @@
+{
+  "rule": "Exclude each subtest whose wall-clock span and reported elapsed differ by more than 1 second; include all remaining samples, without filtering by performance.",
+  "files": {
+    "EXP-007-admission-protection.jsonl": {
+      "sha256": "3f570e400565577f148534843f22e342eed6d989af0a68882e3fc9e7dca7f8d7",
+      "commit": "919daab23de1cadf2a69ef47b8be2c1001f704a2",
+      "source_files_verified": 40,
+      "overlay_files_verified": 2,
+      "timing_gaps": [
+        {
+          "test": "TestExperimentAdmissionProtection/limit6",
+          "round": 1,
+          "wall_seconds": 61.962717,
+          "reported_elapsed_seconds": 60.11,
+          "gap_seconds": 1.8527169999999984
+        },
+        {
+          "test": "TestExperimentAdmissionProtection/limit16_pause",
+          "round": 1,
+          "wall_seconds": 938.857027,
+          "reported_elapsed_seconds": 10.57,
+          "gap_seconds": 928.287027
+        },
+        {
+          "test": "TestExperimentAdmissionProtection/limit6_pause",
+          "round": 1,
+          "wall_seconds": 9201.773607,
+          "reported_elapsed_seconds": 60.12,
+          "gap_seconds": 9141.653606999998
+        }
+      ],
+      "accounting_and_cleanup_passed_all_cases": true
+    },
+    "EXP-007-admission-protection-rerun.jsonl": {
+      "sha256": "ceab498d6c92d7ef26985d182568fa5a1d228d3a9f56e1a2a2617e3d91d02025",
+      "commit": "919daab23de1cadf2a69ef47b8be2c1001f704a2",
+      "source_files_verified": 40,
+      "overlay_files_verified": 2,
+      "timing_gaps": [
+        {
+          "test": "TestExperimentAdmissionProtection/limit16",
+          "round": 1,
+          "wall_seconds": 126.925702,
+          "reported_elapsed_seconds": 60.17,
+          "gap_seconds": 66.755702
+        }
+      ],
+      "accounting_and_cleanup_passed_all_cases": true
+    }
+  },
+  "selected_cases": {
+    "limit16": {
+      "source": "EXP-007-admission-protection.jsonl",
+      "round": 1,
+      "admitted": 16,
+      "rejected": 0
+    },
+    "limit6": {
+      "source": "EXP-007-admission-protection-rerun.jsonl",
+      "round": 1,
+      "admitted": 6,
+      "rejected": 10
+    },
+    "limit16_pause": {
+      "source": "EXP-007-admission-protection-rerun.jsonl",
+      "round": 1,
+      "admitted": 16,
+      "rejected": 0
+    },
+    "limit6_pause": {
+      "source": "EXP-007-admission-protection-rerun.jsonl",
+      "round": 1,
+      "admitted": 6,
+      "rejected": 10
+    }
+  }
+}

@@ -6,7 +6,7 @@ from collections import Counter, defaultdict
 import json
 from pathlib import Path
 
-from summarize_streaming_load import records
+from summarize_streaming_load import records, timing_gaps
 
 
 def validate(r):
@@ -48,19 +48,30 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("inputs", nargs="+", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--exclude-timing-gaps", action="store_true",
+                        help="Exclude only subtests failing the existing 1s continuity rule; keep raw files unchanged")
     args = parser.parse_args()
     grouped = defaultdict(list)
     for path in args.inputs:
         meta = json.loads(path.with_suffix(path.suffix + ".meta.json").read_text())
         if meta["experiment"] != "admission" or meta["race"] or meta["exit_code"] != 0:
             raise ValueError(f"not a formal admission run: {path}")
-        rows = records(path, strict_timing=True)
+        rows = records(path, strict_timing=not args.exclude_timing_gaps)
+        events = [json.loads(line) for line in path.read_text().splitlines()]
+        excluded = {(g["test"].rsplit("/", 1)[-1], g["round"]) for g in timing_gaps(events)}
         counts = Counter(r["case"] for r in rows)
         if any(n != meta["count"] for n in counts.values()):
             raise ValueError(f"wrong case count: {path}")
+        rounds = Counter()
         for r in rows:
             validate(r)
+            rounds[r["case"]] += 1
+            if args.exclude_timing_gaps and (r["case"], rounds[r["case"]]) in excluded:
+                continue
             grouped[(r["case"], r["input_ms"])].append(r)
+
+    if not grouped:
+        raise ValueError("no samples passed the continuity rule")
 
     def span(values):
         values = list(values)

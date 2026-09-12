@@ -1,8 +1,8 @@
 # Tide 当前架构
 
-Updated: 2026-09-11
+Updated: 2026-09-12
 Source: 08a7db1bfad548bb4189a4979a1d849462a6db8a
-Related: [ADR-002](adr/ADR-002-streaming-io-backpressure.md), [ADR-003](adr/ADR-003-processing-progress-deadline.md)
+Related: [ADR-002](adr/ADR-002-streaming-io-backpressure.md), [ADR-003](adr/ADR-003-processing-progress-deadline.md), [ADR-004](adr/ADR-004-admission-protection.md)
 
 ## 系统边界
 
@@ -66,6 +66,8 @@ Send EOF 仅表示发送停止，不能当作 RPC 成功。Send EOF 或 CloseSen
 音频满队列立即取消 RPC，尝试返回 WebSocket 1013；空音频块或非法控制消息按协议错误处理。写入超时取消 RPC 并清理连接；它可能先使 Reader 观察到断开，收尾后会补充写入超时原因。异常结束允许存在未处理音频或未送达结果，但不能报告正常完成。
 
 处理等待超时尝试返回 1013 / `processing_timeout`；End 超时返回 1011 / `end_timeout`；进度记录满返回 1013 / `progress_capacity`。这些路径均先取消 RPC，再尽力通知客户端并完成清理。非法进度或缺失尾部确认按 Worker 失败 1011 处理。
+
+容量不足时优先保护已接纳问诊，升级前立即返回 HTTP 503，拒绝请求不创建 Worker RPC，不提供接入等待或抢占已有会话。当前单 Gateway、单 Worker 使用 `MaxSessions` 实施这一策略；它仍是静态配置，不会自动感知 Worker 剩余处理能力，实验候选值 6 未设为生产默认容量。
 
 会话在升级前登记，所有执行流与连接清理完成后才注销。StopAccepting 拒绝新会话，Wait 仅等待注销；Abort 取消会话并关闭原始传输。服务关闭先共享 5 秒自然排空预算，必要时进入 2 秒强制清理等待预算；同步关闭调用不能由等待预算抢占。
 

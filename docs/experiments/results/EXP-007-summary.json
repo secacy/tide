@@ -1,0 +1,258 @@
+{
+  "limit16_60000ms": {
+    "runs": 1,
+    "max_sessions": 16,
+    "input_ms": 60000,
+    "cohorts": {
+      "existing": {
+        "attempted": 6,
+        "admitted": 6,
+        "rejected": 0,
+        "normal_complete": 4,
+        "failed_after_admission": {
+          "processing_timeout": 2
+        },
+        "rejection_ms": null,
+        "result_p95_ms": {
+          "min": 2086,
+          "max": 2086
+        },
+        "result_max_ms": {
+          "min": 2996.735709,
+          "max": 2996.735709
+        },
+        "sent_without_result": 302,
+        "schedule_lateness_p99_ms": {
+          "min": 2,
+          "max": 2
+        }
+      },
+      "incoming": {
+        "attempted": 10,
+        "admitted": 10,
+        "rejected": 0,
+        "normal_complete": 0,
+        "failed_after_admission": {
+          "processing_timeout": 10
+        },
+        "rejection_ms": null,
+        "result_p95_ms": {
+          "min": 2856,
+          "max": 2856
+        },
+        "result_max_ms": {
+          "min": 2998.231791,
+          "max": 2998.231791
+        },
+        "sent_without_result": 1510,
+        "schedule_lateness_p99_ms": {
+          "min": 2,
+          "max": 2
+        }
+      }
+    },
+    "rpc_opened": [
+      16
+    ],
+    "queue_peak_bytes_session": {
+      "min": 640,
+      "max": 640
+    },
+    "pause_hits": [
+      0
+    ],
+    "registered_after_cleanup": [
+      0
+    ],
+    "reuse_probe_complete": [
+      true
+    ]
+  },
+  "limit6_60000ms": {
+    "runs": 1,
+    "max_sessions": 6,
+    "input_ms": 60000,
+    "cohorts": {
+      "existing": {
+        "attempted": 6,
+        "admitted": 6,
+        "rejected": 0,
+        "normal_complete": 6,
+        "failed_after_admission": {},
+        "rejection_ms": null,
+        "result_p95_ms": {
+          "min": 22,
+          "max": 22
+        },
+        "result_max_ms": {
+          "min": 37.759667,
+          "max": 37.759667
+        },
+        "sent_without_result": 0,
+        "schedule_lateness_p99_ms": {
+          "min": 2,
+          "max": 2
+        }
+      },
+      "incoming": {
+        "attempted": 10,
+        "admitted": 0,
+        "rejected": 10,
+        "normal_complete": 0,
+        "failed_after_admission": {},
+        "rejection_ms": {
+          "min": 0.277917,
+          "max": 0.86075
+        },
+        "result_p95_ms": null,
+        "result_max_ms": null,
+        "sent_without_result": 0,
+        "schedule_lateness_p99_ms": null
+      }
+    },
+    "rpc_opened": [
+      6
+    ],
+    "queue_peak_bytes_session": {
+      "min": 640,
+      "max": 640
+    },
+    "pause_hits": [
+      0
+    ],
+    "registered_after_cleanup": [
+      0
+    ],
+    "reuse_probe_complete": [
+      true
+    ]
+  },
+  "limit16_pause_60000ms": {
+    "runs": 1,
+    "max_sessions": 16,
+    "input_ms": 60000,
+    "cohorts": {
+      "existing": {
+        "attempted": 6,
+        "admitted": 6,
+        "rejected": 0,
+        "normal_complete": 0,
+        "failed_after_admission": {
+          "processing_timeout": 6
+        },
+        "rejection_ms": null,
+        "result_p95_ms": {
+          "min": 2275,
+          "max": 2275
+        },
+        "result_max_ms": {
+          "min": 2700.086625,
+          "max": 2700.086625
+        },
+        "sent_without_result": 905,
+        "schedule_lateness_p99_ms": {
+          "min": 2,
+          "max": 2
+        }
+      },
+      "incoming": {
+        "attempted": 10,
+        "admitted": 10,
+        "rejected": 0,
+        "normal_complete": 0,
+        "failed_after_admission": {
+          "processing_timeout": 10
+        },
+        "rejection_ms": null,
+        "result_p95_ms": {
+          "min": 2562,
+          "max": 2562
+        },
+        "result_max_ms": {
+          "min": 2700.195333,
+          "max": 2700.195333
+        },
+        "sent_without_result": 1507,
+        "schedule_lateness_p99_ms": {
+          "min": 2,
+          "max": 2
+        }
+      }
+    },
+    "rpc_opened": [
+      16
+    ],
+    "queue_peak_bytes_session": {
+      "min": 640,
+      "max": 640
+    },
+    "pause_hits": [
+      4
+    ],
+    "registered_after_cleanup": [
+      0
+    ],
+    "reuse_probe_complete": [
+      true
+    ]
+  },
+  "limit6_pause_60000ms": {
+    "runs": 1,
+    "max_sessions": 6,
+    "input_ms": 60000,
+    "cohorts": {
+      "existing": {
+        "attempted": 6,
+        "admitted": 6,
+        "rejected": 0,
+        "normal_complete": 6,
+        "failed_after_admission": {},
+        "rejection_ms": null,
+        "result_p95_ms": {
+          "min": 22,
+          "max": 22
+        },
+        "result_max_ms": {
+          "min": 518.923125,
+          "max": 518.923125
+        },
+        "sent_without_result": 0,
+        "schedule_lateness_p99_ms": {
+          "min": 2,
+          "max": 2
+        }
+      },
+      "incoming": {
+        "attempted": 10,
+        "admitted": 0,
+        "rejected": 10,
+        "normal_complete": 0,
+        "failed_after_admission": {},
+        "rejection_ms": {
+          "min": 0.074792,
+          "max": 1.025042
+        },
+        "result_p95_ms": null,
+        "result_max_ms": null,
+        "sent_without_result": 0,
+        "schedule_lateness_p99_ms": null
+      }
+    },
+    "rpc_opened": [
+      6
+    ],
+    "queue_peak_bytes_session": {
+      "min": 640,
+      "max": 640
+    },
+    "pause_hits": [
+      4
+    ],
+    "registered_after_cleanup": [
+      0
+    ],
+    "reuse_probe_complete": [
+      true
+    ]
+  }
+}
