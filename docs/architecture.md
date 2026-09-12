@@ -2,7 +2,7 @@
 
 Updated: 2026-09-12
 Source: e92c1288afad46f0f6da05b3375d851a80a94709
-Related: [ADR-002](adr/ADR-002-streaming-io-backpressure.md), [ADR-003](adr/ADR-003-processing-progress-deadline.md), [ADR-004](adr/ADR-004-admission-protection.md), [ADR-005](adr/ADR-005-worker-reservation-lifecycle.md)
+Related: [ADR-002](adr/ADR-002-streaming-io-backpressure.md), [ADR-003](adr/ADR-003-processing-progress-deadline.md), [ADR-004](adr/ADR-004-admission-protection.md), [ADR-005](adr/ADR-005-worker-reservation-lifecycle.md), [ADR-006](adr/ADR-006-least-reserved-ratio-selection.md)
 
 ## 系统边界
 
@@ -23,7 +23,7 @@ Related: [ADR-002](adr/ADR-002-streaming-io-backpressure.md), [ADR-003](adr/ADR-
 
 准备和收尾都占名额，取消 RPC 不会立即释放。Lease 是没有 TTL/续租的本地预留凭证，重复或并发释放只生效一次；不负责取消或关闭客户端连接。`Gateway.Wait` 排空后，该 Gateway 接入路径持有的 Worker 预留已归还。远端处理是否已停止仍受 RPC 取消契约约束，本地账本不能证明远端资源已释放。
 
-`RoundRobin` 从上次选择之后轮询，跳过已满或停止接入的 Worker；`LeastReservedRatio` 比较 `reserved/capacity`，同值轮换。两者均为显式候选，多 Worker 配置必须提供策略，尚无最终推荐。`StopAccepting(workerID)` 只停止之后的新预留，已预留会话继续；它没有管理 HTTP 接口，也不包含自动健康检测。列表、容量在进程运行期间固定，不协调多个 Gateway。
+`RoundRobin` 从上次选择之后轮询，跳过已满或停止接入的 Worker；`LeastReservedRatio` 比较 `reserved/capacity`，同值轮换。当前推荐 `LeastReservedRatio`，保留轮询供显式配置和对照；多 Worker 配置仍必须提供策略，不隐式切换。`StopAccepting(workerID)` 只停止之后的新预留，已预留会话继续；它没有管理 HTTP 接口，也不包含自动健康检测。列表、容量在进程运行期间固定，不协调多个 Gateway。
 
 实现：[worker_pool.go](../internal/gateway/worker_pool.go)、[接入流程](../internal/gateway/gateway.go)。单 Worker `New` 入口与旧调用兼容，其 Worker 配额等于 `MaxSessions`。多 Worker 使用 `NewWithPool`，启动配置见 [运行命令](command.md)。
 
@@ -100,6 +100,6 @@ Send EOF 仅表示发送停止，不能当作 RPC 成功。Send EOF 或 CloseSen
 
 [EXP-005](experiments/EXP-005-tcp-slow-client-cleanup.md) 补充 18 次真实 loopback TCP 慢读、RST、Abort 和恢复读取实验，全部最终注销。默认 2 秒写入期限下能结束慢写；将写入期限设为 8 秒后，RPC 约在处理/End 的 3/5 秒期限取消，会话却接近第 8 秒才注销。当前没有独立的异常收尾预算，尽力发送关闭通知可能延迟资源释放。已确认暂时保留这一取舍，不承诺整个收尾在 5 秒内完成，也不保证关闭原因送达；后续需要延长写入期限或发现清理占用影响接入时再评估。
 
-[EXP-008](experiments/EXP-008-worker-selection.md) 验证固定 Worker 预留和两种候选分配的行为：异构组中最小预留比例改善本轮短负载回显延迟，同容量组表现接近；32 个流式会话全部正常完成并归还名额。逻辑重放、短回显和微基准不代表长期或真实模型容量，算法推荐尚待确认。
+[EXP-008](experiments/EXP-008-worker-selection.md) 验证固定 Worker 预留和两种候选分配的行为：异构组中最小预留比例改善本轮短负载回显延迟，同容量组表现接近；32 个流式会话全部正常完成并归还名额。逻辑重放、短回显和微基准不代表长期或真实模型容量，[ADR-006](adr/ADR-006-least-reserved-ratio-selection.md) 据此确认当前推荐最小预留比例策略。
 
 当前仍没有 Start/建流专用期限、静默断网心跳发现、结果持久化或恢复协议。无未确认音频且未 End 的连接不会仅因无文字输出而超时。WAN/TLS 慢读、临床量级会话时长及共享模型资源下的稳定容量尚未验证；正常转录可见延迟 P95 目标 1 秒仍需真实模型验证。

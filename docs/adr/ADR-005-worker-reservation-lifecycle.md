@@ -31,7 +31,7 @@ Gateway 总会话上限不能表达多个 Worker 各自的容量。若选择 Wor
 
 Lease 的释放并发安全且只生效一次。显式停止某 Worker 接入，只禁止之后的新预留，之前已取得名额的会话继续；它不是自动健康检测。客户端连接由应用组装层创建并在 Gateway 清理后关闭，Pool 不负责关闭共享 gRPC 连接。
 
-选择算法与资源生命周期分离。本决策批准提供轮询和最小预留比例两种显式候选，用实验比较；多 Worker 不设置隐式推荐算法。单 Worker 兼容入口不改变原调用语义。算法的最终推荐由实验和后续确认决定，不写入本记录。
+选择算法与资源生命周期分离。本决策批准提供轮询和最小预留比例两种显式候选，用实验比较；多 Worker 不设置隐式推荐算法。单 Worker 兼容入口不改变原调用语义。算法推荐独立记录于 [ADR-006](ADR-006-least-reserved-ratio-selection.md)，本记录继续约束两种策略共同遵循的资源生命周期。
 
 ## Invariants
 
@@ -49,4 +49,4 @@ Lease 的释放并发安全且只生效一次。显式停止某 Worker 接入，
 
 [Pool 测试](../../internal/gateway/worker_pool_test.go)、[接入测试](../../internal/gateway/worker_admission_test.go) 和 Abort 回归验证并发不超配、重复释放、停止接入与预留竞争、两层上限独立、失败路径归还、固定路由及 Wait 后预留归零；取消但 I/O 尚未退出时仍占名额。全量 race 测试及 vet 通过。
 
-[EXP-008](../experiments/EXP-008-worker-selection.md) 完成同/异构配额、交错释放的逻辑重放与真实流式回显对照，以及 2/8/32 Worker 预留微基准。全部 32 个流式会话正常完成并清理；异构组 LRR 改善本负载的分配与回显延迟。实验没有决定最终推荐算法，也不代表真实模型容量。
+[EXP-008](../experiments/EXP-008-worker-selection.md) 完成同/异构配额、交错释放的逻辑重放与真实流式回显对照，以及 2/8/32 Worker 预留微基准。全部 32 个流式会话正常完成并清理；异构组 LRR 改善本负载的分配与回显延迟。实验支持后续 [ADR-006](ADR-006-least-reserved-ratio-selection.md) 的算法选择，不代表真实模型容量。
