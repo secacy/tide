@@ -47,4 +47,6 @@ Lease 的释放并发安全且只生效一次。显式停止某 Worker 接入，
 
 ## Validation
 
-验证并发不超配、重复释放、停止接入与预留竞争、Gateway 总上限与 Worker 上限独立、失败路径释放、会话固定路由，以及 Wait 之后预留归零。EXP-008 比较同容量、不同容量、交错释放下的两种选择策略，并单独观察并发预留的开销；不以调度微基准代替真实模型容量。
+[Pool 测试](../../internal/gateway/worker_pool_test.go)、[接入测试](../../internal/gateway/worker_admission_test.go) 和 Abort 回归验证并发不超配、重复释放、停止接入与预留竞争、两层上限独立、失败路径归还、固定路由及 Wait 后预留归零；取消但 I/O 尚未退出时仍占名额。全量 race 测试及 vet 通过。
+
+[EXP-008](../experiments/EXP-008-worker-selection.md) 完成同/异构配额、交错释放的逻辑重放与真实流式回显对照，以及 2/8/32 Worker 预留微基准。全部 32 个流式会话正常完成并清理；异构组 LRR 改善本负载的分配与回显延迟。实验没有决定最终推荐算法，也不代表真实模型容量。

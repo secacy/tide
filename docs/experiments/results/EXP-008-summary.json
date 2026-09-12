@@ -1,0 +1,723 @@
+{
+  "quality": [
+    {
+      "file": "EXP-008-worker-selection.jsonl",
+      "sha256": "16320c340ced3c99b21077b52b3823c7458b5d6b0a4f59a46cf844e644ac675d",
+      "commit": "e92c1288afad46f0f6da05b3375d851a80a94709",
+      "source_matches_commit": true,
+      "timing_gaps": [],
+      "accepted": [
+        [
+          "logical_equal_round_robin",
+          1
+        ],
+        [
+          "stream_equal_round_robin",
+          1
+        ],
+        [
+          "logical_heterogeneous_round_robin",
+          1
+        ],
+        [
+          "stream_heterogeneous_round_robin",
+          1
+        ],
+        [
+          "logical_equal_least_reserved_ratio",
+          1
+        ],
+        [
+          "stream_equal_least_reserved_ratio",
+          1
+        ],
+        [
+          "logical_heterogeneous_least_reserved_ratio",
+          1
+        ],
+        [
+          "stream_heterogeneous_least_reserved_ratio",
+          1
+        ],
+        [
+          "logical_equal_round_robin",
+          2
+        ],
+        [
+          "stream_equal_round_robin",
+          2
+        ],
+        [
+          "logical_heterogeneous_round_robin",
+          2
+        ],
+        [
+          "stream_heterogeneous_round_robin",
+          2
+        ],
+        [
+          "logical_equal_least_reserved_ratio",
+          2
+        ],
+        [
+          "stream_equal_least_reserved_ratio",
+          2
+        ],
+        [
+          "logical_heterogeneous_least_reserved_ratio",
+          2
+        ],
+        [
+          "stream_heterogeneous_least_reserved_ratio",
+          2
+        ]
+      ],
+      "excluded": [],
+      "benchmark_excluded": []
+    }
+  ],
+  "scenarios": {
+    "logical_equal_round_robin": {
+      "runs": 2,
+      "initial_reserved": [
+        2,
+        2
+      ],
+      "admitted": [
+        50,
+        50
+      ],
+      "rejected": [
+        34,
+        34
+      ],
+      "mean_ratio_gap": {
+        "min": 0.1125,
+        "max": 0.1125
+      }
+    },
+    "stream_equal_round_robin": {
+      "runs": 2,
+      "initial_reserved": [
+        2,
+        2
+      ],
+      "input_ms": 6000,
+      "normal_complete": [
+        4,
+        4
+      ],
+      "sent": 2400,
+      "received": 2400,
+      "p95_ms": {
+        "min": 15,
+        "max": 15
+      },
+      "max_ms": {
+        "min": 15.981958,
+        "max": 21.994375
+      },
+      "schedule_p99_ms": {
+        "min": 2,
+        "max": 3
+      },
+      "queue_peak_bytes": {
+        "min": 640,
+        "max": 640
+      }
+    },
+    "logical_heterogeneous_round_robin": {
+      "runs": 2,
+      "initial_reserved": [
+        2,
+        2
+      ],
+      "admitted": [
+        50,
+        50
+      ],
+      "rejected": [
+        34,
+        34
+      ],
+      "mean_ratio_gap": {
+        "min": 0.1916666666666666,
+        "max": 0.1916666666666666
+      }
+    },
+    "stream_heterogeneous_round_robin": {
+      "runs": 2,
+      "initial_reserved": [
+        2,
+        2
+      ],
+      "input_ms": 6000,
+      "normal_complete": [
+        4,
+        4
+      ],
+      "sent": 2400,
+      "received": 2400,
+      "p95_ms": {
+        "min": 1487,
+        "max": 1490
+      },
+      "max_ms": {
+        "min": 1660.739417,
+        "max": 1663.11975
+      },
+      "schedule_p99_ms": {
+        "min": 2,
+        "max": 4
+      },
+      "queue_peak_bytes": {
+        "min": 640,
+        "max": 640
+      }
+    },
+    "logical_equal_least_reserved_ratio": {
+      "runs": 2,
+      "initial_reserved": [
+        2,
+        2
+      ],
+      "admitted": [
+        50,
+        50
+      ],
+      "rejected": [
+        34,
+        34
+      ],
+      "mean_ratio_gap": {
+        "min": 0.1125,
+        "max": 0.1125
+      }
+    },
+    "stream_equal_least_reserved_ratio": {
+      "runs": 2,
+      "initial_reserved": [
+        2,
+        2
+      ],
+      "input_ms": 6000,
+      "normal_complete": [
+        4,
+        4
+      ],
+      "sent": 2400,
+      "received": 2400,
+      "p95_ms": {
+        "min": 14,
+        "max": 15
+      },
+      "max_ms": {
+        "min": 16.403166,
+        "max": 28.360833
+      },
+      "schedule_p99_ms": {
+        "min": 2,
+        "max": 4
+      },
+      "queue_peak_bytes": {
+        "min": 640,
+        "max": 640
+      }
+    },
+    "logical_heterogeneous_least_reserved_ratio": {
+      "runs": 2,
+      "initial_reserved": [
+        1,
+        3
+      ],
+      "admitted": [
+        50,
+        50
+      ],
+      "rejected": [
+        34,
+        34
+      ],
+      "mean_ratio_gap": {
+        "min": 0.12166666666666676,
+        "max": 0.12166666666666676
+      }
+    },
+    "stream_heterogeneous_least_reserved_ratio": {
+      "runs": 2,
+      "initial_reserved": [
+        1,
+        3
+      ],
+      "input_ms": 6000,
+      "normal_complete": [
+        4,
+        4
+      ],
+      "sent": 2400,
+      "received": 2400,
+      "p95_ms": {
+        "min": 15,
+        "max": 16
+      },
+      "max_ms": {
+        "min": 20.645292,
+        "max": 22.142666
+      },
+      "schedule_p99_ms": {
+        "min": 4,
+        "max": 4
+      },
+      "queue_peak_bytes": {
+        "min": 640,
+        "max": 640
+      }
+    }
+  },
+  "benchmarks": {
+    "round_robin/workers2/serial": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 84.13,
+        "max": 99.05
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "round_robin/workers2/serial",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 99.05,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0017159999999999988
+        },
+        {
+          "case": "round_robin/workers2/serial",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 84.13,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0013229999999999995
+        }
+      ]
+    },
+    "round_robin/workers2/parallel": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 226.5,
+        "max": 282.8
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "round_robin/workers2/parallel",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 282.8,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0011649999999999994
+        },
+        {
+          "case": "round_robin/workers2/parallel",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 226.5,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0011600000000000013
+        }
+      ]
+    },
+    "round_robin/workers8/serial": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 49.66,
+        "max": 49.79
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "round_robin/workers8/serial",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 49.66,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0009469999999999999
+        },
+        {
+          "case": "round_robin/workers8/serial",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 49.79,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0008029999999999999
+        }
+      ]
+    },
+    "round_robin/workers8/parallel": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 232.2,
+        "max": 240.0
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "round_robin/workers8/parallel",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 232.2,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0009669999999999991
+        },
+        {
+          "case": "round_robin/workers8/parallel",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 240.0,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0009270000000000007
+        }
+      ]
+    },
+    "round_robin/workers32/serial": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 48.02,
+        "max": 48.06
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "round_robin/workers32/serial",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 48.02,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0007379999999999999
+        },
+        {
+          "case": "round_robin/workers32/serial",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 48.06,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0007959999999999998
+        }
+      ]
+    },
+    "round_robin/workers32/parallel": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 244.3,
+        "max": 247.8
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "round_robin/workers32/parallel",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 247.8,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0007650000000000018
+        },
+        {
+          "case": "round_robin/workers32/parallel",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 244.3,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0008060000000000012
+        }
+      ]
+    },
+    "least_reserved_ratio/workers2/serial": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 45.7,
+        "max": 47.91
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "least_reserved_ratio/workers2/serial",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 47.91,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.000732
+        },
+        {
+          "case": "least_reserved_ratio/workers2/serial",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 45.7,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0008219999999999998
+        }
+      ]
+    },
+    "least_reserved_ratio/workers2/parallel": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 254.5,
+        "max": 259.0
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "least_reserved_ratio/workers2/parallel",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 254.5,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0008029999999999982
+        },
+        {
+          "case": "least_reserved_ratio/workers2/parallel",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 259.0,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0007610000000000013
+        }
+      ]
+    },
+    "least_reserved_ratio/workers8/serial": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 45.76,
+        "max": 47.83
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "least_reserved_ratio/workers8/serial",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 45.76,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0007369999999999998
+        },
+        {
+          "case": "least_reserved_ratio/workers8/serial",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 47.83,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0009709999999999996
+        }
+      ]
+    },
+    "least_reserved_ratio/workers8/parallel": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 275.1,
+        "max": 275.7
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "least_reserved_ratio/workers8/parallel",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 275.1,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0007899999999999956
+        },
+        {
+          "case": "least_reserved_ratio/workers8/parallel",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 275.7,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0007969999999999991
+        }
+      ]
+    },
+    "least_reserved_ratio/workers32/serial": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 91.89,
+        "max": 91.99
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "least_reserved_ratio/workers32/serial",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 91.99,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0006839999999999988
+        },
+        {
+          "case": "least_reserved_ratio/workers32/serial",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 91.89,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0007620000000000005
+        }
+      ]
+    },
+    "least_reserved_ratio/workers32/parallel": {
+      "runs": 2,
+      "ns_per_op": {
+        "min": 367.4,
+        "max": 378.2
+      },
+      "bytes_per_op": {
+        "min": 32,
+        "max": 32
+      },
+      "allocs_per_op": {
+        "min": 1,
+        "max": 1
+      },
+      "samples": [
+        {
+          "case": "least_reserved_ratio/workers32/parallel",
+          "round": 1,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 367.4,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0007039999999999963
+        },
+        {
+          "case": "least_reserved_ratio/workers32/parallel",
+          "round": 2,
+          "gomaxprocs": 12,
+          "iterations": 100000,
+          "ns_per_op": 378.2,
+          "bytes_per_op": 32,
+          "allocs_per_op": 1,
+          "timing_gap_seconds": 0.0009880000000000028
+        }
+      ]
+    }
+  }
+}
