@@ -10,16 +10,18 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+	"github.com/secacy/tide-artisan/internal/wsheartbeat"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 )
 
 // Config 描述 WebSocket Gateway 配置。
 type Config struct {
-	ProcessingTimeout    time.Duration // 最早未确认处理音频的等待预算，默认 3 秒。
-	EndTimeout           time.Duration // 从收到合法 End 起的完成预算，默认 5 秒。
-	MaxUnprocessedChunks int           // 未确认音频时间记录上限，默认 4096。
-	MaxMessageBytes      int64         // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
-	MaxSessions          int           // Gateway 同时管理的最大会话数
+	Heartbeat            wsheartbeat.Config // 双端独立配置，零值默认启用 2 秒周期、3 秒预算。
+	ProcessingTimeout    time.Duration      // 最早未确认处理音频的等待预算，默认 3 秒。
+	EndTimeout           time.Duration      // 从收到合法 End 起的完成预算，默认 5 秒。
+	MaxUnprocessedChunks int                // 未确认音频时间记录上限，默认 4096。
+	MaxMessageBytes      int64              // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
+	MaxSessions          int                // Gateway 同时管理的最大会话数
 
 	AudioQueueMaxBytes  int           // 限制队列内等待发送的音频总字节数，不包含正在发送的音频。
 	AudioQueueMaxChunks int           // 限制队列内的音频块数量，防止大量小消息产生过多管理开销。
@@ -61,6 +63,11 @@ func NewWithPool(ctx context.Context, pool *WorkerPool, logger *slog.Logger, cfg
 	}
 	if pool == nil || len(pool.workers) == 0 {
 		return nil, fmt.Errorf("worker pool is not initialized")
+	}
+	var err error
+	cfg.Heartbeat, err = cfg.Heartbeat.Normalize()
+	if err != nil {
+		return nil, err
 	}
 	if cfg.MaxMessageBytes <= 0 {
 		cfg.MaxMessageBytes = 1024 * 1024 // 1 MiB

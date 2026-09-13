@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/secacy/tide-artisan/internal/wsclient"
+	"github.com/secacy/tide-artisan/internal/wsheartbeat"
 )
 
 func main() {
@@ -25,8 +26,13 @@ func main() {
 }
 
 func run(ctx context.Context) error {
+	heartbeat, err := wsheartbeat.FromEnvironment(os.Getenv)
+	if err != nil {
+		return err
+	}
 	client, err := wsclient.New(
 		wsclient.Config{
+			Heartbeat:  heartbeat,
 			URL:        "ws://localhost:8080/v1/asr",
 			ChunkBytes: 3200, // 默认模拟 100ms 左右的音频块
 			Realtime:   true,

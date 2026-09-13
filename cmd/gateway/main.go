@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/secacy/tide-artisan/internal/gateway"
+	"github.com/secacy/tide-artisan/internal/wsheartbeat"
 )
 
 const (
@@ -43,6 +44,10 @@ func main() {
 // run 组装应用依赖；stopCtx 只触发关闭，logger 必须非 nil。
 // serve 完成关闭编排后，才释放会话 Context 和共享 gRPC 连接。
 func run(stopCtx context.Context, logger *slog.Logger) error {
+	heartbeat, err := wsheartbeat.FromEnvironment(os.Getenv)
+	if err != nil {
+		return fmt.Errorf("read heartbeat configuration: %w", err)
+	}
 	settings, err := readWorkerSettings(os.Getenv("TIDE_GATEWAY_CONFIG"))
 	if err != nil {
 		return fmt.Errorf("read Worker configuration: %w", err)
@@ -53,6 +58,7 @@ func run(stopCtx context.Context, logger *slog.Logger) error {
 	}
 	defer closeWorkers()
 	logger.Info("worker pool configured", "policy", settings.Policy, "workers", pool.Snapshot(), "max_sessions", settings.MaxSessions)
+	logger.Info("heartbeat configured", "interval", heartbeat.Interval, "timeout", heartbeat.Timeout)
 
 	// 组件字段在依赖组装时绑定，会话字段由 Gateway 在接入时绑定。
 	gatewayLogger := logger.With("component", "gateway")
@@ -63,6 +69,7 @@ func run(stopCtx context.Context, logger *slog.Logger) error {
 	defer cancelSessions()
 
 	wsGateway, err := gateway.NewWithPool(sessionCtx, pool, gatewayLogger, gateway.Config{
+		Heartbeat:       heartbeat,
 		MaxMessageBytes: 1024 * 1024,
 		MaxSessions:     settings.MaxSessions,
 	})

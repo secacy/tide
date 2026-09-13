@@ -41,6 +41,9 @@ func (c *Client) sendAudio(ctx context.Context, conn *websocket.Conn, source io.
 	pacer := audio.NewPacer()
 
 	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
 		n, readErr := io.ReadFull(source, buf)
 		if n > 0 {
 			if c.cfg.Realtime {

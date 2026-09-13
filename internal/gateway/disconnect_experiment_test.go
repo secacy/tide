@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+	"github.com/secacy/tide-artisan/internal/wsheartbeat"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 	"google.golang.org/grpc"
 )
@@ -268,7 +269,7 @@ func runDisconnectTimed(t *testing.T, scenario, mode, experiment string, interva
 		bound <- s
 		context.AfterFunc(rpcCtx, func() { trace.mark("rpc_cancel", "context cancellation observed"); close(rpcCanceled) })
 	}
-	cfg := Config{MaxSessions: 1}
+	cfg := Config{Heartbeat: wsheartbeat.Config{Disabled: true}, MaxSessions: 1}
 	if scenario == "send_stall_isolated" {
 		cfg.ProcessingTimeout = 12 * time.Second
 	}

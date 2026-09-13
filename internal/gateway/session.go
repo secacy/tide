@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+	"github.com/secacy/tide-artisan/internal/wsheartbeat"
 	"github.com/secacy/tide-artisan/internal/wsprotocol"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 )
@@ -58,6 +59,7 @@ const (
 	resultWriteTimedOut                               // 单次结果写入超过等待期限。
 	resultInputSent                                   // Sender 已排空并完成 CloseSend；尚不代表 Worker 完成。
 	resultSendStopped                                 // Send EOF 或 CloseSend 失败，等待 Recv 给出 RPC 最终状态。
+	resultHeartbeatFailed                             // Ping/Pong 未能在预算内完成；不等同于 Worker 失败。
 )
 
 // sessionResult 是 Reader、Sender、download 向 session.run 汇报的事件。
@@ -94,7 +96,7 @@ func newSession(parent context.Context, id string, worker asrv1.ASRServiceClient
 //   - 决定 WebSocket Close Code；
 //   - 唤醒仍然阻塞的 I/O goroutine；
 //   - 等待所有 goroutine 真正退出。
-func (s *session) run(cfg Config) error {
+func (s *session) run(cfg Config) (runErr error) {
 	ctx := s.ctx
 	if result, canceled := cancellationResult(ctx); canceled {
 		return result.err
@@ -108,10 +110,20 @@ func (s *session) run(cfg Config) error {
 		return err
 	}
 	queue.progress = progress
+	heartbeat := wsheartbeat.Start(ctx, cfg.Heartbeat, s.ws.Ping, s.abortWithCause)
+	defer func() {
+		heartbeat.Stop()
+		if err := heartbeat.Wait(); runErr != nil && ctx.Err() == nil && errors.Is(err, context.DeadlineExceeded) && !errors.Is(runErr, wsheartbeat.ErrFailed) {
+			// 等待 Start 时也可能先由 Ping 写超时唤醒 Read。
+			runErr = errors.Join(runErr, err)
+		}
+	}()
 	if err := readStart(ctx, s.ws); err != nil {
 		if result, canceled := cancellationResult(ctx); canceled {
 			return result.err
 		}
+		heartbeat.Stop()
+		_ = heartbeat.Wait()
 		_ = s.ws.Close(websocket.StatusPolicyViolation, "invalid start message")
 		return err
 	}
@@ -127,18 +139,9 @@ func (s *session) run(cfg Config) error {
 	wsCtx, cancelWS := context.WithCancel(context.WithoutCancel(ctx))
 	defer cancelWS()
 
-	stream, err := s.worker.StreamingRecognize(rpcCtx)
-	if err != nil {
-		result := sessionResult{
-			kind: resultWorkerFailed,
-			err:  fmt.Errorf("open worker stream: %w", err),
-		}
-		if canceledResult, canceled := cancellationResult(ctx); canceled {
-			result = canceledResult
-		}
-		_ = s.finish(wsCtx, result, cancelRPC, cancelWS)
-		return result.err
-	}
+	// 建流放在 Sender 内；Reader 与期限协调者不等待下游准备完成。
+	// 只传递一次流对象，缓冲保证取消时 Sender 不因交接而滞留。
+	streams := make(chan workerStream, 1)
 
 	// Sender 排空后、调用 CloseSend 前关闭。Worker EOF 可以先于 CloseSend 返回，
 	// 因而“开始半关闭”和“半关闭调用返回”必须分开观察。
@@ -157,11 +160,23 @@ func (s *session) run(cfg Config) error {
 
 	go func() {
 		defer wg.Done()
+		stream, err := s.worker.StreamingRecognize(rpcCtx)
+		if err != nil {
+			events <- sessionResult{kind: resultWorkerFailed, err: fmt.Errorf("open worker stream: %w", err)}
+			return
+		}
+		streams <- stream
 		events <- sendAudio(rpcCtx, stream, queue, requestClosing)
 	}()
 	var downloaded sessionResult // 仅 download 写入，协调者在 wg.Wait 后读取。
 	go func() {
 		defer wg.Done()
+		var stream workerStream
+		select {
+		case stream = <-streams:
+		case <-rpcCtx.Done():
+			return
+		}
 		downloaded = s.download(wsCtx, stream, cfg.ResultWriteTimeout, progress)
 		events <- downloaded
 	}()
@@ -169,6 +184,21 @@ func (s *session) run(cfg Config) error {
 	// 第一个真正具有决定性的事件确定 Session 结果。
 	result := waitSessionResult(ctx, events, requestClosing, progress)
 
+	// 业务失败先取消 RPC，不让正常停用心跳的 join 推迟处理期限。
+	heartbeat.Stop()
+	if result.kind != resultCompleted {
+		cancelRPC()
+	}
+	if err := heartbeat.Wait(); err != nil {
+		// 在途探测也已失败，不再向同一连接等待关闭握手；保留已选业务原因。
+		_ = s.ws.CloseNow()
+		if result.kind == resultCompleted {
+			result = sessionResult{kind: resultHeartbeatFailed, err: err}
+		} else if result.kind == resultClientDisconnected && errors.Is(err, context.DeadlineExceeded) {
+			// Ping 写超时可能先关闭连接，再返回探测错误；保留两者以免日志只剩 EOF。
+			result.err = errors.Join(result.err, err)
+		}
+	}
 	// 先主动执行能够解除阻塞的 cleanup。
 	cleanupErr := s.finish(wsCtx, result, cancelRPC, cancelWS)
 
@@ -356,7 +386,7 @@ func (s *session) finish(
 		_ = s.ws.CloseNow()
 		return nil
 
-	case resultAborted:
+	case resultAborted, resultHeartbeatFailed:
 		// abort 负责底层连接中断，这里取消剩余 I/O 并清理 WebSocket 对象。
 		cancelRPC()
 		cancelWS()

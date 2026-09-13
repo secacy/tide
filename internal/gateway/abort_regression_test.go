@@ -15,6 +15,7 @@ import (
 
 	"github.com/coder/websocket"
 	"github.com/secacy/tide-artisan/internal/mockasr"
+	"github.com/secacy/tide-artisan/internal/wsheartbeat"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 	"google.golang.org/grpc"
 )
@@ -43,7 +44,7 @@ func TestSessionRunPreservesEarlyCancellationCause(t *testing.T) {
 				_ = peer.SetDeadline(deadline)
 				finished := make(chan error, 1)
 				go func() {
-					finished <- s.run(Config{ProcessingTimeout: 3 * time.Second, EndTimeout: 5 * time.Second, MaxUnprocessedChunks: 4096, AudioQueueMaxBytes: 64_000, AudioQueueMaxChunks: 128, ResultWriteTimeout: 2 * time.Second})
+					finished <- s.run(Config{Heartbeat: wsheartbeat.Config{Interval: 2 * time.Second, Timeout: 3 * time.Second}, ProcessingTimeout: 3 * time.Second, EndTimeout: 5 * time.Second, MaxUnprocessedChunks: 4096, AudioQueueMaxBytes: 64_000, AudioQueueMaxChunks: 128, ResultWriteTimeout: 2 * time.Second})
 				}()
 				awaitGatewaySignal(t, ctx, reading, "Session entered initial read")
 				if stage == "opening_worker" {
@@ -57,7 +58,7 @@ func TestSessionRunPreservesEarlyCancellationCause(t *testing.T) {
 					s.abort()
 				} else {
 					cancelParent(want)
-					// 建流时尚无 WS reader，读取并回应服务端的 1001 关闭帧。
+					// 建流期间保持 WS reader，读取并回应服务端的 1001 关闭帧。
 					if stage == "opening_worker" {
 						opcode, payload := readRawServerFrame(t, peer)
 						if opcode != 8 {
@@ -92,7 +93,7 @@ func TestSessionAbortDuringFailureCleanupPreservesWorkerError(t *testing.T) {
 	_ = peer.SetDeadline(deadline)
 	finished := make(chan error, 1)
 	go func() {
-		finished <- s.run(Config{ProcessingTimeout: 3 * time.Second, EndTimeout: 5 * time.Second, MaxUnprocessedChunks: 4096, AudioQueueMaxBytes: 64_000, AudioQueueMaxChunks: 128, ResultWriteTimeout: 2 * time.Second})
+		finished <- s.run(Config{Heartbeat: wsheartbeat.Config{Interval: 2 * time.Second, Timeout: 3 * time.Second}, ProcessingTimeout: 3 * time.Second, EndTimeout: 5 * time.Second, MaxUnprocessedChunks: 4096, AudioQueueMaxBytes: 64_000, AudioQueueMaxChunks: 128, ResultWriteTimeout: 2 * time.Second})
 	}()
 	writeRawClientFrame(t, peer, 1, []byte(`{"type":"start","version":"v1"}`))
 	opcode, _ := readRawServerFrame(t, peer)

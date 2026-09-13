@@ -370,6 +370,11 @@ func stalledSendWorker(entered, canceled chan struct{}) *controlledWorkerClient 
 // runDirectStreamingTest 设置独立的兜底截止时间；正常断言不依赖 Abort。
 func runDirectStreamingTest(t *testing.T, s *session, cfg Config) <-chan error {
 	t.Helper()
+	var err error
+	cfg.Heartbeat, err = cfg.Heartbeat.Normalize()
+	if err != nil {
+		t.Fatal(err)
+	}
 	_ = s.transport.SetDeadline(time.Now().Add(3 * time.Second))
 	finished, exited := make(chan error, 1), make(chan struct{})
 	go func() {

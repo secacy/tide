@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"github.com/secacy/tide-artisan/internal/wsheartbeat"
 	"testing"
 	"time"
 )
@@ -38,6 +39,7 @@ func TestGatewayStreamingConfig(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			tc.want.Heartbeat = wsheartbeat.Config{Interval: 2 * time.Second, Timeout: 3 * time.Second}
 			if g.cfg != tc.want {
 				t.Fatalf("normalized config = %+v, want %+v", g.cfg, tc.want)
 			}
@@ -56,6 +58,8 @@ func TestGatewayRejectsNegativeStreamingConfig(t *testing.T) {
 		{MaxSessions: 1, ProcessingTimeout: -time.Nanosecond},
 		{MaxSessions: 1, EndTimeout: -time.Nanosecond},
 		{MaxSessions: 1, MaxUnprocessedChunks: -1},
+		{MaxSessions: 1, Heartbeat: wsheartbeat.Config{Interval: -1}},
+		{MaxSessions: 1, Heartbeat: wsheartbeat.Config{Timeout: -1}},
 	} {
 		g, err := New(context.Background(), &unusedGatewayWorker{}, nil, cfg)
 		if g != nil || err == nil {

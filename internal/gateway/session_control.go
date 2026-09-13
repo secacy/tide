@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"net"
+
+	"github.com/secacy/tide-artisan/internal/wsheartbeat"
 )
 
 // attachTransport 绑定升级接管的底层连接。
@@ -27,7 +29,12 @@ func (s *session) attachTransport(conn net.Conn) {
 // 尚未绑定连接时，保留停止标记，由后续绑定流程关闭连接。
 // 此方法不注销会话，也不等待 run 和它创建的 goroutine 退出。
 func (s *session) abort() {
-	s.cancel(errSessionAborted)
+	s.abortWithCause(errSessionAborted)
+}
+
+// abortWithCause 保留首次取消原因，统一中断底层传输；不提前归还名额。
+func (s *session) abortWithCause(cause error) {
+	s.cancel(cause)
 	s.controlMu.Lock()
 	if s.aborted {
 		s.controlMu.Unlock()
@@ -51,6 +58,8 @@ func cancellationResult(ctx context.Context) (sessionResult, bool) {
 	kind := resultServerStopping
 	if errors.Is(cause, errSessionAborted) {
 		kind = resultAborted
+	} else if errors.Is(cause, wsheartbeat.ErrFailed) {
+		kind = resultHeartbeatFailed
 	}
 	return sessionResult{kind: kind, err: cause}, true
 }

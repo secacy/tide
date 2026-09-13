@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+	"github.com/secacy/tide-artisan/internal/wsheartbeat"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 	"google.golang.org/grpc"
 )
@@ -184,7 +185,7 @@ func runHeartbeatOverhead(t *testing.T, n int, interval, window time.Duration) {
 		}
 	}}
 	var err error
-	g, err = New(ctx, wrapper, slog.New(slog.NewTextHandler(io.Discard, nil)), Config{MaxSessions: n})
+	g, err = New(ctx, wrapper, slog.New(slog.NewTextHandler(io.Discard, nil)), Config{Heartbeat: wsheartbeat.Config{Disabled: true}, MaxSessions: n})
 	if err != nil {
 		t.Fatal(err)
 	}
