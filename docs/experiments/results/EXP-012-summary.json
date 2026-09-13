@@ -1,0 +1,32 @@
+{
+  "experiment": "EXP-012",
+  "commit": "7575ff216a3303504e9354d6fee600ba9c6c4dad",
+  "kind": "correctness regression, not benchmark",
+  "raw_sha256": "18ecd01fa8f525ca2eee5f2f11a7b6cf2197d0766969c277ca2a75225f2fa8e3",
+  "race": true,
+  "top_level_tests": 15,
+  "rounds": 10,
+  "passed_top_level_runs": 150,
+  "per_test_passes": {
+    "github.com/secacy/tide-artisan/internal/wsheartbeat / TestFromEnvironment": 10,
+    "github.com/secacy/tide-artisan/internal/wsheartbeat / TestNormalize": 10,
+    "github.com/secacy/tide-artisan/internal/wsheartbeat / TestMonitorTimeout": 10,
+    "github.com/secacy/tide-artisan/internal/wsheartbeat / TestMonitorStopPreservesInflightPing": 10,
+    "github.com/secacy/tide-artisan/internal/wsheartbeat / TestMonitorDisabledAndStoppedBeforeFirstProbe": 10,
+    "github.com/secacy/tide-artisan/internal/wsclient / TestClientHeartbeatFailure": 10,
+    "github.com/secacy/tide-artisan/internal/wsclient / TestClientNormalCloseDuringHeartbeat": 10,
+    "github.com/secacy/tide-artisan/internal/wsclient / TestClientHeartbeatConfig": 10,
+    "github.com/secacy/tide-artisan/internal/gateway / TestGatewayHeartbeatEndToEnd": 10,
+    "github.com/secacy/tide-artisan/internal/gateway / TestGatewayHeartbeatFailureStages": 10,
+    "github.com/secacy/tide-artisan/internal/gateway / TestGatewayOpeningWorkerProcessingDeadline": 10,
+    "github.com/secacy/tide-artisan/internal/gateway / TestGatewayHeartbeatFailureDuringBusinessCleanup": 10,
+    "github.com/secacy/tide-artisan/internal/gateway / TestGatewayHeartbeatHealthyPreparationAndEnd": 10,
+    "github.com/secacy/tide-artisan/internal/gateway / TestGatewayHeartbeatJoinDoesNotDelayProcessingCancellation": 10,
+    "github.com/secacy/tide-artisan/internal/gateway / TestGatewayHeartbeatStopDuringControlWrite": 10
+  },
+  "normal_close_during_client_ping_sessions": 200,
+  "real_client_gateway_mock_sessions": 10,
+  "failures": 0,
+  "exclusions": [],
+  "boundary": "Short loopback/bufconn/net.Pipe regressions with accelerated timing and synctest virtual time. No production detection percentile, capacity or replay performance claim."
+}

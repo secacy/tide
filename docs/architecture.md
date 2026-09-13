@@ -1,8 +1,8 @@
 # Tide 当前架构
 
-Updated: 2026-09-12
-Source: e92c1288afad46f0f6da05b3375d851a80a94709
-Related: [ADR-002](adr/ADR-002-streaming-io-backpressure.md), [ADR-003](adr/ADR-003-processing-progress-deadline.md), [ADR-004](adr/ADR-004-admission-protection.md), [ADR-005](adr/ADR-005-worker-reservation-lifecycle.md), [ADR-006](adr/ADR-006-least-reserved-ratio-selection.md), [ADR-007](adr/ADR-007-experimental-capacity-margin.md)
+Updated: 2026-09-13
+Source: 7575ff216a3303504e9354d6fee600ba9c6c4dad
+Related: [ADR-002](adr/ADR-002-streaming-io-backpressure.md), [ADR-003](adr/ADR-003-processing-progress-deadline.md), [ADR-004](adr/ADR-004-admission-protection.md), [ADR-005](adr/ADR-005-worker-reservation-lifecycle.md), [ADR-006](adr/ADR-006-least-reserved-ratio-selection.md), [ADR-007](adr/ADR-007-experimental-capacity-margin.md), [ADR-008](adr/ADR-008-websocket-heartbeat-lifecycle.md)
 
 ## 系统边界
 
@@ -29,23 +29,25 @@ Related: [ADR-002](adr/ADR-002-streaming-io-backpressure.md), [ADR-003](adr/ADR-
 
 ## 会话执行结构
 
-完成 Start 校验和 Worker 建流后，Session 启动三个 I/O goroutine：
+WebSocket 升级后启动独立心跳，Start 校验完成后启动三个 I/O goroutine。Worker 建流由 Sender 执行，Reader 和期限协调者不等待建流：
 
 ```text
 WebSocket Reader → 有界音频 FIFO → Worker Sender → gRPC Send
 
 gRPC Recv → download → 带期限的 WebSocket Write
 
-三个执行流 → Session 协调者 → 取消 / 关闭 / 等待退出
+三个业务执行流 → Session 协调者 → 取消 / 关闭 / 等待退出
+
+独立 Ping/Pong → 失败时取消 Session 并中断传输
 ```
 
 | 角色 | 职责与等待边界 |
 | --- | --- |
 | Reader | 独占 WebSocket 读取。立即尝试入队，满时报告过载；合法 End 关闭队列输入，随后继续监测断开和非法后续数据 |
 | 音频队列 | 同时限制字节数和条目数，复制成功入队的音频，FIFO 出队时移除引用；只关闭输入时保留积压供 Sender 排空 |
-| Sender | 独占 Send/CloseSend；发送前建立音频序号水位，空队列等待使用 RPC Context；排空后半关闭请求方向 |
-| download | 校验并消费 Worker 处理进度，不转发为文字；结果继续串行写入，每条有独立期限，写入期间不继续 Recv |
-| 协调者 | 处理失败及发送完成、Worker EOF 事件，复用一个计时器等待最近的音频/End 截止时刻；执行清理并等待三个执行流退出 |
+| Sender | 建立 RPC，将流对象通过单槽通道交给 download，独占 Send/CloseSend；发送前建立音频序号水位，空队列等待使用 RPC Context；排空后半关闭请求方向 |
+| download | 可取消地等待流对象，随后校验并消费 Worker 处理进度，不转发为文字；结果继续串行写入，每条有独立期限，写入期间不继续 Recv |
+| 协调者 | 处理失败及发送完成、Worker EOF 事件，复用一个计时器等待最近的音频/End 截止时刻；执行清理并等待业务执行流和心跳退出 |
 
 实现入口：[session.go](../internal/gateway/session.go)、[upload.go](../internal/gateway/upload.go)、[audio_queue.go](../internal/gateway/audio_queue.go)、[download.go](../internal/gateway/download.go)。
 
@@ -61,6 +63,8 @@ gRPC Recv → download → 带期限的 WebSocket Write
 
 | 配置 | 默认值 | 含义 |
 | --- | ---: | --- |
+| Heartbeat.Interval / Timeout | 2 秒 / 3 秒 | 计划探测周期 / 写 Ping 加等待匹配 Pong 的总预算，两端独立配置 |
+| Heartbeat.Disabled | false | 显式禁用主动探测，适用于对照或由调用方接管；仍须持续 Read 回应对端 |
 | MaxMessageBytes | 1 MiB | 单条入站 WebSocket 消息上限 |
 | AudioQueueMaxBytes | 64,000 | 等待发送的音频字节上限，约 2 秒音频 |
 | AudioQueueMaxChunks | 128 | 等待发送的音频块数量上限 |
@@ -74,7 +78,7 @@ gRPC Recv → download → 带期限的 WebSocket Write
 
 ## 完成与失败语义
 
-正常结束依次经历：Reader 接收 End → Sender 排空队列 → 开始并完成 CloseSend → 收齐结果及 Worker EOF → WebSocket 正常关闭 → 等待执行流退出 → 归还 Worker 名额 → 注销。CloseSend 返回和 Worker EOF 的观测顺序可以交错，协调者需要同时确认两者。Worker 在开始半关闭前就返回 EOF，按失败处理。
+正常结束依次经历：Reader 接收 End → Sender 排空队列 → 开始并完成 CloseSend → 收齐结果及 Worker EOF → 停止后续心跳并等待在途探测 → WebSocket 正常关闭 → 等待执行流退出 → 归还 Worker 名额 → 注销。CloseSend 返回和 Worker EOF 的观测顺序可以交错，协调者需要同时确认两者。Worker 在开始半关闭前就返回 EOF，按失败处理。
 
 正常完成还要求全部已接纳音频均获处理确认。已到期的失败不能被迟到确认或 End 重复通知清除；已有音频全部确认后，音频期限撤销，End 期限仍独立存在。期限约束协调者等待业务完成的过程，之后的关闭握手和清理仍须单独观测，不构成无条件的总退出时间上界。
 
@@ -87,6 +91,16 @@ Send EOF 仅表示发送停止，不能当作 RPC 成功。Send EOF 或 CloseSen
 容量不足时优先保护已接纳问诊，升级前立即返回 HTTP 503，拒绝请求不创建 Worker RPC，不提供接入等待或抢占已有会话。当前分别检查 Gateway 的 `MaxSessions` 与选定 Worker 的配额；这些仍是静态配置，不会自动感知 Worker 剩余处理能力，实验候选值 6 未设为生产默认容量。
 
 会话在升级前登记，所有执行流与连接清理完成后才注销。StopAccepting 拒绝新会话，Wait 仅等待注销；Abort 取消会话并关闭原始传输。服务关闭先共享 5 秒自然排空预算，必要时进入 2 秒强制清理等待预算；同步关闭调用不能由等待预算抢占。
+
+## 心跳与退出协调
+
+[ADR-008](adr/ADR-008-websocket-heartbeat-lifecycle.md) 采用双端独立 Ping/Pong，默认两秒周期、三秒单次预算，最多一个在途 Ping。Gateway 从升级成功后开始，覆盖等待 Start、慢建流、传输和 End 后等待结果；客户端从 Dial 成功后开始。业务 Reader 是唯一读取者，也负责消费控制帧；没有另建心跳 Reader。正常空闲继续保活，处理期限仍独立衡量 Worker 进度。
+
+`Monitor.Stop` 幂等关闭后续探测入口，不取消在途 Ping 的 Context；`Wait` 等它按自身预算退出。正常收尾先停用并 join，再完成关闭握手。业务失败先取消 RPC，再 join 心跳；在途探测也失败时直接 CloseNow，保留先选定的业务错误，避免继续等待关闭握手。显式 Abort 可以立即中断原始传输。正常停止可能增加当前探测的剩余等待，但五秒检测目标不代表整个收尾硬上界。
+
+活动会话心跳失败携带独立 `websocket heartbeat failed` 原因，取消 Session 并中断连接；客户端取消发送、退出接收并返回错误。正常收到 1000 时，不因同时结束的 Ping 重判为失败。心跳错误可能来自读写争用、本地调度或网络，不直接改变 Worker 接入资格；对端不一定得到关闭原因。
+
+实现：[公共探测组件](../internal/wsheartbeat/heartbeat.go)、[Gateway 协调](../internal/gateway/session.go)、[客户端](../internal/wsclient/client.go)。两端命令通过 `TIDE_HEARTBEAT_INTERVAL` / `TIDE_HEARTBEAT_TIMEOUT` 在启动时配置，见 [命令说明](command.md)。库组件只读取显式 Config，不隐式读取环境。客户端仍是单次会话，不自动重连；其 `io.Reader` 输入必须能够返回，Context 无法中断任意阻塞 Reader。
 
 ## 已验证范围
 
@@ -104,4 +118,6 @@ Send EOF 仅表示发送停止，不能当作 RPC 成功。Send EOF 或 CloseSen
 
 [EXP-009](experiments/EXP-009-multi-worker-capacity.md) 延长多 Worker 容量验证：配额 1/3 在本机 Mock 下完成四会话五分钟正常输入，并在两轮周期暂停中确认十次恢复；1/4 正常负载达标但有三次暂停恢复未确认，1/5 出现处理超时。持续降速时 B 仍失败，A 在本实验中正常完成。全部名额与活动流最终清理；[ADR-007](adr/ADR-007-experimental-capacity-margin.md) 据此确认 1/3 为上述模拟条件下的保守实验配额，1/4 保留为正常负载下的较高利用率候选。该决策不改变应用启动默认值，也不代表最大稳定容量。M5 按此实验与基础范围收尾，恢复协议尚待 M6 设计。
 
-当前仍没有 Start/建流专用期限、静默断网心跳发现、结果持久化或恢复协议。无未确认音频且未 End 的连接不会仅因无文字输出而超时。WAN/TLS 慢读、临床量级会话时长及共享模型资源下的稳定容量尚未验证；正常转录可见延迟 P95 目标 1 秒仍需真实模型验证。
+[EXP-010](experiments/EXP-010-silent-disconnect.md) / [EXP-011](experiments/EXP-011-heartbeat-interval.md) 提供候选检测与周期成本依据；[EXP-012](experiments/EXP-012-heartbeat-lifecycle.md) 保存生产实现的生命周期回归及收尾失败复现。候选性能数据不直接当作当前生产代码的性能测量。
+
+当前仍没有 Start/建流专用期限、结果持久化或恢复协议。无未确认音频且未 End 的连接不会仅因无文字输出而超时。WAN/TLS 慢读、临床量级会话时长及共享模型资源下的稳定容量尚未验证；正常转录可见延迟 P95 目标 1 秒仍需真实模型验证。

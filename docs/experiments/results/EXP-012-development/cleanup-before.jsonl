@@ -1,0 +1,9 @@
+{"Time":"2026-09-13T15:48:47.003298+08:00","Action":"start","Package":"github.com/secacy/tide-artisan/internal/gateway"}
+{"Time":"2026-09-13T15:48:47.613082+08:00","Action":"run","Package":"github.com/secacy/tide-artisan/internal/gateway","Test":"TestGatewayHeartbeatFailureDuringBusinessCleanup"}
+{"Time":"2026-09-13T15:48:47.61319+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/gateway","Test":"TestGatewayHeartbeatFailureDuringBusinessCleanup","Output":"=== RUN   TestGatewayHeartbeatFailureDuringBusinessCleanup\n"}
+{"Time":"2026-09-13T15:48:48.315918+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/gateway","Test":"TestGatewayHeartbeatFailureDuringBusinessCleanup","Output":"    heartbeat_test.go:138: waiting for failed Ping bypassed graceful handshake: context deadline exceeded\n"}
+{"Time":"2026-09-13T15:48:48.316124+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/gateway","Test":"TestGatewayHeartbeatFailureDuringBusinessCleanup","Output":"--- FAIL: TestGatewayHeartbeatFailureDuringBusinessCleanup (0.70s)\n"}
+{"Time":"2026-09-13T15:48:48.316179+08:00","Action":"fail","Package":"github.com/secacy/tide-artisan/internal/gateway","Test":"TestGatewayHeartbeatFailureDuringBusinessCleanup","Elapsed":0.7}
+{"Time":"2026-09-13T15:48:48.316234+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/gateway","Output":"FAIL\n"}
+{"Time":"2026-09-13T15:48:48.317887+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/gateway","Output":"FAIL\tgithub.com/secacy/tide-artisan/internal/gateway\t1.314s\n"}
+{"Time":"2026-09-13T15:48:48.317965+08:00","Action":"fail","Package":"github.com/secacy/tide-artisan/internal/gateway","Elapsed":1.315}

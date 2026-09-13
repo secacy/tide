@@ -38,4 +38,4 @@ Related: [EXP-010](../experiments/EXP-010-silent-disconnect.md), [EXP-011](../ex
 
 ## Validation
 
-频率及静默失联依据见 EXP-010/011，原始数据保留原版本语义。实现验证覆盖等待 Start、慢建流、Send 停滞、健康空闲、End/final/1000、正常停用时在途 Ping、处理失败优先取消以及 Abort/停接并发；用 race 检查执行流及名额归还。生产实现的定点验证与候选性能样本区分记录，不把测试耗时当作业务延迟或恢复时间。
+频率及静默失联依据见 EXP-010/011，原始数据保留原版本语义。[EXP-012](../experiments/EXP-012-heartbeat-lifecycle.md) 完成十五个顶层测试各十轮 race，覆盖等待 Start、慢建流、Send 停滞、健康空闲、End/final/1000、正常停用时在途 Ping、处理失败优先取消以及 Abort/停接协调；保留了业务失败后追加关闭等待的复现与修正证据。全量带实验标签的 race 与 vet 通过。生产实现的定点验证与候选性能样本区分记录，不把测试耗时当作业务延迟或恢复时间。

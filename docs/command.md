@@ -48,6 +48,19 @@ TIDE_GATEWAY_CONFIG=./gateway.json go run ./cmd/gateway
 
 命令行 Mock 仍按各 RPC 独立模拟处理；共享处理槽位由实验 Worker 提供，不能用这里的两个 Mock 进程直接证明模型容量。复现实验参见 [EXP-008](experiments/EXP-008-worker-selection.md)。
 
+## WebSocket 心跳
+
+Gateway 和 Go 客户端默认各自每两秒主动 Ping，写入和等待 Pong 共用三秒预算。两端可独立配置，启动后不热更新；空值或 `0` 使用默认值，负值和无效 duration 使启动失败。
+
+```bash
+TIDE_HEARTBEAT_INTERVAL=2s TIDE_HEARTBEAT_TIMEOUT=3s go run ./cmd/gateway
+TIDE_HEARTBEAT_INTERVAL=2s TIDE_HEARTBEAT_TIMEOUT=3s go run ./cmd/ws-client
+```
+
+将间隔改为 `5s` 可复验较低探测频率，但检测目标相应约为八秒。参数作用于当前命令所在进程，不会自动同步给另一端。库调用者可设置 `gateway.Config.Heartbeat` / `wsclient.Config.Heartbeat`；`wsheartbeat.Config.Disabled` 是显式实验对照或外部接管入口，不提供隐式禁用的负数约定。
+
+客户端仍须持续读取结果和控制帧；心跳不能只靠发送音频推进。失败返回不代表已经重连或补齐，当前命令不会自动重试。依据见 [ADR-008](adr/ADR-008-websocket-heartbeat-lifecycle.md)。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \
