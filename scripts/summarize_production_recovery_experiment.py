@@ -21,13 +21,18 @@ def summarize(raw):
     if hashlib.sha256(raw.read_bytes()).hexdigest() != meta['raw_sha256']:
         raise ValueError('raw evidence hash mismatch')
     samples = []
+    # go test -json can split one long t.Log line across Output events.
+    # Reassemble per test before parsing records; never discard partial samples.
+    outputs = defaultdict(list)
     for line in raw.read_text().splitlines():
         event = json.loads(line)
         if event.get('Action') == 'fail':
             raise ValueError('raw test failure; preserve and investigate')
-        output = event.get('Output', '')
-        if 'RECOVERY_SAMPLE ' in output:
-            samples.append(json.loads(output.split('RECOVERY_SAMPLE ', 1)[1]))
+        outputs[(event.get('Package'), event.get('Test'))].append(event.get('Output', ''))
+    for chunks in outputs.values():
+        for line in ''.join(chunks).splitlines():
+            if 'RECOVERY_SAMPLE ' in line:
+                samples.append(json.loads(line.split('RECOVERY_SAMPLE ', 1)[1]))
     if Counter(s['case'] for s in samples) != Counter({c: meta['count'] for c in CASES}):
         raise ValueError('missing, extra or duplicated case samples')
     groups = defaultdict(list)
@@ -58,6 +63,7 @@ def summarize(raw):
         groups[s['case']].append(s)
     lines = ['# EXP-014 production recovery summary', '',
              f"Source commit: `{meta['commit']}`; race: `{meta['race']}`; samples: {len(samples)}; excluded: 0.", '',
+             f"Analyzer SHA-256: `{hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}`.", '',
              'Run elapsed includes initial capture/admission and cleanup; it is not fault-to-recovery latency or an ASR benchmark.', '',
              '| Case | n | Complete | Attempts min–max | Run ms min–max | PCM peak bytes max |',
              '| --- | ---: | --- | ---: | ---: | ---: |']

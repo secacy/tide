@@ -1,12 +1,12 @@
 # Tide 当前架构
 
 Updated: 2026-09-13
-Source: 7575ff216a3303504e9354d6fee600ba9c6c4dad
+Source: 469947dfb0833320fd8fbfd4c650601bfbd33e46
 Related: [ADR-002](adr/ADR-002-streaming-io-backpressure.md), [ADR-003](adr/ADR-003-processing-progress-deadline.md), [ADR-004](adr/ADR-004-admission-protection.md), [ADR-005](adr/ADR-005-worker-reservation-lifecycle.md), [ADR-006](adr/ADR-006-least-reserved-ratio-selection.md), [ADR-007](adr/ADR-007-experimental-capacity-margin.md), [ADR-008](adr/ADR-008-websocket-heartbeat-lifecycle.md)
 
 ## 系统边界
 
-当前实现为 WebSocket Client → 单 Go Gateway → 固定列表中的 gRPC ASR Worker。Mock Worker 支持返回 partial/final；Gateway 负责实时转发、会话登记、总接入上限、各 Worker 名额预留及生命周期收尾。一个 WebSocket 会话固定一个 Worker、对应一次 RPC，不包含重连恢复、跨 Worker 重试或病历生成。
+当前实现为 WebSocket Client → 单 Go Gateway → 固定列表中的 gRPC ASR Worker。Mock Worker 支持返回 partial/final；Gateway 负责实时转发、会话登记、总接入上限、各 Worker 名额预留及生命周期收尾。每个 WebSocket 尝试固定一个 Worker、对应一次 RPC；v1 为单次识别，v2 由存活客户端持有问诊身份并在有限预算内重新接入和重放，新的接入重新参与 Worker 选择。不包含病历生成或服务端持久化恢复。
 
 音频约定为 16 kHz、单声道、16-bit PCM，即每秒 32,000 字节；客户端默认每块 3,200 字节。
 
@@ -57,7 +57,7 @@ gRPC Recv → download → 带期限的 WebSocket Write
 
 每个 RPC 的请求 `audio_seq` 从 1 连续递增。独立 `ProcessingProgress.processed_through_seq` 确认此前所有音频均已处理，包含静音；允许累计和重复确认，拒绝倒退、越过已开始发送的水位或与文字结果混装。开始发送水位在 Send 调用前建立，确认可以先于 Send 返回。
 
-进度表示处理完成，不能用接收确认代替。批量周期和返回延迟计入等待预算。协议新增字段需要 Gateway 与 Worker 配套升级：旧 Worker 的缺失确认不会被视作成功。WebSocket Start/result 格式保持原样，客户端通过最终关闭状态判断整次转录是否完整，分段 `isFinal` 不代表会话完成。
+进度表示处理完成，不能用接收确认代替。批量周期和返回延迟计入等待预算。协议新增字段需要 Gateway 与 Worker 配套升级：旧 Worker 的缺失确认不会被视作成功。v1 Start/result 格式保持原样，分段 `isFinal` 不代表会话完成。v2 的安全 checkpoint 与此处理水位独立，整个问诊完整性由客户端结果覆盖、End 完成及显式缺口共同决定。
 
 ## 配置与资源边界
 
@@ -100,7 +100,17 @@ Send EOF 仅表示发送停止，不能当作 RPC 成功。Send EOF 或 CloseSen
 
 活动会话心跳失败携带独立 `websocket heartbeat failed` 原因，取消 Session 并中断连接；客户端取消发送、退出接收并返回错误。正常收到 1000 时，不因同时结束的 Ping 重判为失败。心跳错误可能来自读写争用、本地调度或网络，不直接改变 Worker 接入资格；对端不一定得到关闭原因。
 
-实现：[公共探测组件](../internal/wsheartbeat/heartbeat.go)、[Gateway 协调](../internal/gateway/session.go)、[客户端](../internal/wsclient/client.go)。两端命令通过 `TIDE_HEARTBEAT_INTERVAL` / `TIDE_HEARTBEAT_TIMEOUT` 在启动时配置，见 [命令说明](command.md)。库组件只读取显式 Config，不隐式读取环境。客户端仍是单次会话，不自动重连；其 `io.Reader` 输入必须能够返回，Context 无法中断任意阻塞 Reader。
+实现：[公共探测组件](../internal/wsheartbeat/heartbeat.go)、[Gateway 协调](../internal/gateway/session.go)、[客户端](../internal/wsclient/client.go)。两端命令通过 `TIDE_HEARTBEAT_INTERVAL` / `TIDE_HEARTBEAT_TIMEOUT` 在启动时配置，见 [命令说明](command.md)。库组件只读取显式 Config，不隐式读取环境。`Client.Run` 仍是单次会话；v2 的 `RunRecoverable` 另负责跨尝试恢复。其 `AudioSource` 必须响应 Context，文件/内存 Reader 适配要求 Read 能及时返回。
+
+## 客户端有限恢复
+
+[ADR-009](adr/ADR-009-bounded-recovery.md) 已实现：业务 Session 留在客户端，各 RecognitionAttempt 使用独立连接/RPC，先取消并等待本地旧尝试退出再重试；Gateway 注册表继续按本次接入管理名额。客户端协调 goroutine 独占结果、缓存和缺口，采集与网络 I/O 独立。
+
+可恢复 Worker 显式实现 `RecoverableRecognize`：Ready 后接收带全局采样点偏移的 PCM，提供不可变、连续覆盖且无需前文音频即可重启的 checkpoint。客户端保存结果与断点后才释放 PCM；progress 不能代替 checkpoint。旧尝试和已提交重复结果不再次追加。Mock 使用人工独立片段，真实模型契约未验证。
+
+默认缓存十五秒 PCM / 最多 4096 块，一轮恢复总预算十秒，包含重试间隔、Ready、重放和追赶。只有安全断点追上采集末尾才结束一轮预算，End 后还要求正常完成。缓存不足且未 End 时可在同一剩余预算中从新片段继续，并保留历史缺口；End 后禁止跳过尾部。预算耗尽返回中断报告并停止自动重试，不能用最后一次 1000 消除旧缺口。
+
+完整协议、消息、配置与 API 使用见 [恢复协议](recovery-protocol.md)。实现：[协调器](../internal/wsclient/recovery.go)、[尝试 I/O](../internal/wsclient/recovery_attempt.go)、[Gateway 协议校验](../internal/gateway/recovery.go)、[Mock 契约](../internal/mockasr/recovery.go)。PCM 上限不包含固定通道/发送缓冲，也不是总会话内存上限；结果随问诊增长。Source 取消及观察回调及时返回是接口条件。
 
 ## 已验证范围
 
@@ -116,10 +126,12 @@ Send EOF 仅表示发送停止，不能当作 RPC 成功。Send EOF 或 CloseSen
 
 [EXP-008](experiments/EXP-008-worker-selection.md) 验证固定 Worker 预留和两种候选分配的行为：异构组中最小预留比例改善本轮短负载回显延迟，同容量组表现接近；32 个流式会话全部正常完成并归还名额。逻辑重放、短回显和微基准不代表长期或真实模型容量，[ADR-006](adr/ADR-006-least-reserved-ratio-selection.md) 据此确认当前推荐最小预留比例策略。
 
-[EXP-009](experiments/EXP-009-multi-worker-capacity.md) 延长多 Worker 容量验证：配额 1/3 在本机 Mock 下完成四会话五分钟正常输入，并在两轮周期暂停中确认十次恢复；1/4 正常负载达标但有三次暂停恢复未确认，1/5 出现处理超时。持续降速时 B 仍失败，A 在本实验中正常完成。全部名额与活动流最终清理；[ADR-007](adr/ADR-007-experimental-capacity-margin.md) 据此确认 1/3 为上述模拟条件下的保守实验配额，1/4 保留为正常负载下的较高利用率候选。该决策不改变应用启动默认值，也不代表最大稳定容量。M5 按此实验与基础范围收尾，恢复协议尚待 M6 设计。
+[EXP-009](experiments/EXP-009-multi-worker-capacity.md) 延长多 Worker 容量验证：配额 1/3 在本机 Mock 下完成四会话五分钟正常输入，并在两轮周期暂停中确认十次恢复；1/4 正常负载达标但有三次暂停恢复未确认，1/5 出现处理超时。持续降速时 B 仍失败，A 在本实验中正常完成。全部名额与活动流最终清理；[ADR-007](adr/ADR-007-experimental-capacity-margin.md) 据此确认 1/3 为上述模拟条件下的保守实验配额，1/4 保留为正常负载下的较高利用率候选。该决策不改变应用启动默认值，也不代表最大稳定容量。M5 按此实验与基础范围收尾；M6 恢复仍通过相同接入与名额机制。
 
 [EXP-010](experiments/EXP-010-silent-disconnect.md) / [EXP-011](experiments/EXP-011-heartbeat-interval.md) 提供候选检测与周期成本依据；[EXP-012](experiments/EXP-012-heartbeat-lifecycle.md) 保存生产实现的生命周期回归及收尾失败复现。候选性能数据不直接当作当前生产代码的性能测量。
 
-[EXP-013](experiments/EXP-013-recovery-checkpoint.md) 用测试客户端状态模型和可控 Worker 验证处理进度不能代替恢复断点，以及迟到/重复结果、断点停滞导致缓存不足的边界；另用生产 Gateway 验证旧清理占用与接入拒绝。候选恢复逻辑仅存在于测试中，安全断点能力和最终协议尚未确认。
+[EXP-013](experiments/EXP-013-recovery-checkpoint.md) 用测试客户端状态模型和可控 Worker 验证处理进度不能代替恢复断点，以及迟到/重复结果、断点停滞导致缓存不足的边界；另用生产 Gateway 验证旧清理占用与接入拒绝。该实验提供候选反例，最终协议随后由 ADR-009 确认，实际链路由 EXP-014 验证。
 
-当前仍没有 Start/建流专用期限、结果持久化或恢复协议。无未确认音频且未 End 的连接不会仅因无文字输出而超时。WAN/TLS 慢读、临床量级会话时长及共享模型资源下的稳定容量尚未验证；正常转录可见延迟 P95 目标 1 秒仍需真实模型验证。
+Gateway 仍没有 Start/建流专用期限；v2 客户端从 Dial 到 Ready 另有三秒预算，并在恢复期间服从剩余总预算。当前没有结果持久化。无未确认音频且未 End 的连接不会仅因无文字输出而超时。WAN/TLS 慢读、临床量级会话时长及共享模型资源下的稳定容量尚未验证；正常转录可见延迟 P95 目标 1 秒仍需真实模型验证。
+
+[EXP-014](experiments/EXP-014-production-recovery.md) 验证实际 Client/Gateway 链路的 Worker 故障、WebSocket checkpoint 交付丢失、End 关闭丢失、缓存耗尽与预算终止。三十个样本全部满足预设语义与清理，包含十五个按预期不完整结果；加速预算不能证明默认预算下的持续追赶。M6 仍需联合弱网及实例故障负载。

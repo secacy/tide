@@ -43,3 +43,5 @@ Related: [EXP-013](../experiments/EXP-013-recovery-checkpoint.md), [ADR-005](ADR
 ## Validation
 
 EXP-013 提供交付丢失、迟到/重复、缓存停滞及接入拒绝的候选证据。实现回归需覆盖真实 v2 Client/Gateway/Mock 链路、结果丢失后重放、持续故障预算、缓存不足时带缺口继续、End 后尾部成功/失败、非法检查点与旧 v1 兼容，并分别检查尝试退出、名额归还和逻辑问诊完整性。
+
+实现已由 [EXP-014](../experiments/EXP-014-production-recovery.md) 的三十个实际链路故障样本及普通回归验证。该证据覆盖重放、缺口、预算与清理语义，不证明默认预算下的持续追赶或真实 ASR 重启质量。
