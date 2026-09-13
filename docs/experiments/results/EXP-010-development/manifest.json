@@ -1,0 +1,10 @@
+{
+  "scope": "Interrupted development race run; not formal latency evidence. Original candidate source reconstructed and verified byte-for-byte against original metadata hash.",
+  "failure": "acked_idle_heartbeat: canceled in-flight Ping during planned stop closed the connection before End",
+  "raw_sha256": "d47448381b1cd6ff975683a78c01754b53307c561ad46e95bab8b524dc48ce87",
+  "original_candidate_sha256": "b56c5a9242d7a857c74ba96b18814c32baa5471dd3612148483e92deeff9a485",
+  "interrupted": true,
+  "reproducer": "TestDisconnectHeartbeatStopDuringPing/cancel_inflight; current committed test also verifies stop_future",
+  "remaining_sources_available_at_commit": "fdfc7b4b4ea82ff7240372b1768e1e7c01977719",
+  "verified_source_files": 48
+}
