@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run EXP-010 baseline and heartbeat candidates without editing production code."""
+"""Run EXP-010/011 detection and heartbeat overhead experiments without editing production code."""
 import argparse
 import hashlib
 import json
@@ -17,9 +17,16 @@ def main():
     parser.add_argument('--case', default='.*')
     parser.add_argument('--count', type=int, default=1)
     parser.add_argument('--race', action='store_true', help='Correctness only, not formal performance evidence')
+    parser.add_argument('--experiment', choices=('disconnect', 'interval', 'overhead'), default='disconnect')
+    parser.add_argument('--connections', type=int, help='Overhead smoke check override; formal workload uses 64/256')
+    parser.add_argument('--window-ms', type=int, help='Overhead smoke check override; formal window is 21000ms')
     args = parser.parse_args()
     if args.count < 1:
         parser.error('count must be positive')
+    if (args.connections is not None or args.window_ms is not None) and args.experiment != 'overhead':
+        parser.error('connection/window overrides apply only to overhead')
+    if (args.connections is not None and not 1 <= args.connections <= 1024) or (args.window_ms is not None and args.window_ms < 1):
+        parser.error('invalid smoke override')
     root = Path(__file__).resolve().parents[1]
     output = args.output.resolve()
     meta = output.with_suffix(output.suffix + '.meta.json')
@@ -35,27 +42,35 @@ def main():
     overlay_source += '\nfunc init() { disconnectOverlayEnabled = true }\n'
     env = os.environ.copy()
     env['TIDE_RUN_DISCONNECT_EXPERIMENTS'] = '1'
+    env['TIDE_RUN_HEARTBEAT_EXPERIMENTS'] = '1'
+    for name, value in [('TIDE_HEARTBEAT_CONNECTIONS', args.connections), ('TIDE_HEARTBEAT_WINDOW_MS', args.window_ms)]:
+        env.pop(name, None)
+        if value is not None:
+            env[name] = str(value)
     sources = [root / 'go.mod', root / 'go.sum', Path(__file__).resolve(),
                root / 'scripts/summarize_disconnect_experiment.py', root / 'scripts/summarize_streaming_load.py']
+    sources.append(root / 'scripts/summarize_heartbeat_interval.py')
     sources += sorted((root / 'internal').rglob('*.go')) + sorted((root / 'proto').rglob('*.go'))
     with tempfile.TemporaryDirectory(prefix='tide-disconnect-') as temp:
         modified = Path(temp) / 'session.go'
         modified.write_text(overlay_source)
         overlay = Path(temp) / 'overlay.json'
         overlay.write_text(json.dumps({'Replace': {str(root / relative): str(modified)}}))
+        test = {'disconnect': 'TestExperimentDisconnect', 'interval': 'TestExperimentHeartbeatInterval', 'overhead': 'TestExperimentHeartbeatOverhead'}[args.experiment]
         command = ['go', 'test', '-mod=readonly', '-tags=tide_disconnect', '-overlay', str(overlay),
-                   './internal/gateway', '-run', f'^TestExperimentDisconnect$/^{args.case}$',
+                   './internal/gateway', '-run', f'^{test}$/^{args.case}$',
                    f'-count={args.count}', '-timeout=15m', '-json']
         if args.race:
             command.insert(2, '-race')
         metadata = {
-            'experiment': 'EXP-010',
+            'experiment': 'EXP-010' if args.experiment == 'disconnect' else 'EXP-011',
+            'kind': args.experiment, 'connections_override': args.connections, 'window_override_ms': args.window_ms,
             'commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
             'source_sha256': {str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources},
             'overlay_sha256': {relative: hashlib.sha256(overlay_source.encode()).hexdigest()},
             'overlay_insertion': site.rstrip() + '\n\tdisconnectDecision(s, result)',
             'case': args.case, 'count': args.count, 'race': args.race, 'command': command,
-            'transport': 'WS over loopback TCP relay; gRPC bufconn; bounded ordered forwarding pause, NOT packet loss',
+            'transport': 'WS loopback TCP; gRPC bufconn; detection uses bounded ordered relay pause, overhead uses direct TCP',
             'go_version': subprocess.check_output(['go', 'version'], cwd=root, env=env, text=True).strip(),
             'platform': platform.platform(), 'logical_cpu_count': os.cpu_count(),
             'environment': {k: env.get(k) for k in ('GOCACHE', 'GOPROXY', 'GOSUMDB', 'GOGC', 'GOMEMLIMIT', 'GOMAXPROCS')},

@@ -230,7 +230,13 @@ func TestExperimentDisconnect(t *testing.T) {
 }
 
 func runDisconnect(t *testing.T, scenario, mode string) {
-	ctx, cancel := context.WithTimeout(t.Context(), 25*time.Second)
+	runDisconnectTimed(t, scenario, mode, "EXP-010", 2*time.Second, 6*time.Second)
+}
+
+// runDisconnectTimed shares the exact fault and cleanup paths across interval
+// candidates. The legacy EXP-010 entry keeps its original timing and record names.
+func runDisconnectTimed(t *testing.T, scenario, mode, experiment string, interval, observation time.Duration) {
+	ctx, cancel := context.WithTimeout(t.Context(), max(25*time.Second, interval+observation+15*time.Second))
 	defer cancel()
 	trace := &disconnectTrace{epoch: time.Now(), events: make(map[string]disconnectEvent), pings: make(map[string]int)}
 	started, workerDone, rpcCanceled := make(chan struct{}), make(chan struct{}), make(chan struct{})
@@ -388,10 +394,10 @@ func runDisconnect(t *testing.T, scenario, mode string) {
 	defer func() { stopHB(); heartbeatWG.Wait() }()
 	if mode == "heartbeat" {
 		heartbeatWG.Go(func() {
-			disconnectHeartbeat(ctx, hbStop, conn, "client", trace, func() { _ = conn.CloseNow() }, 2*time.Second, 3*time.Second)
+			disconnectHeartbeat(ctx, hbStop, conn, "client", trace, func() { _ = conn.CloseNow() }, interval, 3*time.Second)
 		})
 		heartbeatWG.Go(func() {
-			disconnectHeartbeat(s.ctx, hbStop, s.ws, "gateway", trace, s.abort, 2*time.Second, 3*time.Second)
+			disconnectHeartbeat(s.ctx, hbStop, s.ws, "gateway", trace, s.abort, interval, 3*time.Second)
 		})
 	}
 	healthy := scenario == "idle" || scenario == "acked_idle" || scenario == "pause"
@@ -400,7 +406,7 @@ func runDisconnect(t *testing.T, scenario, mode string) {
 		phase = 1200 * time.Millisecond
 	}
 	if scenario == "pause" {
-		phase = 1800 * time.Millisecond
+		phase = interval - 200*time.Millisecond
 	}
 	if !healthy || scenario == "pause" {
 		select {
@@ -430,10 +436,10 @@ func runDisconnect(t *testing.T, scenario, mode string) {
 			trace.mark("resumed", "relay preserves buffered bytes and order")
 		}
 	}
-	// Six seconds after fault (or start for idle) distinguishes the 5s detection
-	// target from the watchdog. Pause controls get a further 6s after reopening.
+	// Snapshot precedes the watchdog. EXP-010 uses 6s; EXP-011 extends the
+	// window to cover its 8s candidate and at least two healthy 5s probes.
 	select {
-	case <-time.After(6 * time.Second):
+	case <-time.After(observation):
 	case <-ctx.Done():
 		t.Fatal(ctx.Err())
 	}
@@ -483,9 +489,14 @@ func runDisconnect(t *testing.T, scenario, mode string) {
 	_ = front.Close()
 	awaitGatewaySignal(t, ctx, relayDone, "relay goroutines exit")
 	after, _ := trace.snapshot()
+	caseName := scenario + "_" + mode
+	if experiment == "EXP-011" {
+		caseName = fmt.Sprintf("%s_i%d", scenario, interval.Milliseconds())
+	}
 	record := map[string]any{
-		"experiment": "EXP-010", "case": scenario + "_" + mode, "scenario": scenario, "mode": mode,
-		"interval_ms": 2000, "ping_timeout_ms": 3000, "detection_target_ms": 5000,
+		"experiment": experiment, "case": caseName, "scenario": scenario, "mode": mode,
+		"interval_ms": interval.Milliseconds(), "ping_timeout_ms": 3000, "detection_target_ms": (interval + 3*time.Second).Milliseconds(),
+		"observation_ms":        observation.Milliseconds(),
 		"processing_timeout_ms": g.cfg.ProcessingTimeout.Milliseconds(), "fault_phase_ms": phase.Milliseconds(),
 		"events_before_cleanup": before, "events": after, "successful_pings": pingCounts,
 		"registered_before_cleanup": registeredBefore, "reserved_before_cleanup": reservedBefore,
