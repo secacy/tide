@@ -120,4 +120,6 @@ Send EOF 仅表示发送停止，不能当作 RPC 成功。Send EOF 或 CloseSen
 
 [EXP-010](experiments/EXP-010-silent-disconnect.md) / [EXP-011](experiments/EXP-011-heartbeat-interval.md) 提供候选检测与周期成本依据；[EXP-012](experiments/EXP-012-heartbeat-lifecycle.md) 保存生产实现的生命周期回归及收尾失败复现。候选性能数据不直接当作当前生产代码的性能测量。
 
+[EXP-013](experiments/EXP-013-recovery-checkpoint.md) 用测试客户端状态模型和可控 Worker 验证处理进度不能代替恢复断点，以及迟到/重复结果、断点停滞导致缓存不足的边界；另用生产 Gateway 验证旧清理占用与接入拒绝。候选恢复逻辑仅存在于测试中，安全断点能力和最终协议尚未确认。
+
 当前仍没有 Start/建流专用期限、结果持久化或恢复协议。无未确认音频且未 End 的连接不会仅因无文字输出而超时。WAN/TLS 慢读、临床量级会话时长及共享模型资源下的稳定容量尚未验证；正常转录可见延迟 P95 目标 1 秒仍需真实模型验证。
