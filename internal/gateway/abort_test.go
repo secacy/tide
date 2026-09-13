@@ -18,6 +18,8 @@ import (
 	"github.com/secacy/tide-artisan/internal/wsprotocol"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestGatewayAbortWaitingForStart(t *testing.T) {
@@ -237,6 +239,11 @@ func assertGatewayAborted(t *testing.T, h *gatewayHarness, s *session) {
 // controlledWorkerClient 通过回调控制建流何时返回。
 type controlledWorkerClient struct {
 	open func(context.Context) (grpc.BidiStreamingClient[asrv1.StreamingRecognizeRequest, asrv1.StreamingRecognizeResponse], error)
+}
+
+// This fixture deliberately represents a legacy Worker without recovery support.
+func (w *controlledWorkerClient) RecoverableRecognize(context.Context, ...grpc.CallOption) (grpc.BidiStreamingClient[asrv1.StreamingRecognizeRequest, asrv1.StreamingRecognizeResponse], error) {
+	return nil, status.Error(codes.Unimplemented, "legacy fixture")
 }
 
 func (w *controlledWorkerClient) StreamingRecognize(ctx context.Context, _ ...grpc.CallOption) (grpc.BidiStreamingClient[asrv1.StreamingRecognizeRequest, asrv1.StreamingRecognizeResponse], error) {

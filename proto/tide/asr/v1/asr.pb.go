@@ -29,7 +29,10 @@ type StreamingRecognizeRequest struct {
 	//	}
 	Data []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	// 从 1 开始的连续音频块序号，每个 RPC 独立计数。
-	AudioSeq      uint64 `protobuf:"varint,2,opt,name=audio_seq,json=audioSeq,proto3" json:"audio_seq,omitempty"`
+	AudioSeq uint64 `protobuf:"varint,2,opt,name=audio_seq,json=audioSeq,proto3" json:"audio_seq,omitempty"`
+	// Recoverable RPC begins with start only; subsequent requests carry PCM.
+	RecoveryStart *RecoveryStart `protobuf:"bytes,3,opt,name=recovery_start,json=recoveryStart,proto3" json:"recovery_start,omitempty"`
+	StartSample   uint64         `protobuf:"varint,4,opt,name=start_sample,json=startSample,proto3" json:"start_sample,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -78,13 +81,30 @@ func (x *StreamingRecognizeRequest) GetAudioSeq() uint64 {
 	return 0
 }
 
+func (x *StreamingRecognizeRequest) GetRecoveryStart() *RecoveryStart {
+	if x != nil {
+		return x.RecoveryStart
+	}
+	return nil
+}
+
+func (x *StreamingRecognizeRequest) GetStartSample() uint64 {
+	if x != nil {
+		return x.StartSample
+	}
+	return 0
+}
+
 type StreamingRecognizeResponse struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	SegmentId string                 `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
 	Text      string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
 	IsFinal   bool                   `protobuf:"varint,3,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"`
 	// 独立进度消息；设置时 segment_id/text/is_final 必须为空或 false。
-	Progress      *ProcessingProgress `protobuf:"bytes,4,opt,name=progress,proto3" json:"progress,omitempty"` // 如果后续需要定位音频、展示时间轴或测量结果延迟，可以考虑使用 audio_end_offset_ms 表示：这条结果对应的音频结束位置，相对于本次识别流音频起点的毫秒偏移。
+	Progress *ProcessingProgress `protobuf:"bytes,4,opt,name=progress,proto3" json:"progress,omitempty"`
+	// Standalone envelopes; never mixed with ordinary text/progress.
+	Checkpoint    *RecoveryCheckpoint `protobuf:"bytes,5,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
+	Ready         bool                `protobuf:"varint,6,opt,name=ready,proto3" json:"ready,omitempty"` // 如果后续需要定位音频、展示时间轴或测量结果延迟，可以考虑使用 audio_end_offset_ms 表示：这条结果对应的音频结束位置，相对于本次识别流音频起点的毫秒偏移。
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -147,6 +167,20 @@ func (x *StreamingRecognizeResponse) GetProgress() *ProcessingProgress {
 	return nil
 }
 
+func (x *StreamingRecognizeResponse) GetCheckpoint() *RecoveryCheckpoint {
+	if x != nil {
+		return x.Checkpoint
+	}
+	return nil
+}
+
+func (x *StreamingRecognizeResponse) GetReady() bool {
+	if x != nil {
+		return x.Ready
+	}
+	return false
+}
+
 // 连续处理完成的音频前缀，包含静音；不是接收确认。
 type ProcessingProgress struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
@@ -192,25 +226,167 @@ func (x *ProcessingProgress) GetProcessedThroughSeq() uint64 {
 	return 0
 }
 
+// Global sample offsets use [from_sample, through_sample), 16 kHz mono PCM.
+type RecoveryStart struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SessionId     string                 `protobuf:"bytes,1,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	AttemptId     string                 `protobuf:"bytes,2,opt,name=attempt_id,json=attemptId,proto3" json:"attempt_id,omitempty"`
+	FromSample    uint64                 `protobuf:"varint,3,opt,name=from_sample,json=fromSample,proto3" json:"from_sample,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecoveryStart) Reset() {
+	*x = RecoveryStart{}
+	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecoveryStart) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecoveryStart) ProtoMessage() {}
+
+func (x *RecoveryStart) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecoveryStart.ProtoReflect.Descriptor instead.
+func (*RecoveryStart) Descriptor() ([]byte, []int) {
+	return file_proto_tide_asr_v1_asr_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *RecoveryStart) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *RecoveryStart) GetAttemptId() string {
+	if x != nil {
+		return x.AttemptId
+	}
+	return ""
+}
+
+func (x *RecoveryStart) GetFromSample() uint64 {
+	if x != nil {
+		return x.FromSample
+	}
+	return 0
+}
+
+// Immutable coverage; through_sample is safe to restart without earlier audio.
+// Empty text still commits coverage (e.g. silence).
+type RecoveryCheckpoint struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FromSample    uint64                 `protobuf:"varint,1,opt,name=from_sample,json=fromSample,proto3" json:"from_sample,omitempty"`
+	ThroughSample uint64                 `protobuf:"varint,2,opt,name=through_sample,json=throughSample,proto3" json:"through_sample,omitempty"`
+	Text          string                 `protobuf:"bytes,3,opt,name=text,proto3" json:"text,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecoveryCheckpoint) Reset() {
+	*x = RecoveryCheckpoint{}
+	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecoveryCheckpoint) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecoveryCheckpoint) ProtoMessage() {}
+
+func (x *RecoveryCheckpoint) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecoveryCheckpoint.ProtoReflect.Descriptor instead.
+func (*RecoveryCheckpoint) Descriptor() ([]byte, []int) {
+	return file_proto_tide_asr_v1_asr_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *RecoveryCheckpoint) GetFromSample() uint64 {
+	if x != nil {
+		return x.FromSample
+	}
+	return 0
+}
+
+func (x *RecoveryCheckpoint) GetThroughSample() uint64 {
+	if x != nil {
+		return x.ThroughSample
+	}
+	return 0
+}
+
+func (x *RecoveryCheckpoint) GetText() string {
+	if x != nil {
+		return x.Text
+	}
+	return ""
+}
+
 var File_proto_tide_asr_v1_asr_proto protoreflect.FileDescriptor
 
 const file_proto_tide_asr_v1_asr_proto_rawDesc = "" +
 	"\n" +
-	"\x1bproto/tide/asr/v1/asr.proto\x12\vtide.asr.v1\"L\n" +
+	"\x1bproto/tide/asr/v1/asr.proto\x12\vtide.asr.v1\"\xb2\x01\n" +
 	"\x19StreamingRecognizeRequest\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12\x1b\n" +
-	"\taudio_seq\x18\x02 \x01(\x04R\baudioSeq\"\xa7\x01\n" +
+	"\taudio_seq\x18\x02 \x01(\x04R\baudioSeq\x12A\n" +
+	"\x0erecovery_start\x18\x03 \x01(\v2\x1a.tide.asr.v1.RecoveryStartR\rrecoveryStart\x12!\n" +
+	"\fstart_sample\x18\x04 \x01(\x04R\vstartSample\"\xfe\x01\n" +
 	"\x1aStreamingRecognizeResponse\x12\x1d\n" +
 	"\n" +
 	"segment_id\x18\x01 \x01(\tR\tsegmentId\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\x12\x19\n" +
 	"\bis_final\x18\x03 \x01(\bR\aisFinal\x12;\n" +
-	"\bprogress\x18\x04 \x01(\v2\x1f.tide.asr.v1.ProcessingProgressR\bprogress\"H\n" +
+	"\bprogress\x18\x04 \x01(\v2\x1f.tide.asr.v1.ProcessingProgressR\bprogress\x12?\n" +
+	"\n" +
+	"checkpoint\x18\x05 \x01(\v2\x1f.tide.asr.v1.RecoveryCheckpointR\n" +
+	"checkpoint\x12\x14\n" +
+	"\x05ready\x18\x06 \x01(\bR\x05ready\"H\n" +
 	"\x12ProcessingProgress\x122\n" +
-	"\x15processed_through_seq\x18\x01 \x01(\x04R\x13processedThroughSeq2w\n" +
+	"\x15processed_through_seq\x18\x01 \x01(\x04R\x13processedThroughSeq\"n\n" +
+	"\rRecoveryStart\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x01 \x01(\tR\tsessionId\x12\x1d\n" +
+	"\n" +
+	"attempt_id\x18\x02 \x01(\tR\tattemptId\x12\x1f\n" +
+	"\vfrom_sample\x18\x03 \x01(\x04R\n" +
+	"fromSample\"p\n" +
+	"\x12RecoveryCheckpoint\x12\x1f\n" +
+	"\vfrom_sample\x18\x01 \x01(\x04R\n" +
+	"fromSample\x12%\n" +
+	"\x0ethrough_sample\x18\x02 \x01(\x04R\rthroughSample\x12\x12\n" +
+	"\x04text\x18\x03 \x01(\tR\x04text2\xe4\x01\n" +
 	"\n" +
 	"ASRService\x12i\n" +
-	"\x12StreamingRecognize\x12&.tide.asr.v1.StreamingRecognizeRequest\x1a'.tide.asr.v1.StreamingRecognizeResponse(\x010\x01B8Z6github.com/secacy/tide-artisan/proto/tide/asr/v1;asrv1b\x06proto3"
+	"\x12StreamingRecognize\x12&.tide.asr.v1.StreamingRecognizeRequest\x1a'.tide.asr.v1.StreamingRecognizeResponse(\x010\x01\x12k\n" +
+	"\x14RecoverableRecognize\x12&.tide.asr.v1.StreamingRecognizeRequest\x1a'.tide.asr.v1.StreamingRecognizeResponse(\x010\x01B8Z6github.com/secacy/tide-artisan/proto/tide/asr/v1;asrv1b\x06proto3"
 
 var (
 	file_proto_tide_asr_v1_asr_proto_rawDescOnce sync.Once
@@ -224,21 +400,27 @@ func file_proto_tide_asr_v1_asr_proto_rawDescGZIP() []byte {
 	return file_proto_tide_asr_v1_asr_proto_rawDescData
 }
 
-var file_proto_tide_asr_v1_asr_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_proto_tide_asr_v1_asr_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_proto_tide_asr_v1_asr_proto_goTypes = []any{
 	(*StreamingRecognizeRequest)(nil),  // 0: tide.asr.v1.StreamingRecognizeRequest
 	(*StreamingRecognizeResponse)(nil), // 1: tide.asr.v1.StreamingRecognizeResponse
 	(*ProcessingProgress)(nil),         // 2: tide.asr.v1.ProcessingProgress
+	(*RecoveryStart)(nil),              // 3: tide.asr.v1.RecoveryStart
+	(*RecoveryCheckpoint)(nil),         // 4: tide.asr.v1.RecoveryCheckpoint
 }
 var file_proto_tide_asr_v1_asr_proto_depIdxs = []int32{
-	2, // 0: tide.asr.v1.StreamingRecognizeResponse.progress:type_name -> tide.asr.v1.ProcessingProgress
-	0, // 1: tide.asr.v1.ASRService.StreamingRecognize:input_type -> tide.asr.v1.StreamingRecognizeRequest
-	1, // 2: tide.asr.v1.ASRService.StreamingRecognize:output_type -> tide.asr.v1.StreamingRecognizeResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	3, // 0: tide.asr.v1.StreamingRecognizeRequest.recovery_start:type_name -> tide.asr.v1.RecoveryStart
+	2, // 1: tide.asr.v1.StreamingRecognizeResponse.progress:type_name -> tide.asr.v1.ProcessingProgress
+	4, // 2: tide.asr.v1.StreamingRecognizeResponse.checkpoint:type_name -> tide.asr.v1.RecoveryCheckpoint
+	0, // 3: tide.asr.v1.ASRService.StreamingRecognize:input_type -> tide.asr.v1.StreamingRecognizeRequest
+	0, // 4: tide.asr.v1.ASRService.RecoverableRecognize:input_type -> tide.asr.v1.StreamingRecognizeRequest
+	1, // 5: tide.asr.v1.ASRService.StreamingRecognize:output_type -> tide.asr.v1.StreamingRecognizeResponse
+	1, // 6: tide.asr.v1.ASRService.RecoverableRecognize:output_type -> tide.asr.v1.StreamingRecognizeResponse
+	5, // [5:7] is the sub-list for method output_type
+	3, // [3:5] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_proto_tide_asr_v1_asr_proto_init() }
@@ -252,7 +434,7 @@ func file_proto_tide_asr_v1_asr_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_tide_asr_v1_asr_proto_rawDesc), len(file_proto_tide_asr_v1_asr_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

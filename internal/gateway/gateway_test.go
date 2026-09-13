@@ -391,6 +391,10 @@ func TestGatewayConcurrentAdmissionLimit(t *testing.T) {
 // unusedGatewayWorker 用于不应进入识别阶段的测试，记录意外建流次数。
 type unusedGatewayWorker struct{ calls atomic.Int32 }
 
+func (w *unusedGatewayWorker) RecoverableRecognize(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[asrv1.StreamingRecognizeRequest, asrv1.StreamingRecognizeResponse], error) {
+	return nil, status.Error(codes.Unimplemented, "legacy fixture")
+}
+
 func (w *unusedGatewayWorker) StreamingRecognize(context.Context, ...grpc.CallOption) (grpc.BidiStreamingClient[asrv1.StreamingRecognizeRequest, asrv1.StreamingRecognizeResponse], error) {
 	w.calls.Add(1)
 	return nil, status.Error(codes.Unavailable, "unexpected Worker stream")

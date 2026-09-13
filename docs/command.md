@@ -59,7 +59,7 @@ TIDE_HEARTBEAT_INTERVAL=2s TIDE_HEARTBEAT_TIMEOUT=3s go run ./cmd/ws-client
 
 将间隔改为 `5s` 可复验较低探测频率，但检测目标相应约为八秒。参数作用于当前命令所在进程，不会自动同步给另一端。库调用者可设置 `gateway.Config.Heartbeat` / `wsclient.Config.Heartbeat`；`wsheartbeat.Config.Disabled` 是显式实验对照或外部接管入口，不提供隐式禁用的负数约定。
 
-客户端仍须持续读取结果和控制帧；心跳不能只靠发送音频推进。失败返回不代表已经重连或补齐，当前命令不会自动重试。依据见 [ADR-008](adr/ADR-008-websocket-heartbeat-lifecycle.md)。
+客户端仍须持续读取结果和控制帧；心跳不能只靠发送音频推进。v1 失败返回不代表已经重连或补齐；显式开启 v2 后的恢复与终止行为见下文。依据见 [ADR-008](adr/ADR-008-websocket-heartbeat-lifecycle.md)。
 
 ## protoc代码生成
 ```
@@ -78,3 +78,15 @@ ffmpeg \
   -f s16le \
   "data/pcm/test3s.pcm"
 ```
+
+## 有限恢复客户端（v2）
+
+先启动支持新 RPC 的 Mock 和 Gateway，再显式开启恢复：
+
+```bash
+TIDE_RECOVERY=true go run ./cmd/ws-client
+```
+
+默认不设置该变量时仍运行 v1；`false` 也使用 v1，无效布尔值使启动失败。v2 逐条打印已提交的稳定区间和文字，结束时输出完整 JSON 报告；有缺口、预算耗尽或其他失败时仍先输出报告，再以错误退出。恢复预算不会自动重新开始，调用方需显式决定下一次问诊识别。
+
+十五秒缓存、十秒总预算及三秒 Ready 初值由 `wsclient.RecoveryConfig` 配置，本次没有新增这些参数的命令行开关。详细格式、缺口含义及 Source 约束见 [有限恢复协议](recovery-protocol.md)。Mock 的 checkpoint 不是实际模型能力证明。

@@ -14,6 +14,7 @@ import (
 
 // Config 描述 WebSocket 模拟客户端配置。
 type Config struct {
+	Recovery   RecoveryConfig     // Used only by explicit RunRecoverable.
 	Heartbeat  wsheartbeat.Config // 零值默认启用；客户端独立探测，不依赖 Gateway 的失败判定。
 	URL        string             // Gateway 的 WebSocket 地址，例如：ws://localhost:8080/v1/asr
 	ChunkBytes int                // 一次最多读取并发送多少 PCM 字节(客户端的发送粒度)，默认3200bytes(100ms)
@@ -43,6 +44,10 @@ type Client struct {
 // New 创建 WebSocket Client。
 func New(cfg Config) (*Client, error) {
 	var err error
+	cfg.Recovery, err = cfg.Recovery.normalize()
+	if err != nil {
+		return nil, err
+	}
 	cfg.Heartbeat, err = cfg.Heartbeat.Normalize()
 	if err != nil {
 		return nil, err

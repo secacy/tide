@@ -7,6 +7,9 @@ option go_package = "github.com/secacy/tide-artisan/proto/tide/asr/v1;asrv1";
 service ASRService {
   rpc StreamingRecognize(stream StreamingRecognizeRequest)
       returns (stream StreamingRecognizeResponse);
+  // Explicit capability: legacy Workers may leave this method unimplemented.
+  rpc RecoverableRecognize(stream StreamingRecognizeRequest)
+      returns (stream StreamingRecognizeResponse);
 }
 
 message StreamingRecognizeRequest {
@@ -17,6 +20,9 @@ message StreamingRecognizeRequest {
   bytes data = 1;
   // 从 1 开始的连续音频块序号，每个 RPC 独立计数。
   uint64 audio_seq = 2;
+  // Recoverable RPC begins with start only; subsequent requests carry PCM.
+  RecoveryStart recovery_start = 3;
+  uint64 start_sample = 4;
 }
 
 //message StartSession {
@@ -42,6 +48,9 @@ message StreamingRecognizeResponse {
   bool is_final = 3;
   // 独立进度消息；设置时 segment_id/text/is_final 必须为空或 false。
   ProcessingProgress progress = 4;
+  // Standalone envelopes; never mixed with ordinary text/progress.
+  RecoveryCheckpoint checkpoint = 5;
+  bool ready = 6;
   // 如果后续需要定位音频、展示时间轴或测量结果延迟，可以考虑使用 audio_end_offset_ms 表示：这条结果对应的音频结束位置，相对于本次识别流音频起点的毫秒偏移。
 }
 
@@ -51,4 +60,19 @@ message StreamingRecognizeResponse {
 // 连续处理完成的音频前缀，包含静音；不是接收确认。
 message ProcessingProgress {
   uint64 processed_through_seq = 1;
+}
+
+// Global sample offsets use [from_sample, through_sample), 16 kHz mono PCM.
+message RecoveryStart {
+  string session_id = 1;
+  string attempt_id = 2;
+  uint64 from_sample = 3;
+}
+
+// Immutable coverage; through_sample is safe to restart without earlier audio.
+// Empty text still commits coverage (e.g. silence).
+message RecoveryCheckpoint {
+  uint64 from_sample = 1;
+  uint64 through_sample = 2;
+  string text = 3;
 }

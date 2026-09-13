@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ASRService_StreamingRecognize_FullMethodName = "/tide.asr.v1.ASRService/StreamingRecognize"
+	ASRService_StreamingRecognize_FullMethodName   = "/tide.asr.v1.ASRService/StreamingRecognize"
+	ASRService_RecoverableRecognize_FullMethodName = "/tide.asr.v1.ASRService/RecoverableRecognize"
 )
 
 // ASRServiceClient is the client API for ASRService service.
@@ -27,6 +28,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ASRServiceClient interface {
 	StreamingRecognize(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[StreamingRecognizeRequest, StreamingRecognizeResponse], error)
+	// Explicit capability: legacy Workers may leave this method unimplemented.
+	RecoverableRecognize(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[StreamingRecognizeRequest, StreamingRecognizeResponse], error)
 }
 
 type aSRServiceClient struct {
@@ -50,11 +53,26 @@ func (c *aSRServiceClient) StreamingRecognize(ctx context.Context, opts ...grpc.
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ASRService_StreamingRecognizeClient = grpc.BidiStreamingClient[StreamingRecognizeRequest, StreamingRecognizeResponse]
 
+func (c *aSRServiceClient) RecoverableRecognize(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[StreamingRecognizeRequest, StreamingRecognizeResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &ASRService_ServiceDesc.Streams[1], ASRService_RecoverableRecognize_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[StreamingRecognizeRequest, StreamingRecognizeResponse]{ClientStream: stream}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ASRService_RecoverableRecognizeClient = grpc.BidiStreamingClient[StreamingRecognizeRequest, StreamingRecognizeResponse]
+
 // ASRServiceServer is the server API for ASRService service.
 // All implementations must embed UnimplementedASRServiceServer
 // for forward compatibility.
 type ASRServiceServer interface {
 	StreamingRecognize(grpc.BidiStreamingServer[StreamingRecognizeRequest, StreamingRecognizeResponse]) error
+	// Explicit capability: legacy Workers may leave this method unimplemented.
+	RecoverableRecognize(grpc.BidiStreamingServer[StreamingRecognizeRequest, StreamingRecognizeResponse]) error
 	mustEmbedUnimplementedASRServiceServer()
 }
 
@@ -67,6 +85,9 @@ type UnimplementedASRServiceServer struct{}
 
 func (UnimplementedASRServiceServer) StreamingRecognize(grpc.BidiStreamingServer[StreamingRecognizeRequest, StreamingRecognizeResponse]) error {
 	return status.Error(codes.Unimplemented, "method StreamingRecognize not implemented")
+}
+func (UnimplementedASRServiceServer) RecoverableRecognize(grpc.BidiStreamingServer[StreamingRecognizeRequest, StreamingRecognizeResponse]) error {
+	return status.Error(codes.Unimplemented, "method RecoverableRecognize not implemented")
 }
 func (UnimplementedASRServiceServer) mustEmbedUnimplementedASRServiceServer() {}
 func (UnimplementedASRServiceServer) testEmbeddedByValue()                    {}
@@ -96,6 +117,13 @@ func _ASRService_StreamingRecognize_Handler(srv interface{}, stream grpc.ServerS
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type ASRService_StreamingRecognizeServer = grpc.BidiStreamingServer[StreamingRecognizeRequest, StreamingRecognizeResponse]
 
+func _ASRService_RecoverableRecognize_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(ASRServiceServer).RecoverableRecognize(&grpc.GenericServerStream[StreamingRecognizeRequest, StreamingRecognizeResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type ASRService_RecoverableRecognizeServer = grpc.BidiStreamingServer[StreamingRecognizeRequest, StreamingRecognizeResponse]
+
 // ASRService_ServiceDesc is the grpc.ServiceDesc for ASRService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -107,6 +135,12 @@ var ASRService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "StreamingRecognize",
 			Handler:       _ASRService_StreamingRecognize_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "RecoverableRecognize",
+			Handler:       _ASRService_RecoverableRecognize_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

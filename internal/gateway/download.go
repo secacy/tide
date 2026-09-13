@@ -26,6 +26,9 @@ func (s *session) download(ctx context.Context, stream workerStream, writeTimeou
 
 		switch {
 		case errors.Is(err, io.EOF):
+			if s.recovery != nil && (!s.recovery.ready || s.recovery.committed != s.recovery.sent.Load()) {
+				return processingFailure(fmt.Errorf("%w: missing checkpoint at EOF", errInvalidRecovery))
+			}
 			// RPC 正常结束；是否满足会话成功条件，由协调者结合 End 判断。
 			return sessionResult{
 				kind: resultCompleted,
@@ -39,6 +42,20 @@ func (s *session) download(ctx context.Context, stream workerStream, writeTimeou
 
 		if response == nil {
 			return processingFailure(fmt.Errorf("%w: nil response", errInvalidProgress))
+		}
+		if s.recovery != nil {
+			message, handled, err := s.recovery.response(response)
+			if err != nil {
+				return processingFailure(fmt.Errorf("%w: %w", errInvalidRecovery, err))
+			}
+			if handled {
+				if err := s.writeRecovery(ctx, message, writeTimeout); err.kind != resultCompleted {
+					return err
+				}
+				continue
+			}
+		} else if response.Ready || response.Checkpoint != nil {
+			return processingFailure(fmt.Errorf("recovery response in v1 stream"))
 		}
 		if response.Progress != nil {
 			if response.SegmentId != "" || response.Text != "" || response.IsFinal {

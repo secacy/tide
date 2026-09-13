@@ -22,6 +22,13 @@ func (s *session) readAudio(ctx context.Context, queue *audioQueue) sessionResul
 		}
 		switch messageType {
 		case websocket.MessageBinary:
+			if s.recovery != nil {
+				var err error
+				data, err = s.recovery.decodeAudio(data)
+				if err != nil {
+					return protocolViolation(err)
+				}
+			}
 			if err := queue.tryPush(data); err != nil {
 				if errors.Is(err, errProgressCapacity) || errors.Is(err, errProcessingTimeout) || errors.Is(err, errEndTimeout) {
 					return processingFailure(err)
@@ -32,7 +39,7 @@ func (s *session) readAudio(ctx context.Context, queue *audioQueue) sessionResul
 				return protocolViolation(err)
 			}
 		case websocket.MessageText:
-			if err := parseEnd(data); err != nil {
+			if err := s.parseEndMessage(data); err != nil {
 				return protocolViolation(err)
 			}
 			queue.closeInput()

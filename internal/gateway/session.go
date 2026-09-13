@@ -29,9 +29,10 @@ type workerStream interface {
 
 // session 表示一个 WebSocket Connection 与一个 gRPC stream 之间的一对一桥接关系。
 type session struct {
-	id     string                 // 标识本次实时会话，在登记前确定
-	ws     *websocket.Conn        // 接入流程在 run 前绑定一次；负责消息读写和关闭握手，abort 不访问此字段。
-	worker asrv1.ASRServiceClient // 用于创建本会话的后端识别流
+	recovery *recoveryState         // v2 attempt state, bound after Start; nil preserves v1.
+	id       string                 // 标识本次实时会话，在登记前确定
+	ws       *websocket.Conn        // 接入流程在 run 前绑定一次；负责消息读写和关闭握手，abort 不访问此字段。
+	worker   asrv1.ASRServiceClient // 用于创建本会话的后端识别流
 
 	ctx       context.Context         // 控制本会话的识别工作，在创建会话时确定
 	cancel    context.CancelCauseFunc // 取消本会话并记录取消原因。强制停止时传入 errSessionAborted，正常释放时传入 nil。
@@ -118,7 +119,8 @@ func (s *session) run(cfg Config) (runErr error) {
 			runErr = errors.Join(runErr, err)
 		}
 	}()
-	if err := readStart(ctx, s.ws); err != nil {
+	start, err := readStartMessage(ctx, s.ws)
+	if err != nil {
 		if result, canceled := cancellationResult(ctx); canceled {
 			return result.err
 		}
@@ -129,6 +131,10 @@ func (s *session) run(cfg Config) (runErr error) {
 	}
 	if result, canceled := cancellationResult(ctx); canceled {
 		return result.err
+	}
+
+	if start.Version == "v2" {
+		s.recovery = newRecoveryState(start)
 	}
 
 	// RPC 从建流阶段起就响应应用取消；WebSocket 保留独立的收尾时间，
@@ -160,7 +166,7 @@ func (s *session) run(cfg Config) (runErr error) {
 
 	go func() {
 		defer wg.Done()
-		stream, err := s.worker.StreamingRecognize(rpcCtx)
+		stream, err := s.openStream(rpcCtx)
 		if err != nil {
 			events <- sessionResult{kind: resultWorkerFailed, err: fmt.Errorf("open worker stream: %w", err)}
 			return
@@ -217,30 +223,33 @@ func (s *session) run(cfg Config) (runErr error) {
 
 // readStart 校验当前 WebSocket Session 的第一条消息。
 // V1 要求第一条消息必须是 {"type":"start","version":"v1"}
-func readStart(ctx context.Context, conn *websocket.Conn) error {
+func readStartMessage(ctx context.Context, conn *websocket.Conn) (wsprotocol.StartMessage, error) {
 	messageType, data, err := conn.Read(ctx)
 	if err != nil {
-		return fmt.Errorf("read websocket start message: %w", err)
+		return wsprotocol.StartMessage{}, fmt.Errorf("read websocket start message: %w", err)
 	}
 
 	if messageType != websocket.MessageText {
-		return fmt.Errorf("first websocket message must be text")
+		return wsprotocol.StartMessage{}, fmt.Errorf("first websocket message must be text")
 	}
 
 	var start wsprotocol.StartMessage
 	if err := json.Unmarshal(data, &start); err != nil {
-		return fmt.Errorf("decode start message: %w", err)
+		return wsprotocol.StartMessage{}, fmt.Errorf("decode start message: %w", err)
 	}
 
 	if start.Type != wsprotocol.MessageTypeStart {
-		return fmt.Errorf("first message must be start, got %q", start.Type)
+		return wsprotocol.StartMessage{}, fmt.Errorf("first message must be start, got %q", start.Type)
 	}
 
-	if start.Version != "v1" {
-		return fmt.Errorf("unsupported protocol version %q", start.Version)
+	if start.Version != "v1" && start.Version != "v2" {
+		return wsprotocol.StartMessage{}, fmt.Errorf("unsupported protocol version %q", start.Version)
 	}
 
-	return nil
+	if start.Version == "v2" && (len(start.SessionID) == 0 || len(start.SessionID) > 128 || len(start.AttemptID) == 0 || len(start.AttemptID) > 128) {
+		return start, fmt.Errorf("invalid recovery identity")
+	}
+	return start, nil
 }
 
 // waitSessionResult 等待第一个能够决定整个 Session 的事件。
@@ -336,7 +345,14 @@ func (s *session) finish(
 		// 但是不要马上 cancel WebSocket Context，因为我们还需要发送 1011 close frame。
 		cancelRPC()
 
-		closeErr := s.ws.Close(websocket.StatusInternalError, "worker failed")
+		code, reason := websocket.StatusInternalError, "worker failed"
+		if s.recovery != nil && isRecoveryUnsupported(result.err) {
+			code, reason = websocket.StatusPolicyViolation, "recovery_unsupported"
+		}
+		if errors.Is(result.err, errInvalidRecovery) {
+			code, reason = websocket.StatusPolicyViolation, "recovery_protocol"
+		}
+		closeErr := s.ws.Close(code, reason)
 
 		cancelWS()
 
