@@ -3,8 +3,10 @@ package gateway
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/secacy/tide-artisan/internal/wsprotocol"
@@ -27,6 +29,8 @@ type workerStream interface {
 type session struct {
 	ws     *websocket.Conn
 	worker asrv1.ASRServiceClient
+
+	startTimeout time.Duration // 等待完整 start 消息的期限，由 Gateway 校验后传入。
 }
 
 // sessionResultKind 描述能够决定整个 Session 结果的事件。
@@ -40,6 +44,9 @@ const (
 	resultServerStopping
 )
 
+// ErrStartTimeout 表示会话未能在规定时间内完成 start 消息的读取与校验。
+var ErrStartTimeout = errors.New("start message timeout")
+
 // sessionResult 是 upload/download 向 session.run 汇报的结果。
 //
 // I/O goroutine 不负责决定 WebSocket 应该如何关闭。它们只负责描述“发生了什么”。
@@ -48,31 +55,41 @@ type sessionResult struct {
 	err  error
 }
 
-// newSession 创建一个 WebSocket ↔ gRPC Session。
-func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient) *session {
+// newSession 创建会话。
+func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration) *session {
 	return &session{
-		ws:     ws,
-		worker: worker,
+		ws:           ws,
+		worker:       worker,
+		startTimeout: startTimeout,
 	}
 }
 
 // run 管理一个音频 Session 的完整生命周期。
-//
-// 它是唯一负责以下事情的位置：
-//
-//   - 判断 Session 最终结果；
-//   - 决定是否取消 gRPC；
-//   - 决定 WebSocket Close Code；
-//   - 唤醒仍然阻塞的 I/O goroutine；
-//   - 等待所有 goroutine 真正退出。
 func (s *session) run(ctx context.Context) error {
-	if err := readStart(ctx, s.ws); err != nil {
-		_ = s.ws.Close(websocket.StatusPolicyViolation, "invalid start message")
+	// 创建读取期限，同时继承服务取消
+	startCtx, cancelStart := context.WithTimeout(ctx, s.startTimeout)
+
+	// 先完成读取，再保存 context 状态，最后释放计时器
+	readErr := readStart(startCtx, s.ws)
+	startContextErr := startCtx.Err()
+	cancelStart()
+
+	if err := ctx.Err(); err != nil {
+		_ = s.ws.CloseNow()
 		return err
 	}
+	if errors.Is(startContextErr, context.DeadlineExceeded) {
+		// 释放连接，返回 ErrStartTimeout
+		_ = s.ws.CloseNow()
+		return ErrStartTimeout
+	}
+	if readErr != nil {
+		// 处理其他读取或协议校验错误
+		_ = s.ws.Close(websocket.StatusPolicyViolation, "invalid start message")
+		return readErr
+	}
 
-	// RPC 从建流阶段起就响应应用取消；WebSocket 保留独立的收尾时间，
-	// 由 finish 在发送关闭帧后取消其 I/O。
+	// RPC 从建流阶段起就响应应用取消；WebSocket 保留独立的收尾时间，由 finish 在发送关闭帧后取消其 I/O。
 	rpcCtx, cancelRPC := context.WithCancel(ctx)
 	defer cancelRPC()
 
