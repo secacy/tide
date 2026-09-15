@@ -19,6 +19,8 @@ type Gateway struct {
 	ctx    context.Context
 	worker asrv1.ASRServiceClient
 	cfg    Config
+
+	tracker *sessionTracker // 跟踪本 Gateway 已接纳但尚未完成清理的会话。用于停止接入以及等待所有会话退出。
 }
 
 // New 创建一个 Gateway。
@@ -36,9 +38,10 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, cfg Config) (*Gatew
 		cfg.MaxMessageBytes = 1024 * 1024 // 1 MiB
 	}
 	return &Gateway{
-		ctx:    ctx,
-		worker: worker,
-		cfg:    cfg,
+		ctx:     ctx,
+		worker:  worker,
+		cfg:     cfg,
+		tracker: newSessionTracker(),
 	}, nil
 }
 
@@ -46,6 +49,14 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, cfg Config) (*Gatew
 //
 // Session 的协议校验、gRPC stream、错误分类和关闭流程全部由 session.run 负责。
 func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	// 登记会话
+	if !g.tracker.tryEnter() {
+		http.Error(w, "service is stopping", http.StatusServiceUnavailable)
+		return
+	}
+	defer g.tracker.leave()
+
+	// 升级 WebSocket
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		return
@@ -56,6 +67,19 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	conn.SetReadLimit(g.cfg.MaxMessageBytes)
 
-	session := newSession(conn, g.worker)
-	_ = session.run(g.ctx)
+	s := newSession(conn, g.worker)
+	_ = s.run(g.ctx)
+}
+
+// StopAccepting 停止本 Gateway 接纳新会话。
+// 允许重复调用，不会主动取消已有会话。
+func (g *Gateway) StopAccepting() {
+	g.tracker.stopAccepting()
+}
+
+// Wait 等待本 Gateway 停止接入且所有会话完成清理。
+// 调用方应先调用 StopAccepting。
+// ctx 只控制本次等待；取消等待不会取消已有会话。
+func (g *Gateway) Wait(ctx context.Context) error {
+	return g.tracker.wait(ctx)
 }

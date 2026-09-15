@@ -22,7 +22,7 @@ import (
 const (
 	gatewayAddr     = ":8080"           // WebSocket Gateway 对外监听地址
 	workerAddr      = "localhost:50051" // gRPC Mock Worker 地址
-	shutdownTimeout = 5 * time.Second   // HTTP Server 优雅关闭的最长等待时间
+	shutdownTimeout = 5 * time.Second   // HTTP Server 优雅关闭和会话停止的最长等待时间
 )
 
 func main() {
@@ -45,7 +45,9 @@ func run(ctx context.Context) error {
 
 	workerClient := asrv1.NewASRServiceClient(grpcConn)
 
-	wsGateway, err := gateway.New(ctx, workerClient, gateway.Config{
+	sessionCtx, cancelSessions := context.WithCancel(context.Background()) // sessionCtx 管理本 Gateway 所有会话的停止通知
+	defer cancelSessions()
+	wsGateway, err := gateway.New(sessionCtx, workerClient, gateway.Config{
 		MaxMessageBytes: 1024 * 1024,
 	})
 	if err != nil {
@@ -58,7 +60,7 @@ func run(ctx context.Context) error {
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
-	return serve(ctx, server)
+	return serve(ctx, server, wsGateway, cancelSessions)
 }
 
 // routes 负责声明 Gateway 暴露的 HTTP 接口。
@@ -77,12 +79,18 @@ func routes(wsGateway http.Handler) http.Handler {
 	return mux
 }
 
-// serve 管理 HTTP Server 的完整生命周期。
+// serve 运行 HTTP 服务，并协调服务退出时的清理。
 //
 // 它同时处理两个事件：
 //  1. HTTP Server 自身发生异常；
 //  2. 应用 Context 被取消，需要优雅关闭。
-func serve(ctx context.Context, server *http.Server) error {
+//
+// ctx 表示外部退出请求；HTTP 服务异常也会触发关闭流程。
+// wsGateway 用于停止接入和等待会话退出。
+// cancelSessions 用于通知已有会话停止。
+//
+// HTTP 关闭或会话等待失败时返回错误，不能报告清理成功。
+func serve(ctx context.Context, server *http.Server, wsGateway *gateway.Gateway, cancelSessions context.CancelFunc) error {
 	listener, err := net.Listen("tcp", server.Addr)
 	if err != nil {
 		return fmt.Errorf("listen on %s: %w", server.Addr, err)
@@ -92,7 +100,11 @@ func serve(ctx context.Context, server *http.Server) error {
 
 	group, groupCtx := errgroup.WithContext(ctx)
 
-	// HTTP Server 主循环
+	// cleanupErr 仅由关闭 goroutine 写入。
+	// 外层在 group.Wait 返回后读取，避免并发读写。
+	var cleanupErr error
+
+	// HTTP Server 主循环：真实错误通过返回值触发 groupCtx 取消。
 	group.Go(func() error {
 		err := server.Serve(listener)
 		// Shutdown 会让 Serve 返回 http.ErrServerClosed。这是预期的正常退出，不应该作为错误返回。
@@ -102,17 +114,36 @@ func serve(ctx context.Context, server *http.Server) error {
 		return nil
 	})
 
-	// 等待应用退出
+	// 收到停止通知后，执行关闭并收集清理错误
 	group.Go(func() error {
 		<-groupCtx.Done()
+		var errs []error
 		log.Printf("shutting down websocket gateway")
+
+		// 停止接纳新会话
+		wsGateway.StopAccepting()
+		// 向所有继承 sessionCtx 的会话发送停止通知
+		cancelSessions()
+
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
-		if err := server.Shutdown(shutdownCtx); err != nil {
-			return fmt.Errorf("shutdown HTTP server: %w", err)
+		// 关闭 HTTP 服务
+		if err := server.Shutdown(shutdownCtx); err != nil { // server.Serve 由 server.Shutdown() 来停止服务。
+			errs = append(errs, fmt.Errorf("shutdown HTTP server: %w", err))
+			if err := server.Close(); err != nil { // 关闭剩余普通 HTTP 连接
+				errs = append(errs, fmt.Errorf("close HTTP server: %w", err))
+			}
 		}
+		// 等待会话完成清理
+		if err := wsGateway.Wait(shutdownCtx); err != nil {
+			errs = append(errs, fmt.Errorf("wait WebSocket sessions: %w", err))
+		}
+		cleanupErr = errors.Join(errs...)
 		return nil
 	})
 
-	return group.Wait()
+	serveErr := group.Wait()
+
+	// 返回运行和清理结果
+	return errors.Join(serveErr, cleanupErr)
 }
