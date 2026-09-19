@@ -92,6 +92,12 @@ func TestGatewayStartTimeoutReleasesSession(t *testing.T) {
 // parent 决定服务生命周期；客户端使用独立 context。
 func dialTestSession(t *testing.T, parent context.Context, worker asrv1.ASRServiceClient, timeout time.Duration) (*websocket.Conn, <-chan error) {
 	t.Helper()
+	return dialSessionWithTimeouts(t, parent, worker, timeout, defaultInputIdleTimeout)
+}
+
+// dialSessionWithTimeouts 允许分别设置启动期限和输入空闲期限，其他行为与 dialTestSession 相同。
+func dialSessionWithTimeouts(t *testing.T, parent context.Context, worker asrv1.ASRServiceClient, startTimeout, inputIdleTimeout time.Duration) (*websocket.Conn, <-chan error) {
+	t.Helper()
 	ctx, cancel := context.WithCancel(parent)
 	result := make(chan error, 1)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -101,7 +107,7 @@ func dialTestSession(t *testing.T, parent context.Context, worker asrv1.ASRServi
 			return
 		}
 		defer ws.CloseNow()
-		result <- newSession(ws, worker, timeout).run(ctx)
+		result <- newSession(ws, worker, startTimeout, inputIdleTimeout).run(ctx)
 	}))
 	var conn *websocket.Conn
 	t.Cleanup(func() {

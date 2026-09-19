@@ -30,7 +30,11 @@ type session struct {
 	ws     *websocket.Conn
 	worker asrv1.ASRServiceClient
 
-	startTimeout time.Duration // 等待完整 start 消息的期限，由 Gateway 校验后传入。
+	startTimeout     time.Duration // 等待完整 start 消息的期限
+	inputIdleTimeout time.Duration // 限制音频输入阶段单次读取消息的等待时间
+
+	inputReadMu  sync.Mutex      // 保护 inputReadCtx 的读写。只在保存或取得 context 时持有，不覆盖网络 I/O。
+	inputReadCtx context.Context // 保存最近一次音频输入读取的 context。读取结束后仍保留，用于判定本次连接关闭是否伴随输入超时。
 }
 
 // sessionResultKind 描述能够决定整个 Session 结果的事件。
@@ -42,6 +46,7 @@ const (
 	resultClientDisconnected
 	resultProtocolViolation
 	resultServerStopping
+	resultInputIdleTimeout // 等待下一条完整输入消息超时
 )
 
 // ErrStartTimeout 表示会话未能在规定时间内完成 start 消息的读取与校验。
@@ -55,12 +60,16 @@ type sessionResult struct {
 	err  error
 }
 
+// ErrInputIdleTimeout 表示等待下一条完整输入消息超时。
+var ErrInputIdleTimeout = errors.New("input idle timeout")
+
 // newSession 创建会话。
-func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration) *session {
+func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration) *session {
 	return &session{
-		ws:           ws,
-		worker:       worker,
-		startTimeout: startTimeout,
+		ws:               ws,
+		worker:           worker,
+		startTimeout:     startTimeout,
+		inputIdleTimeout: inputIdleTimeout,
 	}
 }
 
@@ -129,7 +138,7 @@ func (s *session) run(ctx context.Context) error {
 	}()
 
 	// 第一个真正具有决定性的事件确定 Session 结果。
-	result := waitSessionResult(ctx, events, inputEnded)
+	result := s.waitSessionResult(ctx, events, inputEnded)
 
 	// 先主动执行能够解除阻塞的 cleanup。
 	cleanupErr := s.finish(wsCtx, result, cancelRPC, cancelWS)
@@ -170,8 +179,9 @@ func readStart(ctx context.Context, conn *websocket.Conn) error {
 	return nil
 }
 
-// waitSessionResult 等待第一个能够决定整个 Session 的事件。
-func waitSessionResult(ctx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}) sessionResult {
+// waitSessionResult 等待退出事件，并在清理开始前确定会话结果。
+// 判定顺序：服务停止、已观察到的输入超时、收到的退出事件。
+func (s *session) waitSessionResult(ctx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}) sessionResult {
 	var result sessionResult
 	select {
 	case result = <-events:
@@ -184,6 +194,13 @@ func waitSessionResult(ctx context.Context, events <-chan sessionResult, inputEn
 		return sessionResult{
 			kind: resultServerStopping,
 			err:  err,
+		}
+	}
+
+	if s.inputIdleExpired() {
+		return sessionResult{
+			kind: resultInputIdleTimeout,
+			err:  ErrInputIdleTimeout,
 		}
 	}
 
@@ -268,6 +285,14 @@ func (s *session) finish(
 			return fmt.Errorf("close websocket during shutdown: %w", closeErr)
 		}
 
+		return nil
+
+	case resultInputIdleTimeout:
+		// 读取超时可能已经关闭 WebSocket。
+		// 取消剩余 I/O，并兜底释放连接，不再等待关闭握手。
+		cancelRPC()
+		cancelWS()
+		_ = s.ws.CloseNow()
 		return nil
 
 	default:

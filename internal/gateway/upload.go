@@ -12,11 +12,44 @@ import (
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 )
 
+// readInput 在音频输入阶段读取一条完整 WebSocket 消息。
+//
+// 它只负责读取与超时分类，不校验 audio/end 协议，
+// 不向 Worker 转发数据，也不决定整个会话的最终结果。
+func (s *session) readInput(ctx context.Context) (websocket.MessageType, []byte, error) {
+	// 每次调用创建独立期限，成功读取后立即释放计时器。
+	readCtx, cancelRead := context.WithTimeout(ctx, s.inputIdleTimeout)
+
+	// 在 Read 可能触发连接关闭之前，公开这次读取的期限状态。
+	s.inputReadMu.Lock()
+	s.inputReadCtx = readCtx
+	s.inputReadMu.Unlock()
+
+	messageType, data, readErr := s.ws.Read(readCtx)
+	readContextErr := readCtx.Err()
+	cancelRead()
+
+	if ctx.Err() != nil {
+		return 0, nil, ctx.Err()
+	}
+	if errors.Is(readContextErr, context.DeadlineExceeded) {
+		return 0, nil, ErrInputIdleTimeout
+	}
+	return messageType, data, readErr
+}
+
 // upload 负责 WebSocket -> gRPC 方向。
 func (s *session) upload(ctx context.Context, stream workerStream, inputEnded chan<- struct{}) sessionResult {
 	for {
-		messageType, data, err := s.ws.Read(ctx)
+		messageType, data, err := s.readInput(ctx)
 		if err != nil {
+			// 输入超时是独立的退出原因，不属于客户端主动断开。
+			if errors.Is(err, ErrInputIdleTimeout) {
+				return sessionResult{
+					kind: resultInputIdleTimeout,
+					err:  err,
+				}
+			}
 			return clientDisconnected(err)
 		}
 
@@ -55,6 +88,16 @@ func (s *session) upload(ctx context.Context, stream workerStream, inputEnded ch
 			return protocolViolation(fmt.Errorf("unsupported websocket message type: %v", messageType))
 		}
 	}
+}
+
+// inputIdleExpired 检查最近一次输入读取是否因期限到期而结束。
+// 主动取消读取产生的 context.Canceled 不属于输入空闲超时。
+func (s *session) inputIdleExpired() bool {
+	s.inputReadMu.Lock()
+	readCtx := s.inputReadCtx
+	s.inputReadMu.Unlock()
+
+	return readCtx != nil && errors.Is(readCtx.Err(), context.DeadlineExceeded)
 }
 
 // waitAfterEnd 在客户端发送 End 后继续监测 WebSocket。
