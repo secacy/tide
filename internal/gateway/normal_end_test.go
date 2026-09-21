@@ -82,7 +82,8 @@ func TestGatewayNormalEndPreservesTail(t *testing.T) {
 			sessionCtx, cancelSessions := context.WithCancel(context.Background())
 			t.Cleanup(cancelSessions)
 			const idleTimeout = 250 * time.Millisecond
-			g, err := New(sessionCtx, workerClient, Config{InputIdleTimeout: idleTimeout})
+			// 尾部延迟 500ms 也超过发送期限，验证该期限不会误变成整条 RPC 的期限。
+			g, err := New(sessionCtx, workerClient, Config{InputIdleTimeout: idleTimeout, WorkerSendTimeout: 100 * time.Millisecond})
 			if err != nil {
 				t.Fatal(err)
 			}

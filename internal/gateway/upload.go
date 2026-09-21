@@ -38,10 +38,17 @@ func (s *session) readInput(ctx context.Context) (websocket.MessageType, []byte,
 	return messageType, data, readErr
 }
 
-// upload 负责 WebSocket -> gRPC 方向。
-func (s *session) upload(ctx context.Context, stream workerStream, inputEnded chan<- struct{}) sessionResult {
+// upload 读取客户端输入并转发音频。
+// wsCtx 控制客户端读取；rpcCtx 与 cancelRPC 属于正在使用的 Worker stream。
+func (s *session) upload(
+	wsCtx context.Context,
+	rpcCtx context.Context,
+	cancelRPC context.CancelCauseFunc,
+	stream workerStream,
+	inputEnded chan<- struct{},
+) sessionResult {
 	for {
-		messageType, data, err := s.readInput(ctx)
+		messageType, data, err := s.readInput(wsCtx)
 		if err != nil {
 			// 输入超时是独立的退出原因，不属于客户端主动断开。
 			if errors.Is(err, ErrInputIdleTimeout) {
@@ -55,15 +62,25 @@ func (s *session) upload(ctx context.Context, stream workerStream, inputEnded ch
 
 		switch messageType {
 		case websocket.MessageBinary:
-			err := stream.Send(&asrv1.StreamingRecognizeRequest{
-				Data: data,
-			})
+			err := sendWithTimeout(
+				rpcCtx,
+				cancelRPC,
+				stream,
+				&asrv1.StreamingRecognizeRequest{Data: data},
+				s.workerSendTimeout,
+			)
 			switch {
 			case err == nil:
 				continue
+			// ErrWorkerSendTimeout → 返回独立的发送超时结果
+			case errors.Is(err, ErrWorkerSendTimeout):
+				return sessionResult{
+					kind: resultWorkerSendTimeout,
+					err:  ErrWorkerSendTimeout,
+				}
 			case errors.Is(err, io.EOF):
 				// Send 返回 io.EOF 不表示 RPC 的最终状态。Worker 可能已经拒绝请求，而真正的 gRPC Status 要由 download 中的 Recv 得到。
-				return s.waitAfterSendEOF(ctx)
+				return s.waitAfterSendEOF(wsCtx)
 			default:
 				return sessionResult{
 					kind: resultWorkerFailed,
@@ -82,7 +99,7 @@ func (s *session) upload(ctx context.Context, stream workerStream, inputEnded ch
 			// End 只关闭 gRPC Request 方向。
 			// 即使 CloseSend 返回错误，最终 RPC Status 仍应该尽量让 download/Recv 来确定。
 			_ = stream.CloseSend()
-			return s.waitAfterEnd(ctx)
+			return s.waitAfterEnd(wsCtx)
 
 		default:
 			return protocolViolation(fmt.Errorf("unsupported websocket message type: %v", messageType))

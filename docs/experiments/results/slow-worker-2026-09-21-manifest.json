@@ -1,0 +1,25 @@
+{
+  "date": "2026-09-21",
+  "base_commit": "2354a4c481ad238db9c0633d0f2db8e326b37c31",
+  "production_change": "internal/mockasr/worker.go only; see saved worker.patch",
+  "added_tests": [
+    "internal/mockasr/worker_test.go",
+    "internal/gateway/slow_worker_experiment_test.go"
+  ],
+  "sha256": {
+    "internal/mockasr/worker.go": "749ece84dc0c8fc4ce9d8ded6ead7de470f7cbb6463ddcdf97d9c8cf5bf5d62c",
+    "internal/mockasr/worker_test.go": "a6c8b5ed478268bfa28f7af14a2153c642692a5bdf0ec8681a379f9c01149e70",
+    "internal/gateway/slow_worker_experiment_test.go": "081d0f8be2dc47871ce7735c3163854415bf668cc6e7b5eea1c2e9f56448ab09"
+  },
+  "environment": {
+    "os": "macOS 26.6.2 (25G83)",
+    "cpu": "Apple M2 Pro",
+    "memory_gib": 32,
+    "logical_cpu": 12,
+    "gomaxprocs": 12,
+    "go": "go1.26.5 darwin/arm64",
+    "transport": "loopback TCP, same process",
+    "race": false
+  },
+  "command": "TIDE_RUN_SLOW_WORKER_EXPERIMENT=1 GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test ./internal/gateway -run '^TestSlowWorkerBaselineExperiment$' -v -count=3 -timeout=180s"
+}

@@ -35,6 +35,8 @@ type session struct {
 
 	inputReadMu  sync.Mutex      // 保护 inputReadCtx 的读写。只在保存或取得 context 时持有，不覆盖网络 I/O。
 	inputReadCtx context.Context // 保存最近一次音频输入读取的 context。读取结束后仍保留，用于判定本次连接关闭是否伴随输入超时。
+
+	workerSendTimeout time.Duration // 限制单次向 Worker 发送音频的等待时间
 }
 
 // sessionResultKind 描述能够决定整个 Session 结果的事件。
@@ -46,7 +48,8 @@ const (
 	resultClientDisconnected
 	resultProtocolViolation
 	resultServerStopping
-	resultInputIdleTimeout // 等待下一条完整输入消息超时
+	resultInputIdleTimeout  // 等待下一条完整输入消息超时
+	resultWorkerSendTimeout // 单次音频发送等待超时，已触发 RPC 取消
 )
 
 // ErrStartTimeout 表示会话未能在规定时间内完成 start 消息的读取与校验。
@@ -64,12 +67,13 @@ type sessionResult struct {
 var ErrInputIdleTimeout = errors.New("input idle timeout")
 
 // newSession 创建会话。
-func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration) *session {
+func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration) *session {
 	return &session{
-		ws:               ws,
-		worker:           worker,
-		startTimeout:     startTimeout,
-		inputIdleTimeout: inputIdleTimeout,
+		ws:                ws,
+		worker:            worker,
+		startTimeout:      startTimeout,
+		inputIdleTimeout:  inputIdleTimeout,
+		workerSendTimeout: workerSendTimeout,
 	}
 }
 
@@ -99,7 +103,11 @@ func (s *session) run(ctx context.Context) error {
 	}
 
 	// RPC 从建流阶段起就响应应用取消；WebSocket 保留独立的收尾时间，由 finish 在发送关闭帧后取消其 I/O。
-	rpcCtx, cancelRPC := context.WithCancel(ctx)
+	rpcCtx, cancelRPCWithCause := context.WithCancelCause(ctx)
+	// 普通清理不主动指定业务原因；已有取消原因不会被覆盖。
+	cancelRPC := func() {
+		cancelRPCWithCause(nil)
+	}
 	defer cancelRPC()
 
 	wsCtx, cancelWS := context.WithCancel(context.WithoutCancel(ctx))
@@ -129,7 +137,7 @@ func (s *session) run(ctx context.Context) error {
 
 	go func() {
 		defer wg.Done()
-		events <- s.upload(wsCtx, stream, inputEnded)
+		events <- s.upload(wsCtx, rpcCtx, cancelRPCWithCause, stream, inputEnded)
 	}()
 
 	go func() {
@@ -138,7 +146,7 @@ func (s *session) run(ctx context.Context) error {
 	}()
 
 	// 第一个真正具有决定性的事件确定 Session 结果。
-	result := s.waitSessionResult(ctx, events, inputEnded)
+	result := s.waitSessionResult(ctx, rpcCtx, events, inputEnded)
 
 	// 先主动执行能够解除阻塞的 cleanup。
 	cleanupErr := s.finish(wsCtx, result, cancelRPC, cancelWS)
@@ -180,8 +188,8 @@ func readStart(ctx context.Context, conn *websocket.Conn) error {
 }
 
 // waitSessionResult 等待退出事件，并在清理开始前确定会话结果。
-// 判定顺序：服务停止、已观察到的输入超时、收到的退出事件。
-func (s *session) waitSessionResult(ctx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}) sessionResult {
+// 判定顺序：服务停止、发送超时、输入空闲超时、收到的退出事件。
+func (s *session) waitSessionResult(ctx context.Context, rpcCtx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}) sessionResult {
 	var result sessionResult
 	select {
 	case result = <-events:
@@ -194,6 +202,13 @@ func (s *session) waitSessionResult(ctx context.Context, events <-chan sessionRe
 		return sessionResult{
 			kind: resultServerStopping,
 			err:  err,
+		}
+	}
+
+	if errors.Is(context.Cause(rpcCtx), ErrWorkerSendTimeout) {
+		return sessionResult{
+			kind: resultWorkerSendTimeout,
+			err:  ErrWorkerSendTimeout,
 		}
 	}
 
@@ -293,6 +308,15 @@ func (s *session) finish(
 		cancelRPC()
 		cancelWS()
 		_ = s.ws.CloseNow()
+		return nil
+
+	case resultWorkerSendTimeout:
+		cancelRPC()
+		closeErr := s.ws.Close(websocket.StatusInternalError, "worker send timeout")
+		cancelWS()
+		if closeErr != nil {
+			return fmt.Errorf("worker send timeout: %w", closeErr)
+		}
 		return nil
 
 	default:

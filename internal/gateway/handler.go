@@ -12,9 +12,10 @@ import (
 
 // Config 描述 WebSocket Gateway 配置。
 type Config struct {
-	MaxMessageBytes  int64         // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
-	StartTimeout     time.Duration // 限制会话等待完整 start 消息的时间。为 0 时使用默认值；负值属于无效配置。
-	InputIdleTimeout time.Duration // 限制音频输入阶段每次等待完整消息的时间。不包含向 Worker 转发音频的时间；收到合法 end 后不再使用。为 0 时使用默认值；负值属于无效配置。
+	MaxMessageBytes   int64         // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
+	StartTimeout      time.Duration // 限制会话等待完整 start 消息的时间。为 0 时使用默认值；负值属于无效配置。
+	InputIdleTimeout  time.Duration // 限制音频输入阶段每次等待完整消息的时间。不包含向 Worker 转发音频的时间；收到合法 end 后不再使用。
+	WorkerSendTimeout time.Duration // 限制单次向 Worker 发送音频的等待时间。超时后取消整个会话 RPC；不代表模型处理期限。
 }
 
 // Gateway 把 WebSocket 音频流桥接到 gRPC Worker。
@@ -27,8 +28,9 @@ type Gateway struct {
 }
 
 const (
-	defaultStartTimeout     = 10 * time.Second
-	defaultInputIdleTimeout = 30 * time.Second
+	defaultStartTimeout      = 10 * time.Second
+	defaultInputIdleTimeout  = 30 * time.Second
+	defaultWorkerSendTimeout = 2 * time.Second
 )
 
 // New 创建一个 Gateway。
@@ -54,6 +56,11 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, cfg Config) (*Gatew
 		return nil, fmt.Errorf("input idle timeout is invalid")
 	} else if cfg.InputIdleTimeout == 0 {
 		cfg.InputIdleTimeout = defaultInputIdleTimeout
+	}
+	if cfg.WorkerSendTimeout < 0 {
+		return nil, fmt.Errorf("worker send timeout is invalid")
+	} else if cfg.WorkerSendTimeout == 0 {
+		cfg.WorkerSendTimeout = defaultWorkerSendTimeout
 	}
 	return &Gateway{
 		ctx:     ctx,
@@ -85,7 +92,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	conn.SetReadLimit(g.cfg.MaxMessageBytes)
 
-	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout)
+	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout)
 	_ = s.run(g.ctx)
 }
 

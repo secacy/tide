@@ -17,11 +17,12 @@ import (
 //
 // Mock Worker 不真正执行 ASR 推理，而是根据收到的音频时长，按固定规则返回可预测的 partial/final 结果。
 type Config struct {
-	PartialEvery    time.Duration // 每收到多长时间的音频后返回一次 partial result
-	ResponseDelay   time.Duration // 模拟 ASR 推理延迟，设置为 0 表示立即返回
-	PartialTexts    []string      // Mock Worker 依次返回的 partial 文本
-	FinalText       string        // 客户端发送完音频后返回的最终结果
-	ProcessingDelay time.Duration // 模拟每个有效音频块的串行处理耗时。固定音频块大小时，该值决定模拟的音频处理速度。
+	PartialEvery     time.Duration // 每收到多长时间的音频后返回一次 partial result
+	ResponseDelay    time.Duration // 模拟 ASR 推理延迟，设置为 0 表示立即返回
+	PartialTexts     []string      // Mock Worker 依次返回的 partial 文本
+	FinalText        string        // 客户端发送完音频后返回的最终结果
+	ProcessingDelay  time.Duration // 模拟每个有效音频块的串行处理耗时。固定音频块大小时，该值决定模拟的音频处理速度。
+	StallAfterChunks int           // 指定每条 stream 处理多少个有效音频块后停止读取。前 N 块正常处理并发送相应 partial，随后不再调用 Recv，只等待 RPC context 取消。
 }
 
 // Worker 实现 ASRWorker gRPC 服务。
@@ -59,12 +60,21 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 	ctx := stream.Context()
 
 	var (
-		totalBytes    int                  // 本次 stream 已完成模拟处理的 PCM 总字节数
-		partialIndex  int                  // 下一次应该返回哪个 partial 文本
-		nextPartialAt = w.cfg.PartialEvery // 下一次 partial 应该出现在音频时间轴的哪个位置
+		totalBytes      int                  // 本次 stream 已完成模拟处理的 PCM 总字节数
+		partialIndex    int                  // 下一次应该返回哪个 partial 文本
+		nextPartialAt   = w.cfg.PartialEvery // 下一次 partial 应该出现在音频时间轴的哪个位置
+		processedChunks int                  // 本条 stream 已完成模拟处理的有效音频块数
 	)
 
 	for {
+
+		if w.cfg.StallAfterChunks > 0 &&
+			processedChunks >= w.cfg.StallAfterChunks {
+			// 故障注入：不再读取输入，只等待 RPC 被取消。
+			<-ctx.Done()
+			return status.FromContextError(ctx.Err()).Err()
+		}
+
 		req, err := stream.Recv()
 
 		switch {
@@ -96,6 +106,7 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 			return status.FromContextError(err).Err()
 		}
 		totalBytes += len(audioChunk)
+		processedChunks++
 		audioElapsed := audio.DurationFromBytes(totalBytes)
 
 		for partialIndex < len(w.cfg.PartialTexts) && audioElapsed >= nextPartialAt {

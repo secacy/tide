@@ -1,0 +1,283 @@
+diff --git a/internal/gateway/handler.go b/internal/gateway/handler.go
+index 4a19ca7..e4e11b1 100644
+--- a/internal/gateway/handler.go
++++ b/internal/gateway/handler.go
+@@ -12,9 +12,10 @@ import (
+ 
+ // Config 描述 WebSocket Gateway 配置。
+ type Config struct {
+-	MaxMessageBytes  int64         // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
+-	StartTimeout     time.Duration // 限制会话等待完整 start 消息的时间。为 0 时使用默认值；负值属于无效配置。
+-	InputIdleTimeout time.Duration // 限制音频输入阶段每次等待完整消息的时间。不包含向 Worker 转发音频的时间；收到合法 end 后不再使用。为 0 时使用默认值；负值属于无效配置。
++	MaxMessageBytes   int64         // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
++	StartTimeout      time.Duration // 限制会话等待完整 start 消息的时间。为 0 时使用默认值；负值属于无效配置。
++	InputIdleTimeout  time.Duration // 限制音频输入阶段每次等待完整消息的时间。不包含向 Worker 转发音频的时间；收到合法 end 后不再使用。
++	WorkerSendTimeout time.Duration // 限制单次向 Worker 发送音频的等待时间。超时后取消整个会话 RPC；不代表模型处理期限。
+ }
+ 
+ // Gateway 把 WebSocket 音频流桥接到 gRPC Worker。
+@@ -27,8 +28,9 @@ type Gateway struct {
+ }
+ 
+ const (
+-	defaultStartTimeout     = 10 * time.Second
+-	defaultInputIdleTimeout = 30 * time.Second
++	defaultStartTimeout      = 10 * time.Second
++	defaultInputIdleTimeout  = 30 * time.Second
++	defaultWorkerSendTimeout = 2 * time.Second
+ )
+ 
+ // New 创建一个 Gateway。
+@@ -55,6 +57,11 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, cfg Config) (*Gatew
+ 	} else if cfg.InputIdleTimeout == 0 {
+ 		cfg.InputIdleTimeout = defaultInputIdleTimeout
+ 	}
++	if cfg.WorkerSendTimeout < 0 {
++		return nil, fmt.Errorf("worker send timeout is invalid")
++	} else if cfg.WorkerSendTimeout == 0 {
++		cfg.WorkerSendTimeout = defaultWorkerSendTimeout
++	}
+ 	return &Gateway{
+ 		ctx:     ctx,
+ 		worker:  worker,
+@@ -85,7 +92,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+ 
+ 	conn.SetReadLimit(g.cfg.MaxMessageBytes)
+ 
+-	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout)
++	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout)
+ 	_ = s.run(g.ctx)
+ }
+ 
+diff --git a/internal/gateway/session.go b/internal/gateway/session.go
+index ecb9947..cab690b 100644
+--- a/internal/gateway/session.go
++++ b/internal/gateway/session.go
+@@ -35,6 +35,8 @@ type session struct {
+ 
+ 	inputReadMu  sync.Mutex      // 保护 inputReadCtx 的读写。只在保存或取得 context 时持有，不覆盖网络 I/O。
+ 	inputReadCtx context.Context // 保存最近一次音频输入读取的 context。读取结束后仍保留，用于判定本次连接关闭是否伴随输入超时。
++
++	workerSendTimeout time.Duration // 限制单次向 Worker 发送音频的等待时间
+ }
+ 
+ // sessionResultKind 描述能够决定整个 Session 结果的事件。
+@@ -46,7 +48,8 @@ const (
+ 	resultClientDisconnected
+ 	resultProtocolViolation
+ 	resultServerStopping
+-	resultInputIdleTimeout // 等待下一条完整输入消息超时
++	resultInputIdleTimeout  // 等待下一条完整输入消息超时
++	resultWorkerSendTimeout // 单次音频发送等待超时，已触发 RPC 取消
+ )
+ 
+ // ErrStartTimeout 表示会话未能在规定时间内完成 start 消息的读取与校验。
+@@ -64,12 +67,13 @@ type sessionResult struct {
+ var ErrInputIdleTimeout = errors.New("input idle timeout")
+ 
+ // newSession 创建会话。
+-func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration) *session {
++func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration) *session {
+ 	return &session{
+-		ws:               ws,
+-		worker:           worker,
+-		startTimeout:     startTimeout,
+-		inputIdleTimeout: inputIdleTimeout,
++		ws:                ws,
++		worker:            worker,
++		startTimeout:      startTimeout,
++		inputIdleTimeout:  inputIdleTimeout,
++		workerSendTimeout: workerSendTimeout,
+ 	}
+ }
+ 
+@@ -99,7 +103,11 @@ func (s *session) run(ctx context.Context) error {
+ 	}
+ 
+ 	// RPC 从建流阶段起就响应应用取消；WebSocket 保留独立的收尾时间，由 finish 在发送关闭帧后取消其 I/O。
+-	rpcCtx, cancelRPC := context.WithCancel(ctx)
++	rpcCtx, cancelRPCWithCause := context.WithCancelCause(ctx)
++	// 普通清理不主动指定业务原因；已有取消原因不会被覆盖。
++	cancelRPC := func() {
++		cancelRPCWithCause(nil)
++	}
+ 	defer cancelRPC()
+ 
+ 	wsCtx, cancelWS := context.WithCancel(context.WithoutCancel(ctx))
+@@ -129,7 +137,7 @@ func (s *session) run(ctx context.Context) error {
+ 
+ 	go func() {
+ 		defer wg.Done()
+-		events <- s.upload(wsCtx, stream, inputEnded)
++		events <- s.upload(wsCtx, rpcCtx, cancelRPCWithCause, stream, inputEnded)
+ 	}()
+ 
+ 	go func() {
+@@ -138,7 +146,7 @@ func (s *session) run(ctx context.Context) error {
+ 	}()
+ 
+ 	// 第一个真正具有决定性的事件确定 Session 结果。
+-	result := s.waitSessionResult(ctx, events, inputEnded)
++	result := s.waitSessionResult(ctx, rpcCtx, events, inputEnded)
+ 
+ 	// 先主动执行能够解除阻塞的 cleanup。
+ 	cleanupErr := s.finish(wsCtx, result, cancelRPC, cancelWS)
+@@ -180,8 +188,8 @@ func readStart(ctx context.Context, conn *websocket.Conn) error {
+ }
+ 
+ // waitSessionResult 等待退出事件，并在清理开始前确定会话结果。
+-// 判定顺序：服务停止、已观察到的输入超时、收到的退出事件。
+-func (s *session) waitSessionResult(ctx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}) sessionResult {
++// 判定顺序：服务停止、已观察到的输入超时、收到的退出事件、发送超时。
++func (s *session) waitSessionResult(ctx context.Context, rpcCtx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}) sessionResult {
+ 	var result sessionResult
+ 	select {
+ 	case result = <-events:
+@@ -197,6 +205,13 @@ func (s *session) waitSessionResult(ctx context.Context, events <-chan sessionRe
+ 		}
+ 	}
+ 
++	if errors.Is(context.Cause(rpcCtx), ErrWorkerSendTimeout) {
++		return sessionResult{
++			kind: resultWorkerSendTimeout,
++			err:  ErrWorkerSendTimeout,
++		}
++	}
++
+ 	if s.inputIdleExpired() {
+ 		return sessionResult{
+ 			kind: resultInputIdleTimeout,
+@@ -295,6 +310,15 @@ func (s *session) finish(
+ 		_ = s.ws.CloseNow()
+ 		return nil
+ 
++	case resultWorkerSendTimeout:
++		cancelRPC()
++		closeErr := s.ws.Close(websocket.StatusInternalError, "worker send timeout")
++		cancelWS()
++		if closeErr != nil {
++			return fmt.Errorf("worker send timeout: %w", closeErr)
++		}
++		return nil
++
+ 	default:
+ 		cancelRPC()
+ 		cancelWS()
+diff --git a/internal/gateway/upload.go b/internal/gateway/upload.go
+index 9b9b3b8..c1012a8 100644
+--- a/internal/gateway/upload.go
++++ b/internal/gateway/upload.go
+@@ -38,10 +38,17 @@ func (s *session) readInput(ctx context.Context) (websocket.MessageType, []byte,
+ 	return messageType, data, readErr
+ }
+ 
+-// upload 负责 WebSocket -> gRPC 方向。
+-func (s *session) upload(ctx context.Context, stream workerStream, inputEnded chan<- struct{}) sessionResult {
++// upload 读取客户端输入并转发音频。
++// wsCtx 控制客户端读取；rpcCtx 与 cancelRPC 属于正在使用的 Worker stream。
++func (s *session) upload(
++	wsCtx context.Context,
++	rpcCtx context.Context,
++	cancelRPC context.CancelCauseFunc,
++	stream workerStream,
++	inputEnded chan<- struct{},
++) sessionResult {
+ 	for {
+-		messageType, data, err := s.readInput(ctx)
++		messageType, data, err := s.readInput(wsCtx)
+ 		if err != nil {
+ 			// 输入超时是独立的退出原因，不属于客户端主动断开。
+ 			if errors.Is(err, ErrInputIdleTimeout) {
+@@ -55,15 +62,25 @@ func (s *session) upload(ctx context.Context, stream workerStream, inputEnded ch
+ 
+ 		switch messageType {
+ 		case websocket.MessageBinary:
+-			err := stream.Send(&asrv1.StreamingRecognizeRequest{
+-				Data: data,
+-			})
++			err := sendWithTimeout(
++				rpcCtx,
++				cancelRPC,
++				stream,
++				&asrv1.StreamingRecognizeRequest{Data: data},
++				s.workerSendTimeout,
++			)
+ 			switch {
+ 			case err == nil:
+ 				continue
++			// ErrWorkerSendTimeout → 返回独立的发送超时结果
++			case errors.Is(err, ErrWorkerSendTimeout):
++				return sessionResult{
++					kind: resultWorkerSendTimeout,
++					err:  ErrWorkerSendTimeout,
++				}
+ 			case errors.Is(err, io.EOF):
+ 				// Send 返回 io.EOF 不表示 RPC 的最终状态。Worker 可能已经拒绝请求，而真正的 gRPC Status 要由 download 中的 Recv 得到。
+-				return s.waitAfterSendEOF(ctx)
++				return s.waitAfterSendEOF(wsCtx)
+ 			default:
+ 				return sessionResult{
+ 					kind: resultWorkerFailed,
+@@ -82,7 +99,7 @@ func (s *session) upload(ctx context.Context, stream workerStream, inputEnded ch
+ 			// End 只关闭 gRPC Request 方向。
+ 			// 即使 CloseSend 返回错误，最终 RPC Status 仍应该尽量让 download/Recv 来确定。
+ 			_ = stream.CloseSend()
+-			return s.waitAfterEnd(ctx)
++			return s.waitAfterEnd(wsCtx)
+ 
+ 		default:
+ 			return protocolViolation(fmt.Errorf("unsupported websocket message type: %v", messageType))
+--- /dev/null
++++ b/internal/gateway/send.go
+@@ -0,0 +1,51 @@
++package gateway
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"time"
++
++	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
++)
++
++var ErrWorkerSendTimeout = errors.New("worker send timeout") // 单次向 Worker 发送音频的等待超过期限
++
++// sendWithTimeout 同步发送一块音频，等待超时后取消整个 RPC。
++// rpcCtx 和 cancelRPC 必须来自创建该 stream 的同一组 WithCancelCause。
++// stream 必须响应 RPC context 取消。
++// 不能与该 stream 的另一次 Send 或 CloseSend 并发调用。
++func sendWithTimeout(
++	rpcCtx context.Context,
++	cancelRPC context.CancelCauseFunc,
++	stream workerStream,
++	request *asrv1.StreamingRecognizeRequest,
++	timeout time.Duration,
++) error {
++	// 检查参数和取消状态
++	if timeout <= 0 {
++		return fmt.Errorf("send timeout must be positive: %s", timeout)
++	}
++	if cause := context.Cause(rpcCtx); cause != nil {
++		return cause
++	}
++	// 创建回调完成channel
++	timeoutDone := make(chan struct{})
++
++	timer := time.AfterFunc(timeout, func() {
++		cancelRPC(ErrWorkerSendTimeout)
++		close(timeoutDone)
++	})
++
++	sendErr := stream.Send(request)
++
++	// 停止计时器，并处理 Send 返回与超时回调之间的竞争。
++	if !timer.Stop() {
++		<-timeoutDone
++	}
++
++	if cause := context.Cause(rpcCtx); cause != nil {
++		return cause
++	}
++	return sendErr
++}

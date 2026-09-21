@@ -107,7 +107,7 @@ func dialSessionWithTimeouts(t *testing.T, parent context.Context, worker asrv1.
 			return
 		}
 		defer ws.CloseNow()
-		result <- newSession(ws, worker, startTimeout, inputIdleTimeout).run(ctx)
+		result <- newSession(ws, worker, startTimeout, inputIdleTimeout, defaultWorkerSendTimeout).run(ctx)
 	}))
 	var conn *websocket.Conn
 	t.Cleanup(func() {

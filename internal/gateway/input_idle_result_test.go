@@ -15,7 +15,9 @@ func TestUploadReportsInputIdleTimeout(t *testing.T) {
 	results := make(chan sessionResult, 1)
 	_ = dialInputReader(t, context.Background(), 50*time.Millisecond, func(ctx context.Context, s *session) {
 		// 客户端不发送消息，不会执行任何 Worker 操作，因此不需要 stream。
-		results <- s.upload(ctx, nil, make(chan struct{}))
+		rpcCtx, cancelRPC := context.WithCancelCause(ctx)
+		defer cancelRPC(nil)
+		results <- s.upload(ctx, rpcCtx, cancelRPC, nil, make(chan struct{}))
 	})
 	select {
 	case result := <-results:
@@ -58,7 +60,7 @@ func TestWaitSessionResultInputIdlePriority(t *testing.T) {
 			events := make(chan sessionResult, 1)
 			// 仅放入 download 的写入失败事件，upload 超时事件尚未上报。
 			events <- sessionResult{kind: resultClientDisconnected, err: writeErr}
-			result := s.waitSessionResult(ctx, events, make(chan struct{}))
+			result := s.waitSessionResult(ctx, ctx, events, make(chan struct{}))
 			if result.kind != tc.wantKind || !errors.Is(result.err, tc.wantErr) {
 				t.Fatalf("result = {kind:%v err:%v}, want {kind:%v err:%v}", result.kind, result.err, tc.wantKind, tc.wantErr)
 			}

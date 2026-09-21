@@ -31,7 +31,7 @@ func dialInputReader(t *testing.T, parent context.Context, timeout time.Duration
 			return
 		}
 		defer ws.CloseNow()
-		s := newSession(ws, &recordingWorker{}, defaultStartTimeout, timeout)
+		s := newSession(ws, &recordingWorker{}, defaultStartTimeout, timeout, defaultWorkerSendTimeout)
 		fn(ctx, s)
 	}))
 	var conn *websocket.Conn

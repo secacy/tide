@@ -1,0 +1,27 @@
+{
+  "date": "2026-09-21",
+  "base_commit": "b2b520047be2e1bd1748918f2ed41a323f82ad6c",
+  "changes": "WorkerSendTimeout Config, session wiring/classification/cleanup; untracked send.go and tests; see gateway.patch",
+  "sha256": {
+    "internal/gateway/send.go": "dd499b61fb2fb7f5268b51c5f856d755d4a48b34300d35cc68bf6f9fed4c1163",
+    "internal/gateway/session.go": "782d193668d6da2f6eabc22f8b58199b29ed0751903359def932d1501e9efd23",
+    "internal/gateway/upload.go": "c8f9e27d2c113d7c8cf2e5e677705d9306500f75eedb30fe2aaa7b26eebdf5d7",
+    "internal/gateway/handler.go": "e05063e03192b0b44eb6b32da03a58f055ccd28cadf0d0bf66d116a6517c3438",
+    "internal/gateway/stalled_worker_experiment_test.go": "193bc99c2c4b3eea39f47f76b4fa5cb390b094ed7c0448fa6de2643e7c12c81c",
+    "internal/gateway/slow_worker_experiment_test.go": "081d0f8be2dc47871ce7735c3163854415bf668cc6e7b5eea1c2e9f56448ab09",
+    "internal/gateway/resource_cleanup_test.go": "6c7f9679aa88f5014b29cdf421447001b13fbddbe856f2fdec3f56006fdece80",
+    "internal/gateway/worker_send_timeout_test.go": "da9b867a4a6152b389df1c76aad2e65a420b6b54b31b3f1d63fba914bb676e08",
+    "internal/mockasr/worker.go": "530eb693e19ce8d52eca139d640151338e2bbd8a2a1abc440d34e7ed466f942a"
+  },
+  "environment": {
+    "os": "26.6.2",
+    "cpu": "Apple M2 Pro",
+    "memory_gib": 32,
+    "go": "go version go1.26.5 darwin/arm64",
+    "logical_cpu": 12,
+    "gomaxprocs": 12,
+    "transport": "loopback TCP, same process",
+    "race": false
+  },
+  "command": "TIDE_RUN_WORKER_SEND_TIMEOUT_EXPERIMENT=1 GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test ./internal/gateway -run '^TestWorkerSendTimeoutExperiment$' -v -count=3 -timeout=90s"
+}

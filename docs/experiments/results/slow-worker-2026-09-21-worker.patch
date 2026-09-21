@@ -1,0 +1,40 @@
+diff --git a/internal/mockasr/worker.go b/internal/mockasr/worker.go
+index f02b15e..171784f 100644
+--- a/internal/mockasr/worker.go
++++ b/internal/mockasr/worker.go
+@@ -17,10 +17,11 @@ import (
+ //
+ // Mock Worker 不真正执行 ASR 推理，而是根据收到的音频时长，按固定规则返回可预测的 partial/final 结果。
+ type Config struct {
+-	PartialEvery  time.Duration // 每收到多长时间的音频后返回一次 partial result
+-	ResponseDelay time.Duration // 模拟 ASR 推理延迟，设置为 0 表示立即返回
+-	PartialTexts  []string      // Mock Worker 依次返回的 partial 文本
+-	FinalText     string        // 客户端发送完音频后返回的最终结果
++	PartialEvery    time.Duration // 每收到多长时间的音频后返回一次 partial result
++	ResponseDelay   time.Duration // 模拟 ASR 推理延迟，设置为 0 表示立即返回
++	PartialTexts    []string      // Mock Worker 依次返回的 partial 文本
++	FinalText       string        // 客户端发送完音频后返回的最终结果
++	ProcessingDelay time.Duration // 模拟每个有效音频块的串行处理耗时。固定音频块大小时，该值决定模拟的音频处理速度。
+ }
+ 
+ // Worker 实现 ASRWorker gRPC 服务。
+@@ -58,7 +59,7 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
+ 	ctx := stream.Context()
+ 
+ 	var (
+-		totalBytes    int                  // 本次 stream 到目前为止收到的 PCM 总字节数
++		totalBytes    int                  // 本次 stream 已完成模拟处理的 PCM 总字节数
+ 		partialIndex  int                  // 下一次应该返回哪个 partial 文本
+ 		nextPartialAt = w.cfg.PartialEvery // 下一次 partial 应该出现在音频时间轴的哪个位置
+ 	)
+@@ -90,6 +91,10 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
+ 		if len(audioChunk)%audio.BytesDepth != 0 {
+ 			return status.Errorf(codes.InvalidArgument, "invalid PCM chunk size %d: must align to %d-byte samples", len(audioChunk), audio.BytesDepth)
+ 		}
++		// 模拟处理耗时
++		if err := wait(ctx, w.cfg.ProcessingDelay); err != nil {
++			return status.FromContextError(err).Err()
++		}
+ 		totalBytes += len(audioChunk)
+ 		audioElapsed := audio.DurationFromBytes(totalBytes)
+ 
