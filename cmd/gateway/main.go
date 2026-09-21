@@ -22,7 +22,7 @@ import (
 const (
 	gatewayAddr     = ":8080"           // WebSocket Gateway 对外监听地址
 	workerAddr      = "localhost:50051" // gRPC Mock Worker 地址
-	shutdownTimeout = 5 * time.Second   // HTTP Server 优雅关闭和会话停止的最长等待时间
+	shutdownTimeout = 15 * time.Second  // HTTP Server 优雅关闭和已有会话退出的等待时间上限
 )
 
 func main() {

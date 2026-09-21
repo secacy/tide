@@ -90,39 +90,11 @@ func testGatewayShutdown(t *testing.T, afterEnd bool) {
 		worker.inputEnded = make(chan struct{})
 	}
 
-	// 内存监听器保留真实 gRPC 取消语义，不需要外部 Worker 进程。
-	listener := bufconn.Listen(1024 * 1024)
-	rpcServer := grpc.NewServer()
-	asrv1.RegisterASRServiceServer(rpcServer, worker)
-	serveDone := make(chan struct{}) // 通知识别服务的 Serve goroutine 已退出。
-	go func() {
-		defer close(serveDone)
-		_ = rpcServer.Serve(listener)
-	}()
-	t.Cleanup(func() {
-		rpcServer.Stop()
-		_ = listener.Close()
-		select {
-		case <-serveDone:
-		case <-time.After(time.Second):
-			t.Error("gRPC server did not stop")
-		}
-	})
-
-	rpcConn, err := grpc.NewClient("passthrough:///shutdown-worker",
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
-			return listener.DialContext(ctx)
-		}),
-	)
-	if err != nil {
-		t.Fatalf("create worker client: %v", err)
-	}
-	t.Cleanup(func() { _ = rpcConn.Close() })
+	workerClient := newTestWorkerClient(t, worker)
 
 	sessionCtx, cancelSessions := context.WithCancel(context.Background())
 	t.Cleanup(cancelSessions)
-	g, err := New(sessionCtx, asrv1.NewASRServiceClient(rpcConn), Config{})
+	g, err := New(sessionCtx, workerClient, Config{})
 	if err != nil {
 		t.Fatalf("create gateway: %v", err)
 	}
@@ -212,4 +184,38 @@ func testGatewayShutdown(t *testing.T, afterEnd bool) {
 	case <-shutdownCtx.Done():
 		t.Fatal("worker did not exit after service cancellation")
 	}
+}
+
+// newTestWorkerClient 用内存监听器运行真实 gRPC 服务，保留半关闭、EOF 和取消语义。
+// 客户端连接和服务端仅在测试清理时关闭，避免替被测会话提前释放 RPC。
+func newTestWorkerClient(t *testing.T, worker asrv1.ASRServiceServer) asrv1.ASRServiceClient {
+	t.Helper()
+	listener := bufconn.Listen(1024 * 1024)
+	rpcServer := grpc.NewServer()
+	asrv1.RegisterASRServiceServer(rpcServer, worker)
+	serveDone := make(chan struct{}) // 通知服务的 Serve goroutine 已退出。
+	go func() {
+		defer close(serveDone)
+		_ = rpcServer.Serve(listener)
+	}()
+	t.Cleanup(func() {
+		rpcServer.Stop()
+		_ = listener.Close()
+		select {
+		case <-serveDone:
+		case <-time.After(time.Second):
+			t.Error("gRPC server did not stop")
+		}
+	})
+	rpcConn, err := grpc.NewClient("passthrough:///test-worker",
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+			return listener.DialContext(ctx)
+		}),
+	)
+	if err != nil {
+		t.Fatalf("create worker client: %v", err)
+	}
+	t.Cleanup(func() { _ = rpcConn.Close() })
+	return asrv1.NewASRServiceClient(rpcConn)
 }
