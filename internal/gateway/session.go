@@ -36,7 +36,11 @@ type session struct {
 	inputReadMu  sync.Mutex      // 保护 inputReadCtx 的读写。只在保存或取得 context 时持有，不覆盖网络 I/O。
 	inputReadCtx context.Context // 保存最近一次音频输入读取的 context。读取结束后仍保留，用于判定本次连接关闭是否伴随输入超时。
 
-	workerSendTimeout time.Duration // 限制单次向 Worker 发送音频的等待时间
+	workerSendTimeout  time.Duration   // 限制单次向 Worker 发送音频的等待时间
+	tailTimeout        time.Duration   // 输入结束后的完成等待预算，不限制正常问诊时长
+	resultWriteTimeout time.Duration   // 限制单条结果的 WebSocket Write 等待
+	resultWriteMu      sync.Mutex      // 只保护 resultWriteCtx，不覆盖编码或网络写入
+	resultWriteCtx     context.Context // 保存最近一次写入的 context。写入结束后仍保留，供协调者判断连接关闭是否伴随写入超时。
 }
 
 // sessionResultKind 描述能够决定整个 Session 结果的事件。
@@ -48,8 +52,10 @@ const (
 	resultClientDisconnected
 	resultProtocolViolation
 	resultServerStopping
-	resultInputIdleTimeout  // 等待下一条完整输入消息超时
-	resultWorkerSendTimeout // 单次音频发送等待超时，已触发 RPC 取消
+	resultInputIdleTimeout   // 等待下一条完整输入消息超时
+	resultWorkerSendTimeout  // 单次音频发送等待超时，已触发 RPC 取消
+	resultTailTimeout        // 表示输入结束后，等待剩余结果及响应流结束超时
+	resultResultWriteTimeout // 表示单条识别结果写回客户端超时
 )
 
 // ErrStartTimeout 表示会话未能在规定时间内完成 start 消息的读取与校验。
@@ -67,13 +73,15 @@ type sessionResult struct {
 var ErrInputIdleTimeout = errors.New("input idle timeout")
 
 // newSession 创建会话。
-func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration) *session {
+func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration, tailTimeout time.Duration, resultWriteTimeout time.Duration) *session {
 	return &session{
-		ws:                ws,
-		worker:            worker,
-		startTimeout:      startTimeout,
-		inputIdleTimeout:  inputIdleTimeout,
-		workerSendTimeout: workerSendTimeout,
+		ws:                 ws,
+		worker:             worker,
+		startTimeout:       startTimeout,
+		inputIdleTimeout:   inputIdleTimeout,
+		workerSendTimeout:  workerSendTimeout,
+		tailTimeout:        tailTimeout,
+		resultWriteTimeout: resultWriteTimeout,
 	}
 }
 
@@ -190,11 +198,7 @@ func readStart(ctx context.Context, conn *websocket.Conn) error {
 // waitSessionResult 等待退出事件，并在清理开始前确定会话结果。
 // 判定顺序：服务停止、发送超时、输入空闲超时、收到的退出事件。
 func (s *session) waitSessionResult(ctx context.Context, rpcCtx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}) sessionResult {
-	var result sessionResult
-	select {
-	case result = <-events:
-	case <-ctx.Done():
-	}
+	result := waitSessionEvent(ctx, events, inputEnded, s.tailTimeout)
 
 	// 应用取消和 RPC 的取消错误可能同时到达。统一归类为服务停止，
 	// 避免 select 的调度顺序让关闭码在 1001 和 1011 之间变化。
@@ -216,6 +220,13 @@ func (s *session) waitSessionResult(ctx context.Context, rpcCtx context.Context,
 		return sessionResult{
 			kind: resultInputIdleTimeout,
 			err:  ErrInputIdleTimeout,
+		}
+	}
+
+	if s.resultWriteExpired() {
+		return sessionResult{
+			kind: resultResultWriteTimeout,
+			err:  ErrResultWriteTimeout,
 		}
 	}
 
@@ -317,6 +328,21 @@ func (s *session) finish(
 		if closeErr != nil {
 			return fmt.Errorf("worker send timeout: %w", closeErr)
 		}
+		return nil
+
+	case resultTailTimeout:
+		cancelRPC()
+		closeErr := s.ws.Close(websocket.StatusInternalError, "tail timeout")
+		cancelWS()
+		if closeErr != nil {
+			return fmt.Errorf("tail timeout: %w", closeErr)
+		}
+		return nil
+
+	case resultResultWriteTimeout:
+		cancelRPC()
+		cancelWS()
+		_ = s.ws.CloseNow()
 		return nil
 
 	default:

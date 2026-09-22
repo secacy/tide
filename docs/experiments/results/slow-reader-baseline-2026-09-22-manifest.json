@@ -1,0 +1,44 @@
+{
+  "date": "2026-09-22",
+  "base_commit": "2c51c47bda115557916d445e66eb49b644292f3e",
+  "stage": "writeResult implemented but not wired; download still uses writeJSON without per-write deadline",
+  "sha256": {
+    "go.mod": "c9c7012d18711cb2d954c57cc784a8c70327d34b03167b91a01aabded852db4e",
+    "internal/gateway/handler.go": "950b3e1efd2c7aa22bc46429be5adb72f8547e1fb468606a966f4457a26d0301",
+    "internal/gateway/session.go": "8624694760df000698d91dcb0acc62396c6eac11de498117fd75a14056e0c227",
+    "internal/gateway/download.go": "c89e57916a4fd5adb715f60f90a1fb3f8914b8736da33bc38d7fb519d4a6901c",
+    "internal/gateway/result_write.go": "c4857e2586727457bcd38dd6fd8dcb0b4e214bcbca3484bd0427b3a71069437c",
+    "internal/gateway/result_write_test.go": "118618116884f84b87f13a43db2d76b153c22fd4b0df33d080aa11d586c5589e",
+    "internal/gateway/slow_reader_experiment_test.go": "726a94bcf778254bdc34b3ce1fb5d3af46d0f394944f8a5353fd78d61dd075a6",
+    "internal/gateway/stalled_worker_experiment_test.go": "193bc99c2c4b3eea39f47f76b4fa5cb390b094ed7c0448fa6de2643e7c12c81c",
+    "internal/gateway/slow_worker_experiment_test.go": "081d0f8be2dc47871ce7735c3163854415bf668cc6e7b5eea1c2e9f56448ab09",
+    "internal/gateway/tail_integration_test.go": "2a1196f9cffa816d6d0cd5c0be63dfa6b2cf4010dc8f9859a39bb4501fff49ef",
+    "internal/gateway/tail.go": "28053ca665c70e6c0011d5a1d0ed5f899bb49ab51642bb26ad8cb354cd6d7554"
+  },
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "macos": "26.6.2",
+    "hardware_reference": "session-admission-2026-09-22-manifest.json",
+    "transport": "loopback TCP, same process; compression default disabled; no TCP buffer changes",
+    "race": false
+  },
+  "workload": {
+    "max_sessions": 1,
+    "input_idle_seconds": 30,
+    "tail": "no end sent",
+    "input": "start and one 2-byte audio message, then no further input",
+    "output": "at most 64 responses, each 256KiB ASCII text; unpaced burst until gRPC flow control blocks",
+    "client": "never calls Read after handshake",
+    "blocking_detection_ms": 300,
+    "additional_observation_ms": 500,
+    "detection_budget_seconds": 4,
+    "experiment_timeout_seconds": 15,
+    "repetitions": 3
+  },
+  "measurement": "net.Conn.Write boundary after handshake; not a one-to-one count of WebSocket messages; only this one connection is probed",
+  "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off TIDE_RUN_SLOW_READER_BASELINE=1 go test ./internal/gateway -run '^TestSlowReaderBaselineExperiment$' -count=3 -timeout=45s -v",
+  "validation": [
+    "go test -race ./internal/gateway -run ^TestResultWrite -count=3 -timeout=30s",
+    "TIDE_RUN_SLOW_READER_BASELINE=1 go test -race ./internal/gateway -run ^TestSlowReaderBaselineExperiment$ -count=1 -timeout=25s -v"
+  ]
+}

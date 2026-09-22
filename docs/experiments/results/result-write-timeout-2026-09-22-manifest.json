@@ -1,0 +1,50 @@
+{
+  "date": "2026-09-22",
+  "base_commit": "2c51c47bda115557916d445e66eb49b644292f3e",
+  "stage": "ResultWriteTimeout wired through Config/New/constructor/download/result classification/finish",
+  "sha256": {
+    "go.mod": "c9c7012d18711cb2d954c57cc784a8c70327d34b03167b91a01aabded852db4e",
+    "internal/gateway/handler.go": "2fad07e79cd9185299ba38d886add66bb7e3fb2b049f89d76e48781822380de2",
+    "internal/gateway/session.go": "b81748d5a39d7b5ca889d73d1d9758b64e926aa5a4316793ac27a566b28cf23b",
+    "internal/gateway/download.go": "61e3fdd2007843e83bbddaefc9a749f23f5e3dbe6272a580f952200185fd537c",
+    "internal/gateway/result_write.go": "c4857e2586727457bcd38dd6fd8dcb0b4e214bcbca3484bd0427b3a71069437c",
+    "internal/gateway/result_write_test.go": "118618116884f84b87f13a43db2d76b153c22fd4b0df33d080aa11d586c5589e",
+    "internal/gateway/result_write_integration_test.go": "b448f55387d633b26ad017281b07b39c564a520b223f70fd53acdb79f75ca4f7",
+    "internal/gateway/result_write_experiment_test.go": "107911597db43de39791393b14106f758874c0817722bf13cb12b69b27422e3f",
+    "internal/gateway/slow_reader_experiment_test.go": "726a94bcf778254bdc34b3ce1fb5d3af46d0f394944f8a5353fd78d61dd075a6",
+    "internal/gateway/stalled_worker_experiment_test.go": "193bc99c2c4b3eea39f47f76b4fa5cb390b094ed7c0448fa6de2643e7c12c81c",
+    "internal/gateway/slow_worker_experiment_test.go": "081d0f8be2dc47871ce7735c3163854415bf668cc6e7b5eea1c2e9f56448ab09",
+    "internal/gateway/tail_integration_test.go": "2a1196f9cffa816d6d0cd5c0be63dfa6b2cf4010dc8f9859a39bb4501fff49ef",
+    "internal/gateway/tail.go": "28053ca665c70e6c0011d5a1d0ed5f899bb49ab51642bb26ad8cb354cd6d7554",
+    "internal/gateway/read_input_test.go": "86e269312ec00b887f6398d1cc6974d643ecd1ce035621dcd5a59b8e54d5558e",
+    "internal/gateway/start_timeout_test.go": "500e53796173f9bc8ab5d742789700c365fd7591f5cdf355878213ffdcc58e8d"
+  },
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "macos": "26.6.2",
+    "hardware_reference": "session-admission-2026-09-22-manifest.json",
+    "transport": "loopback TCP same process, default WebSocket compression disabled, no TCP buffer modifications",
+    "race": false,
+    "concurrent_activity": "formal measurements after full race regression finished"
+  },
+  "workload": {
+    "max_sessions": 1,
+    "input_idle_seconds": 30,
+    "result_write_timeout_ms": 200,
+    "input": "start, 2-byte audio, no end, no subsequent input",
+    "output": "same slowReaderWorker: max 64 responses with 256KiB ASCII text each, unpaced burst until gRPC flow control blocks",
+    "client": "no Read after handshake; reentry handshakes after cleanup and closes without starting ASR",
+    "detection_ms": 50,
+    "experiment_timeout_seconds": 5,
+    "repetitions": 3
+  },
+  "measurement": "actual underlying net.Conn.Write pending start sampled before automatic cleanup; differs from entire WebSocket Write start; no direct run-error capture in Gateway experiment",
+  "classification_validation": "TestResultWriteSessionTimeout observes ErrResultWriteTimeout from run using controlled transport; TestResultWriteTimeoutPriority verifies read-failure-first ordering deterministically",
+  "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off TIDE_RUN_RESULT_WRITE_TIMEOUT_EXPERIMENT=1 go test ./internal/gateway -run '^TestResultWriteTimeoutExperiment$' -count=3 -timeout=30s -v",
+  "validation": [
+    "go test -race ./internal/gateway -run ^(TestResultWrite|TestGatewayNormalEndPreservesTail) -count=3 -timeout=45s",
+    "go test -race ./... (Gateway executed, Mock cached)"
+  ],
+  "baseline": "slow-reader-baseline-2026-09-22-manifest.json",
+  "code_review_note": "ServeHTTP assigns resultWriteTimeout again after constructor; redundant but same value, left for author"
+}

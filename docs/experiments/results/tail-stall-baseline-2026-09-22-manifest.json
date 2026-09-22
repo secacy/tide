@@ -1,0 +1,41 @@
+{
+  "date": "2026-09-22",
+  "base_commit": "2c51c47bda115557916d445e66eb49b644292f3e",
+  "stage": "tail helper implemented but not wired; no tail timeout in live session",
+  "sha256": {
+    "go.mod": "c9c7012d18711cb2d954c57cc784a8c70327d34b03167b91a01aabded852db4e",
+    "internal/gateway/session.go": "29d5bfadd4e50fa80f6840c80901e18101b756e8fa3077f3ee6f91b6553e895e",
+    "internal/gateway/tail.go": "28053ca665c70e6c0011d5a1d0ed5f899bb49ab51642bb26ad8cb354cd6d7554",
+    "internal/gateway/tail_test.go": "09d41c3edd20b81d9dce92592194ed8c7cf532fb93695e6ae25ad2e1a763e68c",
+    "internal/gateway/tail_stall_experiment_test.go": "fc081acb326f53899cd32abe301a8eea64642bd959e5809b36f29db6b4a432dd",
+    "internal/gateway/handler.go": "9ba80f19a8fd03ee2a37ff9bc2028325d64a8bb0135f92e1240d17a0f1c42b24",
+    "internal/gateway/tracker.go": "1965a81ef7053352ab3945009dd3b44c0683e2e98cf73af5838977ad54971d35",
+    "internal/gateway/upload.go": "c8f9e27d2c113d7c8cf2e5e677705d9306500f75eedb30fe2aaa7b26eebdf5d7",
+    "internal/gateway/download.go": "c89e57916a4fd5adb715f60f90a1fb3f8914b8736da33bc38d7fb519d4a6901c",
+    "internal/gateway/normal_end_test.go": "36befc70cd6a8033d8444b1fecfeb1dad0174324e49de909a0b5078f8fd01d6a",
+    "internal/gateway/admission_network_test.go": "03599fc9555ac127ddbdeebcb6e3c4f8dc1cf89d62e14d13b9448ce8179b2b74",
+    "internal/gateway/slow_worker_experiment_test.go": "081d0f8be2dc47871ce7735c3163854415bf668cc6e7b5eea1c2e9f56448ab09"
+  },
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "macos": "26.6.2",
+    "transport": "loopback TCP, same process",
+    "hardware_reference": "session-admission-2026-09-22-manifest.json",
+    "race": false
+  },
+  "workload": {
+    "max_sessions": 1,
+    "input_idle_timeout_ms": 100,
+    "worker_send_timeout_ms": 100,
+    "observation_ms": 500,
+    "runs": 3,
+    "fault": "Worker receives EOF then waits for releaseTail (never released) or RPC cancellation",
+    "client": "keeps connection and reads; second client attempts admission after observation",
+    "fallback": "cancel service context after full observation and rejected admission"
+  },
+  "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off TIDE_RUN_TAIL_STALL_BASELINE=1 go test ./internal/gateway -run '^TestTailStallBaselineExperiment$' -count=3 -v",
+  "validation": [
+    "go test -race ./internal/gateway -run ^TestTailWait -count=3 -timeout=30s",
+    "TIDE_RUN_TAIL_STALL_BASELINE=1 go test -race ./internal/gateway -run ^TestTailStallBaselineExperiment$ -count=1 -v"
+  ]
+}

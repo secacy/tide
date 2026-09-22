@@ -2,12 +2,10 @@ package gateway
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 
-	"github.com/coder/websocket"
 	"github.com/secacy/tide-artisan/internal/wsprotocol"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 )
@@ -37,7 +35,13 @@ func (s *session) download(ctx context.Context, stream workerStream) sessionResu
 		}
 
 		message := toResultMessage(response)
-		if err := writeJSON(ctx, s.ws, message); err != nil {
+		if err := s.writeResult(ctx, message); err != nil {
+			if errors.Is(err, ErrResultWriteTimeout) {
+				return sessionResult{
+					kind: resultResultWriteTimeout,
+					err:  ErrResultWriteTimeout,
+				}
+			}
 			return sessionResult{
 				kind: resultClientDisconnected,
 				err:  fmt.Errorf("write result to websocket: %w", err),
@@ -54,18 +58,6 @@ func toResultMessage(response *asrv1.StreamingRecognizeResponse) wsprotocol.Resu
 		Text:      response.GetText(),
 		IsFinal:   response.GetIsFinal(),
 	}
-}
-
-// writeJSON 把 Gateway 控制/结果消息编码为 WebSocket Text Message。
-func writeJSON(ctx context.Context, conn *websocket.Conn, value any) error {
-	data, err := json.Marshal(value)
-	if err != nil {
-		return fmt.Errorf("encode websocket message: %w", err)
-	}
-	if err := conn.Write(ctx, websocket.MessageText, data); err != nil {
-		return fmt.Errorf("write websocket message: %w", err)
-	}
-	return nil
 }
 
 func clientDisconnected(err error) sessionResult {

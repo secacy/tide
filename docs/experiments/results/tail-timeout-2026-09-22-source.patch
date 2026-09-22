@@ -1,0 +1,158 @@
+diff --git a/internal/gateway/handler.go b/internal/gateway/handler.go
+index e1414f6..bf199a6 100644
+--- a/internal/gateway/handler.go
++++ b/internal/gateway/handler.go
+@@ -18,6 +18,7 @@ type Config struct {
+ 	InputIdleTimeout  time.Duration // 限制音频输入阶段每次等待完整消息的时间。不包含向 Worker 转发音频的时间；收到合法 end 后不再使用。
+ 	WorkerSendTimeout time.Duration // 限制单次向 Worker 发送音频的等待时间。超时后取消整个会话 RPC；不代表模型处理期限。
+ 	MaxSessions       int           // 限制本 Gateway 已接纳但尚未完成清理的会话数量
++	TailTimeout       time.Duration // 限制协调者观察到合法 end 后，等待剩余结果转发和 Worker 响应流结束的时间
+ }
+ 
+ // Gateway 把 WebSocket 音频流桥接到 gRPC Worker。
+@@ -34,6 +35,7 @@ const (
+ 	defaultInputIdleTimeout  = 30 * time.Second
+ 	defaultWorkerSendTimeout = 2 * time.Second
+ 	defaultMaxSessions       = 64
++	defaultTailTimeout       = 15 * time.Second
+ )
+ 
+ // New 创建一个 Gateway。
+@@ -70,6 +72,11 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, cfg Config) (*Gatew
+ 	} else if cfg.MaxSessions == 0 {
+ 		cfg.MaxSessions = defaultMaxSessions
+ 	}
++	if cfg.TailTimeout < 0 {
++		return nil, fmt.Errorf("tail timeout is invalid")
++	} else if cfg.TailTimeout == 0 {
++		cfg.TailTimeout = defaultTailTimeout
++	}
+ 	return &Gateway{
+ 		ctx:     ctx,
+ 		worker:  worker,
+@@ -105,7 +112,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+ 
+ 	conn.SetReadLimit(g.cfg.MaxMessageBytes)
+ 
+-	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout)
++	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout)
+ 	_ = s.run(g.ctx)
+ }
+ 
+diff --git a/internal/gateway/session.go b/internal/gateway/session.go
+index c34d675..2a6ed58 100644
+--- a/internal/gateway/session.go
++++ b/internal/gateway/session.go
+@@ -37,6 +37,7 @@ type session struct {
+ 	inputReadCtx context.Context // 保存最近一次音频输入读取的 context。读取结束后仍保留，用于判定本次连接关闭是否伴随输入超时。
+ 
+ 	workerSendTimeout time.Duration // 限制单次向 Worker 发送音频的等待时间
++	tailTimeout       time.Duration // 输入结束后的完成等待预算，不限制正常问诊时长
+ }
+ 
+ // sessionResultKind 描述能够决定整个 Session 结果的事件。
+@@ -50,6 +51,7 @@ const (
+ 	resultServerStopping
+ 	resultInputIdleTimeout  // 等待下一条完整输入消息超时
+ 	resultWorkerSendTimeout // 单次音频发送等待超时，已触发 RPC 取消
++	resultTailTimeout       // 表示输入结束后，等待剩余结果及响应流结束超时
+ )
+ 
+ // ErrStartTimeout 表示会话未能在规定时间内完成 start 消息的读取与校验。
+@@ -67,13 +69,14 @@ type sessionResult struct {
+ var ErrInputIdleTimeout = errors.New("input idle timeout")
+ 
+ // newSession 创建会话。
+-func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration) *session {
++func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration, tailTimeout time.Duration) *session {
+ 	return &session{
+ 		ws:                ws,
+ 		worker:            worker,
+ 		startTimeout:      startTimeout,
+ 		inputIdleTimeout:  inputIdleTimeout,
+ 		workerSendTimeout: workerSendTimeout,
++		tailTimeout:       tailTimeout,
+ 	}
+ }
+ 
+@@ -190,11 +193,7 @@ func readStart(ctx context.Context, conn *websocket.Conn) error {
+ // waitSessionResult 等待退出事件，并在清理开始前确定会话结果。
+ // 判定顺序：服务停止、发送超时、输入空闲超时、收到的退出事件。
+ func (s *session) waitSessionResult(ctx context.Context, rpcCtx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}) sessionResult {
+-	var result sessionResult
+-	select {
+-	case result = <-events:
+-	case <-ctx.Done():
+-	}
++	result := waitSessionEvent(ctx, events, inputEnded, s.tailTimeout)
+ 
+ 	// 应用取消和 RPC 的取消错误可能同时到达。统一归类为服务停止，
+ 	// 避免 select 的调度顺序让关闭码在 1001 和 1011 之间变化。
+@@ -319,6 +318,15 @@ func (s *session) finish(
+ 		}
+ 		return nil
+ 
++	case resultTailTimeout:
++		cancelRPC()
++		closeErr := s.ws.Close(websocket.StatusInternalError, "tail timeout")
++		cancelWS()
++		if closeErr != nil {
++			return fmt.Errorf("tail timeout: %w", closeErr)
++		}
++		return nil
++
+ 	default:
+ 		cancelRPC()
+ 		cancelWS()
+--- /dev/null
++++ b/internal/gateway/tail.go
+@@ -0,0 +1,49 @@
++package gateway
++
++import (
++	"context"
++	"errors"
++	"time"
++)
++
++// ErrTailTimeout 表示输入结束后，未能在预算内完成结果转发。
++var ErrTailTimeout = errors.New("tail timeout")
++
++// waitSessionEvent 等待会话退出事件。
++// 观察到合法 end 通知后，启动一次性的尾部完成计时器。
++// end 本身不是退出事件；后续结果不会延长期限。
++// tailTimeout 必须为正值。
++// 本函数只返回原因，不取消 RPC、不关闭连接，也不释放会话名额。
++func waitSessionEvent(ctx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}, tailTimeout time.Duration) sessionResult {
++	var (
++		endSignal = inputEnded     // 本函数使用的接收入口，处理一次后禁用
++		timer     *time.Timer      // 尚未观察到 end 时，不创建计时器
++		timeoutC  <-chan time.Time // nil channel 在 select 中不会被选中，相当于暂时关闭超时分支
++	)
++	defer func() {
++		if timer != nil {
++			timer.Stop()
++		}
++	}()
++	for {
++		select {
++		case event := <-events:
++			return event
++		case <-ctx.Done():
++			return sessionResult{
++				kind: resultServerStopping,
++				err:  ctx.Err(),
++			}
++		case <-endSignal:
++			// 创建计时器
++			timer = time.NewTimer(tailTimeout)
++			timeoutC = timer.C
++			endSignal = nil
++		case <-timeoutC:
++			return sessionResult{
++				kind: resultTailTimeout,
++				err:  ErrTailTimeout,
++			}
++		}
++	}
++}

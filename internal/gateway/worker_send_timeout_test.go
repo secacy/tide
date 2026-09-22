@@ -69,7 +69,7 @@ func TestWorkerSendTimeoutResultPriority(t *testing.T) {
 			if tc.stopService {
 				stop()
 			}
-			s := &session{}
+			s := &session{tailTimeout: defaultTailTimeout}
 			if tc.inputExpired {
 				readCtx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
 				defer cancel()

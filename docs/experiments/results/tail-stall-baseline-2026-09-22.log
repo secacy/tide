@@ -1,0 +1,11 @@
+=== RUN   TestTailStallBaselineExperiment
+    tail_stall_experiment_test.go:45: TAIL_BASELINE_JSON {"outcome":"required_external_cancel","observation_ms":501.046167,"active_after_observation":1,"rejected_admission":{"index":1,"outcome":"capacity_rejected","status":503,"elapsed_ms":1.206791,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},"fallback_cancel":true,"close_code":1001,"worker_canceled":true,"cancel_to_handler_ms":0.451334,"final_active":0}
+--- PASS: TestTailStallBaselineExperiment (0.51s)
+=== RUN   TestTailStallBaselineExperiment
+    tail_stall_experiment_test.go:45: TAIL_BASELINE_JSON {"outcome":"required_external_cancel","observation_ms":501.097291,"active_after_observation":1,"rejected_admission":{"index":1,"outcome":"capacity_rejected","status":503,"elapsed_ms":1.467334,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},"fallback_cancel":true,"close_code":1001,"worker_canceled":true,"cancel_to_handler_ms":0.28475,"final_active":0}
+--- PASS: TestTailStallBaselineExperiment (0.51s)
+=== RUN   TestTailStallBaselineExperiment
+    tail_stall_experiment_test.go:45: TAIL_BASELINE_JSON {"outcome":"required_external_cancel","observation_ms":500.233084,"active_after_observation":1,"rejected_admission":{"index":1,"outcome":"capacity_rejected","status":503,"elapsed_ms":1.791167,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},"fallback_cancel":true,"close_code":1001,"worker_canceled":true,"cancel_to_handler_ms":0.300375,"final_active":0}
+--- PASS: TestTailStallBaselineExperiment (0.50s)
+PASS
+ok  	github.com/secacy/tide-artisan/internal/gateway	2.085s

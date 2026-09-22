@@ -1,0 +1,46 @@
+{
+  "date": "2026-09-22",
+  "base_commit": "2c51c47bda115557916d445e66eb49b644292f3e",
+  "changes": "TailTimeout default/validation, constructor wiring, waitSessionEvent call, tail-timeout finish; tests adapted and added",
+  "sha256": {
+    "go.mod": "c9c7012d18711cb2d954c57cc784a8c70327d34b03167b91a01aabded852db4e",
+    "internal/gateway/handler.go": "950b3e1efd2c7aa22bc46429be5adb72f8547e1fb468606a966f4457a26d0301",
+    "internal/gateway/session.go": "b8c6dff453f79ddec015b81470be647dd3a0d31544a1e07403a36afe423dc0c0",
+    "internal/gateway/tail.go": "28053ca665c70e6c0011d5a1d0ed5f899bb49ab51642bb26ad8cb354cd6d7554",
+    "internal/gateway/tail_test.go": "f0413c578bc08cdeacdcf850edfd96b97b342d6cdd38f510cf0066a27f6780d3",
+    "internal/gateway/tail_config_test.go": "56122b128b3c74890af364dfa21036fba648bb60b228ef383a5f37caa6166535",
+    "internal/gateway/tail_integration_test.go": "2a1196f9cffa816d6d0cd5c0be63dfa6b2cf4010dc8f9859a39bb4501fff49ef",
+    "internal/gateway/tail_stall_experiment_test.go": "fc081acb326f53899cd32abe301a8eea64642bd959e5809b36f29db6b4a432dd",
+    "internal/gateway/normal_end_test.go": "36befc70cd6a8033d8444b1fecfeb1dad0174324e49de909a0b5078f8fd01d6a",
+    "internal/gateway/slow_worker_experiment_test.go": "081d0f8be2dc47871ce7735c3163854415bf668cc6e7b5eea1c2e9f56448ab09",
+    "internal/gateway/read_input_test.go": "eec6ceb393fccc109b7edc5c2ae1ff21913b07ebca73a17de76afcef16ebc93a",
+    "internal/gateway/start_timeout_test.go": "d1546b9f4a79d1d9a435a54ad24bb81d75e9f07a4e1f29ace7a453c584352271",
+    "internal/gateway/input_idle_result_test.go": "c1f53731a87ce77eb4153f587aafa6036f1aaef2775d429fad32318384fb4b2a",
+    "internal/gateway/worker_send_timeout_test.go": "cd2cd526b8beb8341b6608e0cb9ad77d0020430cf84d0488be490c54612cfc61"
+  },
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "macos": "26.6.2",
+    "hardware_reference": "session-admission-2026-09-22-manifest.json",
+    "transport": "loopback TCP, same process",
+    "race": false,
+    "concurrency_note": "formal experiment started after full race regression completed"
+  },
+  "workload": {
+    "max_sessions": 1,
+    "input_idle_timeout_ms": 100,
+    "worker_send_timeout_ms": 100,
+    "tail_timeout_ms": 200,
+    "runs": 3,
+    "fault": "same normalEndWorker as baseline: receive EOF then wait indefinitely for releaseTail or RPC cancellation",
+    "client": "remains connected and reading",
+    "reentry": "handshake only after cleanup, close without start; not a second ASR run"
+  },
+  "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off TIDE_RUN_TAIL_TIMEOUT_EXPERIMENT=1 go test ./internal/gateway -run '^TestTailTimeoutExperiment$' -count=3 -v",
+  "validation": [
+    "go test -race ./internal/gateway -run ^TestTail -count=3 -timeout=30s (including 3 integration scenarios per repetition)",
+    "go test -race ./... (includes final coordinator-priority tests, Mock cached)"
+  ],
+  "time_origin": "test observes Worker EOF notification, not coordinator timer creation; handler timestamp after Gateway.ServeHTTP returns",
+  "baseline": "tail-stall-baseline-2026-09-22-manifest.json"
+}

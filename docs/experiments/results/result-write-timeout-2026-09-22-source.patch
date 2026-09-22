@@ -1,0 +1,330 @@
+diff --git a/internal/gateway/download.go b/internal/gateway/download.go
+index 5eb72e5..bb7aaa5 100644
+--- a/internal/gateway/download.go
++++ b/internal/gateway/download.go
+@@ -2,12 +2,10 @@ package gateway
+ 
+ import (
+ 	"context"
+-	"encoding/json"
+ 	"errors"
+ 	"fmt"
+ 	"io"
+ 
+-	"github.com/coder/websocket"
+ 	"github.com/secacy/tide-artisan/internal/wsprotocol"
+ 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
+ )
+@@ -37,7 +35,13 @@ func (s *session) download(ctx context.Context, stream workerStream) sessionResu
+ 		}
+ 
+ 		message := toResultMessage(response)
+-		if err := writeJSON(ctx, s.ws, message); err != nil {
++		if err := s.writeResult(ctx, message); err != nil {
++			if errors.Is(err, ErrResultWriteTimeout) {
++				return sessionResult{
++					kind: resultResultWriteTimeout,
++					err:  ErrResultWriteTimeout,
++				}
++			}
+ 			return sessionResult{
+ 				kind: resultClientDisconnected,
+ 				err:  fmt.Errorf("write result to websocket: %w", err),
+@@ -56,18 +60,6 @@ func toResultMessage(response *asrv1.StreamingRecognizeResponse) wsprotocol.Resu
+ 	}
+ }
+ 
+-// writeJSON 把 Gateway 控制/结果消息编码为 WebSocket Text Message。
+-func writeJSON(ctx context.Context, conn *websocket.Conn, value any) error {
+-	data, err := json.Marshal(value)
+-	if err != nil {
+-		return fmt.Errorf("encode websocket message: %w", err)
+-	}
+-	if err := conn.Write(ctx, websocket.MessageText, data); err != nil {
+-		return fmt.Errorf("write websocket message: %w", err)
+-	}
+-	return nil
+-}
+-
+ func clientDisconnected(err error) sessionResult {
+ 	return sessionResult{
+ 		kind: resultClientDisconnected,
+diff --git a/internal/gateway/handler.go b/internal/gateway/handler.go
+index e1414f6..5723e70 100644
+--- a/internal/gateway/handler.go
++++ b/internal/gateway/handler.go
+@@ -13,11 +13,13 @@ import (
+ 
+ // Config 描述 WebSocket Gateway 配置。
+ type Config struct {
+-	MaxMessageBytes   int64         // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
+-	StartTimeout      time.Duration // 限制会话等待完整 start 消息的时间。为 0 时使用默认值；负值属于无效配置。
+-	InputIdleTimeout  time.Duration // 限制音频输入阶段每次等待完整消息的时间。不包含向 Worker 转发音频的时间；收到合法 end 后不再使用。
+-	WorkerSendTimeout time.Duration // 限制单次向 Worker 发送音频的等待时间。超时后取消整个会话 RPC；不代表模型处理期限。
+-	MaxSessions       int           // 限制本 Gateway 已接纳但尚未完成清理的会话数量
++	MaxMessageBytes    int64         // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
++	StartTimeout       time.Duration // 限制会话等待完整 start 消息的时间。为 0 时使用默认值；负值属于无效配置。
++	InputIdleTimeout   time.Duration // 限制音频输入阶段每次等待完整消息的时间。不包含向 Worker 转发音频的时间；收到合法 end 后不再使用。
++	WorkerSendTimeout  time.Duration // 限制单次向 Worker 发送音频的等待时间。超时后取消整个会话 RPC；不代表模型处理期限。
++	MaxSessions        int           // 限制本 Gateway 已接纳但尚未完成清理的会话数量
++	TailTimeout        time.Duration // 限制协调者观察到合法 end 后，等待剩余结果转发和 Worker 响应流结束的时间
++	ResultWriteTimeout time.Duration // 限制单条结果的 WebSocket Write 等待
+ }
+ 
+ // Gateway 把 WebSocket 音频流桥接到 gRPC Worker。
+@@ -30,10 +32,12 @@ type Gateway struct {
+ }
+ 
+ const (
+-	defaultStartTimeout      = 10 * time.Second
+-	defaultInputIdleTimeout  = 30 * time.Second
+-	defaultWorkerSendTimeout = 2 * time.Second
+-	defaultMaxSessions       = 64
++	defaultStartTimeout       = 10 * time.Second
++	defaultInputIdleTimeout   = 30 * time.Second
++	defaultWorkerSendTimeout  = 2 * time.Second
++	defaultMaxSessions        = 64
++	defaultTailTimeout        = 15 * time.Second
++	defaultResultWriteTimeout = 2 * time.Second
+ )
+ 
+ // New 创建一个 Gateway。
+@@ -70,6 +74,16 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, cfg Config) (*Gatew
+ 	} else if cfg.MaxSessions == 0 {
+ 		cfg.MaxSessions = defaultMaxSessions
+ 	}
++	if cfg.TailTimeout < 0 {
++		return nil, fmt.Errorf("tail timeout is invalid")
++	} else if cfg.TailTimeout == 0 {
++		cfg.TailTimeout = defaultTailTimeout
++	}
++	if cfg.ResultWriteTimeout < 0 {
++		return nil, fmt.Errorf("result write timeout is invalid")
++	} else if cfg.ResultWriteTimeout == 0 {
++		cfg.ResultWriteTimeout = defaultResultWriteTimeout
++	}
+ 	return &Gateway{
+ 		ctx:     ctx,
+ 		worker:  worker,
+@@ -105,7 +119,8 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+ 
+ 	conn.SetReadLimit(g.cfg.MaxMessageBytes)
+ 
+-	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout)
++	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout)
++	s.resultWriteTimeout = g.cfg.ResultWriteTimeout
+ 	_ = s.run(g.ctx)
+ }
+ 
+diff --git a/internal/gateway/session.go b/internal/gateway/session.go
+index c34d675..eae5ca8 100644
+--- a/internal/gateway/session.go
++++ b/internal/gateway/session.go
+@@ -36,7 +36,11 @@ type session struct {
+ 	inputReadMu  sync.Mutex      // 保护 inputReadCtx 的读写。只在保存或取得 context 时持有，不覆盖网络 I/O。
+ 	inputReadCtx context.Context // 保存最近一次音频输入读取的 context。读取结束后仍保留，用于判定本次连接关闭是否伴随输入超时。
+ 
+-	workerSendTimeout time.Duration // 限制单次向 Worker 发送音频的等待时间
++	workerSendTimeout  time.Duration   // 限制单次向 Worker 发送音频的等待时间
++	tailTimeout        time.Duration   // 输入结束后的完成等待预算，不限制正常问诊时长
++	resultWriteTimeout time.Duration   // 限制单条结果的 WebSocket Write 等待
++	resultWriteMu      sync.Mutex      // 只保护 resultWriteCtx，不覆盖编码或网络写入
++	resultWriteCtx     context.Context // 保存最近一次写入的 context。写入结束后仍保留，供协调者判断连接关闭是否伴随写入超时。
+ }
+ 
+ // sessionResultKind 描述能够决定整个 Session 结果的事件。
+@@ -48,8 +52,10 @@ const (
+ 	resultClientDisconnected
+ 	resultProtocolViolation
+ 	resultServerStopping
+-	resultInputIdleTimeout  // 等待下一条完整输入消息超时
+-	resultWorkerSendTimeout // 单次音频发送等待超时，已触发 RPC 取消
++	resultInputIdleTimeout   // 等待下一条完整输入消息超时
++	resultWorkerSendTimeout  // 单次音频发送等待超时，已触发 RPC 取消
++	resultTailTimeout        // 表示输入结束后，等待剩余结果及响应流结束超时
++	resultResultWriteTimeout // 表示单条识别结果写回客户端超时
+ )
+ 
+ // ErrStartTimeout 表示会话未能在规定时间内完成 start 消息的读取与校验。
+@@ -67,13 +73,15 @@ type sessionResult struct {
+ var ErrInputIdleTimeout = errors.New("input idle timeout")
+ 
+ // newSession 创建会话。
+-func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration) *session {
++func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration, tailTimeout time.Duration, resultWriteTimeout time.Duration) *session {
+ 	return &session{
+-		ws:                ws,
+-		worker:            worker,
+-		startTimeout:      startTimeout,
+-		inputIdleTimeout:  inputIdleTimeout,
+-		workerSendTimeout: workerSendTimeout,
++		ws:                 ws,
++		worker:             worker,
++		startTimeout:       startTimeout,
++		inputIdleTimeout:   inputIdleTimeout,
++		workerSendTimeout:  workerSendTimeout,
++		tailTimeout:        tailTimeout,
++		resultWriteTimeout: resultWriteTimeout,
+ 	}
+ }
+ 
+@@ -190,11 +198,7 @@ func readStart(ctx context.Context, conn *websocket.Conn) error {
+ // waitSessionResult 等待退出事件，并在清理开始前确定会话结果。
+ // 判定顺序：服务停止、发送超时、输入空闲超时、收到的退出事件。
+ func (s *session) waitSessionResult(ctx context.Context, rpcCtx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}) sessionResult {
+-	var result sessionResult
+-	select {
+-	case result = <-events:
+-	case <-ctx.Done():
+-	}
++	result := waitSessionEvent(ctx, events, inputEnded, s.tailTimeout)
+ 
+ 	// 应用取消和 RPC 的取消错误可能同时到达。统一归类为服务停止，
+ 	// 避免 select 的调度顺序让关闭码在 1001 和 1011 之间变化。
+@@ -219,6 +223,13 @@ func (s *session) waitSessionResult(ctx context.Context, rpcCtx context.Context,
+ 		}
+ 	}
+ 
++	if s.resultWriteExpired() {
++		return sessionResult{
++			kind: resultResultWriteTimeout,
++			err:  ErrResultWriteTimeout,
++		}
++	}
++
+ 	if result.kind == resultCompleted {
+ 		select {
+ 		case <-inputEnded:
+@@ -319,6 +330,21 @@ func (s *session) finish(
+ 		}
+ 		return nil
+ 
++	case resultTailTimeout:
++		cancelRPC()
++		closeErr := s.ws.Close(websocket.StatusInternalError, "tail timeout")
++		cancelWS()
++		if closeErr != nil {
++			return fmt.Errorf("tail timeout: %w", closeErr)
++		}
++		return nil
++
++	case resultResultWriteTimeout:
++		cancelRPC()
++		cancelWS()
++		_ = s.ws.CloseNow()
++		return nil
++
+ 	default:
+ 		cancelRPC()
+ 		cancelWS()
+--- /dev/null
++++ b/internal/gateway/tail.go
+@@ -0,0 +1,49 @@
++package gateway
++
++import (
++	"context"
++	"errors"
++	"time"
++)
++
++// ErrTailTimeout 表示输入结束后，未能在预算内完成结果转发。
++var ErrTailTimeout = errors.New("tail timeout")
++
++// waitSessionEvent 等待会话退出事件。
++// 观察到合法 end 通知后，启动一次性的尾部完成计时器。
++// end 本身不是退出事件；后续结果不会延长期限。
++// tailTimeout 必须为正值。
++// 本函数只返回原因，不取消 RPC、不关闭连接，也不释放会话名额。
++func waitSessionEvent(ctx context.Context, events <-chan sessionResult, inputEnded <-chan struct{}, tailTimeout time.Duration) sessionResult {
++	var (
++		endSignal = inputEnded     // 本函数使用的接收入口，处理一次后禁用
++		timer     *time.Timer      // 尚未观察到 end 时，不创建计时器
++		timeoutC  <-chan time.Time // nil channel 在 select 中不会被选中，相当于暂时关闭超时分支
++	)
++	defer func() {
++		if timer != nil {
++			timer.Stop()
++		}
++	}()
++	for {
++		select {
++		case event := <-events:
++			return event
++		case <-ctx.Done():
++			return sessionResult{
++				kind: resultServerStopping,
++				err:  ctx.Err(),
++			}
++		case <-endSignal:
++			// 创建计时器
++			timer = time.NewTimer(tailTimeout)
++			timeoutC = timer.C
++			endSignal = nil
++		case <-timeoutC:
++			return sessionResult{
++				kind: resultTailTimeout,
++				err:  ErrTailTimeout,
++			}
++		}
++	}
++}
+--- /dev/null
++++ b/internal/gateway/result_write.go
+@@ -0,0 +1,56 @@
++package gateway
++
++import (
++	"context"
++	"encoding/json"
++	"errors"
++	"fmt"
++
++	"github.com/coder/websocket"
++	"github.com/secacy/tide-artisan/internal/wsprotocol"
++)
++
++// ErrResultWriteTimeout 表示单条结果写回客户端超时。
++var ErrResultWriteTimeout = errors.New("result write timeout")
++
++// writeResult 编码并同步写回一条识别结果。
++// 期限只覆盖 WebSocket Write，不包含 JSON 编码。
++// 单个会话只能由一个结果写入者串行调用。
++// 本方法不取消 RPC、不归还会话名额。
++func (s *session) writeResult(ctx context.Context, message wsprotocol.ResultMessage) error {
++	if s.resultWriteTimeout <= 0 {
++		return fmt.Errorf("result write timeout must be positive: %s", s.resultWriteTimeout)
++	}
++	if ctx.Err() != nil {
++		return ctx.Err()
++	}
++	data, err := json.Marshal(message)
++	if err != nil {
++		return fmt.Errorf("marshal result message: %w", err)
++	}
++	writeCtx, cancelWrite := context.WithTimeout(ctx, s.resultWriteTimeout)
++	s.resultWriteMu.Lock()
++	s.resultWriteCtx = writeCtx
++	s.resultWriteMu.Unlock()
++	writeErr := s.ws.Write(writeCtx, websocket.MessageText, data)
++	writeContextErr := writeCtx.Err()
++	cancelWrite()
++	if ctx.Err() != nil {
++		return ctx.Err()
++	}
++	if errors.Is(writeContextErr, context.DeadlineExceeded) {
++		return ErrResultWriteTimeout
++	}
++	if writeErr != nil {
++		return fmt.Errorf("write result message: %w", writeErr)
++	}
++	return nil
++}
++
++// resultWriteExpired 判断最近一次结果写入是否因期限到期而结束。
++// 尚未写入，或成功后主动取消 context，都不属于写入超时。
++func (s *session) resultWriteExpired() bool {
++	s.resultWriteMu.Lock()
++	defer s.resultWriteMu.Unlock()
++	return s.resultWriteCtx != nil && errors.Is(s.resultWriteCtx.Err(), context.DeadlineExceeded)
++}

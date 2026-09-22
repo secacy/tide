@@ -1,0 +1,11 @@
+=== RUN   TestTailTimeoutExperiment
+    tail_integration_test.go:92: TAIL_TIMEOUT_JSON {"case":"stalled_tail","outcome":"tail_timeout","budget_ms":200,"before_end_wait_ms":0,"tail_delay_ms":0,"close_code":1011,"close_reason":"tail timeout","eof_from_end_write_ms":0.101458,"worker_exit_from_eof_ms":201.32325,"client_close_from_eof_ms":201.391334,"handler_exit_from_eof_ms":201.451417,"worker_canceled":true,"fallback_cancel":false,"active_after_cleanup":0,"reentry_accepted":true,"final_active":0}
+--- PASS: TestTailTimeoutExperiment (0.21s)
+=== RUN   TestTailTimeoutExperiment
+    tail_integration_test.go:92: TAIL_TIMEOUT_JSON {"case":"stalled_tail","outcome":"tail_timeout","budget_ms":200,"before_end_wait_ms":0,"tail_delay_ms":0,"close_code":1011,"close_reason":"tail timeout","eof_from_end_write_ms":0.2345,"worker_exit_from_eof_ms":201.484083,"client_close_from_eof_ms":201.600541,"handler_exit_from_eof_ms":201.684916,"worker_canceled":true,"fallback_cancel":false,"active_after_cleanup":0,"reentry_accepted":true,"final_active":0}
+--- PASS: TestTailTimeoutExperiment (0.21s)
+=== RUN   TestTailTimeoutExperiment
+    tail_integration_test.go:92: TAIL_TIMEOUT_JSON {"case":"stalled_tail","outcome":"tail_timeout","budget_ms":200,"before_end_wait_ms":0,"tail_delay_ms":0,"close_code":1011,"close_reason":"tail timeout","eof_from_end_write_ms":0.092875,"worker_exit_from_eof_ms":202.381167,"client_close_from_eof_ms":202.573042,"handler_exit_from_eof_ms":202.653042,"worker_canceled":true,"fallback_cancel":false,"active_after_cleanup":0,"reentry_accepted":true,"final_active":0}
+--- PASS: TestTailTimeoutExperiment (0.21s)
+PASS
+ok  	github.com/secacy/tide-artisan/internal/gateway	1.232s

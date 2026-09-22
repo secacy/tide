@@ -56,7 +56,7 @@ func TestWaitSessionResultInputIdlePriority(t *testing.T) {
 			if tc.stopService {
 				cancel()
 			}
-			s := &session{inputReadCtx: tc.readCtx}
+			s := &session{inputReadCtx: tc.readCtx, tailTimeout: defaultTailTimeout}
 			events := make(chan sessionResult, 1)
 			// 仅放入 download 的写入失败事件，upload 超时事件尚未上报。
 			events <- sessionResult{kind: resultClientDisconnected, err: writeErr}
