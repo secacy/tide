@@ -1,0 +1,51 @@
+{
+  "date": "2026-09-22",
+  "base_commit": "b2b6504e1bde03e9f7976cf7ab28f5b7c4653b39",
+  "changes": "MaxSessions config, tracker admission check, pre-upgrade HTTP rejection; see gateway.patch; assistant added admission tests",
+  "sha256": {
+    "go.mod": "c9c7012d18711cb2d954c57cc784a8c70327d34b03167b91a01aabded852db4e",
+    "go.sum": "829a64643f43bb0a0fea771fa2561e6a7fa26622fcb4bbcbf7dbbb101e88f5fd",
+    "internal/gateway/handler.go": "9ba80f19a8fd03ee2a37ff9bc2028325d64a8bb0135f92e1240d17a0f1c42b24",
+    "internal/gateway/tracker.go": "1965a81ef7053352ab3945009dd3b44c0683e2e98cf73af5838977ad54971d35",
+    "internal/gateway/session.go": "4cc137d0cde50a38584a009d8952c7841fcfd9c9b4a530c6f5e0fc3c422af470",
+    "internal/gateway/admission_test.go": "c755d5fd8921c537ec54cb363467364aa3a8480d4739501ae82a2d6fec587042",
+    "internal/gateway/admission_network_test.go": "03599fc9555ac127ddbdeebcb6e3c4f8dc1cf89d62e14d13b9448ce8179b2b74",
+    "internal/gateway/handler_test.go": "ea3af53bb63514a644d64b60b9408b5c51287479503af08c8789a15dff235406",
+    "internal/gateway/normal_end_test.go": "36befc70cd6a8033d8444b1fecfeb1dad0174324e49de909a0b5078f8fd01d6a",
+    "internal/gateway/slow_worker_experiment_test.go": "081d0f8be2dc47871ce7735c3163854415bf668cc6e7b5eea1c2e9f56448ab09",
+    "internal/mockasr/worker.go": "6354f5922f66495dd25bf7d811c8ba105e9e944526f44dffb392d3cc3e5eaeb1"
+  },
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "macos": "26.6.2",
+    "cpu": "Apple M2 Pro",
+    "memory_gib": 32,
+    "logical_cpu": 12,
+    "hardware_source": "same workspace machine, verified during worker-pause experiment on 2026-09-22",
+    "GOMAXPROCS_env": null,
+    "transport": "loopback TCP, client/gateway/Mock in same process",
+    "race": false,
+    "concurrent_activity": "full race regression ran alongside this functional admission experiment; timing is incidental, not a latency benchmark"
+  },
+  "workload": {
+    "max_sessions": 4,
+    "rounds": 5,
+    "burst_attempts_per_round": 20,
+    "hold": "accepted clients do not send start until all burst attempts return",
+    "audio_per_accepted_session": "one zero-filled 3200-byte PCM chunk (100ms at 16kHz mono int16), then end",
+    "reentry_attempts_per_round": 1,
+    "processing_delay_ms": 0,
+    "response_delay_ms": 0
+  },
+  "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off TIDE_RUN_SESSION_ADMISSION_EXPERIMENT=1 go test ./internal/gateway -run '^TestSessionAdmissionExperiment$' -count=1 -v",
+  "validation": [
+    "go test -race ./internal/gateway -run ^TestAdmission -count=3 (includes one real-network burst and tail reservation per repetition)",
+    "go test -race ./... (Mock result reused Go test cache; Gateway executed)"
+  ],
+  "measurement_notes": [
+    "max_observed_active is sampled under tracker lock as dial results are collected; it is not continuous tracing",
+    "successful connections remain held until all 20 attempts return, then active must equal 4",
+    "handler completion notifications occur after Gateway.ServeHTTP returns, so subsequent zero-count checks follow cleanup",
+    "reentry attempts and their five completions are separate from the 100 burst attempts"
+  ]
+}

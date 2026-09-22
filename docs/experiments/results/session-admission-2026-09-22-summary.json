@@ -1,0 +1,887 @@
+{
+  "rounds": [
+    {
+      "round": 1,
+      "outcome": "completed",
+      "attempts": [
+        {
+          "index": 2,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 2.5795
+        },
+        {
+          "index": 18,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 2.364959
+        },
+        {
+          "index": 12,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 2.361792
+        },
+        {
+          "index": 3,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.9525,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 0,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.675375,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 8,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.7175,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 17,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.97725,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 9,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.714542,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 15,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.734292,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 7,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.718458,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 6,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.802792,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 14,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.744708,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 11,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.749,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 19,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.9135,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 1,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.750917,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 13,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 2.771291
+        },
+        {
+          "index": 10,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.805125,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 4,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.939584,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 16,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.974458,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 5,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 2.96025,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        }
+      ],
+      "accepted": 4,
+      "rejected": 16,
+      "other_errors": 0,
+      "max_observed_active": 4,
+      "held_active": 4,
+      "worker_starts_before_start": 0,
+      "completed": 4,
+      "active_after_cleanup": 0,
+      "reentry": {
+        "index": 20,
+        "outcome": "accepted",
+        "status": 101,
+        "elapsed_ms": 0.282125
+      },
+      "reentry_completed": true,
+      "final_active": 0
+    },
+    {
+      "round": 2,
+      "outcome": "completed",
+      "attempts": [
+        {
+          "index": 9,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 0.965959
+        },
+        {
+          "index": 14,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 1.103292
+        },
+        {
+          "index": 1,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 1.127584
+        },
+        {
+          "index": 5,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.080834,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 0,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 1.129542
+        },
+        {
+          "index": 16,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.1105,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 2,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.136375,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 15,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.150083,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 3,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.135042,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 19,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.254583,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 10,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.165208,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 4,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.325125,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 18,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.245417,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 11,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.246375,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 13,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.248917,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 12,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.271625,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 8,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.269167,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 6,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.266916,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 7,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.331166,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 17,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.419042,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        }
+      ],
+      "accepted": 4,
+      "rejected": 16,
+      "other_errors": 0,
+      "max_observed_active": 4,
+      "held_active": 4,
+      "worker_starts_before_start": 0,
+      "completed": 4,
+      "active_after_cleanup": 0,
+      "reentry": {
+        "index": 20,
+        "outcome": "accepted",
+        "status": 101,
+        "elapsed_ms": 0.28775
+      },
+      "reentry_completed": true,
+      "final_active": 0
+    },
+    {
+      "round": 3,
+      "outcome": "completed",
+      "attempts": [
+        {
+          "index": 7,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 0.742
+        },
+        {
+          "index": 3,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 1.013791
+        },
+        {
+          "index": 19,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 1.134125
+        },
+        {
+          "index": 0,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 1.424
+        },
+        {
+          "index": 10,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.457875,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 16,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.44425,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 5,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.445166,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 17,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.434334,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 18,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.392084,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 14,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.505,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 13,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.593875,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 2,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.46325,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 6,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.541584,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 4,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.566625,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 11,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.587417,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 9,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.55375,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 12,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.543458,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 1,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.617333,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 8,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.634,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 15,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.632541,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        }
+      ],
+      "accepted": 4,
+      "rejected": 16,
+      "other_errors": 0,
+      "max_observed_active": 4,
+      "held_active": 4,
+      "worker_starts_before_start": 0,
+      "completed": 4,
+      "active_after_cleanup": 0,
+      "reentry": {
+        "index": 20,
+        "outcome": "accepted",
+        "status": 101,
+        "elapsed_ms": 0.439541
+      },
+      "reentry_completed": true,
+      "final_active": 0
+    },
+    {
+      "round": 4,
+      "outcome": "completed",
+      "attempts": [
+        {
+          "index": 19,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 0.753958
+        },
+        {
+          "index": 9,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 0.7905
+        },
+        {
+          "index": 4,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 0.87425
+        },
+        {
+          "index": 14,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 0.899834
+        },
+        {
+          "index": 17,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 0.8985,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 5,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 0.899666,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 1,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 0.92225,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 18,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.052833,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 15,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.184,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 16,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.205167,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 2,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.196417,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 7,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.172792,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 10,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.15375,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 8,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.15075,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 6,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.112167,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 3,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.160209,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 0,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.260667,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 13,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.245416,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 12,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.543208,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 11,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.551083,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        }
+      ],
+      "accepted": 4,
+      "rejected": 16,
+      "other_errors": 0,
+      "max_observed_active": 4,
+      "held_active": 4,
+      "worker_starts_before_start": 0,
+      "completed": 4,
+      "active_after_cleanup": 0,
+      "reentry": {
+        "index": 20,
+        "outcome": "accepted",
+        "status": 101,
+        "elapsed_ms": 0.252208
+      },
+      "reentry_completed": true,
+      "final_active": 0
+    },
+    {
+      "round": 5,
+      "outcome": "completed",
+      "attempts": [
+        {
+          "index": 19,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 0.677208
+        },
+        {
+          "index": 9,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 0.846167
+        },
+        {
+          "index": 4,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 0.879417
+        },
+        {
+          "index": 5,
+          "outcome": "accepted",
+          "status": 101,
+          "elapsed_ms": 0.871292
+        },
+        {
+          "index": 10,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 0.969792,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 7,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.040541,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 2,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.032875,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 17,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.376708,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 16,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.391084,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 0,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.448166,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 8,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.439,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 11,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.447458,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 6,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.447584,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 15,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.417459,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 3,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.428209,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 13,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.387375,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 1,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.432959,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 18,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.478875,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 14,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.518625,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        },
+        {
+          "index": 12,
+          "outcome": "capacity_rejected",
+          "status": 503,
+          "elapsed_ms": 1.554292,
+          "error": "failed to WebSocket dial: expected handshake response status code 101 but got 503",
+          "body": "session limit exceeded\n"
+        }
+      ],
+      "accepted": 4,
+      "rejected": 16,
+      "other_errors": 0,
+      "max_observed_active": 4,
+      "held_active": 4,
+      "worker_starts_before_start": 0,
+      "completed": 4,
+      "active_after_cleanup": 0,
+      "reentry": {
+        "index": 20,
+        "outcome": "accepted",
+        "status": 101,
+        "elapsed_ms": 0.577875
+      },
+      "reentry_completed": true,
+      "final_active": 0
+    }
+  ],
+  "totals": {
+    "burst_attempts": 100,
+    "accepted": 20,
+    "capacity_rejected": 80,
+    "other_errors": 0,
+    "completed": 20,
+    "reentry_completed": 5
+  },
+  "max_observed_active": 4,
+  "rejection_elapsed_ms_range": [
+    0.8985,
+    2.97725
+  ]
+}

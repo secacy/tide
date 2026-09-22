@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"context"
+	"errors"
 	"sync"
 )
 
@@ -25,27 +26,43 @@ type sessionTracker struct {
 	// drained 在 stopping 为 true 且 active 为 0 时关闭。
 	// 它只用于通知全部退出，不发送数据，且只能关闭一次。
 	drained chan struct{}
+
+	// maxActive 是允许同时登记的会话上限。
+	// 构造时设置，使用期间不修改。
+	maxActive int
 }
 
+var (
+	// errGatewayStopping 表示 Gateway 已永久停止接入。
+	errGatewayStopping = errors.New("service is stopping")
+
+	// errSessionLimit 表示尚未清理完成的会话数量已达到上限。
+	errSessionLimit = errors.New("session limit reached")
+)
+
 // newSessionTracker 创建一个允许接入新会话的跟踪器。
-// 初始计数为零，drained 已创建但尚未关闭。
-func newSessionTracker() *sessionTracker {
+// maxActive 必须为正值，由 Gateway.New 校验后传入。
+func newSessionTracker(maxActive int) *sessionTracker {
 	return &sessionTracker{
-		drained: make(chan struct{}),
+		drained:   make(chan struct{}),
+		maxActive: maxActive,
 	}
 }
 
 // tryEnter 尝试登记一个会话。
-// 成功时增加计数并返回 true；停止接入后返回 false。
-// 每次成功调用，必须在清理完成后恰好对应一次 leave。
-func (t *sessionTracker) tryEnter() bool {
+// 成功返回 nil，并增加 active；失败返回拒绝原因，不改变计数。
+// 每次成功登记都必须在资源清理后对应一次 leave。
+func (t *sessionTracker) tryEnter() error {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.stopping {
-		return false
+		return errGatewayStopping
+	}
+	if t.active >= t.maxActive {
+		return errSessionLimit
 	}
 	t.active++
-	return true
+	return nil
 }
 
 // leave 表示一个已登记会话完成全部清理。
