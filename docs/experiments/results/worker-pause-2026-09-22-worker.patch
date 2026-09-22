@@ -1,0 +1,35 @@
+diff --git a/internal/mockasr/worker.go b/internal/mockasr/worker.go
+index a766191..7293297 100644
+--- a/internal/mockasr/worker.go
++++ b/internal/mockasr/worker.go
+@@ -23,6 +23,8 @@ type Config struct {
+ 	FinalText        string        // 客户端发送完音频后返回的最终结果
+ 	ProcessingDelay  time.Duration // 模拟每个有效音频块的串行处理耗时。固定音频块大小时，该值决定模拟的音频处理速度。
+ 	StallAfterChunks int           // 指定每条 stream 处理多少个有效音频块后停止读取。前 N 块正常处理并发送相应 partial，随后不再调用 Recv，只等待 RPC context 取消。
++	PauseAfterChunks int           // 指定处理多少个有效音频块后暂停一次。大于 0 且 PauseDuration 大于 0 时启用；每条 stream 独立计数
++	PauseDuration    time.Duration // 一次暂停的持续时间。暂停期间不读取下一块音频，仍响应 RPC context 取消。小于等于 0 时关闭暂停注入。
+ }
+ 
+ // Worker 实现 ASRWorker gRPC 服务。
+@@ -64,6 +66,7 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
+ 		partialIndex    int                  // 下一次应该返回哪个 partial 文本
+ 		nextPartialAt   = w.cfg.PartialEvery // 下一次 partial 应该出现在音频时间轴的哪个位置
+ 		processedChunks int                  // 本条 stream 已完成模拟处理的有效音频块数
++		pauseApplied    bool                 // 本条 stream 是否已经执行过一次暂停
+ 	)
+ 
+ 	for {
+@@ -75,6 +78,13 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
+ 			return status.FromContextError(ctx.Err()).Err()
+ 		}
+ 
++		if w.cfg.PauseAfterChunks > 0 && w.cfg.PauseDuration > 0 && !pauseApplied && processedChunks >= w.cfg.PauseAfterChunks {
++			pauseApplied = true
++			if err := wait(ctx, w.cfg.PauseDuration); err != nil {
++				return status.FromContextError(err).Err()
++			}
++		}
++
+ 		req, err := stream.Recv()
+ 
+ 		switch {

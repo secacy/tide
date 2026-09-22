@@ -1,0 +1,55 @@
+{
+  "date": "2026-09-22",
+  "base_commit": "56900db8742950e3388113c26dae64ef9cfdce25",
+  "changes": "Mock pause fields and per-stream pause; production diff in worker.patch; new behavior/experiment tests in working tree",
+  "sha256": {
+    "go.mod": "c9c7012d18711cb2d954c57cc784a8c70327d34b03167b91a01aabded852db4e",
+    "go.sum": "829a64643f43bb0a0fea771fa2561e6a7fa26622fcb4bbcbf7dbbb101e88f5fd",
+    "internal/mockasr/worker.go": "6354f5922f66495dd25bf7d811c8ba105e9e944526f44dffb392d3cc3e5eaeb1",
+    "internal/mockasr/pause_test.go": "78842d687f64151cf4370805c645c927c7e059ec4c1d04fd44dafc10b77ef11e",
+    "internal/gateway/worker_pause_experiment_test.go": "05aded37df77d19ea5d1750f30de262b3867b27d54ae4d31af2018e9a50facc8",
+    "internal/gateway/slow_worker_experiment_test.go": "081d0f8be2dc47871ce7735c3163854415bf668cc6e7b5eea1c2e9f56448ab09",
+    "internal/gateway/send.go": "dd499b61fb2fb7f5268b51c5f856d755d4a48b34300d35cc68bf6f9fed4c1163",
+    "internal/gateway/session.go": "4cc137d0cde50a38584a009d8952c7841fcfd9c9b4a530c6f5e0fc3c422af470",
+    "internal/gateway/upload.go": "c8f9e27d2c113d7c8cf2e5e677705d9306500f75eedb30fe2aaa7b26eebdf5d7",
+    "internal/gateway/handler.go": "e05063e03192b0b44eb6b32da03a58f055ccd28cadf0d0bf66d116a6517c3438",
+    "internal/gateway/download.go": "c89e57916a4fd5adb715f60f90a1fb3f8914b8736da33bc38d7fb519d4a6901c"
+  },
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "os": "26.6.2",
+    "cpu": "Apple M2 Pro",
+    "memory_gib": 32,
+    "logical_cpu": 12,
+    "GOMAXPROCS_env": null,
+    "transport": "loopback TCP, same process",
+    "race": false
+  },
+  "workload": {
+    "sessions_per_run": 1,
+    "repetitions": 3,
+    "chunks": 100,
+    "chunk_bytes": 3200,
+    "chunk_interval_ms": 100,
+    "pcm_hz": 16000,
+    "channels": 1,
+    "sample_bits": 16,
+    "processing_ms": 50,
+    "response_delay_ms": 0,
+    "partial_every_audio_ms": 500,
+    "partial_text_count": 20,
+    "pause_after_chunks": 20,
+    "pause_ms": [
+      0,
+      500,
+      3000
+    ],
+    "worker_send_timeout_ms": 2000
+  },
+  "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off TIDE_RUN_WORKER_PAUSE_EXPERIMENT=1 go test ./internal/gateway -run '^TestWorkerPauseExperiment$' -count=3 -timeout=120s -v",
+  "validation": [
+    "go test -race ./internal/mockasr -count=3",
+    "TIDE_RUN_WORKER_PAUSE_EXPERIMENT=1 go test -race ./internal/gateway -run ^TestWorkerPauseExperiment$ -count=1 -v",
+    "go test -race ./..."
+  ]
+}
