@@ -117,6 +117,12 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 		}
 		totalBytes += len(audioChunk)
 		processedChunks++
+
+		// 发送累计进度
+		if err := w.sendProgress(stream, uint64(totalBytes)); err != nil {
+			return err
+		}
+
 		audioElapsed := audio.DurationFromBytes(totalBytes)
 
 		for partialIndex < len(w.cfg.PartialTexts) && audioElapsed >= nextPartialAt {
@@ -165,6 +171,22 @@ func (w *Worker) sendFinal(ctx context.Context, stream asrv1.ASRService_Streamin
 		return fmt.Errorf("send final ASR result: %w", err)
 	}
 
+	return nil
+}
+
+// sendProgress 汇报本次流连续完成模拟处理的累计音频字节数。
+// 只发送进度，不携带文本字段，也不附加 ResponseDelay。
+// 发送失败时由调用方结束当前流。
+func (w *Worker) sendProgress(stream asrv1.ASRService_StreamingRecognizeServer, processedAudioBytes uint64) error {
+	resp := &asrv1.StreamingRecognizeResponse{
+		Progress: &asrv1.AudioProgress{
+			ProcessedAudioBytes: processedAudioBytes,
+		},
+	}
+
+	if err := stream.Send(resp); err != nil {
+		return fmt.Errorf("send progress ASR result: %w", err)
+	}
 	return nil
 }
 

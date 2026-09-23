@@ -62,6 +62,12 @@ func (s *session) upload(
 
 		switch messageType {
 		case websocket.MessageBinary:
+			if err := s.progress.addReceived(uint64(len(data))); err != nil {
+				return sessionResult{
+					kind: resultInternalFailed,
+					err:  fmt.Errorf("progress add received: %w", err),
+				}
+			}
 			err := sendWithTimeout(
 				rpcCtx,
 				cancelRPC,

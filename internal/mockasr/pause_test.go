@@ -36,16 +36,16 @@ func TestPauseOnceAndResume(t *testing.T) {
 				if err := worker.StreamingRecognize(stream); err != nil {
 					t.Fatal(err)
 				}
-				if len(stream.reads) != len(tc.requests)+1 || len(stream.responses) != tc.valid+1 {
-					t.Fatalf("reads=%d results=%d", len(stream.reads), len(stream.responses))
+				if len(stream.reads) != len(tc.requests)+1 || len(stream.results) != tc.valid+1 {
+					t.Fatalf("reads=%d results=%d", len(stream.reads), len(stream.results))
 				}
 				for i := 0; i < tc.valid; i++ {
 					want := time.Duration(i+1) * 70 * time.Millisecond
 					if i >= 2 {
 						want += time.Second
 					}
-					if stream.sentAt[i].Sub(start) != want || stream.responses[i].IsFinal {
-						t.Fatalf("partial %d at %v, want %v", i, stream.sentAt[i].Sub(start), want)
+					if stream.resultSentAt[i].Sub(start) != want || stream.results[i].IsFinal {
+						t.Fatalf("partial %d at %v, want %v", i, stream.resultSentAt[i].Sub(start), want)
 					}
 				}
 				// 第三次 Recv 在暂停结束后发生；提前消费下一条输入会破坏这个边界。
@@ -53,7 +53,7 @@ func TestPauseOnceAndResume(t *testing.T) {
 					t.Fatalf("next Recv at %v, want 1.14s", got)
 				}
 				wantTotal := time.Duration(tc.valid)*70*time.Millisecond + time.Second + 20*time.Millisecond
-				last := stream.responses[len(stream.responses)-1]
+				last := stream.results[len(stream.results)-1]
 				if time.Since(start) != wantTotal || !last.IsFinal || last.Text != "final" {
 					t.Fatalf("elapsed=%v final=%v, want %v and final", time.Since(start), last, wantTotal)
 				}
@@ -83,8 +83,8 @@ func TestPauseCancellation(t *testing.T) {
 				done := make(chan error, 1)
 				go func() { done <- worker.StreamingRecognize(stream) }()
 				synctest.Wait()
-				if len(stream.reads) != 1 || len(stream.responses) != 1 || stream.responses[0].IsFinal {
-					t.Fatalf("not paused after first partial: reads=%d results=%v", len(stream.reads), stream.responses)
+				if len(stream.reads) != 1 || len(stream.results) != 1 || stream.results[0].IsFinal {
+					t.Fatalf("not paused after first partial: reads=%d results=%v", len(stream.reads), stream.results)
 				}
 				want := codes.Canceled
 				if deadline {
@@ -102,7 +102,7 @@ func TestPauseCancellation(t *testing.T) {
 				default:
 					t.Fatal("Worker did not exit during pause")
 				}
-				if len(stream.reads) != 1 || len(stream.responses) != 1 {
+				if len(stream.reads) != 1 || len(stream.results) != 1 {
 					t.Fatal("Worker continued after cancellation")
 				}
 			})
@@ -127,8 +127,8 @@ func TestPauseDisabledOrNotReached(t *testing.T) {
 				stream := &processingStream{ctx: ctx, requests: [][]byte{make([]byte, audio.ChunkBytesDefault)}}
 				start := time.Now()
 				err := New(Config{PauseAfterChunks: tc.after, PauseDuration: tc.duration}).StreamingRecognize(stream)
-				if err != nil || time.Since(start) != 0 || len(stream.responses) != 1 || !stream.responses[0].IsFinal {
-					t.Fatalf("error=%v elapsed=%v results=%v", err, time.Since(start), stream.responses)
+				if err != nil || time.Since(start) != 0 || len(stream.results) != 1 || !stream.results[0].IsFinal {
+					t.Fatalf("error=%v elapsed=%v results=%v", err, time.Since(start), stream.results)
 				}
 			})
 		})
@@ -178,11 +178,11 @@ func TestPausePerStream(t *testing.T) {
 		default:
 			t.Fatal("second stream did not resume")
 		}
-		if len(streams[0].reads) != 1 || len(streams[1].reads) != 3 || len(streams[1].responses) != 3 || !streams[1].responses[2].IsFinal {
+		if len(streams[0].reads) != 1 || len(streams[1].reads) != 3 || len(streams[1].results) != 3 || !streams[1].results[2].IsFinal {
 			t.Fatal("independent cancellation/resume produced wrong input or results")
 		}
 		// 完成通知之后才读取会恢复写入的测试流记录，避免测试观测自身的数据竞争。
-		if elapsed := streams[1].sentAt[1].Sub(start); elapsed != time.Second {
+		if elapsed := streams[1].resultSentAt[1].Sub(start); elapsed != time.Second {
 			t.Fatalf("second stream resumed after %v, want its own one-second pause", elapsed)
 		}
 	})

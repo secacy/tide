@@ -41,6 +41,8 @@ type session struct {
 	resultWriteTimeout time.Duration   // 限制单条结果的 WebSocket Write 等待
 	resultWriteMu      sync.Mutex      // 只保护 resultWriteCtx，不覆盖编码或网络写入
 	resultWriteCtx     context.Context // 保存最近一次写入的 context。写入结束后仍保留，供协调者判断连接关闭是否伴随写入超时。
+
+	progress audioProgress // 记录本会话的音频接收量与 Worker 处理确认量
 }
 
 // sessionResultKind 描述能够决定整个 Session 结果的事件。
@@ -56,6 +58,7 @@ const (
 	resultWorkerSendTimeout  // 单次音频发送等待超时，已触发 RPC 取消
 	resultTailTimeout        // 表示输入结束后，等待剩余结果及响应流结束超时
 	resultResultWriteTimeout // 表示单条识别结果写回客户端超时
+	resultInternalFailed     // 网关内部处理失败，例如音频接收计数溢出
 )
 
 // ErrStartTimeout 表示会话未能在规定时间内完成 start 消息的读取与校验。
@@ -343,6 +346,15 @@ func (s *session) finish(
 		cancelRPC()
 		cancelWS()
 		_ = s.ws.CloseNow()
+		return nil
+
+	case resultInternalFailed:
+		cancelRPC()
+		closeErr := s.ws.Close(websocket.StatusInternalError, "internal error")
+		cancelWS()
+		if closeErr != nil {
+			return fmt.Errorf("internal error: %w", closeErr)
+		}
 		return nil
 
 	default:

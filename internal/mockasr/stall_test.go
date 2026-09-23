@@ -43,9 +43,9 @@ func TestStallAfterChunksBoundary(t *testing.T) {
 				if len(stream.reads) != tc.reads {
 					t.Fatalf("Recv calls=%d, want %d: Worker must stop before reading beyond two valid chunks", len(stream.reads), tc.reads)
 				}
-				if len(stream.responses) != 2 || stream.responses[0].Text != "p1" ||
-					stream.responses[1].Text != "p2" || stream.responses[0].IsFinal || stream.responses[1].IsFinal {
-					t.Fatalf("expected two partials and no final before stall, got %v", stream.responses)
+				if len(stream.results) != 2 || stream.results[0].Text != "p1" ||
+					stream.results[1].Text != "p2" || stream.results[0].IsFinal || stream.results[1].IsFinal {
+					t.Fatalf("expected two partials and no final before stall, got %v", stream.results)
 				}
 				select {
 				case err := <-done:
@@ -68,7 +68,7 @@ func TestStallAfterChunksBoundary(t *testing.T) {
 				default:
 					t.Fatal("Worker did not exit after cancellation")
 				}
-				if len(stream.reads) != tc.reads || len(stream.responses) != 2 {
+				if len(stream.reads) != tc.reads || len(stream.results) != 2 {
 					t.Fatal("Worker resumed reading or produced results after cancellation")
 				}
 			})
@@ -102,11 +102,11 @@ func TestStallAfterChunksDisabledOrNotReached(t *testing.T) {
 					t.Fatalf("exit=%v, want %v", err, tc.wantCode)
 				}
 				if tc.wantCode == codes.OK {
-					if len(stream.responses) != 1 || !stream.responses[0].IsFinal {
-						t.Fatalf("expected final result, got %v", stream.responses)
+					if len(stream.results) != 1 || !stream.results[0].IsFinal {
+						t.Fatalf("expected final result, got %v", stream.results)
 					}
-				} else if len(stream.responses) != 0 {
-					t.Fatalf("invalid audio produced results: %v", stream.responses)
+				} else if len(stream.results) != 0 {
+					t.Fatalf("invalid audio produced results: %v", stream.results)
 				}
 			})
 		})
@@ -132,8 +132,8 @@ func TestStallAfterChunksPerStream(t *testing.T) {
 		}
 		synctest.Wait()
 		for i, stream := range streams {
-			if len(stream.reads) != 2 || len(stream.responses) != 2 {
-				t.Fatalf("stream %d: reads=%d results=%d, want 2 and 2", i, len(stream.reads), len(stream.responses))
+			if len(stream.reads) != 2 || len(stream.results) != 2 {
+				t.Fatalf("stream %d: reads=%d results=%d, want 2 and 2", i, len(stream.reads), len(stream.results))
 			}
 		}
 		for i := range streams {

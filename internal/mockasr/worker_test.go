@@ -18,11 +18,13 @@ import (
 // 未使用的 ServerStream 方法通过嵌入满足接口；若实现开始调用它们，测试应显式补充行为。
 type processingStream struct {
 	grpc.ServerStream
-	ctx       context.Context
-	requests  [][]byte
-	reads     []time.Time // 包含最后一次返回 EOF 的 Recv 调用。
-	responses []*asrv1.StreamingRecognizeResponse
-	sentAt    []time.Time
+	ctx          context.Context
+	requests     [][]byte
+	reads        []time.Time                         // 包含最后一次返回 EOF 的 Recv 调用。
+	responses    []*asrv1.StreamingRecognizeResponse // 所有响应，保留进度与文本的实际顺序。
+	sentAt       []time.Time
+	results      []*asrv1.StreamingRecognizeResponse // 仅文本结果，供原有文本行为断言使用。
+	resultSentAt []time.Time
 }
 
 func (s *processingStream) Context() context.Context { return s.ctx }
@@ -37,10 +39,15 @@ func (s *processingStream) Recv() (*asrv1.StreamingRecognizeRequest, error) {
 	return &asrv1.StreamingRecognizeRequest{Data: s.requests[index]}, nil
 }
 
-// Send 记录结果与发送时刻，供测试判断处理完成之前是否过早输出。
+// Send 记录全部响应，同时保留文本视图；进度测试检查完整记录，旧文本测试不将进度当作 partial。
 func (s *processingStream) Send(response *asrv1.StreamingRecognizeResponse) error {
+	at := time.Now()
 	s.responses = append(s.responses, response)
-	s.sentAt = append(s.sentAt, time.Now())
+	s.sentAt = append(s.sentAt, at)
+	if response.GetProgress() == nil {
+		s.results = append(s.results, response)
+		s.resultSentAt = append(s.resultSentAt, at)
+	}
 	return nil
 }
 
@@ -60,20 +67,20 @@ func TestProcessingDelayAppliesAfterPartialsExhausted(t *testing.T) {
 		if err := worker.StreamingRecognize(stream); err != nil {
 			t.Fatal(err)
 		}
-		if len(stream.reads) != 4 || len(stream.responses) != 2 {
-			t.Fatalf("reads=%d responses=%d, want 4 and 2", len(stream.reads), len(stream.responses))
+		if len(stream.reads) != 4 || len(stream.results) != 2 {
+			t.Fatalf("reads=%d responses=%d, want 4 and 2", len(stream.reads), len(stream.results))
 		}
 		for i, at := range stream.reads {
 			if got := at.Sub(start); got != time.Duration(i)*delay {
 				t.Fatalf("Recv %d at %v, want %v", i, got, time.Duration(i)*delay)
 			}
 		}
-		if stream.sentAt[0].Sub(start) != delay || stream.sentAt[1].Sub(start) != 3*delay {
-			t.Fatalf("unexpected partial/final timing: %v", stream.sentAt)
+		if stream.resultSentAt[0].Sub(start) != delay || stream.resultSentAt[1].Sub(start) != 3*delay {
+			t.Fatalf("unexpected partial/final timing: %v", stream.resultSentAt)
 		}
-		if stream.responses[0].Text != "partial" || stream.responses[0].IsFinal ||
-			stream.responses[1].Text != "final" || !stream.responses[1].IsFinal {
-			t.Fatalf("unexpected results: %v", stream.responses)
+		if stream.results[0].Text != "partial" || stream.results[0].IsFinal ||
+			stream.results[1].Text != "final" || !stream.results[1].IsFinal {
+			t.Fatalf("unexpected results: %v", stream.results)
 		}
 	})
 }
@@ -150,8 +157,8 @@ func TestProcessingDelayInputRules(t *testing.T) {
 				worker := New(Config{ProcessingDelay: tc.delay, PartialEvery: 100 * time.Millisecond})
 				start := time.Now()
 				err := worker.StreamingRecognize(stream)
-				if status.Code(err) != tc.wantCode || time.Since(start) != tc.wantElapsed || len(stream.responses) != tc.wantResults {
-					t.Fatalf("code=%v elapsed=%v results=%d; want %v %v %d", status.Code(err), time.Since(start), len(stream.responses), tc.wantCode, tc.wantElapsed, tc.wantResults)
+				if status.Code(err) != tc.wantCode || time.Since(start) != tc.wantElapsed || len(stream.results) != tc.wantResults {
+					t.Fatalf("code=%v elapsed=%v results=%d; want %v %v %d", status.Code(err), time.Since(start), len(stream.results), tc.wantCode, tc.wantElapsed, tc.wantResults)
 				}
 			})
 		})

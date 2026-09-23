@@ -22,12 +22,8 @@ const (
 )
 
 type StreamingRecognizeRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	//	oneof payload {
-	//	  StartSession session = 1;
-	//	  AudioChunk audio_chunk = 2;
-	//	}
-	Data          []byte `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Data          []byte                 `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -69,18 +65,70 @@ func (x *StreamingRecognizeRequest) GetData() []byte {
 	return nil
 }
 
+// AudioProgress 表示本次识别流的累计音频处理进度。
+// 与是否产生识别文本无关；静音音频也应推进处理进度。
+type AudioProgress struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// 从本次流起点开始，连续完成处理的原始音频字节数。
+	// 不包含协议头或控制消息，按流单调不减。
+	// 仅收到音频或将音频放入内部队列，不算完成处理。
+	ProcessedAudioBytes uint64 `protobuf:"varint,1,opt,name=processed_audio_bytes,json=processedAudioBytes,proto3" json:"processed_audio_bytes,omitempty"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
+}
+
+func (x *AudioProgress) Reset() {
+	*x = AudioProgress{}
+	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AudioProgress) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AudioProgress) ProtoMessage() {}
+
+func (x *AudioProgress) ProtoReflect() protoreflect.Message {
+	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AudioProgress.ProtoReflect.Descriptor instead.
+func (*AudioProgress) Descriptor() ([]byte, []int) {
+	return file_proto_tide_asr_v1_asr_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *AudioProgress) GetProcessedAudioBytes() uint64 {
+	if x != nil {
+		return x.ProcessedAudioBytes
+	}
+	return 0
+}
+
 type StreamingRecognizeResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SegmentId     string                 `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	Text          string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
-	IsFinal       bool                   `protobuf:"varint,3,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"` // 如果后续需要定位音频、展示时间轴或测量结果延迟，可以考虑使用 audio_end_offset_ms 表示：这条结果对应的音频结束位置，相对于本次识别流音频起点的毫秒偏移。
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	SegmentId string                 `protobuf:"bytes,1,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
+	Text      string                 `protobuf:"bytes,2,opt,name=text,proto3" json:"text,omitempty"`
+	IsFinal   bool                   `protobuf:"varint,3,opt,name=is_final,json=isFinal,proto3" json:"is_final,omitempty"`
+	// 存在时，本条响应只表示处理进度；segment_id、text 应为空，is_final 应为 false。
+	// 不存在时，按原有识别结果解析。
+	Progress      *AudioProgress `protobuf:"bytes,4,opt,name=progress,proto3" json:"progress,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StreamingRecognizeResponse) Reset() {
 	*x = StreamingRecognizeResponse{}
-	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[1]
+	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -92,7 +140,7 @@ func (x *StreamingRecognizeResponse) String() string {
 func (*StreamingRecognizeResponse) ProtoMessage() {}
 
 func (x *StreamingRecognizeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[1]
+	mi := &file_proto_tide_asr_v1_asr_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -105,7 +153,7 @@ func (x *StreamingRecognizeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StreamingRecognizeResponse.ProtoReflect.Descriptor instead.
 func (*StreamingRecognizeResponse) Descriptor() ([]byte, []int) {
-	return file_proto_tide_asr_v1_asr_proto_rawDescGZIP(), []int{1}
+	return file_proto_tide_asr_v1_asr_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *StreamingRecognizeResponse) GetSegmentId() string {
@@ -129,18 +177,28 @@ func (x *StreamingRecognizeResponse) GetIsFinal() bool {
 	return false
 }
 
+func (x *StreamingRecognizeResponse) GetProgress() *AudioProgress {
+	if x != nil {
+		return x.Progress
+	}
+	return nil
+}
+
 var File_proto_tide_asr_v1_asr_proto protoreflect.FileDescriptor
 
 const file_proto_tide_asr_v1_asr_proto_rawDesc = "" +
 	"\n" +
 	"\x1bproto/tide/asr/v1/asr.proto\x12\vtide.asr.v1\"/\n" +
 	"\x19StreamingRecognizeRequest\x12\x12\n" +
-	"\x04data\x18\x01 \x01(\fR\x04data\"j\n" +
+	"\x04data\x18\x01 \x01(\fR\x04data\"C\n" +
+	"\rAudioProgress\x122\n" +
+	"\x15processed_audio_bytes\x18\x01 \x01(\x04R\x13processedAudioBytes\"\xa2\x01\n" +
 	"\x1aStreamingRecognizeResponse\x12\x1d\n" +
 	"\n" +
 	"segment_id\x18\x01 \x01(\tR\tsegmentId\x12\x12\n" +
 	"\x04text\x18\x02 \x01(\tR\x04text\x12\x19\n" +
-	"\bis_final\x18\x03 \x01(\bR\aisFinal2w\n" +
+	"\bis_final\x18\x03 \x01(\bR\aisFinal\x126\n" +
+	"\bprogress\x18\x04 \x01(\v2\x1a.tide.asr.v1.AudioProgressR\bprogress2w\n" +
 	"\n" +
 	"ASRService\x12i\n" +
 	"\x12StreamingRecognize\x12&.tide.asr.v1.StreamingRecognizeRequest\x1a'.tide.asr.v1.StreamingRecognizeResponse(\x010\x01B8Z6github.com/secacy/tide-artisan/proto/tide/asr/v1;asrv1b\x06proto3"
@@ -157,19 +215,21 @@ func file_proto_tide_asr_v1_asr_proto_rawDescGZIP() []byte {
 	return file_proto_tide_asr_v1_asr_proto_rawDescData
 }
 
-var file_proto_tide_asr_v1_asr_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_proto_tide_asr_v1_asr_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_proto_tide_asr_v1_asr_proto_goTypes = []any{
 	(*StreamingRecognizeRequest)(nil),  // 0: tide.asr.v1.StreamingRecognizeRequest
-	(*StreamingRecognizeResponse)(nil), // 1: tide.asr.v1.StreamingRecognizeResponse
+	(*AudioProgress)(nil),              // 1: tide.asr.v1.AudioProgress
+	(*StreamingRecognizeResponse)(nil), // 2: tide.asr.v1.StreamingRecognizeResponse
 }
 var file_proto_tide_asr_v1_asr_proto_depIdxs = []int32{
-	0, // 0: tide.asr.v1.ASRService.StreamingRecognize:input_type -> tide.asr.v1.StreamingRecognizeRequest
-	1, // 1: tide.asr.v1.ASRService.StreamingRecognize:output_type -> tide.asr.v1.StreamingRecognizeResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	1, // 0: tide.asr.v1.StreamingRecognizeResponse.progress:type_name -> tide.asr.v1.AudioProgress
+	0, // 1: tide.asr.v1.ASRService.StreamingRecognize:input_type -> tide.asr.v1.StreamingRecognizeRequest
+	2, // 2: tide.asr.v1.ASRService.StreamingRecognize:output_type -> tide.asr.v1.StreamingRecognizeResponse
+	2, // [2:3] is the sub-list for method output_type
+	1, // [1:2] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_proto_tide_asr_v1_asr_proto_init() }
@@ -183,7 +243,7 @@ func file_proto_tide_asr_v1_asr_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_tide_asr_v1_asr_proto_rawDesc), len(file_proto_tide_asr_v1_asr_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   3,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

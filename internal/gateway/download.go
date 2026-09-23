@@ -34,6 +34,24 @@ func (s *session) download(ctx context.Context, stream workerStream) sessionResu
 			}
 		}
 
+		if response.GetProgress() != nil {
+			// 校验不能同时携带文本结果字段
+			if response.GetIsFinal() || response.GetSegmentId() != "" || response.GetText() != "" {
+				return sessionResult{
+					kind: resultWorkerFailed,
+					err:  fmt.Errorf("worker response progress cannot be combined with text result fields"),
+				}
+			}
+			if err := s.progress.acknowledge(response.GetProgress().GetProcessedAudioBytes()); err != nil {
+				return sessionResult{
+					kind: resultWorkerFailed,
+					err:  fmt.Errorf("acknowledge worker response: %w", err),
+				}
+			}
+			// 处理进度属于网关内部控制信息，不作为识别结果发送给客户端。
+			continue
+		}
+
 		message := toResultMessage(response)
 		if err := s.writeResult(ctx, message); err != nil {
 			if errors.Is(err, ErrResultWriteTimeout) {
