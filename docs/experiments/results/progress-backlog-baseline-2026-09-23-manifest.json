@@ -1,0 +1,144 @@
+{
+  "date": "2026-09-23",
+  "base_commit": "13442c4e9c143fe31794931fbc5a4d6f6e4715ce",
+  "stage": "progress accounting integrated; no backlog limit",
+  "sha256": {
+    "go.mod": "c9c7012d18711cb2d954c57cc784a8c70327d34b03167b91a01aabded852db4e",
+    "go.sum": "829a64643f43bb0a0fea771fa2561e6a7fa26622fcb4bbcbf7dbbb101e88f5fd",
+    "internal/gateway/admission_network_test.go": "03599fc9555ac127ddbdeebcb6e3c4f8dc1cf89d62e14d13b9448ce8179b2b74",
+    "internal/gateway/admission_test.go": "c755d5fd8921c537ec54cb363467364aa3a8480d4739501ae82a2d6fec587042",
+    "internal/gateway/audio_progress.go": "e1cf00d7ca2c25990c51350f637b77a3ce127f2c53d0f89f41448741ab665e26",
+    "internal/gateway/audio_progress_test.go": "3abfabd5cd205ed374d27c088103d04660eb2f934854281e834ca3cf952bdd96",
+    "internal/gateway/client_disconnect_test.go": "cedc7166abd449ab4f7de71590be2963ff3cf5c20f3b1d15651730213854b9b5",
+    "internal/gateway/download.go": "ac7803f645210c47c9a67caca549de40d6055383cfe4fe4ea46c9f61e10563e2",
+    "internal/gateway/handler.go": "774d15bd9e5a539e4a0e03df5c88c53c1732c3ed6f7f4588cdf0b2363fcc8350",
+    "internal/gateway/handler_test.go": "ea3af53bb63514a644d64b60b9408b5c51287479503af08c8789a15dff235406",
+    "internal/gateway/input_idle_result_test.go": "c1f53731a87ce77eb4153f587aafa6036f1aaef2775d429fad32318384fb4b2a",
+    "internal/gateway/normal_end_test.go": "36befc70cd6a8033d8444b1fecfeb1dad0174324e49de909a0b5078f8fd01d6a",
+    "internal/gateway/progress_baseline_experiment_test.go": "52f16c775e61064358a2c8a33630b05302de25d501cbcae1e49ff590f2c6b2b6",
+    "internal/gateway/progress_integration_test.go": "cd95c6e54e512d92a8a75a600a4d88f93e6239f02e1fe21fdb9bc160c8c23f22",
+    "internal/gateway/progress_routing_test.go": "dac27d9f0a84ce7cc50373af004b435c207849d5cd0fa571ac8942ce0bfc70b7",
+    "internal/gateway/read_input_test.go": "86e269312ec00b887f6398d1cc6974d643ecd1ce035621dcd5a59b8e54d5558e",
+    "internal/gateway/resource_cleanup_test.go": "6c7f9679aa88f5014b29cdf421447001b13fbddbe856f2fdec3f56006fdece80",
+    "internal/gateway/result_write.go": "c4857e2586727457bcd38dd6fd8dcb0b4e214bcbca3484bd0427b3a71069437c",
+    "internal/gateway/result_write_experiment_test.go": "107911597db43de39791393b14106f758874c0817722bf13cb12b69b27422e3f",
+    "internal/gateway/result_write_integration_test.go": "b448f55387d633b26ad017281b07b39c564a520b223f70fd53acdb79f75ca4f7",
+    "internal/gateway/result_write_test.go": "118618116884f84b87f13a43db2d76b153c22fd4b0df33d080aa11d586c5589e",
+    "internal/gateway/send.go": "dd499b61fb2fb7f5268b51c5f856d755d4a48b34300d35cc68bf6f9fed4c1163",
+    "internal/gateway/send_test.go": "99511f81c61943cd8ddc32f219587b1b6a087f892029cad644cb45e9c335e467",
+    "internal/gateway/session.go": "6ae1d5db05785542327836ef47c1b1dc414482359d8fd53a8b329a52ab442948",
+    "internal/gateway/shutdown_stream_test.go": "b19e20848cda62daece7b5e7e42912c9470d73e1ec1e01550438ebe121b33b0b",
+    "internal/gateway/slow_reader_experiment_test.go": "726a94bcf778254bdc34b3ce1fb5d3af46d0f394944f8a5353fd78d61dd075a6",
+    "internal/gateway/slow_worker_experiment_test.go": "081d0f8be2dc47871ce7735c3163854415bf668cc6e7b5eea1c2e9f56448ab09",
+    "internal/gateway/stalled_worker_experiment_test.go": "193bc99c2c4b3eea39f47f76b4fa5cb390b094ed7c0448fa6de2643e7c12c81c",
+    "internal/gateway/start_timeout_test.go": "500e53796173f9bc8ab5d742789700c365fd7591f5cdf355878213ffdcc58e8d",
+    "internal/gateway/tail.go": "28053ca665c70e6c0011d5a1d0ed5f899bb49ab51642bb26ad8cb354cd6d7554",
+    "internal/gateway/tail_config_test.go": "56122b128b3c74890af364dfa21036fba648bb60b228ef383a5f37caa6166535",
+    "internal/gateway/tail_integration_test.go": "2a1196f9cffa816d6d0cd5c0be63dfa6b2cf4010dc8f9859a39bb4501fff49ef",
+    "internal/gateway/tail_stall_experiment_test.go": "fc081acb326f53899cd32abe301a8eea64642bd959e5809b36f29db6b4a432dd",
+    "internal/gateway/tail_test.go": "f0413c578bc08cdeacdcf850edfd96b97b342d6cdd38f510cf0066a27f6780d3",
+    "internal/gateway/tracker.go": "1965a81ef7053352ab3945009dd3b44c0683e2e98cf73af5838977ad54971d35",
+    "internal/gateway/unresponsive_close_test.go": "7ef649f411976956cf2bd2f86f929d78f169c0d15a7323345bd3a84a1d7f5b93",
+    "internal/gateway/upload.go": "fe0c8a81497d0cb0fbaf06f9f55e7c3aea98536bd31a2bbca8dd2d02ee7470a1",
+    "internal/gateway/worker_failure_test.go": "b1966a1c740e674b2f8cce995484dfb79fbc40b7bc68396b238cd355e2df62e5",
+    "internal/gateway/worker_pause_experiment_test.go": "05aded37df77d19ea5d1750f30de262b3867b27d54ae4d31af2018e9a50facc8",
+    "internal/gateway/worker_send_timeout_test.go": "cd2cd526b8beb8341b6608e0cb9ad77d0020430cf84d0488be490c54612cfc61",
+    "internal/mockasr/pause_test.go": "f0f2b0875c23c4977422e8da2b114b43b88206909c74cd9237b720790208fc2d",
+    "internal/mockasr/progress_test.go": "dc581d07731932e0298cfc2406d989ff49dfb0ba4171cc472c9e568ea510ecc2",
+    "internal/mockasr/stall_test.go": "e9ed20fe3472224c256b040e865defd5cabe772787c029f3a277638ba52786c9",
+    "internal/mockasr/worker.go": "c4b4b93b065c403326eace0426f99d1118cfd0f6425741288ee0a9ad19df18e6",
+    "internal/mockasr/worker_test.go": "e0f44d4f0d02ac746e6893b5d85b2361121d8bb75df105534962e978154a49fb",
+    "internal/audio/format.go": "5f86af2fa59391da5c06853838940abfe7879f28d06c82e1e2411456e558ddda",
+    "internal/audio/pacer.go": "dd6950bcda76f5a6a2d6e5c933b6fde3eeeecccca6d397251e02ad77fc46b604",
+    "internal/wsprotocol/protocol.go": "744893ed3b9cfd381ef456adb5e8e20b4c2906a0e0ad7ef2a2c107b30939316a",
+    "proto/tide/asr/v1/asr.pb.go": "3ca21427d90a92607411ca201b441bb51754c8db6d734f643aa8810b99bec911",
+    "proto/tide/asr/v1/asr_grpc.pb.go": "f3f4f45775d909c068a680574b158d4ecc0e431ba93c1521665c35dbd2eaf673",
+    "proto/tide/asr/v1/asr.proto": "f849ea264fa53bd7c1a7f9240c5ba87500301e59b497e76d4ff735dfd9ef0797"
+  },
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "macos": "26.6.2",
+    "hardware_reference": "session-admission-2026-09-22-manifest.json (Apple M2 Pro, 32 GiB, 12 logical CPU; prior-day verification, not refreshed in this run)",
+    "transport": "loopback TCP WebSocket and gRPC; Client/session/Mock same process",
+    "race": false,
+    "concurrent_activity": "formal measurement starts after full race regression finishes; no other agent-started tests run concurrently",
+    "runtime_observed": {
+      "logical_cpu": 12,
+      "GOMAXPROCS": 12
+    }
+  },
+  "workload": {
+    "cases": [
+      {
+        "name": "normal",
+        "processing_ms": 50,
+        "pause_ms": 0
+      },
+      {
+        "name": "pause_500ms",
+        "processing_ms": 50,
+        "pause_ms": 500
+      },
+      {
+        "name": "slow_200ms",
+        "processing_ms": 200,
+        "pause_ms": 0
+      }
+    ],
+    "repetitions": 3,
+    "concurrency": 1,
+    "chunks": 100,
+    "chunk_bytes": 3200,
+    "cadence_ms": 100,
+    "audio": "16kHz mono signed 16-bit PCM; indexed deterministic synthetic bytes; 10 seconds total",
+    "partial_every_ms": 500,
+    "partial_count": 20,
+    "final_count": 1,
+    "response_delay_ms": 0,
+    "pause_after_chunks": 20,
+    "sample_period_ms": 5,
+    "gateway": {
+      "max_sessions": 1,
+      "max_message_bytes": 1048576,
+      "start_timeout_ms": 10000,
+      "input_idle_timeout_ms": 30000,
+      "send_timeout_ms": 2000,
+      "tail_timeout_ms": 15000,
+      "result_write_timeout_ms": 2000,
+      "backlog_limit": null
+    },
+    "experiment_guard_seconds_per_case": 45
+  },
+  "measurement": {
+    "entry": "test-only HTTP wrapper duplicates admission/Accept/read-limit/session-construction path, exposes session pointer, runs production session.run; does not call Gateway.ServeHTTP",
+    "peak": "maximum of 5ms-period snapshots; not guaranteed true instantaneous peak",
+    "snapshot_time": "begin_ms/at_ms bracket the locked snapshot call; actual sampling gaps recorded",
+    "origin": "after client start Write returns, before first scheduled audio Write",
+    "tail": "client final read completion minus client end Write start",
+    "end_sample": "snapshot immediately after client end Write return, not an acknowledgement of Gateway end handling",
+    "first_low_after_resume": "first post-resume sample pending<=3200 bytes; not sustained recovery",
+    "audio_ms": "pending bytes * 1000 / 32000, not wall-clock latency",
+    "memory": "not measured; outstanding audio bytes are not a total heap bound"
+  },
+  "command": "TIDE_RUN_PROGRESS_BACKLOG_EXPERIMENT=1 GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test ./internal/gateway -run '^TestProgressBacklogBaselineExperiment$' -count=3 -timeout=180s -v",
+  "validation": [
+    "TIDE_RUN_PROGRESS_BACKLOG_EXPERIMENT=1 go test -race ./... -count=1 -timeout=120s (full three-case experiment, short probe and regressions passed)"
+  ],
+  "baseline_limits": [
+    "single-session and finite duration, not stable capacity",
+    "synthetic Mock, not real ASR quality or timing",
+    "measurement adds short snapshot locks and timestamp/record allocation",
+    "old baselines without progress messages are not directly used as current-version control"
+  ],
+  "source_unchanged_after_measurement": true,
+  "formal_completed_runs": 9,
+  "artifact_sha256": {
+    "docs/experiments/results/progress-backlog-baseline-2026-09-23-samples.csv": "e149d009db789bc169005af728f54f899f336adf5ea389aff5c0416a07430dfc",
+    "docs/experiments/results/progress-backlog-baseline-2026-09-23-source.patch": "645e914239d4bb6a4bb8bdfcacf80ecf0ecab0dd3629f13a3d9a0ff5e9c92f79",
+    "docs/experiments/results/progress-backlog-baseline-2026-09-23-summary.json": "a05b9b71feef7322def2c7d3bbe27c35154c0ddd0767de70f714fc2c54fe7d0d",
+    "docs/experiments/results/progress-backlog-baseline-2026-09-23-validation.log": "f1054aafea137dc52dc932bde1cc4e5dee9b4c8449a891aad1b75e707b92c851",
+    "docs/experiments/results/progress-backlog-baseline-2026-09-23.log": "3ef8ce256c79d5bf0f38e5243989bca790418ce2e94e440aa68365e5df26d93e",
+    "docs/experiments/scripts/summarize_progress_baseline.py": "825c24a32ab3b7902cabd3990a2b5736ac219f55f77dd9eaf57fadfeea2e4c70"
+  },
+  "analysis_command": "python3 docs/experiments/scripts/summarize_progress_baseline.py docs/experiments/results/progress-backlog-baseline-2026-09-23.log"
+}

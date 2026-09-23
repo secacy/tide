@@ -1,0 +1,9 @@
+?   	github.com/secacy/tide-artisan/cmd/asr-worker	[no test files]
+?   	github.com/secacy/tide-artisan/cmd/gateway	[no test files]
+?   	github.com/secacy/tide-artisan/cmd/ws-client	[no test files]
+?   	github.com/secacy/tide-artisan/internal/audio	[no test files]
+ok  	github.com/secacy/tide-artisan/internal/gateway	51.825s
+ok  	github.com/secacy/tide-artisan/internal/mockasr	2.072s
+?   	github.com/secacy/tide-artisan/internal/wsclient	[no test files]
+?   	github.com/secacy/tide-artisan/internal/wsprotocol	[no test files]
+?   	github.com/secacy/tide-artisan/proto/tide/asr/v1	[no test files]

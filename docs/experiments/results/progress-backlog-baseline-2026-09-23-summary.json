@@ -1,0 +1,726 @@
+{
+  "source_log": "progress-backlog-baseline-2026-09-23.log",
+  "counts": {
+    "normal": 3,
+    "pause_500ms": 3,
+    "slow_200ms": 3
+  },
+  "totals": {
+    "completed": 9,
+    "audio_chunks": 900,
+    "audio_bytes": 2880000,
+    "active_after_cleanup_each": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "cases": {
+    "normal": {
+      "completed": 3,
+      "ranges": {
+        "observed_peak_pending_bytes": [
+          3200,
+          3200
+        ],
+        "observed_peak_audio_ms": [
+          100,
+          100
+        ],
+        "end_observed_pending_bytes": [
+          0,
+          3200
+        ],
+        "end_observed_pending_audio_ms": [
+          0.0,
+          100.0
+        ],
+        "tail_ms": [
+          50.68962500000089,
+          51.17766699999993
+        ],
+        "max_send_ms": [
+          0.5445000000000002,
+          0.6996659999999792
+        ],
+        "max_write_ms": [
+          0.5148749999998472,
+          2.9600829999999405
+        ],
+        "audio_send_ms": [
+          9900.827292,
+          9900.882958
+        ],
+        "max_input_schedule_lag_ms": [
+          2.163250000000062,
+          6.158541000000014
+        ],
+        "max_sample_gap_ms": [
+          10.000125000000025,
+          10.989833999999973
+        ],
+        "max_snapshot_call_ms": [
+          0.01783299999999599,
+          3.779874999999265
+        ],
+        "first_low_delay_ms": null,
+        "max_partial_wait_ms": [
+          52.190250000000106,
+          57.00512500000002
+        ],
+        "sample_count": [
+          1989,
+          1991
+        ],
+        "end_client_written_not_gateway_counted_bytes": [
+          0,
+          3200
+        ],
+        "end_client_written_unconfirmed_bytes": [
+          3200,
+          3200
+        ],
+        "end_client_written_unconfirmed_audio_ms": [
+          100.0,
+          100.0
+        ]
+      }
+    },
+    "pause_500ms": {
+      "completed": 3,
+      "ranges": {
+        "observed_peak_pending_bytes": [
+          16000,
+          16000
+        ],
+        "observed_peak_audio_ms": [
+          500,
+          500
+        ],
+        "end_observed_pending_bytes": [
+          0,
+          0
+        ],
+        "end_observed_pending_audio_ms": [
+          0.0,
+          0.0
+        ],
+        "tail_ms": [
+          50.57625000000007,
+          56.41858299999876
+        ],
+        "max_send_ms": [
+          0.053791999999702966,
+          2.448874999999134
+        ],
+        "max_write_ms": [
+          0.7957919999998921,
+          24.769334000000526
+        ],
+        "audio_send_ms": [
+          9900.653292,
+          9900.982375
+        ],
+        "max_input_schedule_lag_ms": [
+          0.7202919999999722,
+          4.385749999999916
+        ],
+        "max_sample_gap_ms": [
+          11.753791999999521,
+          49.61199999999917
+        ],
+        "max_snapshot_call_ms": [
+          0.07320900000013353,
+          0.31829100000004473
+        ],
+        "first_low_delay_ms": [
+          403.6847080000002,
+          408.75320899999997
+        ],
+        "max_partial_wait_ms": [
+          302.60275,
+          305.354417
+        ],
+        "sample_count": [
+          1978,
+          1986
+        ],
+        "end_client_written_not_gateway_counted_bytes": [
+          3200,
+          3200
+        ],
+        "end_client_written_unconfirmed_bytes": [
+          3200,
+          3200
+        ],
+        "end_client_written_unconfirmed_audio_ms": [
+          100.0,
+          100.0
+        ]
+      }
+    },
+    "slow_200ms": {
+      "completed": 3,
+      "ranges": {
+        "observed_peak_pending_bytes": [
+          137600,
+          137600
+        ],
+        "observed_peak_audio_ms": [
+          4300,
+          4300
+        ],
+        "end_observed_pending_bytes": [
+          131200,
+          131200
+        ],
+        "end_observed_pending_audio_ms": [
+          4100.0,
+          4100.0
+        ],
+        "tail_ms": [
+          10134.411250000001,
+          10152.604458999998
+        ],
+        "max_send_ms": [
+          1201.894209,
+          1208.1223750000008
+        ],
+        "max_write_ms": [
+          0.4216660000001866,
+          4.042207999998936
+        ],
+        "audio_send_ms": [
+          9900.655084,
+          9902.129917
+        ],
+        "max_input_schedule_lag_ms": [
+          1.0863339999996242,
+          4.21854200000007
+        ],
+        "max_sample_gap_ms": [
+          11.507917000000816,
+          45.19541699999991
+        ],
+        "max_snapshot_call_ms": [
+          0.11883400000078836,
+          2.5130000000008295
+        ],
+        "first_low_delay_ms": null,
+        "max_partial_wait_ms": [
+          10135.015584,
+          10154.679457999999
+        ],
+        "sample_count": [
+          3998,
+          4004
+        ],
+        "end_client_written_not_gateway_counted_bytes": [
+          32000,
+          32000
+        ],
+        "end_client_written_unconfirmed_bytes": [
+          163200,
+          163200
+        ],
+        "end_client_written_unconfirmed_audio_ms": [
+          5100.0,
+          5100.0
+        ]
+      }
+    }
+  },
+  "runs": [
+    {
+      "case": "normal",
+      "outcome": "completed",
+      "chunks": 100,
+      "processing_ms": 50,
+      "pause_ms": 0,
+      "sample_period_ms": 5,
+      "observed_peak_pending_bytes": 3200,
+      "observed_peak_audio_ms": 100,
+      "peak_at_ms": 5.15375,
+      "max_sample_gap_ms": 10.000125000000025,
+      "max_snapshot_call_ms": 0.01783299999999599,
+      "end_started_ms": 9900.82825,
+      "end_returned_ms": 9900.870542,
+      "at_end_write_return": {
+        "begin_ms": 9900.873667,
+        "at_ms": 9900.873792,
+        "received_bytes": 316800,
+        "processed_bytes": 316800,
+        "pending_bytes": 0
+      },
+      "final_ms": 9951.734042,
+      "tail_ms": 50.905791999999565,
+      "close_ms": 9951.7975,
+      "session_returned_ms": 9951.848834,
+      "pause_boundary_ms": null,
+      "resume_ms": null,
+      "first_low_after_resume_ms": null,
+      "first_low_delay_ms": null,
+      "max_send_ms": 0.5445000000000002,
+      "max_write_ms": 0.5782920000001468,
+      "max_input_schedule_lag_ms": 2.163250000000062,
+      "close_code": 1000,
+      "worker_chunks": 100,
+      "worker_bytes": 320000,
+      "final_progress": {
+        "begin_ms": 9951.875209,
+        "at_ms": 9951.87525,
+        "received_bytes": 320000,
+        "processed_bytes": 320000,
+        "pending_bytes": 0
+      },
+      "active_after_cleanup": 0,
+      "run": 1,
+      "sample_count": 1991,
+      "audio_send_ms": 9900.827292,
+      "end_observed_pending_bytes": 0,
+      "end_observed_pending_audio_ms": 0.0,
+      "end_client_written_not_gateway_counted_bytes": 3200,
+      "end_client_written_unconfirmed_bytes": 3200,
+      "end_client_written_unconfirmed_audio_ms": 100.0,
+      "max_partial_wait_ms": 52.190250000000106
+    },
+    {
+      "case": "pause_500ms",
+      "outcome": "completed",
+      "chunks": 100,
+      "processing_ms": 50,
+      "pause_ms": 500,
+      "sample_period_ms": 5,
+      "observed_peak_pending_bytes": 16000,
+      "observed_peak_audio_ms": 500,
+      "peak_at_ms": 2405.547916,
+      "max_sample_gap_ms": 34.517541999999594,
+      "max_snapshot_call_ms": 0.07320900000013353,
+      "end_started_ms": 9900.674458,
+      "end_returned_ms": 9901.400791,
+      "at_end_write_return": {
+        "begin_ms": 9901.409166,
+        "at_ms": 9901.409291,
+        "received_bytes": 316800,
+        "processed_bytes": 316800,
+        "pending_bytes": 0
+      },
+      "final_ms": 9953.824666,
+      "tail_ms": 53.15020800000093,
+      "close_ms": 9953.939583,
+      "session_returned_ms": 9953.998166,
+      "pause_boundary_ms": 1951.381541,
+      "resume_ms": 2451.510833,
+      "first_low_after_resume_ms": 2855.195541,
+      "first_low_delay_ms": 403.6847080000002,
+      "max_send_ms": 0.053791999999702966,
+      "max_write_ms": 24.769334000000526,
+      "max_input_schedule_lag_ms": 0.9797909999997501,
+      "close_code": 1000,
+      "worker_chunks": 100,
+      "worker_bytes": 320000,
+      "final_progress": {
+        "begin_ms": 9954.069583,
+        "at_ms": 9954.069666,
+        "received_bytes": 320000,
+        "processed_bytes": 320000,
+        "pending_bytes": 0
+      },
+      "active_after_cleanup": 0,
+      "run": 1,
+      "sample_count": 1986,
+      "audio_send_ms": 9900.673125,
+      "end_observed_pending_bytes": 0,
+      "end_observed_pending_audio_ms": 0.0,
+      "end_client_written_not_gateway_counted_bytes": 3200,
+      "end_client_written_unconfirmed_bytes": 3200,
+      "end_client_written_unconfirmed_audio_ms": 100.0,
+      "max_partial_wait_ms": 302.60275
+    },
+    {
+      "case": "slow_200ms",
+      "outcome": "completed",
+      "chunks": 100,
+      "processing_ms": 200,
+      "pause_ms": 0,
+      "sample_period_ms": 5,
+      "observed_peak_pending_bytes": 137600,
+      "observed_peak_audio_ms": 4300,
+      "peak_at_ms": 8305.605625,
+      "max_sample_gap_ms": 13.045666999999995,
+      "max_snapshot_call_ms": 0.11883400000078836,
+      "end_started_ms": 9900.694584,
+      "end_returned_ms": 9900.736084,
+      "at_end_write_return": {
+        "begin_ms": 9900.739959,
+        "at_ms": 9900.740084,
+        "received_bytes": 288000,
+        "processed_bytes": 156800,
+        "pending_bytes": 131200
+      },
+      "final_ms": 20040.1015,
+      "tail_ms": 10139.406916,
+      "close_ms": 20040.246917,
+      "session_returned_ms": 20040.293417,
+      "pause_boundary_ms": null,
+      "resume_ms": null,
+      "first_low_after_resume_ms": null,
+      "first_low_delay_ms": null,
+      "max_send_ms": 1201.894209,
+      "max_write_ms": 1.3999590000000097,
+      "max_input_schedule_lag_ms": 2.5612089999999625,
+      "close_code": 1000,
+      "worker_chunks": 100,
+      "worker_bytes": 320000,
+      "final_progress": {
+        "begin_ms": 20040.4105,
+        "at_ms": 20040.410584,
+        "received_bytes": 320000,
+        "processed_bytes": 320000,
+        "pending_bytes": 0
+      },
+      "active_after_cleanup": 0,
+      "run": 1,
+      "sample_count": 4004,
+      "audio_send_ms": 9900.694334,
+      "end_observed_pending_bytes": 131200,
+      "end_observed_pending_audio_ms": 4100.0,
+      "end_client_written_not_gateway_counted_bytes": 32000,
+      "end_client_written_unconfirmed_bytes": 163200,
+      "end_client_written_unconfirmed_audio_ms": 5100.0,
+      "max_partial_wait_ms": 10140.050875
+    },
+    {
+      "case": "normal",
+      "outcome": "completed",
+      "chunks": 100,
+      "processing_ms": 50,
+      "pause_ms": 0,
+      "sample_period_ms": 5,
+      "observed_peak_pending_bytes": 3200,
+      "observed_peak_audio_ms": 100,
+      "peak_at_ms": 5.5585,
+      "max_sample_gap_ms": 10.989833999999973,
+      "max_snapshot_call_ms": 0.31933299999991505,
+      "end_started_ms": 9900.884041,
+      "end_returned_ms": 9901.002083,
+      "at_end_write_return": {
+        "begin_ms": 9901.005333,
+        "at_ms": 9901.005666,
+        "received_bytes": 320000,
+        "processed_bytes": 316800,
+        "pending_bytes": 3200
+      },
+      "final_ms": 9951.573666,
+      "tail_ms": 50.68962500000089,
+      "close_ms": 9951.644833,
+      "session_returned_ms": 9951.689666,
+      "pause_boundary_ms": null,
+      "resume_ms": null,
+      "first_low_after_resume_ms": null,
+      "first_low_delay_ms": null,
+      "max_send_ms": 0.6917499999999563,
+      "max_write_ms": 2.9600829999999405,
+      "max_input_schedule_lag_ms": 6.158541000000014,
+      "close_code": 1000,
+      "worker_chunks": 100,
+      "worker_bytes": 320000,
+      "final_progress": {
+        "begin_ms": 9951.727125,
+        "at_ms": 9951.72725,
+        "received_bytes": 320000,
+        "processed_bytes": 320000,
+        "pending_bytes": 0
+      },
+      "active_after_cleanup": 0,
+      "run": 2,
+      "sample_count": 1989,
+      "audio_send_ms": 9900.882958,
+      "end_observed_pending_bytes": 3200,
+      "end_observed_pending_audio_ms": 100.0,
+      "end_client_written_not_gateway_counted_bytes": 0,
+      "end_client_written_unconfirmed_bytes": 3200,
+      "end_client_written_unconfirmed_audio_ms": 100.0,
+      "max_partial_wait_ms": 57.00512500000002
+    },
+    {
+      "case": "pause_500ms",
+      "outcome": "completed",
+      "chunks": 100,
+      "processing_ms": 50,
+      "pause_ms": 500,
+      "sample_period_ms": 5,
+      "observed_peak_pending_bytes": 16000,
+      "observed_peak_audio_ms": 500,
+      "peak_at_ms": 2405.560833,
+      "max_sample_gap_ms": 11.753791999999521,
+      "max_snapshot_call_ms": 0.31829100000004473,
+      "end_started_ms": 9900.984,
+      "end_returned_ms": 9901.165292,
+      "at_end_write_return": {
+        "begin_ms": 9901.401667,
+        "at_ms": 9901.402083,
+        "received_bytes": 316800,
+        "processed_bytes": 316800,
+        "pending_bytes": 0
+      },
+      "final_ms": 9957.402583,
+      "tail_ms": 56.41858299999876,
+      "close_ms": 9957.524417,
+      "session_returned_ms": 9957.572375,
+      "pause_boundary_ms": 1951.575583,
+      "resume_ms": 2451.862083,
+      "first_low_after_resume_ms": 2860.615292,
+      "first_low_delay_ms": 408.75320899999997,
+      "max_send_ms": 2.448874999999134,
+      "max_write_ms": 0.7957919999998921,
+      "max_input_schedule_lag_ms": 0.7202919999999722,
+      "close_code": 1000,
+      "worker_chunks": 100,
+      "worker_bytes": 320000,
+      "final_progress": {
+        "begin_ms": 9957.63175,
+        "at_ms": 9957.631833,
+        "received_bytes": 320000,
+        "processed_bytes": 320000,
+        "pending_bytes": 0
+      },
+      "active_after_cleanup": 0,
+      "run": 2,
+      "sample_count": 1982,
+      "audio_send_ms": 9900.982375,
+      "end_observed_pending_bytes": 0,
+      "end_observed_pending_audio_ms": 0.0,
+      "end_client_written_not_gateway_counted_bytes": 3200,
+      "end_client_written_unconfirmed_bytes": 3200,
+      "end_client_written_unconfirmed_audio_ms": 100.0,
+      "max_partial_wait_ms": 305.354417
+    },
+    {
+      "case": "slow_200ms",
+      "outcome": "completed",
+      "chunks": 100,
+      "processing_ms": 200,
+      "pause_ms": 0,
+      "sample_period_ms": 5,
+      "observed_peak_pending_bytes": 137600,
+      "observed_peak_audio_ms": 4300,
+      "peak_at_ms": 8305.645292,
+      "max_sample_gap_ms": 11.507917000000816,
+      "max_snapshot_call_ms": 0.5000840000002427,
+      "end_started_ms": 9902.131083,
+      "end_returned_ms": 9902.156542,
+      "at_end_write_return": {
+        "begin_ms": 9902.160167,
+        "at_ms": 9902.187125,
+        "received_bytes": 288000,
+        "processed_bytes": 156800,
+        "pending_bytes": 131200
+      },
+      "final_ms": 20054.735542,
+      "tail_ms": 10152.604458999998,
+      "close_ms": 20054.91125,
+      "session_returned_ms": 20054.972125,
+      "pause_boundary_ms": null,
+      "resume_ms": null,
+      "first_low_after_resume_ms": null,
+      "first_low_delay_ms": null,
+      "max_send_ms": 1208.1223750000008,
+      "max_write_ms": 4.042207999998936,
+      "max_input_schedule_lag_ms": 4.21854200000007,
+      "close_code": 1000,
+      "worker_chunks": 100,
+      "worker_bytes": 320000,
+      "final_progress": {
+        "begin_ms": 20055.04725,
+        "at_ms": 20055.047333,
+        "received_bytes": 320000,
+        "processed_bytes": 320000,
+        "pending_bytes": 0
+      },
+      "active_after_cleanup": 0,
+      "run": 2,
+      "sample_count": 4004,
+      "audio_send_ms": 9902.129917,
+      "end_observed_pending_bytes": 131200,
+      "end_observed_pending_audio_ms": 4100.0,
+      "end_client_written_not_gateway_counted_bytes": 32000,
+      "end_client_written_unconfirmed_bytes": 163200,
+      "end_client_written_unconfirmed_audio_ms": 5100.0,
+      "max_partial_wait_ms": 10154.679457999999
+    },
+    {
+      "case": "normal",
+      "outcome": "completed",
+      "chunks": 100,
+      "processing_ms": 50,
+      "pause_ms": 0,
+      "sample_period_ms": 5,
+      "observed_peak_pending_bytes": 3200,
+      "observed_peak_audio_ms": 100,
+      "peak_at_ms": 5.440041,
+      "max_sample_gap_ms": 10.178042000000005,
+      "max_snapshot_call_ms": 3.779874999999265,
+      "end_started_ms": 9900.871458,
+      "end_returned_ms": 9900.907625,
+      "at_end_write_return": {
+        "begin_ms": 9900.95325,
+        "at_ms": 9900.953416,
+        "received_bytes": 316800,
+        "processed_bytes": 316800,
+        "pending_bytes": 0
+      },
+      "final_ms": 9952.049125,
+      "tail_ms": 51.17766699999993,
+      "close_ms": 9952.150583,
+      "session_returned_ms": 9952.23225,
+      "pause_boundary_ms": null,
+      "resume_ms": null,
+      "first_low_after_resume_ms": null,
+      "first_low_delay_ms": null,
+      "max_send_ms": 0.6996659999999792,
+      "max_write_ms": 0.5148749999998472,
+      "max_input_schedule_lag_ms": 3.1589160000003176,
+      "close_code": 1000,
+      "worker_chunks": 100,
+      "worker_bytes": 320000,
+      "final_progress": {
+        "begin_ms": 9952.275666,
+        "at_ms": 9952.27575,
+        "received_bytes": 320000,
+        "processed_bytes": 320000,
+        "pending_bytes": 0
+      },
+      "active_after_cleanup": 0,
+      "run": 3,
+      "sample_count": 1990,
+      "audio_send_ms": 9900.869958,
+      "end_observed_pending_bytes": 0,
+      "end_observed_pending_audio_ms": 0.0,
+      "end_client_written_not_gateway_counted_bytes": 3200,
+      "end_client_written_unconfirmed_bytes": 3200,
+      "end_client_written_unconfirmed_audio_ms": 100.0,
+      "max_partial_wait_ms": 54.66204099999959
+    },
+    {
+      "case": "pause_500ms",
+      "outcome": "completed",
+      "chunks": 100,
+      "processing_ms": 50,
+      "pause_ms": 500,
+      "sample_period_ms": 5,
+      "observed_peak_pending_bytes": 16000,
+      "observed_peak_audio_ms": 500,
+      "peak_at_ms": 2405.389083,
+      "max_sample_gap_ms": 49.61199999999917,
+      "max_snapshot_call_ms": 0.1226249999999709,
+      "end_started_ms": 9900.653708,
+      "end_returned_ms": 9900.659667,
+      "at_end_write_return": {
+        "begin_ms": 9900.66075,
+        "at_ms": 9900.660833,
+        "received_bytes": 316800,
+        "processed_bytes": 316800,
+        "pending_bytes": 0
+      },
+      "final_ms": 9951.229958,
+      "tail_ms": 50.57625000000007,
+      "close_ms": 9951.304542,
+      "session_returned_ms": 9951.363,
+      "pause_boundary_ms": 1951.852375,
+      "resume_ms": 2452.073833,
+      "first_low_after_resume_ms": 2860.648958,
+      "first_low_delay_ms": 408.5751250000003,
+      "max_send_ms": 0.37483400000019174,
+      "max_write_ms": 1.1856250000000728,
+      "max_input_schedule_lag_ms": 4.385749999999916,
+      "close_code": 1000,
+      "worker_chunks": 100,
+      "worker_bytes": 320000,
+      "final_progress": {
+        "begin_ms": 9951.385292,
+        "at_ms": 9951.385333,
+        "received_bytes": 320000,
+        "processed_bytes": 320000,
+        "pending_bytes": 0
+      },
+      "active_after_cleanup": 0,
+      "run": 3,
+      "sample_count": 1978,
+      "audio_send_ms": 9900.653292,
+      "end_observed_pending_bytes": 0,
+      "end_observed_pending_audio_ms": 0.0,
+      "end_client_written_not_gateway_counted_bytes": 3200,
+      "end_client_written_unconfirmed_bytes": 3200,
+      "end_client_written_unconfirmed_audio_ms": 100.0,
+      "max_partial_wait_ms": 303.95237499999985
+    },
+    {
+      "case": "slow_200ms",
+      "outcome": "completed",
+      "chunks": 100,
+      "processing_ms": 200,
+      "pause_ms": 0,
+      "sample_period_ms": 5,
+      "observed_peak_pending_bytes": 137600,
+      "observed_peak_audio_ms": 4300,
+      "peak_at_ms": 8305.576667,
+      "max_sample_gap_ms": 45.19541699999991,
+      "max_snapshot_call_ms": 2.5130000000008295,
+      "end_started_ms": 9900.6555,
+      "end_returned_ms": 9900.664542,
+      "at_end_write_return": {
+        "begin_ms": 9900.666292,
+        "at_ms": 9900.666375,
+        "received_bytes": 288000,
+        "processed_bytes": 156800,
+        "pending_bytes": 131200
+      },
+      "final_ms": 20035.06675,
+      "tail_ms": 10134.411250000001,
+      "close_ms": 20035.252667,
+      "session_returned_ms": 20035.278459,
+      "pause_boundary_ms": null,
+      "resume_ms": null,
+      "first_low_after_resume_ms": null,
+      "first_low_delay_ms": null,
+      "max_send_ms": 1202.1972920000007,
+      "max_write_ms": 0.4216660000001866,
+      "max_input_schedule_lag_ms": 1.0863339999996242,
+      "close_code": 1000,
+      "worker_chunks": 100,
+      "worker_bytes": 320000,
+      "final_progress": {
+        "begin_ms": 20035.354125,
+        "at_ms": 20035.35425,
+        "received_bytes": 320000,
+        "processed_bytes": 320000,
+        "pending_bytes": 0
+      },
+      "active_after_cleanup": 0,
+      "run": 3,
+      "sample_count": 3998,
+      "audio_send_ms": 9900.655084,
+      "end_observed_pending_bytes": 131200,
+      "end_observed_pending_audio_ms": 4100.0,
+      "end_client_written_not_gateway_counted_bytes": 32000,
+      "end_client_written_unconfirmed_bytes": 163200,
+      "end_client_written_unconfirmed_audio_ms": 5100.0,
+      "max_partial_wait_ms": 10135.015584
+    }
+  ],
+  "measurement_limits": [
+    "Sampled peak is an observed lower bound on the true instantaneous maximum.",
+    "Audio duration is bytes / 32000 seconds, not wall-clock waiting latency.",
+    "End sample follows client end Write return, not Gateway end recognition.",
+    "First low after resume means first sample <= one 3200-byte chunk; no sustained recovery guarantee.",
+    "Instrumented HTTP wrapper calls production session.run and tracker; not Gateway.ServeHTTP.",
+    "Client-written bytes not yet gateway-counted may be in upstream buffers; no buffer location attribution."
+  ]
+}
