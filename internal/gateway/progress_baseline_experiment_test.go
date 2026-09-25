@@ -158,7 +158,7 @@ func runProgressBacklogBaseline(t *testing.T, name string, delay, pause time.Dur
 		}
 		defer ws.CloseNow()
 		ws.SetReadLimit(g.cfg.MaxMessageBytes)
-		s := newSession(ws, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout)
+		s := newSession(ws, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout, uint64(g.cfg.MaxPendingAudioBytes))
 		ready <- s
 		err = s.run(g.ctx)
 		runExit <- sessionExit{time.Now(), err}

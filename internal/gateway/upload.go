@@ -68,6 +68,13 @@ func (s *session) upload(
 					err:  fmt.Errorf("progress add received: %w", err),
 				}
 			}
+			// 当前块已经完整读取并记账；只有预算允许时才继续向 Worker 发送。
+			if err := checkPendingAudioLimit(s.progress.snapshot(), s.maxPendingAudioBytes); err != nil {
+				return sessionResult{
+					kind: resultAudioBacklogExceeded,
+					err:  err,
+				}
+			}
 			err := sendWithTimeout(
 				rpcCtx,
 				cancelRPC,

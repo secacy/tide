@@ -13,13 +13,14 @@ import (
 
 // Config 描述 WebSocket Gateway 配置。
 type Config struct {
-	MaxMessageBytes    int64         // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
-	StartTimeout       time.Duration // 限制会话等待完整 start 消息的时间。为 0 时使用默认值；负值属于无效配置。
-	InputIdleTimeout   time.Duration // 限制音频输入阶段每次等待完整消息的时间。不包含向 Worker 转发音频的时间；收到合法 end 后不再使用。
-	WorkerSendTimeout  time.Duration // 限制单次向 Worker 发送音频的等待时间。超时后取消整个会话 RPC；不代表模型处理期限。
-	MaxSessions        int           // 限制本 Gateway 已接纳但尚未完成清理的会话数量
-	TailTimeout        time.Duration // 限制协调者观察到合法 end 后，等待剩余结果转发和 Worker 响应流结束的时间
-	ResultWriteTimeout time.Duration // 限制单条结果的 WebSocket Write 等待
+	MaxMessageBytes      int64         // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
+	StartTimeout         time.Duration // 限制会话等待完整 start 消息的时间。为 0 时使用默认值；负值属于无效配置。
+	InputIdleTimeout     time.Duration // 限制音频输入阶段每次等待完整消息的时间。不包含向 Worker 转发音频的时间；收到合法 end 后不再使用。
+	WorkerSendTimeout    time.Duration // 限制单次向 Worker 发送音频的等待时间。超时后取消整个会话 RPC；不代表模型处理期限。
+	MaxSessions          int           // 限制本 Gateway 已接纳但尚未完成清理的会话数量
+	TailTimeout          time.Duration // 限制协调者观察到合法 end 后，等待剩余结果转发和 Worker 响应流结束的时间
+	ResultWriteTimeout   time.Duration // 限制单条结果的 WebSocket Write 等待
+	MaxPendingAudioBytes int64         // 限制单会话未确认处理的音频字节数。0 表示关闭，正值启用，负值无效。
 }
 
 // Gateway 把 WebSocket 音频流桥接到 gRPC Worker。
@@ -84,6 +85,9 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, cfg Config) (*Gatew
 	} else if cfg.ResultWriteTimeout == 0 {
 		cfg.ResultWriteTimeout = defaultResultWriteTimeout
 	}
+	if cfg.MaxPendingAudioBytes < 0 {
+		return nil, fmt.Errorf("max pending audio bytes is invalid")
+	}
 	return &Gateway{
 		ctx:     ctx,
 		worker:  worker,
@@ -119,7 +123,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	conn.SetReadLimit(g.cfg.MaxMessageBytes)
 
-	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout)
+	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout, uint64(g.cfg.MaxPendingAudioBytes))
 	_ = s.run(g.ctx)
 }
 

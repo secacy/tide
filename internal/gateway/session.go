@@ -42,7 +42,8 @@ type session struct {
 	resultWriteMu      sync.Mutex      // 只保护 resultWriteCtx，不覆盖编码或网络写入
 	resultWriteCtx     context.Context // 保存最近一次写入的 context。写入结束后仍保留，供协调者判断连接关闭是否伴随写入超时。
 
-	progress audioProgress // 记录本会话的音频接收量与 Worker 处理确认量
+	progress             audioProgress // 记录本会话的音频接收量与 Worker 处理确认量
+	maxPendingAudioBytes uint64        // 本会话的未确认音频预算。创建后不变，0 表示关闭限制。
 }
 
 // sessionResultKind 描述能够决定整个 Session 结果的事件。
@@ -54,11 +55,12 @@ const (
 	resultClientDisconnected
 	resultProtocolViolation
 	resultServerStopping
-	resultInputIdleTimeout   // 等待下一条完整输入消息超时
-	resultWorkerSendTimeout  // 单次音频发送等待超时，已触发 RPC 取消
-	resultTailTimeout        // 表示输入结束后，等待剩余结果及响应流结束超时
-	resultResultWriteTimeout // 表示单条识别结果写回客户端超时
-	resultInternalFailed     // 网关内部处理失败，例如音频接收计数溢出
+	resultInputIdleTimeout     // 等待下一条完整输入消息超时
+	resultWorkerSendTimeout    // 单次音频发送等待超时，已触发 RPC 取消
+	resultTailTimeout          // 表示输入结束后，等待剩余结果及响应流结束超时
+	resultResultWriteTimeout   // 表示单条识别结果写回客户端超时
+	resultInternalFailed       // 网关内部处理失败，例如音频接收计数溢出
+	resultAudioBacklogExceeded // 未确认音频量超过预算，不属于网络操作超时。
 )
 
 // ErrStartTimeout 表示会话未能在规定时间内完成 start 消息的读取与校验。
@@ -76,15 +78,16 @@ type sessionResult struct {
 var ErrInputIdleTimeout = errors.New("input idle timeout")
 
 // newSession 创建会话。
-func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration, tailTimeout time.Duration, resultWriteTimeout time.Duration) *session {
+func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration, tailTimeout time.Duration, resultWriteTimeout time.Duration, maxPendingAudioBytes uint64) *session {
 	return &session{
-		ws:                 ws,
-		worker:             worker,
-		startTimeout:       startTimeout,
-		inputIdleTimeout:   inputIdleTimeout,
-		workerSendTimeout:  workerSendTimeout,
-		tailTimeout:        tailTimeout,
-		resultWriteTimeout: resultWriteTimeout,
+		ws:                   ws,
+		worker:               worker,
+		startTimeout:         startTimeout,
+		inputIdleTimeout:     inputIdleTimeout,
+		workerSendTimeout:    workerSendTimeout,
+		tailTimeout:          tailTimeout,
+		resultWriteTimeout:   resultWriteTimeout,
+		maxPendingAudioBytes: maxPendingAudioBytes,
 	}
 }
 
@@ -354,6 +357,15 @@ func (s *session) finish(
 		cancelWS()
 		if closeErr != nil {
 			return fmt.Errorf("internal error: %w", closeErr)
+		}
+		return nil
+
+	case resultAudioBacklogExceeded:
+		cancelRPC()
+		closeErr := s.ws.Close(websocket.StatusInternalError, "audio backlog exceeded")
+		cancelWS()
+		if closeErr != nil {
+			return fmt.Errorf("audio backlog exceeded: %w", closeErr)
 		}
 		return nil
 

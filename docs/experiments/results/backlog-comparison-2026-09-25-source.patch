@@ -1,0 +1,1007 @@
+diff --git a/internal/gateway/handler.go b/internal/gateway/handler.go
+index 6dbf667..88d2303 100644
+--- a/internal/gateway/handler.go
++++ b/internal/gateway/handler.go
+@@ -13,13 +13,14 @@ import (
+ 
+ // Config 描述 WebSocket Gateway 配置。
+ type Config struct {
+-	MaxMessageBytes    int64         // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
+-	StartTimeout       time.Duration // 限制会话等待完整 start 消息的时间。为 0 时使用默认值；负值属于无效配置。
+-	InputIdleTimeout   time.Duration // 限制音频输入阶段每次等待完整消息的时间。不包含向 Worker 转发音频的时间；收到合法 end 后不再使用。
+-	WorkerSendTimeout  time.Duration // 限制单次向 Worker 发送音频的等待时间。超时后取消整个会话 RPC；不代表模型处理期限。
+-	MaxSessions        int           // 限制本 Gateway 已接纳但尚未完成清理的会话数量
+-	TailTimeout        time.Duration // 限制协调者观察到合法 end 后，等待剩余结果转发和 Worker 响应流结束的时间
+-	ResultWriteTimeout time.Duration // 限制单条结果的 WebSocket Write 等待
++	MaxMessageBytes      int64         // Gateway 允许接收的单个 WebSocket Message 上限, 这个值只是安全限制
++	StartTimeout         time.Duration // 限制会话等待完整 start 消息的时间。为 0 时使用默认值；负值属于无效配置。
++	InputIdleTimeout     time.Duration // 限制音频输入阶段每次等待完整消息的时间。不包含向 Worker 转发音频的时间；收到合法 end 后不再使用。
++	WorkerSendTimeout    time.Duration // 限制单次向 Worker 发送音频的等待时间。超时后取消整个会话 RPC；不代表模型处理期限。
++	MaxSessions          int           // 限制本 Gateway 已接纳但尚未完成清理的会话数量
++	TailTimeout          time.Duration // 限制协调者观察到合法 end 后，等待剩余结果转发和 Worker 响应流结束的时间
++	ResultWriteTimeout   time.Duration // 限制单条结果的 WebSocket Write 等待
++	MaxPendingAudioBytes int64         // 限制单会话未确认处理的音频字节数。0 表示关闭，正值启用，负值无效。
+ }
+ 
+ // Gateway 把 WebSocket 音频流桥接到 gRPC Worker。
+@@ -84,6 +85,9 @@ func New(ctx context.Context, worker asrv1.ASRServiceClient, cfg Config) (*Gatew
+ 	} else if cfg.ResultWriteTimeout == 0 {
+ 		cfg.ResultWriteTimeout = defaultResultWriteTimeout
+ 	}
++	if cfg.MaxPendingAudioBytes < 0 {
++		return nil, fmt.Errorf("max pending audio bytes is invalid")
++	}
+ 	return &Gateway{
+ 		ctx:     ctx,
+ 		worker:  worker,
+@@ -119,7 +123,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+ 
+ 	conn.SetReadLimit(g.cfg.MaxMessageBytes)
+ 
+-	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout)
++	s := newSession(conn, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout, uint64(g.cfg.MaxPendingAudioBytes))
+ 	_ = s.run(g.ctx)
+ }
+ 
+diff --git a/internal/gateway/progress_baseline_experiment_test.go b/internal/gateway/progress_baseline_experiment_test.go
+index b1a56d1..6e86cda 100644
+--- a/internal/gateway/progress_baseline_experiment_test.go
++++ b/internal/gateway/progress_baseline_experiment_test.go
+@@ -158,7 +158,7 @@ func runProgressBacklogBaseline(t *testing.T, name string, delay, pause time.Dur
+ 		}
+ 		defer ws.CloseNow()
+ 		ws.SetReadLimit(g.cfg.MaxMessageBytes)
+-		s := newSession(ws, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout)
++		s := newSession(ws, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout, uint64(g.cfg.MaxPendingAudioBytes))
+ 		ready <- s
+ 		err = s.run(g.ctx)
+ 		runExit <- sessionExit{time.Now(), err}
+diff --git a/internal/gateway/read_input_test.go b/internal/gateway/read_input_test.go
+index 002901e..0d318b1 100644
+--- a/internal/gateway/read_input_test.go
++++ b/internal/gateway/read_input_test.go
+@@ -31,7 +31,7 @@ func dialInputReader(t *testing.T, parent context.Context, timeout time.Duration
+ 			return
+ 		}
+ 		defer ws.CloseNow()
+-		s := newSession(ws, &recordingWorker{}, defaultStartTimeout, timeout, defaultWorkerSendTimeout, defaultTailTimeout, defaultResultWriteTimeout)
++		s := newSession(ws, &recordingWorker{}, defaultStartTimeout, timeout, defaultWorkerSendTimeout, defaultTailTimeout, defaultResultWriteTimeout, 0)
+ 		fn(ctx, s)
+ 	}))
+ 	var conn *websocket.Conn
+diff --git a/internal/gateway/session.go b/internal/gateway/session.go
+index a3d86b6..24374b9 100644
+--- a/internal/gateway/session.go
++++ b/internal/gateway/session.go
+@@ -42,7 +42,8 @@ type session struct {
+ 	resultWriteMu      sync.Mutex      // 只保护 resultWriteCtx，不覆盖编码或网络写入
+ 	resultWriteCtx     context.Context // 保存最近一次写入的 context。写入结束后仍保留，供协调者判断连接关闭是否伴随写入超时。
+ 
+-	progress audioProgress // 记录本会话的音频接收量与 Worker 处理确认量
++	progress             audioProgress // 记录本会话的音频接收量与 Worker 处理确认量
++	maxPendingAudioBytes uint64        // 本会话的未确认音频预算。创建后不变，0 表示关闭限制。
+ }
+ 
+ // sessionResultKind 描述能够决定整个 Session 结果的事件。
+@@ -54,11 +55,12 @@ const (
+ 	resultClientDisconnected
+ 	resultProtocolViolation
+ 	resultServerStopping
+-	resultInputIdleTimeout   // 等待下一条完整输入消息超时
+-	resultWorkerSendTimeout  // 单次音频发送等待超时，已触发 RPC 取消
+-	resultTailTimeout        // 表示输入结束后，等待剩余结果及响应流结束超时
+-	resultResultWriteTimeout // 表示单条识别结果写回客户端超时
+-	resultInternalFailed     // 网关内部处理失败，例如音频接收计数溢出
++	resultInputIdleTimeout     // 等待下一条完整输入消息超时
++	resultWorkerSendTimeout    // 单次音频发送等待超时，已触发 RPC 取消
++	resultTailTimeout          // 表示输入结束后，等待剩余结果及响应流结束超时
++	resultResultWriteTimeout   // 表示单条识别结果写回客户端超时
++	resultInternalFailed       // 网关内部处理失败，例如音频接收计数溢出
++	resultAudioBacklogExceeded // 未确认音频量超过预算，不属于网络操作超时。
+ )
+ 
+ // ErrStartTimeout 表示会话未能在规定时间内完成 start 消息的读取与校验。
+@@ -76,15 +78,16 @@ type sessionResult struct {
+ var ErrInputIdleTimeout = errors.New("input idle timeout")
+ 
+ // newSession 创建会话。
+-func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration, tailTimeout time.Duration, resultWriteTimeout time.Duration) *session {
++func newSession(ws *websocket.Conn, worker asrv1.ASRServiceClient, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration, tailTimeout time.Duration, resultWriteTimeout time.Duration, maxPendingAudioBytes uint64) *session {
+ 	return &session{
+-		ws:                 ws,
+-		worker:             worker,
+-		startTimeout:       startTimeout,
+-		inputIdleTimeout:   inputIdleTimeout,
+-		workerSendTimeout:  workerSendTimeout,
+-		tailTimeout:        tailTimeout,
+-		resultWriteTimeout: resultWriteTimeout,
++		ws:                   ws,
++		worker:               worker,
++		startTimeout:         startTimeout,
++		inputIdleTimeout:     inputIdleTimeout,
++		workerSendTimeout:    workerSendTimeout,
++		tailTimeout:          tailTimeout,
++		resultWriteTimeout:   resultWriteTimeout,
++		maxPendingAudioBytes: maxPendingAudioBytes,
+ 	}
+ }
+ 
+@@ -357,6 +360,15 @@ func (s *session) finish(
+ 		}
+ 		return nil
+ 
++	case resultAudioBacklogExceeded:
++		cancelRPC()
++		closeErr := s.ws.Close(websocket.StatusInternalError, "audio backlog exceeded")
++		cancelWS()
++		if closeErr != nil {
++			return fmt.Errorf("audio backlog exceeded: %w", closeErr)
++		}
++		return nil
++
+ 	default:
+ 		cancelRPC()
+ 		cancelWS()
+diff --git a/internal/gateway/start_timeout_test.go b/internal/gateway/start_timeout_test.go
+index b9fe860..57fd14c 100644
+--- a/internal/gateway/start_timeout_test.go
++++ b/internal/gateway/start_timeout_test.go
+@@ -107,7 +107,7 @@ func dialSessionWithTimeouts(t *testing.T, parent context.Context, worker asrv1.
+ 			return
+ 		}
+ 		defer ws.CloseNow()
+-		result <- newSession(ws, worker, startTimeout, inputIdleTimeout, defaultWorkerSendTimeout, defaultTailTimeout, defaultResultWriteTimeout).run(ctx)
++		result <- newSession(ws, worker, startTimeout, inputIdleTimeout, defaultWorkerSendTimeout, defaultTailTimeout, defaultResultWriteTimeout, 0).run(ctx)
+ 	}))
+ 	var conn *websocket.Conn
+ 	t.Cleanup(func() {
+diff --git a/internal/gateway/upload.go b/internal/gateway/upload.go
+index 628c67a..b29aec6 100644
+--- a/internal/gateway/upload.go
++++ b/internal/gateway/upload.go
+@@ -68,6 +68,13 @@ func (s *session) upload(
+ 					err:  fmt.Errorf("progress add received: %w", err),
+ 				}
+ 			}
++			// 当前块已经完整读取并记账；只有预算允许时才继续向 Worker 发送。
++			if err := checkPendingAudioLimit(s.progress.snapshot(), s.maxPendingAudioBytes); err != nil {
++				return sessionResult{
++					kind: resultAudioBacklogExceeded,
++					err:  err,
++				}
++			}
+ 			err := sendWithTimeout(
+ 				rpcCtx,
+ 				cancelRPC,
+diff --git a/internal/gateway/backlog.go b/internal/gateway/backlog.go
+new file mode 100644
+index 0000000..10ac606
+--- /dev/null
++++ b/internal/gateway/backlog.go
+@@ -0,0 +1,24 @@
++package gateway
++
++import (
++	"errors"
++	"fmt"
++)
++
++// ErrAudioBacklogExceeded 表示当前未确认处理音频量超过配置预算。
++// 它是积压超限原因，不表示某次网络操作超时。
++var ErrAudioBacklogExceeded = errors.New("audio backlog exceeded")
++
++// checkPendingAudioLimit 检查一个有效计量快照是否超过未确认音频预算。
++// maxBytes 的单位是原始音频字节，0 表示关闭限制。
++// pendingBytes 等于预算时允许继续；严格大于预算时返回包装 ErrAudioBacklogExceeded 的错误，并包含实际未确认量与预算值。
++// 本函数不修改计量、不等待、不取消会话；调用方负责后续控制。
++func checkPendingAudioLimit(p audioProgressSnapshot, maxBytes uint64) error {
++	if maxBytes == 0 {
++		return nil
++	}
++	if p.pendingBytes <= maxBytes {
++		return nil
++	}
++	return fmt.Errorf("%w (%d > %d)", ErrAudioBacklogExceeded, p.pendingBytes, maxBytes)
++}
+diff --git a/internal/gateway/backlog_experiment_test.go b/internal/gateway/backlog_experiment_test.go
+new file mode 100644
+index 0000000..25114ad
+--- /dev/null
++++ b/internal/gateway/backlog_experiment_test.go
+@@ -0,0 +1,442 @@
++package gateway
++
++import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"errors"
++	"fmt"
++	"net/http"
++	"net/http/httptest"
++	"os"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/coder/websocket"
++	"github.com/secacy/tide-artisan/internal/audio"
++	"github.com/secacy/tide-artisan/internal/mockasr"
++	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
++	"google.golang.org/grpc"
++	"google.golang.org/grpc/codes"
++	"google.golang.org/grpc/status"
++)
++
++// backlogExperimentReport 区分业务结果与实验验证结果。缺失时间用 nil，
++// 逐块发送、计量和结果记录用于复核，不能将未完成转录算作延迟改善。
++type backlogExperimentReport struct {
++	Case                string           `json:"case"`
++	Budget              uint64           `json:"budget_bytes"`
++	Validated           bool             `json:"validated"`
++	Outcome             string           `json:"outcome"`
++	RunError            string           `json:"run_error,omitempty"`
++	ProcessingMS        float64          `json:"processing_ms"`
++	PauseMS             float64          `json:"pause_ms"`
++	PlannedChunks       int              `json:"planned_chunks"`
++	ClientWrittenBytes  int              `json:"client_written_bytes"`
++	SendSucceededBytes  int              `json:"send_succeeded_bytes"`
++	WorkerReceivedBytes int              `json:"worker_received_bytes"`
++	WorkerProgressSent  uint64           `json:"worker_progress_sent_bytes"`
++	WorkerError         string           `json:"worker_error,omitempty"`
++	FinalProgress       progressSample   `json:"final_progress"`
++	PeakPending         uint64           `json:"observed_peak_pending_bytes"`
++	MaxSampleGapMS      float64          `json:"max_sample_gap_ms"`
++	MaxSnapshotMS       float64          `json:"max_snapshot_call_ms"`
++	EndMS               *float64         `json:"end_ms"`
++	FinalMS             *float64         `json:"final_ms"`
++	TailMS              *float64         `json:"tail_ms"`
++	CloseMS             float64          `json:"close_ms"`
++	CloseCode           int              `json:"close_code"`
++	CloseReason         string           `json:"close_reason"`
++	RunReturnedMS       float64          `json:"run_returned_ms"`
++	HandlerReturnedMS   float64          `json:"handler_returned_ms"`
++	WorkerReturnedMS    float64          `json:"worker_returned_ms"`
++	ActiveAfterCleanup  int              `json:"active_after_cleanup"`
++	Reused              bool             `json:"reused"`
++	Writes              []baselineWrite  `json:"writes"`
++	Sends               []baselineWrite  `json:"sends"`
++	Partials            []pausePartial   `json:"partials"`
++	Samples             []progressSample `json:"samples"`
++}
++
++type backlogMeasuredExit struct {
++	baselineWorkerExit
++	progress uint64
++	at       time.Time
++}
++
++// backlogMeasuredWorker 验证收到的合成音频顺序，并记录成功发出的累计进度。
++// 进度发送成功不代表网关一定收到了确认；这两个观测点分开记录。
++type backlogMeasuredWorker struct {
++	asrv1.UnimplementedASRServiceServer
++	worker *mockasr.Worker
++	exits  chan backlogMeasuredExit
++}
++
++func (w *backlogMeasuredWorker) StreamingRecognize(s grpc.BidiStreamingServer[asrv1.StreamingRecognizeRequest, asrv1.StreamingRecognizeResponse]) error {
++	observed := &backlogMeasuredStream{baselineStream: &baselineStream{BidiStreamingServer: s}}
++	err := w.worker.StreamingRecognize(observed)
++	w.exits <- backlogMeasuredExit{baselineWorkerExit{observed.chunks, observed.bytes, err}, observed.progress, time.Now()}
++	return err
++}
++
++type backlogMeasuredStream struct {
++	*baselineStream
++	progress uint64
++}
++
++func (s *backlogMeasuredStream) Send(r *asrv1.StreamingRecognizeResponse) error {
++	err := s.BidiStreamingServer.Send(r)
++	if err == nil && r.Progress != nil {
++		s.progress = r.Progress.ProcessedAudioBytes
++	}
++	return err
++}
++
++// TestAudioBacklogExperimentProbe 快速覆盖实验夹具的完成与超限分支。
++// 预算不足以容纳首块时必然失败，不依赖机器调度或处理速度的偶然差异。
++func TestAudioBacklogExperimentProbe(t *testing.T) {
++	t.Run("completed", func(t *testing.T) { runAudioBacklogExperiment(t, "probe_completed", 0, time.Millisecond, 0, 6, false) })
++	t.Run("exceeded", func(t *testing.T) { runAudioBacklogExperiment(t, "probe_exceeded", 3199, time.Millisecond, 0, 6, true) })
++}
++
++// TestAudioBacklogComparisonExperiment 每轮执行三场景的关闭/启用配对。
++// 正式 -count=3 共 18 个主会话；额外短会话验证清理后的名额复用。
++func TestAudioBacklogComparisonExperiment(t *testing.T) {
++	if os.Getenv("TIDE_RUN_BACKLOG_COMPARISON") != "1" {
++		t.Skip("set TIDE_RUN_BACKLOG_COMPARISON=1")
++	}
++	for _, c := range []struct {
++		name         string
++		delay, pause time.Duration
++	}{
++		{"normal", 50 * time.Millisecond, 0}, {"pause_500ms", 50 * time.Millisecond, 500 * time.Millisecond}, {"slow_200ms", 200 * time.Millisecond, 0},
++	} {
++		for _, budget := range []uint64{0, 32000} {
++			t.Run(fmt.Sprintf("%s/budget_%d", c.name, budget), func(t *testing.T) {
++				runAudioBacklogExperiment(t, c.name, budget, c.delay, c.pause, 100, budget > 0 && c.name == "slow_200ms")
++			})
++		}
++	}
++}
++
++// runAudioBacklogExperiment 使用生产 session.run，测试接入壳暴露计量器。
++// 主会话的接入壳不用于证明 Gateway.ServeHTTP 吞吐；复用会话调用真实 handler。
++func runAudioBacklogExperiment(t *testing.T, name string, budget uint64, delay, pause time.Duration, chunks int, wantExceeded bool) {
++	t.Helper()
++	report := backlogExperimentReport{Case: name, Budget: budget, Outcome: "incomplete", ProcessingMS: baselineMS(delay), PauseMS: baselineMS(pause), PlannedChunks: chunks}
++	defer func() {
++		data, err := json.Marshal(report)
++		if err != nil {
++			t.Error(err)
++			return
++		}
++		t.Logf("BACKLOG_COMPARISON_JSON %s", data)
++	}()
++	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
++	defer cancel()
++	texts := make([]string, chunks/5)
++	for i := range texts {
++		texts[i] = fmt.Sprintf("p%d", i+1)
++	}
++	worker := &backlogMeasuredWorker{worker: mockasr.New(mockasr.Config{ProcessingDelay: delay, PauseAfterChunks: 20, PauseDuration: pause, PartialEvery: 500 * time.Millisecond, PartialTexts: texts, FinalText: "final"}), exits: make(chan backlogMeasuredExit, 2)}
++	probe := &pauseSendProbe{}
++	workerClient := &pauseClient{ASRServiceClient: newBaselineTCPWorkerClient(t, worker), probe: probe}
++	appCtx, stop := context.WithCancel(context.Background())
++	defer stop()
++	g, err := New(appCtx, workerClient, Config{MaxSessions: 1, MaxPendingAudioBytes: int64(budget)})
++	if err != nil {
++		t.Fatal(err)
++	}
++	type exit struct {
++		at  time.Time
++		err error
++	}
++	ready := make(chan *session, 1)
++	runDone := make(chan exit, 1)
++	handlerDone := make(chan time.Time, 2)
++	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		defer func() { handlerDone <- time.Now() }()
++		if r.URL.Path == "/reuse" {
++			g.ServeHTTP(w, r)
++			return
++		}
++		if err := g.tracker.tryEnter(); err != nil {
++			http.Error(w, err.Error(), 503)
++			return
++		}
++		defer g.tracker.leave()
++		ws, err := websocket.Accept(w, r, nil)
++		if err != nil {
++			return
++		}
++		defer ws.CloseNow()
++		ws.SetReadLimit(g.cfg.MaxMessageBytes)
++		s := newSession(ws, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout, uint64(g.cfg.MaxPendingAudioBytes))
++		ready <- s
++		err = s.run(g.ctx)
++		runDone <- exit{time.Now(), err}
++	}))
++	var clients []*websocket.Conn
++	defer func() {
++		stop()
++		for _, c := range clients {
++			_ = c.CloseNow()
++		}
++		server.Close()
++		g.StopAccepting()
++		cleanup, end := context.WithTimeout(context.Background(), 5*time.Second)
++		defer end()
++		if err := g.Wait(cleanup); err != nil {
++			t.Errorf("cleanup: %v", err)
++		}
++	}()
++	url := "ws" + strings.TrimPrefix(server.URL, "http")
++	client, _, err := websocket.Dial(ctx, url, nil)
++	if err != nil {
++		t.Fatal(err)
++	}
++	clients = append(clients, client)
++	var s *session
++	select {
++	case s = <-ready:
++	case <-ctx.Done():
++		t.Fatal(ctx.Err())
++	}
++	if err := client.Write(ctx, websocket.MessageText, []byte(`{"type":"start","version":"v1"}`)); err != nil {
++		t.Fatal(err)
++	}
++	origin := time.Now()
++	ms := func(at time.Time) float64 { return baselineMS(at.Sub(origin)) }
++	probe.mu.Lock()
++	probe.origin = origin
++	probe.mu.Unlock()
++	received := make(chan pauseReception, 1)
++	receiverDone := make(chan struct{})
++	go func() { defer close(receiverDone); received <- receivePause(ctx, client, origin) }()
++	sampleCtx, stopSampling := context.WithCancel(context.Background())
++	sampled := make(chan []progressSample, 1)
++	go func() {
++		ticker := time.NewTicker(5 * time.Millisecond)
++		defer ticker.Stop()
++		rows := []progressSample{takeProgressSample(s, origin)}
++		for {
++			select {
++			case <-ticker.C:
++				rows = append(rows, takeProgressSample(s, origin))
++			case <-sampleCtx.Done():
++				rows = append(rows, takeProgressSample(s, origin))
++				sampled <- rows
++				return
++			}
++		}
++	}()
++	joinedSampler := false
++	defer func() {
++		stopSampling()
++		cancel()
++		if !joinedSampler {
++			select {
++			case report.Samples = <-sampled:
++			case <-time.After(5 * time.Second):
++				t.Error("sampler cleanup timed out")
++			}
++		}
++		select {
++		case <-receiverDone:
++		case <-time.After(5 * time.Second):
++			t.Error("receiver cleanup timed out")
++		}
++	}()
++	// Read 检测到关闭会唤醒节拍等待；不能等到原定 100 块全写完才处理超限。
++upload:
++	for i := 0; i < chunks; i++ {
++		timer := time.NewTimer(max(time.Until(origin.Add(time.Duration(i)*100*time.Millisecond)), 0))
++		select {
++		case <-timer.C:
++		case <-receiverDone:
++			timer.Stop()
++			break upload
++		case <-ctx.Done():
++			timer.Stop()
++			t.Fatal(ctx.Err())
++		}
++		select {
++		case <-receiverDone:
++			break upload
++		default:
++		}
++		began := time.Now()
++		err := client.Write(ctx, websocket.MessageBinary, bytes.Repeat([]byte{byte(i)}, audio.ChunkBytesDefault))
++		row := baselineWrite{Index: i, PlannedMS: float64(i) * 100, StartedMS: ms(began), ReturnedMS: ms(time.Now())}
++		if err != nil {
++			row.Error = err.Error()
++		} else {
++			report.ClientWrittenBytes += audio.ChunkBytesDefault
++		}
++		report.Writes = append(report.Writes, row)
++		if err != nil {
++			break
++		}
++	}
++	if report.ClientWrittenBytes == chunks*audio.ChunkBytesDefault {
++		at := ms(time.Now())
++		report.EndMS = &at
++		if err := client.Write(ctx, websocket.MessageText, []byte(`{"type":"end"}`)); err != nil {
++			t.Fatal(err)
++		}
++	}
++	var reception pauseReception
++	select {
++	case reception = <-received:
++	case <-ctx.Done():
++		t.Fatal(ctx.Err())
++	}
++	report.Partials = reception.rows
++	report.CloseCode = reception.closeCode
++	report.CloseMS = ms(reception.closed)
++	var closeErr websocket.CloseError
++	if errors.As(reception.err, &closeErr) {
++		report.CloseReason = closeErr.Reason
++	}
++	if !reception.final.IsZero() {
++		at := ms(reception.final)
++		report.FinalMS = &at
++		if report.EndMS != nil {
++			tail := at - *report.EndMS
++			report.TailMS = &tail
++		}
++	}
++	var run exit
++	select {
++	case run = <-runDone:
++	case <-ctx.Done():
++		t.Fatal(ctx.Err())
++	}
++	report.RunReturnedMS = ms(run.at)
++	if run.err != nil {
++		report.RunError = run.err.Error()
++	}
++	select {
++	case at := <-handlerDone:
++		report.HandlerReturnedMS = ms(at)
++	case <-ctx.Done():
++		t.Fatal(ctx.Err())
++	}
++	stopSampling()
++	select {
++	case report.Samples = <-sampled:
++		joinedSampler = true
++	case <-ctx.Done():
++		t.Fatal(ctx.Err())
++	}
++	var workerExit backlogMeasuredExit
++	select {
++	case workerExit = <-worker.exits:
++	case <-ctx.Done():
++		t.Fatal(ctx.Err())
++	}
++	report.WorkerReceivedBytes = workerExit.bytes
++	report.WorkerProgressSent = workerExit.progress
++	report.WorkerReturnedMS = ms(workerExit.at)
++	if workerExit.err != nil {
++		report.WorkerError = workerExit.err.Error()
++	}
++	report.FinalProgress = takeProgressSample(s, origin)
++	probe.mu.Lock()
++	report.Sends = append([]baselineWrite(nil), probe.rows...)
++	probe.mu.Unlock()
++	for _, row := range report.Sends {
++		if row.Error != "" {
++			t.Fatalf("unexpected Send failure: %s", row.Error)
++		}
++		report.SendSucceededBytes += audio.ChunkBytesDefault
++	}
++	for i, row := range report.Samples {
++		if row.Processed > row.Received || row.Pending != row.Received-row.Processed {
++			t.Fatalf("invalid counters: %+v", row)
++		}
++		if i > 0 {
++			prev := report.Samples[i-1]
++			if row.Received < prev.Received || row.Processed < prev.Processed {
++				t.Fatal("counter regression")
++			}
++			report.MaxSampleGapMS = max(report.MaxSampleGapMS, row.AtMS-prev.AtMS)
++		}
++		report.PeakPending = max(report.PeakPending, row.Pending)
++		report.MaxSnapshotMS = max(report.MaxSnapshotMS, row.AtMS-row.BeginMS)
++	}
++	g.tracker.mu.Lock()
++	report.ActiveAfterCleanup = g.tracker.active
++	g.tracker.mu.Unlock()
++	if report.ActiveAfterCleanup != 0 || appCtx.Err() != nil {
++		t.Fatal("session cleanup required external cancellation")
++	}
++	if wantExceeded {
++		report.Outcome = "audio_backlog_exceeded"
++		if !errors.Is(run.err, ErrAudioBacklogExceeded) || closeErr.Code != websocket.StatusInternalError || closeErr.Reason != "audio backlog exceeded" {
++			t.Fatalf("wrong failure: run=%v receive=%v", run.err, reception.err)
++		}
++		if status.Code(workerExit.err) != codes.Canceled {
++			t.Fatalf("Worker did not cancel: %v", workerExit.err)
++		}
++		if reception.finals != 0 || report.EndMS != nil {
++			t.Fatal("overload unexpectedly finished input or produced final")
++		}
++		if report.FinalProgress.Received != uint64(report.SendSucceededBytes+audio.ChunkBytesDefault) {
++			t.Fatal("over-limit block not accounted for or was sent")
++		}
++		if report.PeakPending > budget+audio.ChunkBytesDefault {
++			t.Fatal("sample exceeded budget plus one chunk")
++		}
++	} else {
++		report.Outcome = "completed"
++		if run.err != nil || reception.err != nil || workerExit.err != nil {
++			t.Fatalf("unexpected failure: %v / %v / %v", run.err, reception.err, workerExit.err)
++		}
++		if reception.finals != 1 || len(reception.rows) != chunks/5 || reception.closeCode != 1000 {
++			t.Fatal("missing results or normal closure")
++		}
++		total := chunks * audio.ChunkBytesDefault
++		if report.SendSucceededBytes != total || workerExit.bytes != total || report.FinalProgress.Received != uint64(total) || report.FinalProgress.Processed != uint64(total) || report.FinalProgress.Pending != 0 {
++			t.Fatal("incomplete audio processing")
++		}
++	}
++	// 已关闭主会话不依赖 StopAccepting/应用取消；同一个 Gateway 仍可接受新连接。
++	// 预算小于标准块的快速探针只检查重新接入；正式配置验证完整的单块会话。
++	reuse, _, err := websocket.Dial(ctx, url+"/reuse", nil)
++	if err != nil {
++		t.Fatal(err)
++	}
++	clients = append(clients, reuse)
++	if budget > 0 && budget < audio.ChunkBytesDefault {
++		// 探针保持合成内容校验所需 3200 字节块，因此该配置本身不允许正常复用音频。
++		// 只验证新连接被接纳并在主动关闭后清理，正式配置则验证完整正常转录。
++		_ = reuse.CloseNow()
++	} else {
++		if err := finishAdmission(ctx, reuse); err != nil {
++			t.Fatalf("reuse: %v", err)
++		}
++		select {
++		case exit := <-worker.exits:
++			if exit.err != nil || exit.bytes != audio.ChunkBytesDefault {
++				t.Fatalf("reuse Worker: %+v", exit)
++			}
++		case <-ctx.Done():
++			t.Fatal(ctx.Err())
++		}
++	}
++	select {
++	case <-handlerDone:
++	case <-ctx.Done():
++		t.Fatal(ctx.Err())
++	}
++	g.tracker.mu.Lock()
++	active := g.tracker.active
++	g.tracker.mu.Unlock()
++	if active != 0 || appCtx.Err() != nil {
++		t.Fatal("reuse cleanup failed")
++	}
++	report.Reused = true
++	report.Validated = true
++}
+diff --git a/internal/gateway/backlog_integration_test.go b/internal/gateway/backlog_integration_test.go
+new file mode 100644
+index 0000000..65296a2
+--- /dev/null
++++ b/internal/gateway/backlog_integration_test.go
+@@ -0,0 +1,251 @@
++package gateway
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"io"
++	"net/http"
++	"net/http/httptest"
++	"strings"
++	"testing"
++	"time"
++
++	"github.com/coder/websocket"
++	"github.com/secacy/tide-artisan/internal/wsprotocol"
++	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
++	"google.golang.org/grpc"
++)
++
++// TestAudioBacklogConfig 验证配置开关与有符号边界，防止负值转换成巨大预算。
++func TestAudioBacklogConfig(t *testing.T) {
++	for _, tc := range []struct {
++		name  string
++		value int64
++	}{
++		{"disabled", 0}, {"enabled", 32000}, {"negative", -1}, {"minimum_int64", -1 << 63},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			g, err := New(context.Background(), &recordingWorker{}, Config{MaxPendingAudioBytes: tc.value})
++			if tc.value < 0 {
++				if err == nil || g != nil {
++					t.Fatal("negative pending audio budget was accepted")
++				}
++				if errors.Is(err, ErrAudioBacklogExceeded) {
++					t.Fatal("invalid configuration classified as runtime backlog failure")
++				}
++				return
++			}
++			if err != nil {
++				t.Fatal(err)
++			}
++			if g.cfg.MaxPendingAudioBytes != tc.value {
++				t.Fatalf("budget=%d, want %d", g.cfg.MaxPendingAudioBytes, tc.value)
++			}
++		})
++	}
++}
++
++// TestSessionAudioBacklogFailure 检查完整 run 保留超限原因和已读账目，
++// 不发送超限块，并等待被取消的下载操作退出；应用本身仍可继续运行。
++func TestSessionAudioBacklogFailure(t *testing.T) {
++	s, client, _ := newResultWriter(t, 2*time.Second, false)
++	worker := &heldProgressClient{ready: make(chan *heldProgressStream, 1)}
++	s.worker = worker
++	s.startTimeout, s.inputIdleTimeout, s.workerSendTimeout, s.tailTimeout = 3*time.Second, 3*time.Second, 3*time.Second, 3*time.Second
++	s.maxPendingAudioBytes = 3199
++	appCtx, stop := context.WithCancel(context.Background())
++	done := make(chan error, 1)
++	go func() { done <- s.run(appCtx) }()
++	joined := false
++	defer func() {
++		stop()
++		if !joined {
++			_ = client.CloseNow()
++			_ = s.ws.CloseNow()
++			select {
++			case <-done:
++			case <-time.After(2 * time.Second):
++				t.Error("session did not exit after test cleanup")
++			}
++		}
++	}()
++	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
++	defer cancel()
++	if err := client.Write(ctx, websocket.MessageText, []byte(`{"type":"start","version":"v1"}`)); err != nil {
++		t.Fatal(err)
++	}
++	var stream *heldProgressStream
++	select {
++	case stream = <-worker.ready:
++	case <-ctx.Done():
++		t.Fatal("Worker stream was not created")
++	}
++	if err := client.Write(ctx, websocket.MessageBinary, make([]byte, 3200)); err != nil {
++		t.Fatal(err)
++	}
++	assertBacklogClose(t, ctx, client, true)
++	select {
++	case err := <-done:
++		joined = true
++		if !errors.Is(err, ErrAudioBacklogExceeded) || errors.Is(err, ErrWorkerSendTimeout) {
++			t.Fatalf("wrong session cause: %v", err)
++		}
++	case <-ctx.Done():
++		t.Fatal("session did not finish")
++	}
++	if got := s.progress.snapshot(); got != (audioProgressSnapshot{receivedBytes: 3200, pendingBytes: 3200}) {
++		t.Fatalf("failure changed received accounting: %+v", got)
++	}
++	if stream.sendCalls.Load() != 0 {
++		t.Fatal("over-budget chunk was sent")
++	}
++	select {
++	case <-stream.recvExited:
++	default:
++		t.Fatal("download did not exit")
++	}
++	if stream.ctx.Err() == nil || appCtx.Err() != nil {
++		t.Fatal("RPC was not canceled independently of the application")
++	}
++}
++
++// backlogIntegrationWorker 可选择汇报累计确认；每块之后的文本用作同步标记。
++// 客户端看到标记时，网关已经处理了之前的进度，测试不依赖 sleep 猜测时序。
++type backlogIntegrationWorker struct {
++	asrv1.UnimplementedASRServiceServer
++	reportProgress bool
++	exits          chan baselineWorkerExit
++}
++
++func (w *backlogIntegrationWorker) StreamingRecognize(stream grpc.BidiStreamingServer[asrv1.StreamingRecognizeRequest, asrv1.StreamingRecognizeResponse]) (err error) {
++	var chunks, bytes int
++	defer func() { w.exits <- baselineWorkerExit{chunks: chunks, bytes: bytes, err: err} }()
++	for {
++		req, recvErr := stream.Recv()
++		if errors.Is(recvErr, io.EOF) {
++			return stream.Send(&asrv1.StreamingRecognizeResponse{SegmentId: "tail", Text: "final", IsFinal: true})
++		}
++		if recvErr != nil {
++			return recvErr
++		}
++		chunks++
++		bytes += len(req.GetData())
++		if w.reportProgress {
++			if err := stream.Send(&asrv1.StreamingRecognizeResponse{Progress: &asrv1.AudioProgress{ProcessedAudioBytes: uint64(bytes)}}); err != nil {
++				return err
++			}
++		}
++		if err := stream.Send(&asrv1.StreamingRecognizeResponse{SegmentId: fmt.Sprint(chunks), Text: "chunk received"}); err != nil {
++			return err
++		}
++	}
++}
++
++// assertBacklogClose 校验超限和正常完成的客户端可见语义。
++func assertBacklogClose(t *testing.T, ctx context.Context, client *websocket.Conn, exceeded bool) {
++	t.Helper()
++	code, reason := websocket.StatusNormalClosure, "completed"
++	if exceeded {
++		code, reason = websocket.StatusInternalError, "audio backlog exceeded"
++	}
++	_, _, err := client.Read(ctx)
++	var closeErr websocket.CloseError
++	if !errors.As(err, &closeErr) || closeErr.Code != code || closeErr.Reason != reason {
++		t.Fatalf("close=%v, want %v %q", err, code, reason)
++	}
++}
++
++// TestGatewayAudioBacklog 使用真实 WebSocket 和 TCP gRPC 验证完整构造传参、
++// 等额放行、超限块拦截、确认释放预算、关闭开关与清理后的单名额复用。
++// 这些是确定性功能测试，不测量处理能力或实际抖动下的性能。
++func TestGatewayAudioBacklog(t *testing.T) {
++	for _, tc := range []struct {
++		name     string
++		budget   int64
++		progress bool
++		exceeded bool
++	}{
++		{"no_progress_exceeds_and_reuses_slot", 3200, false, true},
++		{"progress_releases_budget", 3200, true, false},
++		{"disabled_without_progress", 0, false, false},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			worker := &backlogIntegrationWorker{reportProgress: tc.progress, exits: make(chan baselineWorkerExit, 2)}
++			workerClient := newBaselineTCPWorkerClient(t, worker)
++			appCtx, stop := context.WithCancel(context.Background())
++			defer stop()
++			g, err := New(appCtx, workerClient, Config{MaxSessions: 1, MaxPendingAudioBytes: tc.budget})
++			if err != nil {
++				t.Fatal(err)
++			}
++			handlers := make(chan struct{}, 2)
++			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++				defer func() { handlers <- struct{}{} }()
++				g.ServeHTTP(w, r)
++			}))
++			var clients []*websocket.Conn
++			defer func() {
++				stop()
++				for _, client := range clients {
++					_ = client.CloseNow()
++				}
++				server.Close()
++			}()
++			ctx, cancel := context.WithTimeout(context.Background(), 8*time.Second)
++			defer cancel()
++			// 首次可触发超限；第二次始终只发一个预算内音频块，证明名额可再次使用。
++			for attempt := 0; attempt < 2; attempt++ {
++				client, _, err := websocket.Dial(ctx, "ws"+strings.TrimPrefix(server.URL, "http"), nil)
++				if err != nil {
++					t.Fatal(err)
++				}
++				clients = append(clients, client)
++				if err := client.Write(ctx, websocket.MessageText, []byte(`{"type":"start","version":"v1"}`)); err != nil {
++					t.Fatal(err)
++				}
++				exceeded := tc.exceeded && attempt == 0
++				allowed := 3
++				if exceeded || attempt == 1 {
++					allowed = 1
++				}
++				for i := 1; i <= allowed; i++ {
++					if err := client.Write(ctx, websocket.MessageBinary, make([]byte, 3200)); err != nil {
++						t.Fatal(err)
++					}
++					assertRecognitionResult(t, ctx, client, wsprotocol.ResultMessage{Type: wsprotocol.MessageTypeResult, SegmentID: fmt.Sprint(i), Text: "chunk received"})
++				}
++				if exceeded {
++					if err := client.Write(ctx, websocket.MessageBinary, make([]byte, 3200)); err != nil {
++						t.Fatal(err)
++					}
++				} else {
++					if err := client.Write(ctx, websocket.MessageText, []byte(`{"type":"end"}`)); err != nil {
++						t.Fatal(err)
++					}
++					assertRecognitionResult(t, ctx, client, wsprotocol.ResultMessage{Type: wsprotocol.MessageTypeResult, SegmentID: "tail", Text: "final", IsFinal: true})
++				}
++				assertBacklogClose(t, ctx, client, exceeded)
++				select {
++				case exit := <-worker.exits:
++					if exit.chunks != allowed || exit.bytes != allowed*3200 || (exit.err != nil) != exceeded {
++						t.Fatalf("Worker exit=%+v, allowed=%d, exceeded=%v", exit, allowed, exceeded)
++					}
++				case <-ctx.Done():
++					t.Fatal("Worker did not exit")
++				}
++				select {
++				case <-handlers:
++				case <-ctx.Done():
++					t.Fatal("handler did not exit")
++				}
++				g.tracker.mu.Lock()
++				active := g.tracker.active
++				g.tracker.mu.Unlock()
++				if active != 0 || appCtx.Err() != nil {
++					t.Fatalf("cleanup failed: active=%d application=%v", active, appCtx.Err())
++				}
++			}
++		})
++	}
++}
+diff --git a/internal/gateway/backlog_test.go b/internal/gateway/backlog_test.go
+new file mode 100644
+index 0000000..a3e0fc1
+--- /dev/null
++++ b/internal/gateway/backlog_test.go
+@@ -0,0 +1,91 @@
++package gateway
++
++import (
++	"errors"
++	"strconv"
++	"strings"
++	"testing"
++)
++
++// TestPendingAudioLimitBoundaries 检查开关、严格大于边界和 uint64 极值。
++// 预算约束的是未确认量，不是会话累计接收量。
++func TestPendingAudioLimitBoundaries(t *testing.T) {
++	const max = ^uint64(0)
++	for _, tc := range []struct {
++		name      string
++		received  uint64
++		processed uint64
++		limit     uint64
++		wantError bool
++	}{
++		{name: "disabled_with_large_pending", received: max},
++		{name: "empty", limit: 32000},
++		{name: "below", received: 31999, limit: 32000},
++		{name: "equal", received: 32000, limit: 32000},
++		{name: "one_byte_above", received: 32001, limit: 32000, wantError: true},
++		{name: "large_received_but_equal_pending", received: 1000000, processed: 968000, limit: 32000},
++		{name: "all_processed", received: max, processed: max, limit: 1},
++		{name: "maximum_equal", received: max, limit: max},
++		{name: "maximum_above", received: max, limit: max - 1, wantError: true},
++	} {
++		t.Run(tc.name, func(t *testing.T) {
++			p := audioProgressSnapshot{
++				receivedBytes: tc.received, processedBytes: tc.processed,
++				pendingBytes: tc.received - tc.processed,
++			}
++			before := p
++			err := checkPendingAudioLimit(p, tc.limit)
++			if (err != nil) != tc.wantError {
++				t.Fatalf("pending=%d limit=%d: error=%v, want error=%v", p.pendingBytes, tc.limit, err, tc.wantError)
++			}
++			if p != before {
++				t.Fatalf("budget check changed snapshot: before=%+v after=%+v", before, p)
++			}
++			if tc.wantError {
++				if !errors.Is(err, ErrAudioBacklogExceeded) || errors.Unwrap(err) == nil {
++					t.Fatalf("backlog error did not preserve wrapped cause: %v", err)
++				}
++				for _, value := range []uint64{p.pendingBytes, tc.limit} {
++					if !strings.Contains(err.Error(), strconv.FormatUint(value, 10)) {
++						t.Fatalf("error omits byte count %d: %v", value, err)
++					}
++				}
++				if errors.Is(err, ErrWorkerSendTimeout) {
++					t.Fatal("backlog error classified as send timeout")
++				}
++			}
++		})
++	}
++}
++
++// TestPendingAudioLimitDoesNotRollBackAccounting 验证预算判断与事实计量分离：
++// 触发超限的已读块仍在账目里；新确认改变未确认量后，判断使用新快照。
++// 本测试没有接入 upload，也不模拟超限会话的继续运行。
++func TestPendingAudioLimitDoesNotRollBackAccounting(t *testing.T) {
++	var p audioProgress
++	if err := p.addReceived(32000); err != nil {
++		t.Fatal(err)
++	}
++	if err := checkPendingAudioLimit(p.snapshot(), 32000); err != nil {
++		t.Fatalf("exact budget rejected: %v", err)
++	}
++	if err := p.addReceived(3200); err != nil {
++		t.Fatal(err)
++	}
++	over := p.snapshot()
++	if err := checkPendingAudioLimit(over, 32000); !errors.Is(err, ErrAudioBacklogExceeded) {
++		t.Fatalf("missing excess-budget error: %v", err)
++	}
++	if got := p.snapshot(); got != (audioProgressSnapshot{receivedBytes: 35200, pendingBytes: 35200}) {
++		t.Fatalf("budget check changed received audio accounting: %+v", got)
++	}
++	if err := p.acknowledge(3200); err != nil {
++		t.Fatal(err)
++	}
++	if err := checkPendingAudioLimit(p.snapshot(), 32000); err != nil {
++		t.Fatalf("new acknowledgement not reflected in fresh check: %v", err)
++	}
++	if err := checkPendingAudioLimit(over, 32000); !errors.Is(err, ErrAudioBacklogExceeded) {
++		t.Fatal("historical snapshot changed after new acknowledgement")
++	}
++}

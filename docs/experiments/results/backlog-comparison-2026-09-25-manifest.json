@@ -1,0 +1,158 @@
+{
+  "date": "2026-09-25",
+  "base_commit": "23a65d6871cd1adaa0794adb749343eb11b1d345",
+  "sha256": {
+    "cmd/asr-worker/main.go": "24723fe1a4e44de82785096b43bd2b01c2ecb623bb9b45eef97fdf24125b81bc",
+    "cmd/gateway/main.go": "33e1b0bf10a5b793d18df7e04dabe9cf0159d66645061a486161f0b3ce8f6f19",
+    "cmd/ws-client/main.go": "08dc9c7ac997e338766827c1572edd9f3d23cf19fcb6e6084d0c0a7880b2d94d",
+    "go.mod": "c9c7012d18711cb2d954c57cc784a8c70327d34b03167b91a01aabded852db4e",
+    "go.sum": "829a64643f43bb0a0fea771fa2561e6a7fa26622fcb4bbcbf7dbbb101e88f5fd",
+    "internal/audio/format.go": "5f86af2fa59391da5c06853838940abfe7879f28d06c82e1e2411456e558ddda",
+    "internal/audio/pacer.go": "dd6950bcda76f5a6a2d6e5c933b6fde3eeeecccca6d397251e02ad77fc46b604",
+    "internal/gateway/admission_network_test.go": "03599fc9555ac127ddbdeebcb6e3c4f8dc1cf89d62e14d13b9448ce8179b2b74",
+    "internal/gateway/admission_test.go": "c755d5fd8921c537ec54cb363467364aa3a8480d4739501ae82a2d6fec587042",
+    "internal/gateway/audio_progress.go": "e1cf00d7ca2c25990c51350f637b77a3ce127f2c53d0f89f41448741ab665e26",
+    "internal/gateway/audio_progress_test.go": "3abfabd5cd205ed374d27c088103d04660eb2f934854281e834ca3cf952bdd96",
+    "internal/gateway/backlog.go": "3d2738f4fbefa2c9042f75a9f00435c48a5d3fcc99cdf5e12c1d78923bcf8baa",
+    "internal/gateway/backlog_experiment_test.go": "1495b13cce59a61a072cbf1e5ff36f9f2573c1cce20faa1beb73dd2308e96f37",
+    "internal/gateway/backlog_integration_test.go": "f0a7a2f76ac3e46744b89377cd2230e09f363a8728d09c549d38429f7a17f679",
+    "internal/gateway/backlog_test.go": "ef026ac2c435120c6402e3644806774ef9ed33302447e95068cdab5edffb3ee7",
+    "internal/gateway/client_disconnect_test.go": "cedc7166abd449ab4f7de71590be2963ff3cf5c20f3b1d15651730213854b9b5",
+    "internal/gateway/download.go": "ac7803f645210c47c9a67caca549de40d6055383cfe4fe4ea46c9f61e10563e2",
+    "internal/gateway/handler.go": "a575599bd6f1438d11e323651392a97cf64b3ea05f245c83e720d0faacdfcaf6",
+    "internal/gateway/handler_test.go": "ea3af53bb63514a644d64b60b9408b5c51287479503af08c8789a15dff235406",
+    "internal/gateway/input_idle_result_test.go": "c1f53731a87ce77eb4153f587aafa6036f1aaef2775d429fad32318384fb4b2a",
+    "internal/gateway/normal_end_test.go": "36befc70cd6a8033d8444b1fecfeb1dad0174324e49de909a0b5078f8fd01d6a",
+    "internal/gateway/progress_baseline_experiment_test.go": "41da9ce5333c2fdd0e99c1f269d08204a8261ca1777c21694c3b3d0a4c3a3fa6",
+    "internal/gateway/progress_integration_test.go": "cd95c6e54e512d92a8a75a600a4d88f93e6239f02e1fe21fdb9bc160c8c23f22",
+    "internal/gateway/progress_routing_test.go": "dac27d9f0a84ce7cc50373af004b435c207849d5cd0fa571ac8942ce0bfc70b7",
+    "internal/gateway/read_input_test.go": "7584e0e515066e38c389d1d6acb70212f06567f5684f8686d427fae255e21a3b",
+    "internal/gateway/resource_cleanup_test.go": "6c7f9679aa88f5014b29cdf421447001b13fbddbe856f2fdec3f56006fdece80",
+    "internal/gateway/result_write.go": "c4857e2586727457bcd38dd6fd8dcb0b4e214bcbca3484bd0427b3a71069437c",
+    "internal/gateway/result_write_experiment_test.go": "107911597db43de39791393b14106f758874c0817722bf13cb12b69b27422e3f",
+    "internal/gateway/result_write_integration_test.go": "b448f55387d633b26ad017281b07b39c564a520b223f70fd53acdb79f75ca4f7",
+    "internal/gateway/result_write_test.go": "118618116884f84b87f13a43db2d76b153c22fd4b0df33d080aa11d586c5589e",
+    "internal/gateway/send.go": "dd499b61fb2fb7f5268b51c5f856d755d4a48b34300d35cc68bf6f9fed4c1163",
+    "internal/gateway/send_test.go": "99511f81c61943cd8ddc32f219587b1b6a087f892029cad644cb45e9c335e467",
+    "internal/gateway/session.go": "ae3c970df6c39f62c9ec2e7fb4985440d6590f7afb1a7291098e3ee6cc8e3519",
+    "internal/gateway/shutdown_stream_test.go": "b19e20848cda62daece7b5e7e42912c9470d73e1ec1e01550438ebe121b33b0b",
+    "internal/gateway/slow_reader_experiment_test.go": "726a94bcf778254bdc34b3ce1fb5d3af46d0f394944f8a5353fd78d61dd075a6",
+    "internal/gateway/slow_worker_experiment_test.go": "081d0f8be2dc47871ce7735c3163854415bf668cc6e7b5eea1c2e9f56448ab09",
+    "internal/gateway/stalled_worker_experiment_test.go": "193bc99c2c4b3eea39f47f76b4fa5cb390b094ed7c0448fa6de2643e7c12c81c",
+    "internal/gateway/start_timeout_test.go": "8cc2e28336d27a0b57232310ae553f41c36f20de80c7867a57ae8236b3671ec9",
+    "internal/gateway/tail.go": "28053ca665c70e6c0011d5a1d0ed5f899bb49ab51642bb26ad8cb354cd6d7554",
+    "internal/gateway/tail_config_test.go": "56122b128b3c74890af364dfa21036fba648bb60b228ef383a5f37caa6166535",
+    "internal/gateway/tail_integration_test.go": "2a1196f9cffa816d6d0cd5c0be63dfa6b2cf4010dc8f9859a39bb4501fff49ef",
+    "internal/gateway/tail_stall_experiment_test.go": "fc081acb326f53899cd32abe301a8eea64642bd959e5809b36f29db6b4a432dd",
+    "internal/gateway/tail_test.go": "f0413c578bc08cdeacdcf850edfd96b97b342d6cdd38f510cf0066a27f6780d3",
+    "internal/gateway/tracker.go": "1965a81ef7053352ab3945009dd3b44c0683e2e98cf73af5838977ad54971d35",
+    "internal/gateway/unresponsive_close_test.go": "7ef649f411976956cf2bd2f86f929d78f169c0d15a7323345bd3a84a1d7f5b93",
+    "internal/gateway/upload.go": "7565131b91a28ffcb47553fc72e7c6bdf57a1ebea3872af35f129f78e277b2a2",
+    "internal/gateway/worker_failure_test.go": "b1966a1c740e674b2f8cce995484dfb79fbc40b7bc68396b238cd355e2df62e5",
+    "internal/gateway/worker_pause_experiment_test.go": "05aded37df77d19ea5d1750f30de262b3867b27d54ae4d31af2018e9a50facc8",
+    "internal/gateway/worker_send_timeout_test.go": "cd2cd526b8beb8341b6608e0cb9ad77d0020430cf84d0488be490c54612cfc61",
+    "internal/mockasr/pause_test.go": "f0f2b0875c23c4977422e8da2b114b43b88206909c74cd9237b720790208fc2d",
+    "internal/mockasr/progress_test.go": "dc581d07731932e0298cfc2406d989ff49dfb0ba4171cc472c9e568ea510ecc2",
+    "internal/mockasr/stall_test.go": "e9ed20fe3472224c256b040e865defd5cabe772787c029f3a277638ba52786c9",
+    "internal/mockasr/worker.go": "c4b4b93b065c403326eace0426f99d1118cfd0f6425741288ee0a9ad19df18e6",
+    "internal/mockasr/worker_test.go": "e0f44d4f0d02ac746e6893b5d85b2361121d8bb75df105534962e978154a49fb",
+    "internal/wsclient/client.go": "b731f718acf6aa73eb6c2a75a70b189cb2c888787ecee41ec152b863f55b96b2",
+    "internal/wsclient/receiver.go": "594c98ff93f55d3b7999937e604d95903a8800dd44123091230afc4152455cc9",
+    "internal/wsclient/sender.go": "fc8f0e3b53b56d0ed543a14271faeb883e606c609c3d7829cff7f7c615d4c873",
+    "internal/wsprotocol/protocol.go": "744893ed3b9cfd381ef456adb5e8e20b4c2906a0e0ad7ef2a2c107b30939316a",
+    "proto/tide/asr/v1/asr.pb.go": "3ca21427d90a92607411ca201b441bb51754c8db6d734f643aa8810b99bec911",
+    "proto/tide/asr/v1/asr.proto": "f849ea264fa53bd7c1a7f9240c5ba87500301e59b497e76d4ff735dfd9ef0797",
+    "proto/tide/asr/v1/asr_grpc.pb.go": "f3f4f45775d909c068a680574b158d4ecc0e431ba93c1521665c35dbd2eaf673"
+  },
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "macos": "26.6.2",
+    "python_observed_cpu_count": 12,
+    "GOMAXPROCS_environment": null,
+    "hardware_reference": "progress-backlog-baseline-2026-09-23-manifest.json / session-admission-2026-09-22-manifest.json: Apple M2 Pro, 32 GiB; sysctl hardware query denied in current sandbox, not freshly verified",
+    "transport": "loopback TCP WebSocket and gRPC, same process",
+    "formal_race": false,
+    "concurrent_agent_workloads": "none; validation completed before formal measurement"
+  },
+  "workload": {
+    "cases": [
+      {
+        "name": "normal",
+        "processing_ms": 50,
+        "pause_ms": 0
+      },
+      {
+        "name": "pause_500ms",
+        "processing_ms": 50,
+        "pause_ms": 500
+      },
+      {
+        "name": "slow_200ms",
+        "processing_ms": 200,
+        "pause_ms": 0
+      }
+    ],
+    "budgets_bytes": [
+      0,
+      32000
+    ],
+    "repetitions": 3,
+    "order": "per repetition: normal off/on, pause off/on, slow off/on; fixed order, not randomized",
+    "concurrency": 1,
+    "planned_chunks": 100,
+    "chunk_bytes": 3200,
+    "cadence_ms": 100,
+    "audio": "16kHz mono 16-bit PCM, 10 seconds indexed synthetic bytes, first at 0s and last scheduled at 9.9s; stop upload after server closes",
+    "pause_after_chunks": 20,
+    "partial_every_ms": 500,
+    "response_delay_ms": 0,
+    "sample_period_ms": 5,
+    "gateway": {
+      "max_sessions": 1,
+      "max_message_bytes": 1048576,
+      "start_timeout_ms": 10000,
+      "input_idle_timeout_ms": 30000,
+      "send_timeout_ms": 2000,
+      "tail_timeout_ms": 15000,
+      "result_write_timeout_ms": 2000
+    },
+    "guard_seconds": 45,
+    "reuse": "one extra 3200-byte normal session per main run, same Gateway, actual ServeHTTP, excluded from main-run timings"
+  },
+  "measurement": {
+    "entry": "instrumented HTTP wrapper runs production session.run; not actual Gateway.ServeHTTP for main run",
+    "origin": "after client start Write returns, before first planned audio Write",
+    "peak": "max of snapshots; may miss transients",
+    "trigger_count": "parsed from wrapped ErrAudioBacklogExceeded; exact decision counts, no timestamp at decision",
+    "cleanup": "handler return after tracker leave; Worker method return observed separately; no precise detection-to-cleanup interval",
+    "tail": "client end Write start to final read; absent for aborted sessions",
+    "processed": "gateway received cumulative Worker acknowledgement; Worker progress successfully sent tracked separately",
+    "memory": "not measured; no total heap or full-link backlog bound"
+  },
+  "command": "TIDE_RUN_BACKLOG_COMPARISON=1 GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test ./internal/gateway -run '^TestAudioBacklogComparisonExperiment$' -count=3 -timeout=300s -v",
+  "validation": [
+    "go test -race ./... -count=1 -timeout=180s",
+    "TIDE_RUN_BACKLOG_COMPARISON=1 go test -race ./internal/gateway -run ^TestAudioBacklogComparisonExperiment$ -count=1 -timeout=120s -v"
+  ],
+  "source_unchanged_after_measurement": true,
+  "formal_validated_runs": 18,
+  "artifact_sha256": {
+    "docs/experiments/results/backlog-comparison-2026-09-25-runs.csv": "402a990e8dba046897b2c115181cdb8bf12e04632ee5d767baa017ed5d47359c",
+    "docs/experiments/results/backlog-comparison-2026-09-25-samples.csv": "b42b52b6344d3adf5a1ffa00db5f65601c91c1c4fdb8f3f229f7d3e1c933d87d",
+    "docs/experiments/results/backlog-comparison-2026-09-25-source.patch": "fe3a0feb855e7bdd9f087335167cd8830e96c19450c3530792afaf75f9930e4e",
+    "docs/experiments/results/backlog-comparison-2026-09-25-summary.json": "e38a3c1d7aea7f1b88d2a89d177eef13d3628ec09dcfd44c5520bb46f93c96f0",
+    "docs/experiments/results/backlog-comparison-2026-09-25-validation.log": "c81238cb45270a941413ee8dc0c9ceb98aef5c3147cb030e66e21878b8e2bc32",
+    "docs/experiments/results/backlog-comparison-2026-09-25.log": "7ef1ea3873eac1c1c8054a88e132257a7990dbf36b7e6ed2b338f0817084a551"
+  },
+  "analysis_script": {
+    "path": "docs/experiments/scripts/summarize_backlog_comparison.py",
+    "pre_measurement_sha256": "fd6e8a2898a22a94d9ffb12c0c411b4f7c2758075dbe1a2201d165cf92d1b383",
+    "final_sha256": "6752c78629e1ab9acaffecd49c631ac47721d2d18a268b108cad410c83d03f3f",
+    "post_measurement_change": "CSV header uses union of successful and failed record fields; no measurement code or raw data changed"
+  },
+  "csv_validation": {
+    "runs": 18,
+    "samples": 37023,
+    "raw_outcomes_and_errors_match": true
+  }
+}

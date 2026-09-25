@@ -1,0 +1,558 @@
+{
+  "main_runs": 18,
+  "validated_runs": 18,
+  "groups": [
+    {
+      "case": "normal",
+      "budget_bytes": 0,
+      "runs": 3,
+      "outcomes": {
+        "completed": 3
+      },
+      "cleaned": 3,
+      "reused": 3,
+      "observed_peak_pending_bytes": {
+        "min": 3200,
+        "max": 3200
+      },
+      "tail_ms": {
+        "min": 51.03399999999965,
+        "max": 53.917333999999755
+      },
+      "close_ms": {
+        "min": 9951.939791,
+        "max": 9954.938458
+      },
+      "run_returned_ms": {
+        "min": 9951.963833,
+        "max": 9954.967083
+      },
+      "handler_returned_ms": {
+        "min": 9951.969958,
+        "max": 9954.975291
+      },
+      "worker_returned_ms": {
+        "min": 9951.317083,
+        "max": 9952.131541
+      },
+      "client_written_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "send_succeeded_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "worker_received_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "worker_progress_sent_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "max_sample_gap_ms": {
+        "min": 6.417833000000428,
+        "max": 9.1215830000001
+      },
+      "max_snapshot_call_ms": {
+        "min": 0.07304199999998673,
+        "max": 0.4943750000002183
+      },
+      "max_send_ms": {
+        "min": 0.11133399999994253,
+        "max": 0.7084160000000002
+      },
+      "max_write_ms": {
+        "min": 0.5043329999998605,
+        "max": 0.9289170000000126
+      },
+      "max_schedule_lag_ms": {
+        "min": 0.7380830000001879,
+        "max": 4.282874999999876
+      },
+      "max_partial_wait_ms": {
+        "min": 52.66187500000001,
+        "max": 54.6986250000009
+      },
+      "partial_count": {
+        "min": 20,
+        "max": 20
+      },
+      "trigger_pending_bytes": null,
+      "final_received_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "final_processed_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "final_pending_bytes": {
+        "min": 0,
+        "max": 0
+      }
+    },
+    {
+      "case": "normal",
+      "budget_bytes": 32000,
+      "runs": 3,
+      "outcomes": {
+        "completed": 3
+      },
+      "cleaned": 3,
+      "reused": 3,
+      "observed_peak_pending_bytes": {
+        "min": 3200,
+        "max": 3200
+      },
+      "tail_ms": {
+        "min": 50.79816699999901,
+        "max": 51.43016699999862
+      },
+      "close_ms": {
+        "min": 9951.671291,
+        "max": 9953.487625
+      },
+      "run_returned_ms": {
+        "min": 9951.705625,
+        "max": 9953.719917
+      },
+      "handler_returned_ms": {
+        "min": 9951.713458,
+        "max": 9953.752375
+      },
+      "worker_returned_ms": {
+        "min": 9951.14775,
+        "max": 9952.142959
+      },
+      "client_written_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "send_succeeded_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "worker_received_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "worker_progress_sent_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "max_sample_gap_ms": {
+        "min": 6.911708000000544,
+        "max": 8.138582999999926
+      },
+      "max_snapshot_call_ms": {
+        "min": 0.049417000000175904,
+        "max": 1.2399579999982961
+      },
+      "max_send_ms": {
+        "min": 0.05820799999855808,
+        "max": 0.245958000000428
+      },
+      "max_write_ms": {
+        "min": 0.34799999999995634,
+        "max": 0.881083000000217
+      },
+      "max_schedule_lag_ms": {
+        "min": 0.7668330000001333,
+        "max": 1.2851250000003347
+      },
+      "max_partial_wait_ms": {
+        "min": 52.190332999999555,
+        "max": 53.20629200000076
+      },
+      "partial_count": {
+        "min": 20,
+        "max": 20
+      },
+      "trigger_pending_bytes": null,
+      "final_received_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "final_processed_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "final_pending_bytes": {
+        "min": 0,
+        "max": 0
+      }
+    },
+    {
+      "case": "pause_500ms",
+      "budget_bytes": 0,
+      "runs": 3,
+      "outcomes": {
+        "completed": 3
+      },
+      "cleaned": 3,
+      "reused": 3,
+      "observed_peak_pending_bytes": {
+        "min": 16000,
+        "max": 16000
+      },
+      "tail_ms": {
+        "min": 50.76537499999904,
+        "max": 51.84070799999972
+      },
+      "close_ms": {
+        "min": 9951.554291,
+        "max": 9953.154417
+      },
+      "run_returned_ms": {
+        "min": 9951.619416,
+        "max": 9953.187333
+      },
+      "handler_returned_ms": {
+        "min": 9951.6285,
+        "max": 9953.194042
+      },
+      "worker_returned_ms": {
+        "min": 9951.009166,
+        "max": 9952.212708
+      },
+      "client_written_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "send_succeeded_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "worker_received_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "worker_progress_sent_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "max_sample_gap_ms": {
+        "min": 8.133915999999772,
+        "max": 8.844500000000153
+      },
+      "max_snapshot_call_ms": {
+        "min": 0.01708299999972951,
+        "max": 0.4029579999996713
+      },
+      "max_send_ms": {
+        "min": 0.06375000000025466,
+        "max": 0.13487499999996544
+      },
+      "max_write_ms": {
+        "min": 0.29870800000026065,
+        "max": 0.679374999999709
+      },
+      "max_schedule_lag_ms": {
+        "min": 0.7379160000000411,
+        "max": 5.141999999999825
+      },
+      "max_partial_wait_ms": {
+        "min": 303.2344579999999,
+        "max": 306.68783299999996
+      },
+      "partial_count": {
+        "min": 20,
+        "max": 20
+      },
+      "trigger_pending_bytes": null,
+      "final_received_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "final_processed_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "final_pending_bytes": {
+        "min": 0,
+        "max": 0
+      }
+    },
+    {
+      "case": "pause_500ms",
+      "budget_bytes": 32000,
+      "runs": 3,
+      "outcomes": {
+        "completed": 3
+      },
+      "cleaned": 3,
+      "reused": 3,
+      "observed_peak_pending_bytes": {
+        "min": 16000,
+        "max": 16000
+      },
+      "tail_ms": {
+        "min": 50.70991700000013,
+        "max": 51.06895900000018
+      },
+      "close_ms": {
+        "min": 9951.475167,
+        "max": 9952.639875
+      },
+      "run_returned_ms": {
+        "min": 9951.543292,
+        "max": 9952.669792
+      },
+      "handler_returned_ms": {
+        "min": 9951.554,
+        "max": 9952.6785
+      },
+      "worker_returned_ms": {
+        "min": 9951.073667,
+        "max": 9952.080584
+      },
+      "client_written_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "send_succeeded_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "worker_received_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "worker_progress_sent_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "max_sample_gap_ms": {
+        "min": 7.108291999999892,
+        "max": 8.03070899999966
+      },
+      "max_snapshot_call_ms": {
+        "min": 0.03337499999997817,
+        "max": 0.5672920000001795
+      },
+      "max_send_ms": {
+        "min": 0.15454200000021956,
+        "max": 1.033958999999868
+      },
+      "max_write_ms": {
+        "min": 0.31779099999994287,
+        "max": 1.2664169999989099
+      },
+      "max_schedule_lag_ms": {
+        "min": 1.307875000000422,
+        "max": 3.4755420000001322
+      },
+      "max_partial_wait_ms": {
+        "min": 303.086417,
+        "max": 305.4228750000002
+      },
+      "partial_count": {
+        "min": 20,
+        "max": 20
+      },
+      "trigger_pending_bytes": null,
+      "final_received_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "final_processed_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "final_pending_bytes": {
+        "min": 0,
+        "max": 0
+      }
+    },
+    {
+      "case": "slow_200ms",
+      "budget_bytes": 0,
+      "runs": 3,
+      "outcomes": {
+        "completed": 3
+      },
+      "cleaned": 3,
+      "reused": 3,
+      "observed_peak_pending_bytes": {
+        "min": 137600,
+        "max": 137600
+      },
+      "tail_ms": {
+        "min": 10140.82675,
+        "max": 10152.139000000001
+      },
+      "close_ms": {
+        "min": 20041.753333,
+        "max": 20053.556875
+      },
+      "run_returned_ms": {
+        "min": 20041.851292,
+        "max": 20053.632917
+      },
+      "handler_returned_ms": {
+        "min": 20041.858708,
+        "max": 20053.670209
+      },
+      "worker_returned_ms": {
+        "min": 20041.173125,
+        "max": 20052.447792
+      },
+      "client_written_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "send_succeeded_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "worker_received_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "worker_progress_sent_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "max_sample_gap_ms": {
+        "min": 7.933207999998558,
+        "max": 11.950832999998966
+      },
+      "max_snapshot_call_ms": {
+        "min": 0.12600000000020373,
+        "max": 0.5380419999999049
+      },
+      "max_send_ms": {
+        "min": 1203.4529999999995,
+        "max": 1204.2487089999995
+      },
+      "max_write_ms": {
+        "min": 0.27716700000019046,
+        "max": 0.83462499999996
+      },
+      "max_schedule_lag_ms": {
+        "min": 0.7513330000001588,
+        "max": 1.730333999999857
+      },
+      "max_partial_wait_ms": {
+        "min": 10141.634917,
+        "max": 10153.200541999999
+      },
+      "partial_count": {
+        "min": 20,
+        "max": 20
+      },
+      "trigger_pending_bytes": null,
+      "final_received_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "final_processed_bytes": {
+        "min": 320000,
+        "max": 320000
+      },
+      "final_pending_bytes": {
+        "min": 0,
+        "max": 0
+      }
+    },
+    {
+      "case": "slow_200ms",
+      "budget_bytes": 32000,
+      "runs": 3,
+      "outcomes": {
+        "audio_backlog_exceeded": 3
+      },
+      "cleaned": 3,
+      "reused": 3,
+      "observed_peak_pending_bytes": {
+        "min": 35200,
+        "max": 35200
+      },
+      "tail_ms": null,
+      "close_ms": {
+        "min": 1801.242042,
+        "max": 1802.2565
+      },
+      "run_returned_ms": {
+        "min": 1801.285042,
+        "max": 1802.304792
+      },
+      "handler_returned_ms": {
+        "min": 1801.302875,
+        "max": 1802.310833
+      },
+      "worker_returned_ms": {
+        "min": 1801.202125,
+        "max": 1802.13075
+      },
+      "client_written_bytes": {
+        "min": 60800,
+        "max": 60800
+      },
+      "send_succeeded_bytes": {
+        "min": 57600,
+        "max": 57600
+      },
+      "worker_received_bytes": {
+        "min": 28800,
+        "max": 28800
+      },
+      "worker_progress_sent_bytes": {
+        "min": 25600,
+        "max": 25600
+      },
+      "max_sample_gap_ms": {
+        "min": 6.164250000000038,
+        "max": 6.631124999999884
+      },
+      "max_snapshot_call_ms": {
+        "min": 0.007499999999993179,
+        "max": 0.0362920000000031
+      },
+      "max_send_ms": {
+        "min": 0.06949999999983447,
+        "max": 0.203125
+      },
+      "max_write_ms": {
+        "min": 0.19620900000006714,
+        "max": 0.8979590000000144
+      },
+      "max_schedule_lag_ms": {
+        "min": 0.8199999999999363,
+        "max": 1.2482919999999922
+      },
+      "max_partial_wait_ms": {
+        "min": 601.83775,
+        "max": 603.269833
+      },
+      "partial_count": {
+        "min": 1,
+        "max": 1
+      },
+      "trigger_pending_bytes": {
+        "min": 35200,
+        "max": 35200
+      },
+      "final_received_bytes": {
+        "min": 60800,
+        "max": 60800
+      },
+      "final_processed_bytes": {
+        "min": 25600,
+        "max": 25600
+      },
+      "final_pending_bytes": {
+        "min": 35200,
+        "max": 35200
+      }
+    }
+  ],
+  "limits": [
+    "min/max of three runs, not percentiles",
+    "sampled peak may miss transients",
+    "trigger count comes from error, no precise trigger timestamp",
+    "failed sessions have no tail latency; no model speedup claim"
+  ]
+}
