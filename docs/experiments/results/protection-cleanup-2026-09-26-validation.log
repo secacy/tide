@@ -1,0 +1,610 @@
+?   	github.com/secacy/tide-artisan/cmd/asr-worker	[no test files]
+=== RUN   TestParseGatewayConfigValues
+=== RUN   TestParseGatewayConfigValues/enabled_equals
+=== RUN   TestParseGatewayConfigValues/default_after_enabled
+=== RUN   TestParseGatewayConfigValues/explicit_disabled
+=== RUN   TestParseGatewayConfigValues/enabled_separate
+=== RUN   TestParseGatewayConfigValues/small_positive
+=== RUN   TestParseGatewayConfigValues/maximum_int64
+=== RUN   TestParseGatewayConfigValues/negative_deferred_to_gateway
+=== RUN   TestParseGatewayConfigValues/minimum_int64
+--- PASS: TestParseGatewayConfigValues (0.00s)
+    --- PASS: TestParseGatewayConfigValues/enabled_equals (0.00s)
+    --- PASS: TestParseGatewayConfigValues/default_after_enabled (0.00s)
+    --- PASS: TestParseGatewayConfigValues/explicit_disabled (0.00s)
+    --- PASS: TestParseGatewayConfigValues/enabled_separate (0.00s)
+    --- PASS: TestParseGatewayConfigValues/small_positive (0.00s)
+    --- PASS: TestParseGatewayConfigValues/maximum_int64 (0.00s)
+    --- PASS: TestParseGatewayConfigValues/negative_deferred_to_gateway (0.00s)
+    --- PASS: TestParseGatewayConfigValues/minimum_int64 (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments
+=== RUN   TestParseGatewayConfigInvalidArguments/not_integer
+invalid value "one" for flag -max-pending-audio-bytes: parse error
+Usage of gateway:
+  -max-pending-audio-bytes int
+    	maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+=== RUN   TestParseGatewayConfigInvalidArguments/empty_value
+invalid value "" for flag -max-pending-audio-bytes: parse error
+Usage of gateway:
+  -max-pending-audio-bytes int
+    	maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+=== RUN   TestParseGatewayConfigInvalidArguments/missing_value
+flag needs an argument: -max-pending-audio-bytes
+Usage of gateway:
+  -max-pending-audio-bytes int
+    	maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+=== RUN   TestParseGatewayConfigInvalidArguments/positive_overflow
+invalid value "9223372036854775808" for flag -max-pending-audio-bytes: value out of range
+Usage of gateway:
+  -max-pending-audio-bytes int
+    	maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+=== RUN   TestParseGatewayConfigInvalidArguments/negative_overflow
+invalid value "-9223372036854775809" for flag -max-pending-audio-bytes: value out of range
+Usage of gateway:
+  -max-pending-audio-bytes int
+    	maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+=== RUN   TestParseGatewayConfigInvalidArguments/unknown_flag
+flag provided but not defined: -max-pending-audio-byte
+Usage of gateway:
+  -max-pending-audio-bytes int
+    	maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+=== RUN   TestParseGatewayConfigInvalidArguments/positional
+=== RUN   TestParseGatewayConfigInvalidArguments/positional_after_option
+=== RUN   TestParseGatewayConfigInvalidArguments/positional_before_option
+=== RUN   TestParseGatewayConfigInvalidArguments/positional_after_terminator
+--- PASS: TestParseGatewayConfigInvalidArguments (0.00s)
+    --- PASS: TestParseGatewayConfigInvalidArguments/not_integer (0.00s)
+    --- PASS: TestParseGatewayConfigInvalidArguments/empty_value (0.00s)
+    --- PASS: TestParseGatewayConfigInvalidArguments/missing_value (0.00s)
+    --- PASS: TestParseGatewayConfigInvalidArguments/positive_overflow (0.00s)
+    --- PASS: TestParseGatewayConfigInvalidArguments/negative_overflow (0.00s)
+    --- PASS: TestParseGatewayConfigInvalidArguments/unknown_flag (0.00s)
+    --- PASS: TestParseGatewayConfigInvalidArguments/positional (0.00s)
+    --- PASS: TestParseGatewayConfigInvalidArguments/positional_after_option (0.00s)
+    --- PASS: TestParseGatewayConfigInvalidArguments/positional_before_option (0.00s)
+    --- PASS: TestParseGatewayConfigInvalidArguments/positional_after_terminator (0.00s)
+=== RUN   TestParseGatewayConfigHelp
+=== RUN   TestParseGatewayConfigHelp/-h
+Usage of gateway:
+  -max-pending-audio-bytes int
+    	maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+=== RUN   TestParseGatewayConfigHelp/-help
+Usage of gateway:
+  -max-pending-audio-bytes int
+    	maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+--- PASS: TestParseGatewayConfigHelp (0.00s)
+    --- PASS: TestParseGatewayConfigHelp/-h (0.00s)
+    --- PASS: TestParseGatewayConfigHelp/-help (0.00s)
+PASS
+ok  	github.com/secacy/tide-artisan/cmd/gateway	1.540s
+?   	github.com/secacy/tide-artisan/cmd/ws-client	[no test files]
+?   	github.com/secacy/tide-artisan/internal/audio	[no test files]
+=== RUN   TestAdmissionRealConnections
+    admission_network_test.go:196: ADMISSION_JSON {"round":1,"outcome":"completed","attempts":[{"index":18,"outcome":"accepted","status":101,"elapsed_ms":2.39475},{"index":19,"outcome":"accepted","status":101,"elapsed_ms":2.640084},{"index":6,"outcome":"accepted","status":101,"elapsed_ms":2.725},{"index":13,"outcome":"accepted","status":101,"elapsed_ms":2.862042},{"index":5,"outcome":"capacity_rejected","status":503,"elapsed_ms":2.7645,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":4,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.447,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":10,"outcome":"capacity_rejected","status":503,"elapsed_ms":2.677625,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":12,"outcome":"capacity_rejected","status":503,"elapsed_ms":2.978833,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":15,"outcome":"capacity_rejected","status":503,"elapsed_ms":2.699875,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":16,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.71925,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":0,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.119708,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":8,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.3155,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":14,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.157916,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":11,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.826834,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":3,"outcome":"capacity_rejected","status":503,"elapsed_ms":4.079792,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":17,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.524542,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":1,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.45275,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":2,"outcome":"capacity_rejected","status":503,"elapsed_ms":4.2835,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":9,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.725041,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":7,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.611416,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"}],"accepted":4,"rejected":16,"other_errors":0,"max_observed_active":4,"held_active":4,"worker_starts_before_start":0,"completed":4,"active_after_cleanup":0,"reentry":{"index":20,"outcome":"accepted","status":101,"elapsed_ms":0.720291},"reentry_completed":true,"final_active":0}
+--- PASS: TestAdmissionRealConnections (0.02s)
+=== RUN   TestSessionAdmissionExperiment
+    admission_network_test.go:126: set TIDE_RUN_SESSION_ADMISSION_EXPERIMENT=1
+--- SKIP: TestSessionAdmissionExperiment (0.00s)
+=== RUN   TestAdmissionTailKeepsSlot
+--- PASS: TestAdmissionTailKeepsSlot (0.01s)
+=== RUN   TestAdmissionConfig
+=== RUN   TestAdmissionConfig/default
+=== RUN   TestAdmissionConfig/explicit
+=== RUN   TestAdmissionConfig/negative
+--- PASS: TestAdmissionConfig (0.00s)
+    --- PASS: TestAdmissionConfig/default (0.00s)
+    --- PASS: TestAdmissionConfig/explicit (0.00s)
+    --- PASS: TestAdmissionConfig/negative (0.00s)
+=== RUN   TestAdmissionConcurrentReservations
+--- PASS: TestAdmissionConcurrentReservations (0.00s)
+=== RUN   TestAdmissionStopWithOutstandingReservation
+--- PASS: TestAdmissionStopWithOutstandingReservation (0.00s)
+=== RUN   TestAdmissionRejectedRequestPreservesReservations
+=== RUN   TestAdmissionRejectedRequestPreservesReservations/full
+=== RUN   TestAdmissionRejectedRequestPreservesReservations/stopping
+--- PASS: TestAdmissionRejectedRequestPreservesReservations (0.00s)
+    --- PASS: TestAdmissionRejectedRequestPreservesReservations/full (0.00s)
+    --- PASS: TestAdmissionRejectedRequestPreservesReservations/stopping (0.00s)
+=== RUN   TestAdmissionUpgradeFailureReturnsSlot
+--- PASS: TestAdmissionUpgradeFailureReturnsSlot (0.00s)
+=== RUN   TestAudioProgressAccounting
+--- PASS: TestAudioProgressAccounting (0.00s)
+=== RUN   TestAudioProgressOverflow
+--- PASS: TestAudioProgressOverflow (0.00s)
+=== RUN   TestAudioProgressSnapshotsAreIndependent
+--- PASS: TestAudioProgressSnapshotsAreIndependent (0.00s)
+=== RUN   TestAudioProgressConcurrent
+--- PASS: TestAudioProgressConcurrent (0.00s)
+=== RUN   TestAudioBacklogExperimentProbe
+=== RUN   TestAudioBacklogExperimentProbe/completed
+    backlog_experiment_test.go:134: BACKLOG_COMPARISON_JSON {"case":"probe_completed","budget_bytes":0,"validated":true,"outcome":"completed","processing_ms":1,"pause_ms":0,"planned_chunks":6,"client_written_bytes":19200,"send_succeeded_bytes":19200,"worker_received_bytes":19200,"worker_progress_sent_bytes":19200,"final_progress":{"begin_ms":503.83375,"at_ms":503.834666,"received_bytes":19200,"processed_bytes":19200,"pending_bytes":0},"observed_peak_pending_bytes":0,"max_sample_gap_ms":7.2347500000000196,"max_snapshot_call_ms":0.27049999999997,"end_ms":500.677208,"final_ms":503.357083,"tail_ms":2.6798749999999814,"close_ms":503.596208,"close_code":1000,"close_reason":"","run_returned_ms":503.705958,"handler_returned_ms":503.781166,"worker_returned_ms":502.865666,"active_after_cleanup":0,"reused":true,"writes":[{"index":0,"planned_ms":0,"started_ms":0.020833,"returned_ms":0.121208},{"index":1,"planned_ms":100,"started_ms":100.601333,"returned_ms":100.837541},{"index":2,"planned_ms":200,"started_ms":200.673333,"returned_ms":201.133458},{"index":3,"planned_ms":300,"started_ms":300.634041,"returned_ms":300.98725},{"index":4,"planned_ms":400,"started_ms":400.596875,"returned_ms":400.898916},{"index":5,"planned_ms":500,"started_ms":500.41425,"returned_ms":500.671791}],"sends":[{"index":0,"planned_ms":0,"started_ms":1.169833,"returned_ms":1.228166},{"index":1,"planned_ms":100,"started_ms":101.208541,"returned_ms":101.271125},{"index":2,"planned_ms":200,"started_ms":202.106166,"returned_ms":202.227083},{"index":3,"planned_ms":300,"started_ms":301.373708,"returned_ms":301.453625},{"index":4,"planned_ms":400,"started_ms":401.240375,"returned_ms":401.29875},{"index":5,"planned_ms":500,"started_ms":501.23375,"returned_ms":501.325208}],"partials":[{"index":1,"planned_ms":400,"received_ms":403.163583,"wait_ms":3.163583000000017}],"samples":[{"begin_ms":0.086041,"at_ms":0.087083,"received_bytes":0,"processed_bytes":0,"pending_bytes":0},{"begin_ms":5.332958,"at_ms":5.334083,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":10.692583,"at_ms":10.693791,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":15.644083,"at_ms":15.646,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":20.4875,"at_ms":20.489458,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":25.663666,"at_ms":25.665583,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":30.659125,"at_ms":30.661083,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":35.641958,"at_ms":35.643708,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":40.65175,"at_ms":40.65375,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":45.64975,"at_ms":45.651875,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":50.6415,"at_ms":50.643125,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":55.668958,"at_ms":55.671375,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":60.661208,"at_ms":60.662375,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":65.645041,"at_ms":65.646666,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":70.672166,"at_ms":70.673958,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":75.645458,"at_ms":75.647541,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":80.661958,"at_ms":80.663916,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":85.645,"at_ms":85.646333,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":90.657458,"at_ms":90.661208,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":95.650125,"at_ms":95.651958,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":100.570916,"at_ms":100.572666,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":105.375041,"at_ms":105.376791,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":110.689375,"at_ms":110.691083,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":115.647833,"at_ms":115.650333,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":120.654166,"at_ms":120.655541,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":125.655916,"at_ms":125.657625,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":130.669458,"at_ms":130.670875,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":135.647666,"at_ms":135.649666,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":140.653208,"at_ms":140.655416,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":145.647166,"at_ms":145.648458,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":150.649833,"at_ms":150.650916,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":155.668625,"at_ms":155.672166,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":160.648875,"at_ms":160.651041,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":165.746625,"at_ms":165.791041,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":170.670958,"at_ms":170.676208,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":175.66925,"at_ms":175.675875,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":182.904291,"at_ms":182.910625,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":185.382125,"at_ms":185.386458,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":190.980583,"at_ms":190.987,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":195.255,"at_ms":195.258,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":200.713,"at_ms":200.717125,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":205.225333,"at_ms":205.226708,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":210.738041,"at_ms":210.756583,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":215.6915,"at_ms":215.69775,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":220.662416,"at_ms":220.666291,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":225.698125,"at_ms":225.705458,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":230.7035,"at_ms":230.707916,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":235.705791,"at_ms":235.720833,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":240.762916,"at_ms":240.769916,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":245.651625,"at_ms":245.656208,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":250.671583,"at_ms":250.677291,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":255.699708,"at_ms":255.702625,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":260.357041,"at_ms":260.361875,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":266.475833,"at_ms":266.4815,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":270.593083,"at_ms":270.598375,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":275.696375,"at_ms":275.699291,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":281.227541,"at_ms":281.232416,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":285.587083,"at_ms":285.588958,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":290.714375,"at_ms":290.723,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":295.661791,"at_ms":295.66625,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":300.5995,"at_ms":300.605833,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":305.39275,"at_ms":305.394541,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":310.699791,"at_ms":310.706083,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":315.356166,"at_ms":315.362166,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":320.697541,"at_ms":320.702375,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":325.680958,"at_ms":325.687291,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":332.059708,"at_ms":332.070125,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":335.483208,"at_ms":335.486916,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":340.719125,"at_ms":340.7255,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":345.652833,"at_ms":345.657333,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":350.658166,"at_ms":350.662875,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":355.669833,"at_ms":355.672416,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":360.671208,"at_ms":360.675083,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":365.981166,"at_ms":365.987333,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":370.569041,"at_ms":370.5735,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":376.217166,"at_ms":376.222,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":380.600041,"at_ms":380.604166,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":385.671291,"at_ms":385.676166,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":390.70225,"at_ms":390.707958,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":395.620416,"at_ms":395.62325,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":400.626791,"at_ms":400.6295,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":405.374958,"at_ms":405.377875,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":410.715166,"at_ms":410.985666,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":415.705583,"at_ms":415.71,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":420.652916,"at_ms":420.656958,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":425.679625,"at_ms":425.685333,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":430.688375,"at_ms":430.705041,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":435.670583,"at_ms":435.674708,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":440.696625,"at_ms":440.702333,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":445.675375,"at_ms":445.678708,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":450.64475,"at_ms":450.646791,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":455.680541,"at_ms":455.682833,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":460.648375,"at_ms":460.649625,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":465.204375,"at_ms":465.206291,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":470.701458,"at_ms":470.703166,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":475.413916,"at_ms":475.415666,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":480.7045,"at_ms":480.705916,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":485.642541,"at_ms":485.645125,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":490.644791,"at_ms":490.646166,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":495.174083,"at_ms":495.175208,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":500.439875,"at_ms":500.441041,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":503.824166,"at_ms":503.826541,"received_bytes":19200,"processed_bytes":19200,"pending_bytes":0}]}
+=== RUN   TestAudioBacklogExperimentProbe/exceeded
+    backlog_experiment_test.go:134: BACKLOG_COMPARISON_JSON {"case":"probe_exceeded","budget_bytes":3199,"validated":true,"outcome":"audio_backlog_exceeded","run_error":"audio backlog exceeded (3200 \u003e 3199)","processing_ms":1,"pause_ms":0,"planned_chunks":6,"client_written_bytes":3200,"send_succeeded_bytes":0,"worker_received_bytes":0,"worker_progress_sent_bytes":0,"worker_error":"rpc error: code = Canceled desc = context canceled","final_progress":{"begin_ms":1.556708,"at_ms":1.55775,"received_bytes":3200,"processed_bytes":0,"pending_bytes":3200},"observed_peak_pending_bytes":3200,"max_sample_gap_ms":1.4949160000000001,"max_snapshot_call_ms":0.001458999999999995,"end_ms":null,"final_ms":null,"tail_ms":null,"close_ms":1.460167,"close_code":1011,"close_reason":"audio backlog exceeded","run_returned_ms":1.519208,"handler_returned_ms":1.530417,"worker_returned_ms":1.378375,"active_after_cleanup":0,"reused":true,"writes":[{"index":0,"planned_ms":0,"started_ms":0.020958,"returned_ms":0.159625}],"sends":null,"partials":null,"samples":[{"begin_ms":0.050083,"at_ms":0.051542,"received_bytes":0,"processed_bytes":0,"pending_bytes":0},{"begin_ms":1.545083,"at_ms":1.546458,"received_bytes":3200,"processed_bytes":0,"pending_bytes":3200}]}
+--- PASS: TestAudioBacklogExperimentProbe (0.52s)
+    --- PASS: TestAudioBacklogExperimentProbe/completed (0.51s)
+    --- PASS: TestAudioBacklogExperimentProbe/exceeded (0.00s)
+=== RUN   TestAudioBacklogComparisonExperiment
+    backlog_experiment_test.go:107: set TIDE_RUN_BACKLOG_COMPARISON=1
+--- SKIP: TestAudioBacklogComparisonExperiment (0.00s)
+=== RUN   TestAudioBacklogConfig
+=== RUN   TestAudioBacklogConfig/disabled
+=== RUN   TestAudioBacklogConfig/enabled
+=== RUN   TestAudioBacklogConfig/negative
+=== RUN   TestAudioBacklogConfig/minimum_int64
+--- PASS: TestAudioBacklogConfig (0.00s)
+    --- PASS: TestAudioBacklogConfig/disabled (0.00s)
+    --- PASS: TestAudioBacklogConfig/enabled (0.00s)
+    --- PASS: TestAudioBacklogConfig/negative (0.00s)
+    --- PASS: TestAudioBacklogConfig/minimum_int64 (0.00s)
+=== RUN   TestSessionAudioBacklogFailure
+--- PASS: TestSessionAudioBacklogFailure (0.00s)
+=== RUN   TestGatewayAudioBacklog
+=== RUN   TestGatewayAudioBacklog/no_progress_exceeds_and_reuses_slot
+=== RUN   TestGatewayAudioBacklog/progress_releases_budget
+=== RUN   TestGatewayAudioBacklog/disabled_without_progress
+--- PASS: TestGatewayAudioBacklog (0.02s)
+    --- PASS: TestGatewayAudioBacklog/no_progress_exceeds_and_reuses_slot (0.01s)
+    --- PASS: TestGatewayAudioBacklog/progress_releases_budget (0.01s)
+    --- PASS: TestGatewayAudioBacklog/disabled_without_progress (0.01s)
+=== RUN   TestPendingAudioLimitBoundaries
+=== RUN   TestPendingAudioLimitBoundaries/disabled_with_large_pending
+=== RUN   TestPendingAudioLimitBoundaries/empty
+=== RUN   TestPendingAudioLimitBoundaries/below
+=== RUN   TestPendingAudioLimitBoundaries/equal
+=== RUN   TestPendingAudioLimitBoundaries/one_byte_above
+=== RUN   TestPendingAudioLimitBoundaries/large_received_but_equal_pending
+=== RUN   TestPendingAudioLimitBoundaries/all_processed
+=== RUN   TestPendingAudioLimitBoundaries/maximum_equal
+=== RUN   TestPendingAudioLimitBoundaries/maximum_above
+--- PASS: TestPendingAudioLimitBoundaries (0.00s)
+    --- PASS: TestPendingAudioLimitBoundaries/disabled_with_large_pending (0.00s)
+    --- PASS: TestPendingAudioLimitBoundaries/empty (0.00s)
+    --- PASS: TestPendingAudioLimitBoundaries/below (0.00s)
+    --- PASS: TestPendingAudioLimitBoundaries/equal (0.00s)
+    --- PASS: TestPendingAudioLimitBoundaries/one_byte_above (0.00s)
+    --- PASS: TestPendingAudioLimitBoundaries/large_received_but_equal_pending (0.00s)
+    --- PASS: TestPendingAudioLimitBoundaries/all_processed (0.00s)
+    --- PASS: TestPendingAudioLimitBoundaries/maximum_equal (0.00s)
+    --- PASS: TestPendingAudioLimitBoundaries/maximum_above (0.00s)
+=== RUN   TestPendingAudioLimitDoesNotRollBackAccounting
+--- PASS: TestPendingAudioLimitDoesNotRollBackAccounting (0.00s)
+=== RUN   TestGatewayClientDisconnectIsolated
+--- PASS: TestGatewayClientDisconnectIsolated (0.01s)
+=== RUN   TestGatewayShutdownBeforeStart
+--- PASS: TestGatewayShutdownBeforeStart (0.00s)
+=== RUN   TestUploadReportsInputIdleTimeout
+--- PASS: TestUploadReportsInputIdleTimeout (0.05s)
+=== RUN   TestWaitSessionResultInputIdlePriority
+=== RUN   TestWaitSessionResultInputIdlePriority/write_failure_first
+=== RUN   TestWaitSessionResultInputIdlePriority/service_stop_has_priority
+=== RUN   TestWaitSessionResultInputIdlePriority/successful_read_cleanup_is_not_timeout
+=== RUN   TestWaitSessionResultInputIdlePriority/no_read_is_not_timeout
+--- PASS: TestWaitSessionResultInputIdlePriority (0.00s)
+    --- PASS: TestWaitSessionResultInputIdlePriority/write_failure_first (0.00s)
+    --- PASS: TestWaitSessionResultInputIdlePriority/service_stop_has_priority (0.00s)
+    --- PASS: TestWaitSessionResultInputIdlePriority/successful_read_cleanup_is_not_timeout (0.00s)
+    --- PASS: TestWaitSessionResultInputIdlePriority/no_read_is_not_timeout (0.00s)
+=== RUN   TestSessionInputIdleTimeoutCancelsRPC
+=== RUN   TestSessionInputIdleTimeoutCancelsRPC/before_first_audio
+=== RUN   TestSessionInputIdleTimeoutCancelsRPC/after_audio
+--- PASS: TestSessionInputIdleTimeoutCancelsRPC (0.21s)
+    --- PASS: TestSessionInputIdleTimeoutCancelsRPC/before_first_audio (0.10s)
+    --- PASS: TestSessionInputIdleTimeoutCancelsRPC/after_audio (0.10s)
+=== RUN   TestGatewayNormalEndPreservesTail
+=== RUN   TestGatewayNormalEndPreservesTail/immediate_tail
+=== RUN   TestGatewayNormalEndPreservesTail/tail_after_input_idle_deadline
+--- PASS: TestGatewayNormalEndPreservesTail (0.51s)
+    --- PASS: TestGatewayNormalEndPreservesTail/immediate_tail (0.01s)
+    --- PASS: TestGatewayNormalEndPreservesTail/tail_after_input_idle_deadline (0.51s)
+=== RUN   TestProgressBacklogProbe
+    progress_baseline_experiment_test.go:114: PROGRESS_BASELINE_JSON {"case":"probe_only","outcome":"completed","chunks":6,"processing_ms":1,"pause_ms":0,"sample_period_ms":5,"observed_peak_pending_bytes":3200,"observed_peak_audio_ms":100,"peak_at_ms":405.19075,"max_sample_gap_ms":6.498041999999998,"max_snapshot_call_ms":0.09387500000002547,"end_started_ms":501.020833,"end_returned_ms":501.113416,"at_end_write_return":{"begin_ms":501.116916,"at_ms":501.118583,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},"final_ms":506.567208,"tail_ms":5.546375000000012,"close_ms":506.958875,"session_returned_ms":507.060083,"pause_boundary_ms":null,"resume_ms":null,"first_low_after_resume_ms":null,"first_low_delay_ms":null,"max_send_ms":1.4502500000000396,"max_write_ms":0.4814999999999827,"max_input_schedule_lag_ms":0.5625830000000178,"close_code":1000,"worker_chunks":6,"worker_bytes":19200,"final_progress":{"begin_ms":507.118625,"at_ms":507.124,"received_bytes":19200,"processed_bytes":19200,"pending_bytes":0},"active_after_cleanup":0,"writes":[{"index":0,"planned_ms":0,"started_ms":0.015541,"returned_ms":0.121375},{"index":1,"planned_ms":100,"started_ms":100.423666,"returned_ms":100.899875},{"index":2,"planned_ms":200,"started_ms":200.499,"returned_ms":200.956333},{"index":3,"planned_ms":300,"started_ms":300.562583,"returned_ms":301.044083},{"index":4,"planned_ms":400,"started_ms":400.515,"returned_ms":400.954166},{"index":5,"planned_ms":500,"started_ms":500.550375,"returned_ms":501.018375}],"sends":[{"index":0,"planned_ms":0,"started_ms":1.080291,"returned_ms":1.111875},{"index":1,"planned_ms":100,"started_ms":101.420208,"returned_ms":101.503208},{"index":2,"planned_ms":200,"started_ms":201.38675,"returned_ms":201.485666},{"index":3,"planned_ms":300,"started_ms":301.78475,"returned_ms":301.915333},{"index":4,"planned_ms":400,"started_ms":401.465541,"returned_ms":402.915791},{"index":5,"planned_ms":500,"started_ms":501.587625,"returned_ms":501.683375}],"partials":[{"index":1,"planned_ms":400,"received_ms":405.781708,"wait_ms":5.7817079999999805}],"samples":[{"begin_ms":0.081916,"at_ms":0.083375,"received_bytes":0,"processed_bytes":0,"pending_bytes":0},{"begin_ms":5.317916,"at_ms":5.320041,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":10.650291,"at_ms":10.652833,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":15.712541,"at_ms":15.726291,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":20.908625,"at_ms":20.916916,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":25.593041,"at_ms":25.599666,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":30.669583,"at_ms":30.67675,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":35.644166,"at_ms":35.64675,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":40.642458,"at_ms":40.649416,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":45.502708,"at_ms":45.509583,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":50.6625,"at_ms":50.669166,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":55.343291,"at_ms":55.351,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":60.763333,"at_ms":60.766875,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":65.628208,"at_ms":65.635666,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":71.278625,"at_ms":71.283291,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":75.57375,"at_ms":75.580916,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":80.695583,"at_ms":80.707541,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":85.682916,"at_ms":85.688458,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":90.517833,"at_ms":90.525125,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":95.679833,"at_ms":95.687375,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":100.447583,"at_ms":100.454291,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":105.226083,"at_ms":105.230416,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":110.2935,"at_ms":110.295875,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":115.687083,"at_ms":115.694041,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":120.75925,"at_ms":120.766666,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":125.645,"at_ms":125.651458,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":130.676375,"at_ms":130.684916,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":135.673416,"at_ms":135.679041,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":140.6555,"at_ms":140.662333,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":147.151833,"at_ms":147.160375,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":150.46,"at_ms":150.467708,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":155.97925,"at_ms":155.986,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":160.592458,"at_ms":160.59575,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":165.641458,"at_ms":165.643541,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":170.737666,"at_ms":170.755166,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":175.625125,"at_ms":175.627541,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":180.692541,"at_ms":180.702916,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":185.653625,"at_ms":185.659083,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":190.650125,"at_ms":190.658083,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":196.369791,"at_ms":196.37775,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":200.516625,"at_ms":200.521875,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":205.052791,"at_ms":205.05425,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":210.771041,"at_ms":210.782125,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":215.41575,"at_ms":215.417916,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":220.664291,"at_ms":220.666583,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":225.169416,"at_ms":225.170833,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":230.677291,"at_ms":230.690875,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":235.522958,"at_ms":235.527625,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":240.656208,"at_ms":240.658458,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":245.62875,"at_ms":245.631958,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":250.632958,"at_ms":250.636625,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":255.629958,"at_ms":255.633666,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":260.3755,"at_ms":260.378375,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":265.655833,"at_ms":265.658166,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":270.12375,"at_ms":270.125625,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":275.692833,"at_ms":275.695083,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":280.624875,"at_ms":280.626416,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":285.733833,"at_ms":285.744333,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":290.358208,"at_ms":290.366666,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":295.831791,"at_ms":295.839666,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":300.59225,"at_ms":300.596875,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":305.050291,"at_ms":305.052708,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":310.829083,"at_ms":310.832583,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":315.478,"at_ms":315.485041,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":320.78425,"at_ms":320.792083,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":325.68025,"at_ms":325.690791,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":330.67925,"at_ms":330.686958,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":335.652208,"at_ms":335.655958,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":342.125416,"at_ms":342.133458,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":345.707791,"at_ms":345.715333,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":350.652958,"at_ms":350.660625,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":355.68,"at_ms":355.687166,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":360.25375,"at_ms":360.257041,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":365.697791,"at_ms":365.705291,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":370.674041,"at_ms":370.682541,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":375.635583,"at_ms":375.638125,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":380.665333,"at_ms":380.672916,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":385.64375,"at_ms":385.646666,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":390.663583,"at_ms":390.670583,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":396.374875,"at_ms":396.46875,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":400.486625,"at_ms":400.490291,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":405.188458,"at_ms":405.19075,"received_bytes":16000,"processed_bytes":12800,"pending_bytes":3200},{"begin_ms":410.615708,"at_ms":410.6175,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":415.633708,"at_ms":415.641625,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":420.718,"at_ms":420.725166,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":425.667166,"at_ms":425.674166,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":430.668708,"at_ms":430.67625,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":435.363416,"at_ms":435.387916,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":440.670375,"at_ms":440.67875,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":445.892833,"at_ms":445.900041,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":450.623083,"at_ms":450.629708,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":455.67525,"at_ms":455.682375,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":460.653208,"at_ms":460.657666,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":465.650041,"at_ms":465.657458,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":470.646583,"at_ms":470.6535,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":475.629875,"at_ms":475.6325,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":480.659583,"at_ms":480.667541,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":485.626625,"at_ms":485.629458,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":490.640666,"at_ms":490.649291,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":495.743208,"at_ms":495.750375,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":500.503375,"at_ms":500.51125,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":505.356,"at_ms":505.358708,"received_bytes":19200,"processed_bytes":16000,"pending_bytes":3200},{"begin_ms":507.087916,"at_ms":507.089791,"received_bytes":19200,"processed_bytes":19200,"pending_bytes":0}]}
+--- PASS: TestProgressBacklogProbe (0.51s)
+=== RUN   TestProgressBacklogBaselineExperiment
+    progress_baseline_experiment_test.go:86: set TIDE_RUN_PROGRESS_BACKLOG_EXPERIMENT=1
+--- SKIP: TestProgressBacklogBaselineExperiment (0.00s)
+=== RUN   TestDownloadRejectsInvalidProgress
+=== RUN   TestDownloadRejectsInvalidProgress/beyond_received
+=== RUN   TestDownloadRejectsInvalidProgress/backward
+--- PASS: TestDownloadRejectsInvalidProgress (0.00s)
+    --- PASS: TestDownloadRejectsInvalidProgress/beyond_received (0.00s)
+    --- PASS: TestDownloadRejectsInvalidProgress/backward (0.00s)
+=== RUN   TestUploadProgressSendFailure
+--- PASS: TestUploadProgressSendFailure (0.00s)
+=== RUN   TestSessionProgressIntegration
+=== RUN   TestSessionProgressIntegration/ack_before_send_returns
+=== RUN   TestSessionProgressIntegration/overflow_before_send
+--- PASS: TestSessionProgressIntegration (0.01s)
+    --- PASS: TestSessionProgressIntegration/ack_before_send_returns (0.00s)
+    --- PASS: TestSessionProgressIntegration/overflow_before_send (0.00s)
+=== RUN   TestDownloadProgressContinuesReceiving
+--- PASS: TestDownloadProgressContinuesReceiving (0.00s)
+=== RUN   TestDownloadProgressRejectsMixedFields
+=== RUN   TestDownloadProgressRejectsMixedFields/segment_id
+=== RUN   TestDownloadProgressRejectsMixedFields/text
+=== RUN   TestDownloadProgressRejectsMixedFields/is_final
+=== RUN   TestDownloadProgressRejectsMixedFields/all_fields
+--- PASS: TestDownloadProgressRejectsMixedFields (0.00s)
+    --- PASS: TestDownloadProgressRejectsMixedFields/segment_id (0.00s)
+    --- PASS: TestDownloadProgressRejectsMixedFields/text (0.00s)
+    --- PASS: TestDownloadProgressRejectsMixedFields/is_final (0.00s)
+    --- PASS: TestDownloadProgressRejectsMixedFields/all_fields (0.00s)
+=== RUN   TestGatewayProgressRouting
+=== RUN   TestGatewayProgressRouting/normal
+=== RUN   TestGatewayProgressRouting/mixed_fields
+=== RUN   TestGatewayProgressRouting/eof_before_end
+=== RUN   TestGatewayProgressRouting/future_progress
+=== RUN   TestGatewayProgressRouting/backward_progress
+--- PASS: TestGatewayProgressRouting (0.02s)
+    --- PASS: TestGatewayProgressRouting/normal (0.01s)
+    --- PASS: TestGatewayProgressRouting/mixed_fields (0.01s)
+    --- PASS: TestGatewayProgressRouting/eof_before_end (0.00s)
+    --- PASS: TestGatewayProgressRouting/future_progress (0.00s)
+    --- PASS: TestGatewayProgressRouting/backward_progress (0.00s)
+=== RUN   TestProtectionCleanupProbe
+    protection_cleanup_experiment_test.go:249: PROTECTION_CLEANUP_JSON {"group":"normal_control","rounds":2,"warmup_rounds":2,"sessions_per_round":5,"validated":true,"outcomes":{"normal":10},"samples":[{"round":0,"settled":false,"goroutines":12,"heap_alloc":15761960,"heap_objects":3676,"heap_inuse":17637376,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":1,"settled":false,"goroutines":12,"heap_alloc":15671424,"heap_objects":3625,"heap_inuse":17530880,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":2,"settled":false,"goroutines":12,"heap_alloc":15666744,"heap_objects":3603,"heap_inuse":17489920,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":2,"settled":true,"goroutines":12,"heap_alloc":15500624,"heap_objects":3432,"heap_inuse":17211392,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0}]}
+    protection_cleanup_experiment_test.go:249: PROTECTION_CLEANUP_JSON {"group":"mixed_faults","rounds":2,"warmup_rounds":2,"sessions_per_round":5,"validated":true,"outcomes":{"backlog":2,"normal":2,"send_timeout":2,"tail_timeout":2,"write_timeout":2},"samples":[{"round":0,"settled":false,"goroutines":12,"heap_alloc":14700800,"heap_objects":3764,"heap_inuse":16490496,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":1,"settled":false,"goroutines":12,"heap_alloc":9388104,"heap_objects":3690,"heap_inuse":11132928,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":2,"settled":false,"goroutines":12,"heap_alloc":9461872,"heap_objects":3741,"heap_inuse":11206656,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":2,"settled":true,"goroutines":12,"heap_alloc":9220984,"heap_objects":3554,"heap_inuse":10903552,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0}]}
+--- PASS: TestProtectionCleanupProbe (1.57s)
+=== RUN   TestProtectionCleanupExperiment
+    protection_cleanup_experiment_test.go:249: PROTECTION_CLEANUP_JSON {"group":"normal_control","rounds":20,"warmup_rounds":2,"sessions_per_round":5,"validated":true,"outcomes":{"normal":100},"samples":[{"round":0,"settled":false,"goroutines":12,"heap_alloc":9400712,"heap_objects":3748,"heap_inuse":11075584,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":1,"settled":false,"goroutines":12,"heap_alloc":9453760,"heap_objects":3764,"heap_inuse":11165696,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":2,"settled":false,"goroutines":12,"heap_alloc":9397176,"heap_objects":3748,"heap_inuse":11083776,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":3,"settled":false,"goroutines":12,"heap_alloc":9425304,"heap_objects":3757,"heap_inuse":11067392,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":4,"settled":false,"goroutines":12,"heap_alloc":9388888,"heap_objects":3778,"heap_inuse":10993664,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":5,"settled":false,"goroutines":12,"heap_alloc":9408664,"heap_objects":3813,"heap_inuse":11001856,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":6,"settled":false,"goroutines":12,"heap_alloc":9421256,"heap_objects":3849,"heap_inuse":11091968,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":7,"settled":false,"goroutines":12,"heap_alloc":9457016,"heap_objects":3839,"heap_inuse":11157504,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":8,"settled":false,"goroutines":12,"heap_alloc":9404608,"heap_objects":3838,"heap_inuse":11051008,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":9,"settled":false,"goroutines":12,"heap_alloc":9488504,"heap_objects":3840,"heap_inuse":11149312,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":10,"settled":false,"goroutines":12,"heap_alloc":9443744,"heap_objects":3808,"heap_inuse":11083776,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":11,"settled":false,"goroutines":12,"heap_alloc":9428168,"heap_objects":3846,"heap_inuse":11132928,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":12,"settled":false,"goroutines":12,"heap_alloc":9406648,"heap_objects":3819,"heap_inuse":11116544,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":13,"settled":false,"goroutines":12,"heap_alloc":9414616,"heap_objects":3861,"heap_inuse":11141120,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":14,"settled":false,"goroutines":12,"heap_alloc":9455464,"heap_objects":3833,"heap_inuse":11157504,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":15,"settled":false,"goroutines":12,"heap_alloc":9373136,"heap_objects":3810,"heap_inuse":11042816,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":16,"settled":false,"goroutines":12,"heap_alloc":9471584,"heap_objects":3813,"heap_inuse":11116544,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":17,"settled":false,"goroutines":12,"heap_alloc":9520888,"heap_objects":3875,"heap_inuse":11190272,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":18,"settled":false,"goroutines":12,"heap_alloc":9372008,"heap_objects":3807,"heap_inuse":10993664,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":19,"settled":false,"goroutines":12,"heap_alloc":9483760,"heap_objects":3873,"heap_inuse":11157504,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":20,"settled":false,"goroutines":12,"heap_alloc":9489224,"heap_objects":3855,"heap_inuse":11157504,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":20,"settled":true,"goroutines":12,"heap_alloc":9247152,"heap_objects":3676,"heap_inuse":10829824,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0}]}
+    protection_cleanup_experiment_test.go:249: PROTECTION_CLEANUP_JSON {"group":"mixed_faults","rounds":20,"warmup_rounds":2,"sessions_per_round":5,"validated":true,"outcomes":{"backlog":20,"normal":20,"send_timeout":20,"tail_timeout":20,"write_timeout":20},"samples":[{"round":0,"settled":false,"goroutines":12,"heap_alloc":9480496,"heap_objects":3872,"heap_inuse":11149312,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":1,"settled":false,"goroutines":12,"heap_alloc":9507568,"heap_objects":3862,"heap_inuse":11165696,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":2,"settled":false,"goroutines":12,"heap_alloc":9453920,"heap_objects":3875,"heap_inuse":11100160,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":3,"settled":false,"goroutines":12,"heap_alloc":9474184,"heap_objects":3870,"heap_inuse":11116544,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":4,"settled":false,"goroutines":12,"heap_alloc":9391496,"heap_objects":3855,"heap_inuse":11018240,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":5,"settled":false,"goroutines":12,"heap_alloc":9463416,"heap_objects":3892,"heap_inuse":11124736,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":6,"settled":false,"goroutines":12,"heap_alloc":9507032,"heap_objects":3906,"heap_inuse":11173888,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":7,"settled":false,"goroutines":12,"heap_alloc":9381808,"heap_objects":3845,"heap_inuse":11059200,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":8,"settled":false,"goroutines":12,"heap_alloc":9456336,"heap_objects":3864,"heap_inuse":11116544,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":9,"settled":false,"goroutines":12,"heap_alloc":9455544,"heap_objects":3890,"heap_inuse":11124736,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":10,"settled":false,"goroutines":12,"heap_alloc":9440048,"heap_objects":3879,"heap_inuse":11108352,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":11,"settled":false,"goroutines":12,"heap_alloc":9428504,"heap_objects":3889,"heap_inuse":11051008,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":12,"settled":false,"goroutines":12,"heap_alloc":9475048,"heap_objects":3867,"heap_inuse":11124736,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":13,"settled":false,"goroutines":12,"heap_alloc":9406888,"heap_objects":3912,"heap_inuse":11059200,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":14,"settled":false,"goroutines":12,"heap_alloc":9430712,"heap_objects":3916,"heap_inuse":11116544,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":15,"settled":false,"goroutines":12,"heap_alloc":9425712,"heap_objects":3908,"heap_inuse":11124736,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":16,"settled":false,"goroutines":12,"heap_alloc":9504344,"heap_objects":3955,"heap_inuse":11190272,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":17,"settled":false,"goroutines":12,"heap_alloc":9451544,"heap_objects":3884,"heap_inuse":11083776,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":18,"settled":false,"goroutines":12,"heap_alloc":9427704,"heap_objects":3909,"heap_inuse":11075584,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":19,"settled":false,"goroutines":12,"heap_alloc":9471776,"heap_objects":3943,"heap_inuse":11124736,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":20,"settled":false,"goroutines":12,"heap_alloc":9440208,"heap_objects":3924,"heap_inuse":11075584,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":20,"settled":true,"goroutines":12,"heap_alloc":9261792,"heap_objects":3745,"heap_inuse":10846208,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0}]}
+--- PASS: TestProtectionCleanupExperiment (6.23s)
+=== RUN   TestReadInput
+=== RUN   TestReadInput/idle_timeout
+=== RUN   TestReadInput/parent_canceled
+=== RUN   TestReadInput/parent_deadline
+=== RUN   TestReadInput/audio
+=== RUN   TestReadInput/end
+--- PASS: TestReadInput (0.11s)
+    --- PASS: TestReadInput/idle_timeout (0.05s)
+    --- PASS: TestReadInput/parent_canceled (0.00s)
+    --- PASS: TestReadInput/parent_deadline (0.05s)
+    --- PASS: TestReadInput/audio (0.00s)
+    --- PASS: TestReadInput/end (0.00s)
+=== RUN   TestReadInputDeadlineOnlyAppliesWhileReading
+--- PASS: TestReadInputDeadlineOnlyAppliesWhileReading (0.20s)
+=== RUN   TestGatewayInputIdleTimeoutConfig
+=== RUN   TestGatewayInputIdleTimeoutConfig/0s
+=== RUN   TestGatewayInputIdleTimeoutConfig/2s
+=== RUN   TestGatewayInputIdleTimeoutConfig/-1s
+--- PASS: TestGatewayInputIdleTimeoutConfig (0.00s)
+    --- PASS: TestGatewayInputIdleTimeoutConfig/0s (0.00s)
+    --- PASS: TestGatewayInputIdleTimeoutConfig/2s (0.00s)
+    --- PASS: TestGatewayInputIdleTimeoutConfig/-1s (0.00s)
+=== RUN   TestGatewayRepeatedSessionCleanup
+    resource_cleanup_test.go:122: after warmup: goroutines=12 heap_alloc=11422 KiB heap_objects=4667
+    resource_cleanup_test.go:130: after round 5: goroutines=12 heap_alloc=11450 KiB heap_objects=4862
+    resource_cleanup_test.go:130: after round 10: goroutines=12 heap_alloc=11528 KiB heap_objects=4942
+    resource_cleanup_test.go:130: after round 15: goroutines=12 heap_alloc=11554 KiB heap_objects=4930
+    resource_cleanup_test.go:130: after round 20: goroutines=12 heap_alloc=11484 KiB heap_objects=4924
+    resource_cleanup_test.go:149: completed 120 measured sessions plus 6 warmup sessions; goroutines baseline=12 final=12
+--- PASS: TestGatewayRepeatedSessionCleanup (0.16s)
+=== RUN   TestResultWriteSlowReader
+    result_write_experiment_test.go:58: RESULT_WRITE_JSON {"outcome":"autonomous_cleanup","budget_ms":200,"at_detection":{"started":14,"returned":13,"succeeded":13,"pending_ms":51.524958,"pending_since_ms":29.128667,"last_return_ms":29.127709},"after_cleanup":{"started":14,"returned":14,"succeeded":13,"pending_ms":0,"pending_since_ms":0,"last_return_ms":230.295459,"error":"write tcp 127.0.0.1:49865-\u003e127.0.0.1:49866: use of closed network connection"},"worker_sends":{"started":10,"returned":10,"succeeded":9,"pending_ms":0,"pending_since_ms":0,"last_return_ms":230.840042,"error":"rpc error: code = Canceled desc = context canceled"},"pending_write_to_worker_ms":201.729458,"pending_write_to_handler_ms":201.36575,"origin_to_handler_ms":230.494417,"worker_error":"rpc error: code = Canceled desc = context canceled","fallback_cancel":false,"active_after_cleanup":0,"reentry_accepted":true,"final_active":0}
+--- PASS: TestResultWriteSlowReader (0.23s)
+=== RUN   TestResultWriteTimeoutExperiment
+    result_write_experiment_test.go:43: set TIDE_RUN_RESULT_WRITE_TIMEOUT_EXPERIMENT=1
+--- SKIP: TestResultWriteTimeoutExperiment (0.00s)
+=== RUN   TestResultWriteTimeoutConfig
+=== RUN   TestResultWriteTimeoutConfig/default
+=== RUN   TestResultWriteTimeoutConfig/custom
+=== RUN   TestResultWriteTimeoutConfig/negative
+--- PASS: TestResultWriteTimeoutConfig (0.00s)
+    --- PASS: TestResultWriteTimeoutConfig/default (0.00s)
+    --- PASS: TestResultWriteTimeoutConfig/custom (0.00s)
+    --- PASS: TestResultWriteTimeoutConfig/negative (0.00s)
+=== RUN   TestResultWriteSessionTimeout
+--- PASS: TestResultWriteSessionTimeout (0.10s)
+=== RUN   TestResultWriteTimeoutPriority
+=== RUN   TestResultWriteTimeoutPriority/upload_error_first
+=== RUN   TestResultWriteTimeoutPriority/service_stop_first
+=== RUN   TestResultWriteTimeoutPriority/send_timeout_first
+=== RUN   TestResultWriteTimeoutPriority/input_timeout_first
+=== RUN   TestResultWriteTimeoutPriority/successful_write_canceled_context
+=== RUN   TestResultWriteTimeoutPriority/no_write_yet
+--- PASS: TestResultWriteTimeoutPriority (0.00s)
+    --- PASS: TestResultWriteTimeoutPriority/upload_error_first (0.00s)
+    --- PASS: TestResultWriteTimeoutPriority/service_stop_first (0.00s)
+    --- PASS: TestResultWriteTimeoutPriority/send_timeout_first (0.00s)
+    --- PASS: TestResultWriteTimeoutPriority/input_timeout_first (0.00s)
+    --- PASS: TestResultWriteTimeoutPriority/successful_write_canceled_context (0.00s)
+    --- PASS: TestResultWriteTimeoutPriority/no_write_yet (0.00s)
+=== RUN   TestResultWriteInvalidTimeout
+=== RUN   TestResultWriteInvalidTimeout/0s
+=== RUN   TestResultWriteInvalidTimeout/-1s
+--- PASS: TestResultWriteInvalidTimeout (0.00s)
+    --- PASS: TestResultWriteInvalidTimeout/0s (0.00s)
+    --- PASS: TestResultWriteInvalidTimeout/-1s (0.00s)
+=== RUN   TestResultWriteParentAlreadyDone
+=== RUN   TestResultWriteParentAlreadyDone/canceled
+=== RUN   TestResultWriteParentAlreadyDone/deadline
+--- PASS: TestResultWriteParentAlreadyDone (0.00s)
+    --- PASS: TestResultWriteParentAlreadyDone/canceled (0.00s)
+    --- PASS: TestResultWriteParentAlreadyDone/deadline (0.00s)
+=== RUN   TestResultWriteSuccessAndFreshDeadline
+--- PASS: TestResultWriteSuccessAndFreshDeadline (0.26s)
+=== RUN   TestResultWriteBlockedCancellation
+=== RUN   TestResultWriteBlockedCancellation/own_deadline
+=== RUN   TestResultWriteBlockedCancellation/parent_cancel
+--- PASS: TestResultWriteBlockedCancellation (0.08s)
+    --- PASS: TestResultWriteBlockedCancellation/own_deadline (0.08s)
+    --- PASS: TestResultWriteBlockedCancellation/parent_cancel (0.00s)
+=== RUN   TestResultWriteClosedConnection
+--- PASS: TestResultWriteClosedConnection (0.00s)
+=== RUN   TestSendWithTimeoutPreservesResult
+=== RUN   TestSendWithTimeoutPreservesResult/success
+=== RUN   TestSendWithTimeoutPreservesResult/eof
+=== RUN   TestSendWithTimeoutPreservesResult/worker_error
+--- PASS: TestSendWithTimeoutPreservesResult (0.00s)
+    --- PASS: TestSendWithTimeoutPreservesResult/success (0.00s)
+    --- PASS: TestSendWithTimeoutPreservesResult/eof (0.00s)
+    --- PASS: TestSendWithTimeoutPreservesResult/worker_error (0.00s)
+=== RUN   TestSendWithTimeoutDoesNotCancelNextSend
+--- PASS: TestSendWithTimeoutDoesNotCancelNextSend (0.00s)
+=== RUN   TestSendWithTimeoutCancelsAndWaits
+=== RUN   TestSendWithTimeoutCancelsAndWaits/eof
+=== RUN   TestSendWithTimeoutCancelsAndWaits/nil
+--- PASS: TestSendWithTimeoutCancelsAndWaits (0.00s)
+    --- PASS: TestSendWithTimeoutCancelsAndWaits/eof (0.00s)
+    --- PASS: TestSendWithTimeoutCancelsAndWaits/nil (0.00s)
+=== RUN   TestSendWithTimeoutWaitsForCallback
+--- PASS: TestSendWithTimeoutWaitsForCallback (0.00s)
+=== RUN   TestSendWithTimeoutExternalCancellation
+=== RUN   TestSendWithTimeoutExternalCancellation/before_send
+=== RUN   TestSendWithTimeoutExternalCancellation/during_send
+--- PASS: TestSendWithTimeoutExternalCancellation (0.00s)
+    --- PASS: TestSendWithTimeoutExternalCancellation/before_send (0.00s)
+    --- PASS: TestSendWithTimeoutExternalCancellation/during_send (0.00s)
+=== RUN   TestSendWithTimeoutInvalidDuration
+=== RUN   TestSendWithTimeoutInvalidDuration/0s
+=== RUN   TestSendWithTimeoutInvalidDuration/-1s
+--- PASS: TestSendWithTimeoutInvalidDuration (0.00s)
+    --- PASS: TestSendWithTimeoutInvalidDuration/0s (0.00s)
+    --- PASS: TestSendWithTimeoutInvalidDuration/-1s (0.00s)
+=== RUN   TestGatewayShutdownDuringStreaming
+--- PASS: TestGatewayShutdownDuringStreaming (0.01s)
+=== RUN   TestGatewayShutdownAfterEnd
+--- PASS: TestGatewayShutdownAfterEnd (0.00s)
+=== RUN   TestSlowReaderBaselineExperiment
+    slow_reader_experiment_test.go:98: set TIDE_RUN_SLOW_READER_BASELINE=1
+--- SKIP: TestSlowReaderBaselineExperiment (0.00s)
+=== RUN   TestSlowWorkerBaselineExperiment
+    slow_worker_experiment_test.go:105: set TIDE_RUN_SLOW_WORKER_EXPERIMENT=1 to run the real-time baseline
+--- SKIP: TestSlowWorkerBaselineExperiment (0.00s)
+=== RUN   TestStalledWorkerExperiment
+    stalled_worker_experiment_test.go:166: set TIDE_RUN_STALLED_WORKER_EXPERIMENT=1 for the bounded stall experiment
+--- SKIP: TestStalledWorkerExperiment (0.00s)
+=== RUN   TestWorkerSendTimeoutExperiment
+    stalled_worker_experiment_test.go:178: set TIDE_RUN_WORKER_SEND_TIMEOUT_EXPERIMENT=1 to verify automatic timeout cleanup
+--- SKIP: TestWorkerSendTimeoutExperiment (0.00s)
+=== RUN   TestGatewayStartTimeoutConfig
+=== RUN   TestGatewayStartTimeoutConfig/default
+=== RUN   TestGatewayStartTimeoutConfig/custom
+=== RUN   TestGatewayStartTimeoutConfig/negative
+--- PASS: TestGatewayStartTimeoutConfig (0.00s)
+    --- PASS: TestGatewayStartTimeoutConfig/default (0.00s)
+    --- PASS: TestGatewayStartTimeoutConfig/custom (0.00s)
+    --- PASS: TestGatewayStartTimeoutConfig/negative (0.00s)
+=== RUN   TestGatewayStartTimeoutReleasesSession
+--- PASS: TestGatewayStartTimeoutReleasesSession (0.05s)
+=== RUN   TestSessionStartTimeoutCause
+=== RUN   TestSessionStartTimeoutCause/start_timeout
+=== RUN   TestSessionStartTimeoutCause/parent_canceled
+=== RUN   TestSessionStartTimeoutCause/parent_deadline
+--- PASS: TestSessionStartTimeoutCause (0.11s)
+    --- PASS: TestSessionStartTimeoutCause/start_timeout (0.05s)
+    --- PASS: TestSessionStartTimeoutCause/parent_canceled (0.00s)
+    --- PASS: TestSessionStartTimeoutCause/parent_deadline (0.05s)
+=== RUN   TestSessionStartTimeoutDoesNotLimitStreaming
+--- PASS: TestSessionStartTimeoutDoesNotLimitStreaming (0.21s)
+=== RUN   TestTailTimeoutConfig
+=== RUN   TestTailTimeoutConfig/default
+=== RUN   TestTailTimeoutConfig/explicit
+=== RUN   TestTailTimeoutConfig/negative
+--- PASS: TestTailTimeoutConfig (0.00s)
+    --- PASS: TestTailTimeoutConfig/default (0.00s)
+    --- PASS: TestTailTimeoutConfig/explicit (0.00s)
+    --- PASS: TestTailTimeoutConfig/negative (0.00s)
+=== RUN   TestTailSessionIntegration
+=== RUN   TestTailSessionIntegration/before_end_exceeds_budget
+    tail_integration_test.go:92: TAIL_TIMEOUT_JSON {"case":"before_end_exceeds_budget","outcome":"completed","budget_ms":200,"before_end_wait_ms":300,"tail_delay_ms":50,"close_code":1000,"close_reason":"completed","eof_from_end_write_ms":0.323334,"worker_exit_from_eof_ms":50.578666,"client_close_from_eof_ms":51.941208,"handler_exit_from_eof_ms":52.059291,"worker_canceled":false,"fallback_cancel":false,"active_after_cleanup":0,"reentry_accepted":true,"final_active":0}
+=== RUN   TestTailSessionIntegration/normal_delayed_tail
+    tail_integration_test.go:92: TAIL_TIMEOUT_JSON {"case":"normal_delayed_tail","outcome":"completed","budget_ms":1000,"before_end_wait_ms":0,"tail_delay_ms":500,"close_code":1000,"close_reason":"completed","eof_from_end_write_ms":0.319291,"worker_exit_from_eof_ms":502.834584,"client_close_from_eof_ms":504.959792,"handler_exit_from_eof_ms":505.118417,"worker_canceled":false,"fallback_cancel":false,"active_after_cleanup":0,"reentry_accepted":true,"final_active":0}
+=== RUN   TestTailSessionIntegration/stalled_tail
+    tail_integration_test.go:92: TAIL_TIMEOUT_JSON {"case":"stalled_tail","outcome":"tail_timeout","budget_ms":200,"before_end_wait_ms":0,"tail_delay_ms":0,"close_code":1011,"close_reason":"tail timeout","eof_from_end_write_ms":0.345,"worker_exit_from_eof_ms":201.47725,"client_close_from_eof_ms":201.614417,"handler_exit_from_eof_ms":201.722209,"worker_canceled":true,"fallback_cancel":false,"active_after_cleanup":0,"reentry_accepted":true,"final_active":0}
+--- PASS: TestTailSessionIntegration (1.09s)
+    --- PASS: TestTailSessionIntegration/before_end_exceeds_budget (0.37s)
+    --- PASS: TestTailSessionIntegration/normal_delayed_tail (0.51s)
+    --- PASS: TestTailSessionIntegration/stalled_tail (0.21s)
+=== RUN   TestTailTimeoutExperiment
+    tail_integration_test.go:78: set TIDE_RUN_TAIL_TIMEOUT_EXPERIMENT=1
+--- SKIP: TestTailTimeoutExperiment (0.00s)
+=== RUN   TestTailStallBaselineExperiment
+    tail_stall_experiment_test.go:36: set TIDE_RUN_TAIL_STALL_BASELINE=1
+--- SKIP: TestTailStallBaselineExperiment (0.00s)
+=== RUN   TestTailWaitStartsOnlyAfterEnd
+--- PASS: TestTailWaitStartsOnlyAfterEnd (0.00s)
+=== RUN   TestTailWaitForwardsExitEvents
+=== RUN   TestTailWaitForwardsExitEvents/before_end/completed
+=== RUN   TestTailWaitForwardsExitEvents/before_end/worker_failed
+=== RUN   TestTailWaitForwardsExitEvents/before_end/client_disconnected
+=== RUN   TestTailWaitForwardsExitEvents/after_end/completed
+=== RUN   TestTailWaitForwardsExitEvents/after_end/worker_failed
+=== RUN   TestTailWaitForwardsExitEvents/after_end/client_disconnected
+--- PASS: TestTailWaitForwardsExitEvents (0.00s)
+    --- PASS: TestTailWaitForwardsExitEvents/before_end/completed (0.00s)
+    --- PASS: TestTailWaitForwardsExitEvents/before_end/worker_failed (0.00s)
+    --- PASS: TestTailWaitForwardsExitEvents/before_end/client_disconnected (0.00s)
+    --- PASS: TestTailWaitForwardsExitEvents/after_end/completed (0.00s)
+    --- PASS: TestTailWaitForwardsExitEvents/after_end/worker_failed (0.00s)
+    --- PASS: TestTailWaitForwardsExitEvents/after_end/client_disconnected (0.00s)
+=== RUN   TestTailWaitServiceCancellation
+=== RUN   TestTailWaitServiceCancellation/before_end
+=== RUN   TestTailWaitServiceCancellation/after_end
+--- PASS: TestTailWaitServiceCancellation (0.00s)
+    --- PASS: TestTailWaitServiceCancellation/before_end (0.00s)
+    --- PASS: TestTailWaitServiceCancellation/after_end (0.00s)
+=== RUN   TestTailWaitAlreadyEnded
+--- PASS: TestTailWaitAlreadyEnded (0.00s)
+=== RUN   TestTailSessionResult
+=== RUN   TestTailSessionResult/timeout
+=== RUN   TestTailSessionResult/worker_completed_before_end
+=== RUN   TestTailSessionResult/worker_completed_after_end
+--- PASS: TestTailSessionResult (0.00s)
+    --- PASS: TestTailSessionResult/timeout (0.00s)
+    --- PASS: TestTailSessionResult/worker_completed_before_end (0.00s)
+    --- PASS: TestTailSessionResult/worker_completed_after_end (0.00s)
+=== RUN   TestTailEventKeepsExistingPriorities
+=== RUN   TestTailEventKeepsExistingPriorities/service_stop
+=== RUN   TestTailEventKeepsExistingPriorities/send_timeout
+=== RUN   TestTailEventKeepsExistingPriorities/input_timeout
+--- PASS: TestTailEventKeepsExistingPriorities (0.00s)
+    --- PASS: TestTailEventKeepsExistingPriorities/service_stop (0.00s)
+    --- PASS: TestTailEventKeepsExistingPriorities/send_timeout (0.00s)
+    --- PASS: TestTailEventKeepsExistingPriorities/input_timeout (0.00s)
+=== RUN   TestGatewayShutdownWithoutCloseReply
+    unresponsive_close_test.go:72: Worker canceled after 148.291µs
+    unresponsive_close_test.go:87: short wait returned context deadline exceeded; active sessions=1
+    unresponsive_close_test.go:100: session fully released after 5.001897291s
+--- PASS: TestGatewayShutdownWithoutCloseReply (5.01s)
+=== RUN   TestGatewayWorkerFailureIsolated
+=== RUN   TestGatewayWorkerFailureIsolated/grpc_error
+=== RUN   TestGatewayWorkerFailureIsolated/eof_before_end
+--- PASS: TestGatewayWorkerFailureIsolated (0.02s)
+    --- PASS: TestGatewayWorkerFailureIsolated/grpc_error (0.01s)
+    --- PASS: TestGatewayWorkerFailureIsolated/eof_before_end (0.01s)
+=== RUN   TestWorkerPauseExperiment
+    worker_pause_experiment_test.go:185: set TIDE_RUN_WORKER_PAUSE_EXPERIMENT=1
+--- SKIP: TestWorkerPauseExperiment (0.00s)
+=== RUN   TestWorkerSendTimeoutConfig
+=== RUN   TestWorkerSendTimeoutConfig/default
+=== RUN   TestWorkerSendTimeoutConfig/custom
+=== RUN   TestWorkerSendTimeoutConfig/negative
+--- PASS: TestWorkerSendTimeoutConfig (0.00s)
+    --- PASS: TestWorkerSendTimeoutConfig/default (0.00s)
+    --- PASS: TestWorkerSendTimeoutConfig/custom (0.00s)
+    --- PASS: TestWorkerSendTimeoutConfig/negative (0.00s)
+=== RUN   TestWorkerSendTimeoutResultPriority
+=== RUN   TestWorkerSendTimeoutResultPriority/download_first
+=== RUN   TestWorkerSendTimeoutResultPriority/service_stop_first
+=== RUN   TestWorkerSendTimeoutResultPriority/send_before_input
+=== RUN   TestWorkerSendTimeoutResultPriority/worker_error
+--- PASS: TestWorkerSendTimeoutResultPriority (0.00s)
+    --- PASS: TestWorkerSendTimeoutResultPriority/download_first (0.00s)
+    --- PASS: TestWorkerSendTimeoutResultPriority/service_stop_first (0.00s)
+    --- PASS: TestWorkerSendTimeoutResultPriority/send_before_input (0.00s)
+    --- PASS: TestWorkerSendTimeoutResultPriority/worker_error (0.00s)
+=== RUN   TestGatewayWorkerSendTimeout
+--- PASS: TestGatewayWorkerSendTimeout (0.04s)
+=== RUN   TestUploadWorkerSendTimeout
+--- PASS: TestUploadWorkerSendTimeout (0.03s)
+PASS
+ok  	github.com/secacy/tide-artisan/internal/gateway	18.977s
+=== RUN   TestPauseOnceAndResume
+=== RUN   TestPauseOnceAndResume/more_audio
+=== RUN   TestPauseOnceAndResume/empty_after_pause
+=== RUN   TestPauseOnceAndResume/end_at_boundary
+--- PASS: TestPauseOnceAndResume (0.00s)
+    --- PASS: TestPauseOnceAndResume/more_audio (0.00s)
+    --- PASS: TestPauseOnceAndResume/empty_after_pause (0.00s)
+    --- PASS: TestPauseOnceAndResume/end_at_boundary (0.00s)
+=== RUN   TestPauseCancellation
+=== RUN   TestPauseCancellation/cancel
+=== RUN   TestPauseCancellation/deadline
+--- PASS: TestPauseCancellation (0.00s)
+    --- PASS: TestPauseCancellation/cancel (0.00s)
+    --- PASS: TestPauseCancellation/deadline (0.00s)
+=== RUN   TestPauseDisabledOrNotReached
+=== RUN   TestPauseDisabledOrNotReached/default
+=== RUN   TestPauseDisabledOrNotReached/zero_count
+=== RUN   TestPauseDisabledOrNotReached/negative_count
+=== RUN   TestPauseDisabledOrNotReached/zero_duration
+=== RUN   TestPauseDisabledOrNotReached/negative_duration
+=== RUN   TestPauseDisabledOrNotReached/below_threshold
+--- PASS: TestPauseDisabledOrNotReached (0.00s)
+    --- PASS: TestPauseDisabledOrNotReached/default (0.00s)
+    --- PASS: TestPauseDisabledOrNotReached/zero_count (0.00s)
+    --- PASS: TestPauseDisabledOrNotReached/negative_count (0.00s)
+    --- PASS: TestPauseDisabledOrNotReached/zero_duration (0.00s)
+    --- PASS: TestPauseDisabledOrNotReached/negative_duration (0.00s)
+    --- PASS: TestPauseDisabledOrNotReached/below_threshold (0.00s)
+=== RUN   TestPausePerStream
+--- PASS: TestPausePerStream (0.00s)
+=== RUN   TestProgressAfterProcessing
+=== RUN   TestProgressAfterProcessing/0s
+=== RUN   TestProgressAfterProcessing/40ms
+--- PASS: TestProgressAfterProcessing (0.00s)
+    --- PASS: TestProgressAfterProcessing/0s (0.00s)
+    --- PASS: TestProgressAfterProcessing/40ms (0.00s)
+=== RUN   TestProgressPauseAndStall
+=== RUN   TestProgressPauseAndStall/resume
+=== RUN   TestProgressPauseAndStall/cancel_pause
+=== RUN   TestProgressPauseAndStall/cancel_stall
+--- PASS: TestProgressPauseAndStall (0.00s)
+    --- PASS: TestProgressPauseAndStall/resume (0.00s)
+    --- PASS: TestProgressPauseAndStall/cancel_pause (0.00s)
+    --- PASS: TestProgressPauseAndStall/cancel_stall (0.00s)
+=== RUN   TestProgressInvalidAndEmptyAudio
+=== RUN   TestProgressInvalidAndEmptyAudio/empty_only
+=== RUN   TestProgressInvalidAndEmptyAudio/invalid_first
+=== RUN   TestProgressInvalidAndEmptyAudio/invalid_after_valid
+--- PASS: TestProgressInvalidAndEmptyAudio (0.00s)
+    --- PASS: TestProgressInvalidAndEmptyAudio/empty_only (0.00s)
+    --- PASS: TestProgressInvalidAndEmptyAudio/invalid_first (0.00s)
+    --- PASS: TestProgressInvalidAndEmptyAudio/invalid_after_valid (0.00s)
+=== RUN   TestProgressSendFailurePreservesCause
+=== RUN   TestProgressSendFailurePreservesCause/Unknown
+=== RUN   TestProgressSendFailurePreservesCause/Canceled
+=== RUN   TestProgressSendFailurePreservesCause/DeadlineExceeded
+=== RUN   TestProgressSendFailurePreservesCause/Unavailable
+--- PASS: TestProgressSendFailurePreservesCause (0.00s)
+    --- PASS: TestProgressSendFailurePreservesCause/Unknown (0.00s)
+    --- PASS: TestProgressSendFailurePreservesCause/Canceled (0.00s)
+    --- PASS: TestProgressSendFailurePreservesCause/DeadlineExceeded (0.00s)
+    --- PASS: TestProgressSendFailurePreservesCause/Unavailable (0.00s)
+=== RUN   TestStallAfterChunksBoundary
+=== RUN   TestStallAfterChunksBoundary/unread_audio
+=== RUN   TestStallAfterChunksBoundary/unread_eof
+=== RUN   TestStallAfterChunksBoundary/empty_not_counted
+=== RUN   TestStallAfterChunksBoundary/deadline
+--- PASS: TestStallAfterChunksBoundary (0.00s)
+    --- PASS: TestStallAfterChunksBoundary/unread_audio (0.00s)
+    --- PASS: TestStallAfterChunksBoundary/unread_eof (0.00s)
+    --- PASS: TestStallAfterChunksBoundary/empty_not_counted (0.00s)
+    --- PASS: TestStallAfterChunksBoundary/deadline (0.00s)
+=== RUN   TestStallAfterChunksDisabledOrNotReached
+=== RUN   TestStallAfterChunksDisabledOrNotReached/zero
+=== RUN   TestStallAfterChunksDisabledOrNotReached/negative
+=== RUN   TestStallAfterChunksDisabledOrNotReached/below_threshold
+=== RUN   TestStallAfterChunksDisabledOrNotReached/invalid_pcm
+--- PASS: TestStallAfterChunksDisabledOrNotReached (0.00s)
+    --- PASS: TestStallAfterChunksDisabledOrNotReached/zero (0.00s)
+    --- PASS: TestStallAfterChunksDisabledOrNotReached/negative (0.00s)
+    --- PASS: TestStallAfterChunksDisabledOrNotReached/below_threshold (0.00s)
+    --- PASS: TestStallAfterChunksDisabledOrNotReached/invalid_pcm (0.00s)
+=== RUN   TestStallAfterChunksPerStream
+--- PASS: TestStallAfterChunksPerStream (0.00s)
+=== RUN   TestProcessingDelayAppliesAfterPartialsExhausted
+--- PASS: TestProcessingDelayAppliesAfterPartialsExhausted (0.00s)
+=== RUN   TestProcessingDelayCancellation
+=== RUN   TestProcessingDelayCancellation/cancel
+=== RUN   TestProcessingDelayCancellation/deadline
+--- PASS: TestProcessingDelayCancellation (0.00s)
+    --- PASS: TestProcessingDelayCancellation/cancel (0.00s)
+    --- PASS: TestProcessingDelayCancellation/deadline (0.00s)
+=== RUN   TestProcessingDelayInputRules
+=== RUN   TestProcessingDelayInputRules/zero
+=== RUN   TestProcessingDelayInputRules/negative
+=== RUN   TestProcessingDelayInputRules/empty_then_valid
+=== RUN   TestProcessingDelayInputRules/empty_only
+=== RUN   TestProcessingDelayInputRules/invalid_pcm
+--- PASS: TestProcessingDelayInputRules (0.00s)
+    --- PASS: TestProcessingDelayInputRules/zero (0.00s)
+    --- PASS: TestProcessingDelayInputRules/negative (0.00s)
+    --- PASS: TestProcessingDelayInputRules/empty_then_valid (0.00s)
+    --- PASS: TestProcessingDelayInputRules/empty_only (0.00s)
+    --- PASS: TestProcessingDelayInputRules/invalid_pcm (0.00s)
+PASS
+ok  	github.com/secacy/tide-artisan/internal/mockasr	2.044s
+?   	github.com/secacy/tide-artisan/internal/wsclient	[no test files]
+?   	github.com/secacy/tide-artisan/internal/wsprotocol	[no test files]
+?   	github.com/secacy/tide-artisan/proto/tide/asr/v1	[no test files]
