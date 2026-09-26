@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -26,17 +27,25 @@ const (
 )
 
 func main() {
+	cfg, err := parseGatewayConfig(os.Args[1:])
+	if errors.Is(err, flag.ErrHelp) {
+		return
+	}
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// SIGINT 对应 Ctrl+C，SIGTERM 通常用于容器或进程管理器停止服务。
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	if err := run(ctx); err != nil {
+	if err := run(ctx, cfg); err != nil {
 		log.Fatal(err)
 	}
 }
 
-// run 只负责应用依赖的组装。
-func run(ctx context.Context) error {
+// run 使用启动配置组装应用依赖，并运行服务；配置的语义校验由 gateway.New 完成。
+func run(ctx context.Context, cfg gateway.Config) error {
 	grpcConn, err := grpc.NewClient(workerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return fmt.Errorf("create worker grpc client: %w", err)
@@ -47,9 +56,7 @@ func run(ctx context.Context) error {
 
 	sessionCtx, cancelSessions := context.WithCancel(context.Background()) // sessionCtx 管理本 Gateway 所有会话的停止通知
 	defer cancelSessions()
-	wsGateway, err := gateway.New(sessionCtx, workerClient, gateway.Config{
-		MaxMessageBytes: 1024 * 1024,
-	})
+	wsGateway, err := gateway.New(sessionCtx, workerClient, cfg)
 	if err != nil {
 		return fmt.Errorf("create gateway: %w", err)
 	}
