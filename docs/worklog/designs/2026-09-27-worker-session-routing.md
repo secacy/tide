@@ -1,6 +1,6 @@
 # 第五阶段：多 Worker 新会话分配
 
-日期：2026-09-27。状态：方案与首个实现任务已明确，尚未接入 Gateway。
+方案日期：2026-09-27；最后核对：2026-09-28。状态：独立轮询选择器已通过验收，尚未接入 Gateway。
 
 ## 背景与目标
 
@@ -28,9 +28,9 @@
 - 已建立会话固定使用选中 Worker 的 stream；不做会话迁移或音频重放。健康剔除/重试规则另行设计。
 - 不增加会话 ID 注册表，已有 sessionTracker 仍负责 Gateway 总准入和清理等待；选择器不承担资源保护或会话生命周期职责。
 
-## 当前唯一代码任务：独立轮询选择器
+## 独立轮询选择器（已验收）
 
-开发者新增 internal/workerpool/round_robin.go，暂不修改 Gateway、session 或启动配置。这里 workerpool 保存 Worker 客户端列表，不创建连接池、不创建 goroutine、不执行 RPC、不关闭外部连接。
+开发者已新增 internal/workerpool/round_robin.go，本步未修改 Gateway、session 或启动配置。这里 workerpool 保存 Worker 客户端列表，不创建连接池、不创建 goroutine、不执行 RPC、不关闭外部连接。
 
 类型：
 
@@ -68,3 +68,26 @@ Pick 在锁内取 workers[next]，推进并回绕下标，返回 Worker 值副�
 助手补：构造拒绝非法列表；单 Worker 恒定选择；A/B/C 连续选择顺序；修改原切片或返回的 Worker 值不改变内部列表；并发选择无数据竞争，固定 N 次调用的总数准确且各 Worker 被选择次数差至多 1。N 为测试条件，不是会话吞吐。
 
 后续接线另验：非法 start 不分配、同会话多块音频只到同一后端、并发会话无串流、建流失败不回退或意外重试、停止时全部会话及连接清理。负载实验再记录各 Worker 选择数、活跃会话、失败数与延迟；不能仅凭轮询次数均匀断言稳定容量提高。
+
+## 2026-09-28 初稿检查与测试（历史记录）
+
+开发者已实现 Worker、RoundRobin、构造校验与切片复制，以及短锁内的 Pick 和下标回绕。构造检查重复 ID 时漏写已见 ID 的 map，因此重复 ID 不会被拒绝。修正时按原约定使用原始 w.ID 作为查重和插入键；strings.TrimSpace 仅用于判定是否全空白，不作为 ID 规范化步骤。
+
+助手新增 [round_robin_test.go](../../../internal/workerpool/round_robin_test.go)，执行：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+go test -race ./internal/workerpool -count=1 -timeout=30s -v
+```
+
+共五个顶层测试、13 项叶级检查，11 项通过、2 项失败：相邻与非相邻重复 ID 均未被拒绝。单 Worker/多 Worker 轮询、原始 ID 保留、原切片与返回值修改隔离通过；32 个 goroutine 共选择 3200 次，三个 Worker 计数为 1067/1067/1066，后续选择位置正确，未报告数据竞争。测试客户端在发生 RPC 调用时 panic，验证选择器不主动建流。
+
+上述计数只验证选择规则和并发安全，不是会话吞吐或调度收益。尚未接入 Gateway，因此本次仅运行独立包测试。业务代码留开发者修正，当前不标记验收完成、不提交未通过的代码。
+
+## 2026-09-28 修正后验收
+
+构造函数已在每个 Worker 校验成功后执行 m[w.ID] = struct{}{}，查询和登记均使用原始 ID，TrimSpace 仅检查空白。助手未修改业务逻辑。
+
+再次执行上述独立包 race 命令：五个顶层测试、13 项叶级检查全部通过，包耗时 1.557s，未报告数据竞争。此前失败的相邻与非相邻重复 ID 均被拒绝；32 个 goroutine 共 3200 次选择仍为 1067/1067/1066，下一次选择位置正确。单 Worker、多 Worker 回绕、原始 ID 保留、列表及返回值隔离均通过。
+
+源码格式和 git diff --check 通过。本步尚未接入其他包，因此仅复验 workerpool 包，未重复网络回归。选择次数的均匀性不代表活跃会话、计算负载或稳定容量均衡。下一步接入 Gateway：合法 start 后选择一次，整场复用选中的 stream，再验证协议失败不分配、会话归属和异常清理。
