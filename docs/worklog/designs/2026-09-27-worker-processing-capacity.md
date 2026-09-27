@@ -213,3 +213,18 @@ ResponseDelay 不占处理名额，但会延后同一流读取后续音频，容
 执行 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./cmd/asr-worker -count=1 -timeout=30s -v`：22 个表驱动子用例及 1 个独立调用隔离测试全部通过（包耗时 1.552s），未报告数据竞争。覆盖默认值保留、两种赋值方式、零值、负并行度在构造边界拒绝、参数格式/溢出、额外位置参数、帮助、空白地址、负延迟，以及重复解析不污染默认配置。
 
 源码与测试通过 gofmt 检查；此次仅新增尚未接入口的解析器，因此运行定向测试，未重复全项目网络回归。main/run 仍使用原硬编码配置，四个新参数暂未对可执行程序生效。下一小步由开发者接入入口和启动日志，助手再验证帮助/错误退出及多端口启动。
+
+## 下一小步：启动入口接线与配置日志（待实现）
+
+价值：让已验收的解析结果真正决定 Worker 监听地址和处理行为，能够以同一可执行程序运行多个配置不同的进程，并留下可核对的实验条件。选择 main 处理命令行与进程退出，run(cfg workerConfig) 只组装和运行；相比全塞 main，运行逻辑可直接测试；相比让 run 读取 os.Args，显式配置避免隐藏的进程全局依赖。当前只有一个配置来源，保持默认值集中在 parseWorkerConfig，run 不再创建另一份硬编码配置。
+
+开发者修改 cmd/asr-worker/main.go：
+
+1. main 调用 parseWorkerConfig(os.Args[1:])；errors.Is(err, flag.ErrHelp) 时直接 return；其他解析错误记录并 os.Exit(1)；成功后调用 run(cfg)，运行错误记录并非零退出。
+2. run 签名改为 run(cfg workerConfig) error，注释说明 cfg 来自参数解析，函数不读取命令行、不退出进程；先 mockasr.New(cfg.Mock) 校验行为配置，再 net.Listen("tcp", cfg.ListenAddr)，然后注册并 Serve。
+3. 删除地址常量和原有内联 Mock 默认值，直接传递 cfg.Mock；构造、监听、Serve 错误通过 fmt.Errorf 的 %w 增加发生阶段，Serve 返回 nil 时仍返回 nil。
+4. 启动日志记录 listener.Addr().String()、processing_concurrency、processing_delay、response_delay。使用实际监听地址，允许 :0 时记录分配后的端口。日志只能说明已完成绑定和组装，完整可用性仍由实际 RPC 验证。
+
+生命周期仍沿用当前 Serve 接管监听器的约定；若加入 Listen 后、Serve 前的可失败步骤，应补相应关闭路径。本步不增加信号处理或 Worker 优雅退出方案。response-delay 帮助文本可明确为 partial/final 文本响应等待，避免误解进度消息也有该等待。
+
+助手在实现后补启动入口测试/验证：帮助退出 0，解析错误和负并行度非零退出且没有启动日志；Worker 构造失败优先于监听错误；两个临时端口进程同时运行且分别完成包含尾部结果的真实 gRPC 会话；启动日志与传入处理配置及实际地址一致。测试进程由助手清理，不把这些检查当作容量实验。同步 docs/command.md 为包路径启动 go run ./cmd/asr-worker，并添加经验证的参数示例；当前未接线，文档不提前宣称命令已可用。
