@@ -43,7 +43,7 @@ func TestProgressAfterProcessing(t *testing.T) {
 		t.Run(responseDelay.String(), func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				const processingDelay = 20 * time.Millisecond
-				worker := New(Config{ProcessingDelay: processingDelay, ResponseDelay: responseDelay,
+				worker := mustWorker(t, Config{ProcessingDelay: processingDelay, ResponseDelay: responseDelay,
 					PartialEvery: 100 * time.Millisecond, PartialTexts: []string{"only partial"}, FinalText: "final"})
 				// 同一个 Worker 连续处理两条流，累计值必须每次从零开始。
 				for run := 0; run < 2; run++ {
@@ -129,7 +129,8 @@ func TestProgressPauseAndStall(t *testing.T) {
 				}
 				done := make(chan error, 1)
 				start := time.Now()
-				go func() { done <- New(cfg).StreamingRecognize(observed) }()
+				worker := mustWorker(t, cfg)
+				go func() { done <- worker.StreamingRecognize(observed) }()
 				synctest.Wait()
 				if len(observed.snapshot().responses) != 0 {
 					t.Fatal("progress sent before first ProcessingDelay finished")
@@ -196,7 +197,7 @@ func TestProgressInvalidAndEmptyAudio(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			stream := &processingStream{ctx: context.Background(), requests: tc.requests}
-			err := New(Config{}).StreamingRecognize(stream)
+			err := mustWorker(t, Config{}).StreamingRecognize(stream)
 			if status.Code(err) != codes.InvalidArgument || len(recordedProgress(t, stream)) != tc.want || len(stream.results) != 0 {
 				t.Fatalf("error=%v responses=%v, want InvalidArgument and %d progress only", err, stream.responses, tc.want)
 			}
@@ -231,7 +232,7 @@ func TestProgressSendFailurePreservesCause(t *testing.T) {
 				processingStream: &processingStream{ctx: context.Background(), requests: [][]byte{make([]byte, 3200), make([]byte, 3200)}},
 				failure:          cause,
 			}
-			err := New(Config{PartialEvery: 100 * time.Millisecond}).StreamingRecognize(stream)
+			err := mustWorker(t, Config{PartialEvery: 100 * time.Millisecond}).StreamingRecognize(stream)
 			if !errors.Is(err, cause) {
 				t.Errorf("lost original send error: got %v, cause %v", err, cause)
 			}

@@ -139,7 +139,7 @@ func runSlowWorkerBaseline(t *testing.T, name string, delay time.Duration) {
 		t.Fatal(err)
 	}
 	worker := &baselineWorker{
-		worker: mockasr.New(mockasr.Config{ProcessingDelay: delay, PartialEvery: 500 * time.Millisecond,
+		worker: mustMockWorker(t, mockasr.Config{ProcessingDelay: delay, PartialEvery: 500 * time.Millisecond,
 			ResponseDelay: 0, PartialTexts: []string{"p1", "p2", "p3"}, FinalText: "final"}),
 		done: make(chan baselineWorkerExit, 1),
 	}

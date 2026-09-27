@@ -62,7 +62,7 @@ func TestProcessingDelayAppliesAfterPartialsExhausted(t *testing.T) {
 			requests: [][]byte{make([]byte, audio.ChunkBytesDefault),
 				make([]byte, audio.ChunkBytesDefault), make([]byte, audio.ChunkBytesDefault)},
 		}
-		worker := New(Config{ProcessingDelay: delay, PartialEvery: 100 * time.Millisecond,
+		worker := mustWorker(t, Config{ProcessingDelay: delay, PartialEvery: 100 * time.Millisecond,
 			PartialTexts: []string{"partial"}, FinalText: "final"})
 		if err := worker.StreamingRecognize(stream); err != nil {
 			t.Fatal(err)
@@ -102,7 +102,7 @@ func TestProcessingDelayCancellation(t *testing.T) {
 				}
 				defer cancel()
 				stream := &processingStream{ctx: ctx, requests: [][]byte{make([]byte, audio.ChunkBytesDefault)}}
-				worker := New(Config{ProcessingDelay: time.Hour, PartialEvery: 100 * time.Millisecond})
+				worker := mustWorker(t, Config{ProcessingDelay: time.Hour, PartialEvery: 100 * time.Millisecond})
 				done := make(chan error, 1)
 				go func() { done <- worker.StreamingRecognize(stream) }()
 				synctest.Wait() // 确认 Worker 已读到音频并阻塞在处理等待。
@@ -154,7 +154,7 @@ func TestProcessingDelayInputRules(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				stream := &processingStream{ctx: context.Background(), requests: tc.chunks}
-				worker := New(Config{ProcessingDelay: tc.delay, PartialEvery: 100 * time.Millisecond})
+				worker := mustWorker(t, Config{ProcessingDelay: tc.delay, PartialEvery: 100 * time.Millisecond})
 				start := time.Now()
 				err := worker.StreamingRecognize(stream)
 				if status.Code(err) != tc.wantCode || time.Since(start) != tc.wantElapsed || len(stream.results) != tc.wantResults {

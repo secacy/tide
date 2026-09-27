@@ -126,7 +126,7 @@ func runProgressBacklogBaseline(t *testing.T, name string, delay, pause time.Dur
 	for i := range texts {
 		texts[i] = fmt.Sprintf("p%d", i+1)
 	}
-	worker := &pauseWorker{worker: mockasr.New(mockasr.Config{
+	worker := &pauseWorker{worker: mustMockWorker(t, mockasr.Config{
 		ProcessingDelay: delay, PartialEvery: 500 * time.Millisecond, PartialTexts: texts, FinalText: "final",
 		PauseAfterChunks: 20, PauseDuration: pause,
 	}), done: make(chan pauseWorkerExit, 1)}

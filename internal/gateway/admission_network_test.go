@@ -131,7 +131,7 @@ func TestSessionAdmissionExperiment(t *testing.T) {
 func runAdmissionRounds(t *testing.T, rounds int) {
 	t.Helper()
 	const limit, attempts = 4, 20
-	w := &admissionWorker{worker: mockasr.New(mockasr.Config{FinalText: "final"}), exits: make(chan baselineWorkerExit, rounds*(limit+1))}
+	w := &admissionWorker{worker: mustMockWorker(t, mockasr.Config{FinalText: "final"}), exits: make(chan baselineWorkerExit, rounds*(limit+1))}
 	workerClient := newBaselineTCPWorkerClient(t, w)
 	appCtx, stop := context.WithCancel(context.Background())
 	g, err := New(appCtx, workerClient, Config{MaxSessions: limit})

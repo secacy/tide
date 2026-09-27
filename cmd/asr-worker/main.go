@@ -21,14 +21,7 @@ func main() {
 func run() error {
 	const address = ":50051"
 
-	listener, err := net.Listen("tcp", address)
-	if err != nil {
-		return err
-	}
-
-	grpcServer := grpc.NewServer()
-
-	worker := mockasr.New(
+	worker, err := mockasr.New(
 		mockasr.Config{
 			PartialEvery:  500 * time.Millisecond, // 每收到约 500ms 音频返回一次 partial result
 			ResponseDelay: 50 * time.Millisecond,
@@ -41,6 +34,16 @@ func run() error {
 			FinalText: "今天天气不错",
 		},
 	)
+	if err != nil {
+		return err
+	}
+
+	listener, err := net.Listen("tcp", address)
+	if err != nil {
+		return err
+	}
+
+	grpcServer := grpc.NewServer()
 
 	// 把 worker 注册成为 ASRService 的服务实现
 	asrv1.RegisterASRServiceServer(grpcServer, worker)

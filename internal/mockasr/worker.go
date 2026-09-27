@@ -17,29 +17,44 @@ import (
 //
 // Mock Worker 不真正执行 ASR 推理，而是根据收到的音频时长，按固定规则返回可预测的 partial/final 结果。
 type Config struct {
-	PartialEvery     time.Duration // 每收到多长时间的音频后返回一次 partial result
-	ResponseDelay    time.Duration // 模拟 ASR 推理延迟，设置为 0 表示立即返回
-	PartialTexts     []string      // Mock Worker 依次返回的 partial 文本
-	FinalText        string        // 客户端发送完音频后返回的最终结果
-	ProcessingDelay  time.Duration // 模拟每个有效音频块的串行处理耗时。固定音频块大小时，该值决定模拟的音频处理速度。
-	StallAfterChunks int           // 指定每条 stream 处理多少个有效音频块后停止读取。前 N 块正常处理并发送相应 partial，随后不再调用 Recv，只等待 RPC context 取消。
-	PauseAfterChunks int           // 指定处理多少个有效音频块后暂停一次。大于 0 且 PauseDuration 大于 0 时启用；每条 stream 独立计数
-	PauseDuration    time.Duration // 一次暂停的持续时间。暂停期间不读取下一块音频，仍响应 RPC context 取消。小于等于 0 时关闭暂停注入。
+	PartialEvery          time.Duration // 每收到多长时间的音频后返回一次 partial result
+	ResponseDelay         time.Duration // 模拟 ASR 推理延迟，设置为 0 表示立即返回
+	PartialTexts          []string      // Mock Worker 依次返回的 partial 文本
+	FinalText             string        // 客户端发送完音频后返回的最终结果
+	ProcessingDelay       time.Duration // 模拟每个有效音频块的串行处理耗时。固定音频块大小时，该值决定模拟的音频处理速度。
+	StallAfterChunks      int           // 指定每条 stream 处理多少个有效音频块后停止读取。前 N 块正常处理并发送相应 partial，随后不再调用 Recv，只等待 RPC context 取消。
+	PauseAfterChunks      int           // 指定处理多少个有效音频块后暂停一次。大于 0 且 PauseDuration 大于 0 时启用；每条 stream 独立计数
+	PauseDuration         time.Duration // 一次暂停的持续时间。暂停期间不读取下一块音频，仍响应 RPC context 取消。小于等于 0 时关闭暂停注入
+	ProcessingConcurrency int           // 限制同一 Worker 同时处理的音频块数量; 0 关闭共享限制，正值启用，负值属于无效配置
 }
 
 // Worker 实现 ASRWorker gRPC 服务。
 type Worker struct {
 	asrv1.UnimplementedASRServiceServer
 
-	cfg Config
+	cfg   Config
+	slots *processingSlots // 由本 Worker 的所有会话共享；nil 表示关闭共享处理限制
 }
 
-// New 创建 Mock ASR Worker。
-func New(cfg Config) *Worker {
+// New 创建 Mock ASR Worker，并初始化实例共享的处理名额。
+func New(cfg Config) (*Worker, error) {
+	var (
+		slots *processingSlots
+		err   error
+	)
+
+	if cfg.ProcessingConcurrency < 0 {
+		return nil, status.Error(codes.InvalidArgument, "processing concurrency must be >= 0")
+	}
+	if cfg.ProcessingConcurrency > 0 {
+		slots, err = newProcessingSlots(cfg.ProcessingConcurrency)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if cfg.PartialEvery <= 0 {
 		cfg.PartialEvery = 500 * time.Millisecond
 	}
-
 	if len(cfg.PartialTexts) == 0 {
 		cfg.PartialTexts = []string{
 			"你好",
@@ -47,17 +62,37 @@ func New(cfg Config) *Worker {
 			"你好，这里是 Mock ASR",
 		}
 	}
-
 	if cfg.FinalText == "" {
 		cfg.FinalText = "你好，这里是 Mock ASR 的最终识别结果"
 	}
 
 	return &Worker{
-		cfg: cfg,
-	}
+		cfg:   cfg,
+		slots: slots,
+	}, nil
 }
 
-// StreamAudio 模拟真实 ASR 的双向流式 RPC。
+// processChunk 模拟当前有效音频块的处理。
+// 等待名额和处理期间均响应 ctx 取消；取得的名额在返回前归还。
+// 本方法不更新处理计数，也不发送进度或识别结果。
+func (w *Worker) processChunk(ctx context.Context) error {
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
+	if w.slots != nil {
+		release, err := w.slots.acquire(ctx)
+		if err != nil {
+			return err
+		}
+		defer release()
+	}
+	if err := wait(ctx, w.cfg.ProcessingDelay); err != nil {
+		return err
+	}
+	return ctx.Err()
+}
+
+// StreamingRecognize 模拟真实 ASR 的双向流式 RPC。
 func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeServer) error {
 	ctx := stream.Context()
 
@@ -111,8 +146,8 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 		if len(audioChunk)%audio.BytesDepth != 0 {
 			return status.Errorf(codes.InvalidArgument, "invalid PCM chunk size %d: must align to %d-byte samples", len(audioChunk), audio.BytesDepth)
 		}
-		// 模拟处理耗时
-		if err := wait(ctx, w.cfg.ProcessingDelay); err != nil {
+		// 模拟处理耗时: 获取名额、处理、释放
+		if err := w.processChunk(ctx); err != nil {
 			return status.FromContextError(err).Err()
 		}
 		totalBytes += len(audioChunk)

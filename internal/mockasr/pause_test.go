@@ -29,7 +29,7 @@ func TestPauseOnceAndResume(t *testing.T) {
 				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancel()
 				stream := &processingStream{ctx: ctx, requests: tc.requests}
-				worker := New(Config{PauseAfterChunks: 2, PauseDuration: time.Second,
+				worker := mustWorker(t, Config{PauseAfterChunks: 2, PauseDuration: time.Second,
 					ProcessingDelay: 50 * time.Millisecond, ResponseDelay: 20 * time.Millisecond,
 					PartialEvery: 100 * time.Millisecond, PartialTexts: []string{"p1", "p2", "p3", "p4"}, FinalText: "final"})
 				start := time.Now()
@@ -79,7 +79,7 @@ func TestPauseCancellation(t *testing.T) {
 				defer cancel()
 				chunk := make([]byte, audio.ChunkBytesDefault)
 				stream := &processingStream{ctx: ctx, requests: [][]byte{chunk, chunk}}
-				worker := New(Config{PauseAfterChunks: 1, PauseDuration: time.Hour, PartialEvery: 100 * time.Millisecond, PartialTexts: []string{"p1", "p2"}})
+				worker := mustWorker(t, Config{PauseAfterChunks: 1, PauseDuration: time.Hour, PartialEvery: 100 * time.Millisecond, PartialTexts: []string{"p1", "p2"}})
 				done := make(chan error, 1)
 				go func() { done <- worker.StreamingRecognize(stream) }()
 				synctest.Wait()
@@ -126,7 +126,7 @@ func TestPauseDisabledOrNotReached(t *testing.T) {
 				defer cancel()
 				stream := &processingStream{ctx: ctx, requests: [][]byte{make([]byte, audio.ChunkBytesDefault)}}
 				start := time.Now()
-				err := New(Config{PauseAfterChunks: tc.after, PauseDuration: tc.duration}).StreamingRecognize(stream)
+				err := mustWorker(t, Config{PauseAfterChunks: tc.after, PauseDuration: tc.duration}).StreamingRecognize(stream)
 				if err != nil || time.Since(start) != 0 || len(stream.results) != 1 || !stream.results[0].IsFinal {
 					t.Fatalf("error=%v elapsed=%v results=%v", err, time.Since(start), stream.results)
 				}
@@ -139,7 +139,7 @@ func TestPauseDisabledOrNotReached(t *testing.T) {
 func TestPausePerStream(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		start := time.Now()
-		worker := New(Config{PauseAfterChunks: 1, PauseDuration: time.Second, PartialEvery: 100 * time.Millisecond, PartialTexts: []string{"p1", "p2"}})
+		worker := mustWorker(t, Config{PauseAfterChunks: 1, PauseDuration: time.Second, PartialEvery: 100 * time.Millisecond, PartialTexts: []string{"p1", "p2"}})
 		var streams [2]*processingStream
 		var cancels [2]context.CancelFunc
 		var done [2]chan error

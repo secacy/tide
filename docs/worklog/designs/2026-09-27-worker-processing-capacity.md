@@ -1,12 +1,12 @@
 # 第五阶段起步：可控的 Worker 共享处理容量
 
-日期：2026-09-27。状态：独立 processingSlots 已实现并通过本轮验收，尚未接入 Worker。本文记录方案、首步实现和验证依据，尚无第五阶段负载实验数据。
+日期：2026-09-27。状态：processingSlots 已接入 Worker 逐块处理，全项目 race 回归通过。本文记录方案、实现和验证依据，尚无第五阶段负载实验数据。
 
 ## 为什么先做这一项
 
 第四阶段已有单实例准入、操作期限、音频预算与重复清理证据。第五阶段要评估多 Worker 会话分配、稳定容量与瓶颈，首先需要一个能表达共享处理资源的实验后端。
 
-当前 Mock 的 ProcessingDelay 在各条 StreamingRecognize 流里独立 wait，没有跨流共享的处理名额。增加会话时，各条流都可以同时等待；除了运行时与传输资源，模型内部没有配置的共享处理瓶颈。因此已有 Mock 适合验证单流变慢、停读与恢复，不能仅据其扩展曲线推断模型容量或调度收益。
+改造前 Mock 的 ProcessingDelay 在各条 StreamingRecognize 流里独立 wait，没有跨流共享的处理名额。增加会话时，各条流都可以同时等待；除了运行时与传输资源，模型内部没有配置的共享处理瓶颈。因此已有 Mock 适合验证单流变慢、停读与恢复，不能仅据其扩展曲线推断模型容量或调度收益。
 
 多 Worker 地址配置仍需补齐，但共享容量模型先以独立小部件实现，避免在调度之前缺少可解释的负载条件。
 
@@ -34,13 +34,13 @@
 
 实现选用带缓冲 channel 表示名额。已有每流 goroutine 继续串行执行，每次只在模拟处理期间占用一个名额；名额共享于整个 Worker 实例，不能在每次 RPC 内新建，否则不能约束跨流并行度。不创建额外处理 goroutine 池，不宣称 channel 提供严格公平调度。
 
-后续集成时顺序为：Recv 一块 → 等待名额 → 模拟处理 → 归还名额 → 更新处理量并发送进度/结果。取消等待时直接退出，不得把未处理块计入处理确认。网络发送、暂停/停读故障注入不占用计算名额，避免将这些等待误计为模型计算；这是实验模型的约定，不是对所有真实 ASR 实现的断言。
+已实现的处理顺序为：Recv 一块 → 等待名额 → 模拟处理 → 归还名额 → 更新处理量并发送进度/结果。取消等待时直接退出，不得把未处理块计入处理确认。网络发送、暂停/停读故障注入不占用计算名额，避免将这些等待误计为模型计算；这是实验模型的约定，不是对所有真实 ASR 实现的断言。
 
 处理名额只限制同时进行的模拟处理，不限制活跃 RPC 或等待名额的会话数量。每个等待者仍可能持有一块已接收音频；客户端、gRPC 缓冲和模型状态也不由该名额直接限制。因此不能把它写成完整队列或内存上限。
 
-## 当前唯一实现任务：独立 processingSlots
+## 首步任务：独立 processingSlots（已完成）
 
-只新增 internal/mockasr/processing_slots.go，不接入 Worker、不修改配置或启动命令。由开发者写业务部件，助手随后补测试。
+首步范围为新增 internal/mockasr/processing_slots.go；当时不接入 Worker、不修改配置或启动命令。由开发者写业务部件，助手补测试。后续逐块接入及验收见下文。
 
 ```go
 // processingSlots 限制一个 Worker 同时进行的模拟处理数量。
@@ -96,13 +96,13 @@ Mock 包测试通过（1.610s），未报告数据竞争。新增八个顶层测
 
 本次替换了此前与当前仓库文件不一致的验收文字。当前没有 capacity_experiment_test.go、loadProcessingPool 或第五/六阶段已完成的源码证据，不沿用这些旧描述；以上结论均以本次实际代码和测试为准。
 
-## 后续接入边界
+## Worker 接入边界
 
-独立部件已完成；普通 Mock 的 StreamingRecognize 仍未使用它，当前运行行为没有新增共享容量限制。下一步先明确 Worker 配置的默认/关闭/非法值语义，再让同一 Worker 的各流共享一个 processingSlots。
+接入时先明确 Worker 配置的默认/关闭/非法值语义，再让同一 Worker 的各流共享一个 processingSlots。当前 StreamingRecognize 已通过 processChunk 使用该实例共享池；默认配置为 0，仍关闭限制。
 
 逐块集成应只覆盖模拟处理区间：获取名额、执行可取消处理、归还名额，然后更新处理计数并发送进度/文本。无论处理成功或取消都必须归还；不能在循环体中直接累积 defer 到整场会话结束，网络发送、暂停与停读也不应占用计算名额。集成后再验证多流争用及取消，尚不填写容量或调度收益数据。
 
-## 当前小步：接入 Worker 配置与逐块处理（待开发者实现）
+## 接入 Worker 配置与逐块处理（已验收）
 
 ### 配置与 API 的取舍
 
@@ -140,4 +140,39 @@ cmd/asr-worker 先调用新的 New 并处理错误，再建立监听器、注册
 - 单个长流连续多块不会因 defer 累积而自锁；计数只包含成功处理块。
 - 既有 Mock 行为和 Gateway 链路回归保持通过。
 
-当前仅明确设计和实现任务，没有接入代码或新的第五阶段实验结果。
+以上接入代码现已完成并通过回归，尚无第五阶段负载实验结果。
+
+## 接入初稿检查（2026-09-27，历史记录）
+
+开发者已实现 ProcessingConcurrency、实例共享的 slots 和 processChunk，StreamingRecognize 已调用该辅助方法。助手适配既有 Mock/Gateway 测试中的 New 调用，新增 processing_capacity_test.go 的五个顶层测试、22 个子用例：
+
+- 配置负值拒绝、零关闭、正值启用及既有默认值保留。
+- 两条流各处理两块，每块虚拟耗时 10ms：同实例容量 1 总耗时 40ms，容量 2、关闭限制或独立 Worker 各为 20ms；逐流进度独立累计且正常返回 final。
+- 分别取消等待者和持有者，覆盖主动取消与期限到期；未完成块无进度，其他流继续处理，退出后池可复用。
+- 已取消 context 在零耗时和关闭限制时仍返回取消。
+- 进度、partial、final 发送阻塞，以及 ResponseDelay、暂停、停读期间，另一条流仍可处理并确认音频。
+
+上述时间使用 testing/synctest 虚拟时钟，是并发行为证据，不是实测吞吐或稳定容量数据。
+
+首次 Mock 包 race 回归有 6 个子用例失败：新增 4 个取消子用例与既有 TestProcessingDelayCancellation 的 2 个子用例。资源释放和进度断言通过，失败点是 StreamingRecognize 直接返回 context 错误，直接检查 status.Code 得到 Unknown，未保留原有的 Canceled/DeadlineExceeded 方法契约。应在调用 processChunk 失败处恢复 status.FromContextError(err).Err()。当前 grpc-go v1.83.2 的服务端在网络边界另有 context 错误转换，所以这不等于真实客户端一定收到 Unknown。
+
+另有两项代码审查收尾：New 不应丢弃 newProcessingSlots 返回的错误（目前正值检查使该错误分支不可达，但显式传播更便于变更）；cmd/asr-worker 应先构造并校验 Worker，再监听端口，且监听成功后 defer Close。业务代码由开发者修正，测试保持原有契约，不降低断言来通过。此步尚未验收完成。
+
+全项目 `go test -race ./... -count=1 -timeout=180s` 已执行：cmd/gateway 和 internal/gateway 通过（分别 1.581s、12.998s），Mock 包仍仅上述 6 个状态语义子用例失败，未报告数据竞争。未开启额外的可选负载实验。待生产代码修正后再次执行验收；当前不标记完成。
+
+## 接入修正后验收（2026-09-27）
+
+开发者已恢复 StreamingRecognize 在 processChunk 失败处的 gRPC 状态转换，显式传播名额池构造错误，并将 Worker 构造和配置校验移到 net.Listen 之前。助手只整理 Go 格式，未改动业务逻辑。
+
+监听器清理的审查结论修正：当前监听成功后没有提前返回的错误分支，直接进入 grpcServer.Serve；本地依赖 grpc-go v1.83.2 的 Serve 约定并实现返回时关闭传入监听器。因此当前未加 defer listener.Close 不构成已知泄漏，不列为验收阻塞项。若以后在 Listen 与 Serve 之间加入可失败的启动步骤，应明确这些路径的清理责任；显式 defer 可作为入口防护。
+
+执行：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+go test -race ./... -count=1 -timeout=180s
+```
+
+全项目通过，无数据竞争报告：cmd/gateway 1.651s、internal/gateway 13.039s、internal/mockasr 2.395s。新增五个顶层测试的 22 个子用例全部通过，此前失败的新增 4 个及既有 2 个取消子用例全部恢复通过。验证入口：[processing_capacity_test.go](../../../internal/mockasr/processing_capacity_test.go)。没有开启额外可选负载实验。
+
+本步收益是 Mock 具备可配置、实例共享且可取消的处理瓶颈，为后续多 Worker 容量对照提供可控条件；不能据虚拟时钟测试推断实际稳定容量或真实 ASR 性能。下一步支持 Worker 监听地址和处理参数的启动配置，再推进多 Worker 新会话分配。

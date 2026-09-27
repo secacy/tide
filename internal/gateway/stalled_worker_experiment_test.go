@@ -198,7 +198,7 @@ func runStalledWorker(t *testing.T, mode string, requireTimeout bool) {
 		t.Logf("STALL_JSON %s", data)
 	}()
 	fail := func(err error) { report.Outcome = "failed"; report.Error = err.Error(); t.Fatal(err) }
-	worker := &stallWorker{worker: mockasr.New(mockasr.Config{StallAfterChunks: 5, PartialEvery: 500 * time.Millisecond, PartialTexts: []string{"ready"}}), done: make(chan struct{})}
+	worker := &stallWorker{worker: mustMockWorker(t, mockasr.Config{StallAfterChunks: 5, PartialEvery: 500 * time.Millisecond, PartialTexts: []string{"ready"}}), done: make(chan struct{})}
 	sendProbe, writeProbe := &stallIOProbe{}, &stallIOProbe{}
 	client := &stallClient{ASRServiceClient: newBaselineTCPWorkerClient(t, worker), probe: sendProbe, rpcDone: make(chan struct{})}
 	sessionCtx, cancelSessions := context.WithCancel(context.Background())

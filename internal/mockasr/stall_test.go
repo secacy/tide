@@ -35,7 +35,7 @@ func TestStallAfterChunksBoundary(t *testing.T) {
 				}
 				defer cancel()
 				stream := &processingStream{ctx: ctx, requests: tc.requests}
-				worker := New(Config{StallAfterChunks: 2, PartialEvery: 100 * time.Millisecond,
+				worker := mustWorker(t, Config{StallAfterChunks: 2, PartialEvery: 100 * time.Millisecond,
 					PartialTexts: []string{"p1", "p2", "p3"}})
 				done := make(chan error, 1)
 				go func() { done <- worker.StreamingRecognize(stream) }()
@@ -97,7 +97,7 @@ func TestStallAfterChunksDisabledOrNotReached(t *testing.T) {
 				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 				defer cancel()
 				stream := &processingStream{ctx: ctx, requests: tc.requests}
-				err := New(Config{StallAfterChunks: tc.stall}).StreamingRecognize(stream)
+				err := mustWorker(t, Config{StallAfterChunks: tc.stall}).StreamingRecognize(stream)
 				if status.Code(err) != tc.wantCode {
 					t.Fatalf("exit=%v, want %v", err, tc.wantCode)
 				}
@@ -116,7 +116,7 @@ func TestStallAfterChunksDisabledOrNotReached(t *testing.T) {
 // TestStallAfterChunksPerStream 验证共享 Worker 的两个流各自计数、独立取消。
 func TestStallAfterChunksPerStream(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
-		worker := New(Config{StallAfterChunks: 2, PartialEvery: 100 * time.Millisecond,
+		worker := mustWorker(t, Config{StallAfterChunks: 2, PartialEvery: 100 * time.Millisecond,
 			PartialTexts: []string{"p1", "p2", "p3"}})
 		var streams [2]*processingStream
 		var cancels [2]context.CancelFunc

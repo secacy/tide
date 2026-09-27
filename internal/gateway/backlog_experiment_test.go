@@ -139,7 +139,7 @@ func runAudioBacklogExperiment(t *testing.T, name string, budget uint64, delay, 
 	for i := range texts {
 		texts[i] = fmt.Sprintf("p%d", i+1)
 	}
-	worker := &backlogMeasuredWorker{worker: mockasr.New(mockasr.Config{ProcessingDelay: delay, PauseAfterChunks: 20, PauseDuration: pause, PartialEvery: 500 * time.Millisecond, PartialTexts: texts, FinalText: "final"}), exits: make(chan backlogMeasuredExit, 2)}
+	worker := &backlogMeasuredWorker{worker: mustMockWorker(t, mockasr.Config{ProcessingDelay: delay, PauseAfterChunks: 20, PauseDuration: pause, PartialEvery: 500 * time.Millisecond, PartialTexts: texts, FinalText: "final"}), exits: make(chan backlogMeasuredExit, 2)}
 	probe := &pauseSendProbe{}
 	workerClient := &pauseClient{ASRServiceClient: newBaselineTCPWorkerClient(t, worker), probe: probe}
 	appCtx, stop := context.WithCancel(context.Background())

@@ -218,7 +218,7 @@ func runWorkerPause(t *testing.T, name string, pause time.Duration) {
 	for i := range texts {
 		texts[i] = fmt.Sprintf("p%d", i+1)
 	}
-	w := &pauseWorker{worker: mockasr.New(mockasr.Config{ProcessingDelay: 50 * time.Millisecond,
+	w := &pauseWorker{worker: mustMockWorker(t, mockasr.Config{ProcessingDelay: 50 * time.Millisecond,
 		PartialEvery: 500 * time.Millisecond, PartialTexts: texts, FinalText: "final",
 		PauseAfterChunks: 20, PauseDuration: pause}), done: make(chan pauseWorkerExit, 1)}
 	probe := &pauseSendProbe{}
