@@ -101,3 +101,43 @@ Mock 包测试通过（1.610s），未报告数据竞争。新增八个顶层测
 独立部件已完成；普通 Mock 的 StreamingRecognize 仍未使用它，当前运行行为没有新增共享容量限制。下一步先明确 Worker 配置的默认/关闭/非法值语义，再让同一 Worker 的各流共享一个 processingSlots。
 
 逐块集成应只覆盖模拟处理区间：获取名额、执行可取消处理、归还名额，然后更新处理计数并发送进度/文本。无论处理成功或取消都必须归还；不能在循环体中直接累积 defer 到整场会话结束，网络发送、暂停与停读也不应占用计算名额。集成后再验证多流争用及取消，尚不填写容量或调度收益数据。
+
+## 当前小步：接入 Worker 配置与逐块处理（待开发者实现）
+
+### 配置与 API 的取舍
+
+增加 `ProcessingConcurrency int`：0 关闭共享处理限制，正值表示同一 Worker 同时模拟处理的音频块数量，负值属于配置错误。0 保留既有每流独立延迟行为，便于在相同源码上建立开关对照；不将 1 或某个实验值默认为所有 Worker 的容量。
+
+负值不能静默退化为关闭限制。将 `New(cfg Config)` 改为 `New(cfg Config) (*Worker, error)`，在构造时明确拒绝负值并传播 newProcessingSlots 的错误。相比 panic，错误返回适合未来命令行配置；相比新增第二个构造入口，可集中默认值和校验逻辑。代价是调用点需要适配：开发者改唯一生产调用 cmd/asr-worker，助手在验收时统一适配测试调用，不要求开发者重写测试。
+
+Worker 保存 `slots *processingSlots`，nil 表示共享限制关闭；仅在 New 中为正值创建一次，每条 StreamingRecognize 流使用同一指针。不同 Worker 实例拥有不同的名额池，不使用包级全局池。
+
+### 处理边界
+
+增加 `processChunk(ctx context.Context) error`，只模拟当前有效音频块的处理过程，不更新计数、不收发网络消息：
+
+1. 检查 context，已经取消则返回 ctx.Err()，包括 ProcessingDelay 为 0 的情况。
+2. slots 非 nil 时获取名额；失败直接返回原始 context 错误，成功后在本辅助方法内 defer release。
+3. 调用现有 wait(ctx, w.cfg.ProcessingDelay)，失败直接返回。
+4. 成功等待后返回 ctx.Err()，避免在已观察到取消时报告成功；这不保证返回以后 context 不再取消。
+
+名额的持有范围到本方法返回为止。将 `defer release()` 写在辅助方法里可以同时覆盖成功和取消路径；如果直接写在 StreamingRecognize 的循环体中，defer 会积累到整条流结束才执行，可能使单个流耗尽池后等待自己归还名额。
+
+StreamingRecognize 保留 Recv、空块跳过和 PCM 合法性检查，只将当前 wait(ctx, ProcessingDelay) 改为 processChunk(ctx)，继续在 RPC 边界用 status.FromContextError 转换错误。仅成功后增加 totalBytes/processedChunks，并发送进度和文本。等待名额或模拟处理中取消，不得为该块增加确认量。
+
+进度/结果发送、ResponseDelay、尾部发送以及原有暂停/永久停读位于处理范围外，不持有名额。本 Mock 的容量模型只模拟逐块 ProcessingDelay，不能用于推断这些等待也是实际模型计算。启用并发限制而 ProcessingDelay 为 0 仍合法，但不能据此形成有代表性的模拟处理吞吐瓶颈。
+
+### 生产入口与验收分工
+
+cmd/asr-worker 先调用新的 New 并处理错误，再建立监听器、注册服务和启动 gRPC；正常结束或启动失败时仍应关闭监听器。此小步保留现有启动参数和配置值，不新增多端口/命令行配置入口。共享限制由测试显式配置正值来验证，日常启动继续默认关闭。
+
+开发者修改 worker.go 及 cmd/asr-worker/main.go。完成后助手适配所有受 New 签名影响的测试调用，并补集成验证：
+
+- 0 关闭、正值启用、负值构造失败；同实例共享、不同实例独立。
+- 两个流争用一个名额时串行处理，等待者取消不产生进度。
+- 持有者处理中取消会归还名额，后续流能继续处理。
+- 进度/文本发送阻塞、暂停及停读不占用处理名额。
+- 单个长流连续多块不会因 defer 累积而自锁；计数只包含成功处理块。
+- 既有 Mock 行为和 Gateway 链路回归保持通过。
+
+当前仅明确设计和实现任务，没有接入代码或新的第五阶段实验结果。
