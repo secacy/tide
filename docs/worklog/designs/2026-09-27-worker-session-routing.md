@@ -91,3 +91,29 @@ go test -race ./internal/workerpool -count=1 -timeout=30s -v
 再次执行上述独立包 race 命令：五个顶层测试、13 项叶级检查全部通过，包耗时 1.557s，未报告数据竞争。此前失败的相邻与非相邻重复 ID 均被拒绝；32 个 goroutine 共 3200 次选择仍为 1067/1067/1066，下一次选择位置正确。单 Worker、多 Worker 回绕、原始 ID 保留、列表及返回值隔离均通过。
 
 源码格式和 git diff --check 通过。本步尚未接入其他包，因此仅复验 workerpool 包，未重复网络回归。选择次数的均匀性不代表活跃会话、计算负载或稳定容量均衡。下一步接入 Gateway：合法 start 后选择一次，整场复用选中的 stream，再验证协议失败不分配、会话归属和异常清理。
+
+## 下一小步：Gateway 与 session 接入轮询（2026-09-28，待实现）
+
+目标：让现有选择器进入真实会话路径，并保持第三、四阶段的收尾与保护行为。生产入口本步仍组装一个 Worker，测试使用两个 Worker；多地址命令行配置留后续独立小步。
+
+### 接入方式与取舍
+
+- 在 ServeHTTP 接纳连接时选择：改动较少，但非法/超时 start 也推进轮询，不符合当前分配语义。
+- 将选择器包装为 ASRServiceClient：可以保持 Gateway 构造签名，但 Worker 归属容易隐藏在代理内部，后续按 Worker 归因需额外传递。
+- session 在合法 start 后显式 Pick，再使用选中 Client 建流：选择时机、Worker ID 和 stream 归属直接可见；选择此方案，代价是 Gateway/newSession 构造调用需要适配。
+
+当前直接依赖 *workerpool.RoundRobin，先不增加只有 Pick 的通用调度接口。未来最少活跃会话还需要原子登记和可靠释放，不应假定替换 Pick 就足够。生产依赖需通过 NewRoundRobin 构造，禁止传入零值 RoundRobin。
+
+### 开发者修改范围
+
+1. internal/gateway/handler.go：Gateway.worker 替换为 pool *workerpool.RoundRobin；New(ctx,pool,cfg) 校验非 nil，保存传入池，保留所有配置默认值与准入流程。ServeHTTP 传同一个池给 newSession，既不 Pick，也不逐会话创建池。
+2. internal/gateway/session.go：session 保存同一 pool 指针及 workerID string（合法 start 后选中，表示后端归属，不是会话 ID）；newSession 第二参数改为 pool。run 保留 start 校验和 RPC/WS context 构造，紧接建流前执行 selected := s.pool.Pick()，保存 selected.ID，再 selected.Client.StreamingRecognize(rpcCtx)。建流错误包含 Worker ID 并用 %w 包装，其余 finish/取消/等待逻辑保持现有行为。upload/download 继续只接收同一 stream，不能再次 Pick。
+3. cmd/gateway/main.go：复用现有 grpcConn/workerClient，以 workerAddr 为 ID 构造仅含一项的 RoundRobin，处理构造错误，再传给 gateway.New。原连接关闭和会话退出顺序保持不变，不新增多地址参数或每会话连接。
+
+本步不新增选择失败分支或 release：已构造池的列表固定非空，轮询不占用 Worker 会话名额。建流失败照常收尾，已推进游标不回退，不对其他 Worker 重试；已有 sessionTracker 仍在 handler 清理后减少总会话计数。
+
+### 助手后续测试任务
+
+适配所有旧测试里的 Gateway.New/newSession 调用，使用单 Worker 选择器保留旧测试意图；开发者无需修改测试。补验证 nil pool 拒绝、未发/非法/超时 start 不推进轮询、停止/准入拒绝不选择、合法会话只 Pick 一次、同会话多块音频和结果固定归属、两个 Worker 并发无串流、选中 Worker 建流失败后下个会话仍分到下一个 Worker且无隐式重试、异常后清理及名额复用。
+
+运行相应集成测试和完整 race 回归；只记录实际执行的会话数、分配数与清理结果，不将短测试写成容量或吞吐结论。实际多 Worker 启动配置尚未完成，Gateway 默认仍使用 localhost:50051。
