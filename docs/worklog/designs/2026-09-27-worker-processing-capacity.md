@@ -177,7 +177,7 @@ go test -race ./... -count=1 -timeout=180s
 
 本步收益是 Mock 具备可配置、实例共享且可取消的处理瓶颈，为后续多 Worker 容量对照提供可控条件；不能据虚拟时钟测试推断实际稳定容量或真实 ASR 性能。下一步支持 Worker 监听地址和处理参数的启动配置，再推进多 Worker 新会话分配。
 
-## 下一小步：Worker 启动参数解析（待实现）
+## Worker 启动参数解析（已验收，待接启动入口）
 
 目标是用同一份程序启动监听地址和处理能力不同的 Worker，并保留可复制的实验启动命令。此小步先新增 cmd/asr-worker/config.go 的纯参数解析，下一小步再接 main/run 与启动日志。当前可执行程序尚不支持以下参数，不能将示例作为已可用命令。
 
@@ -194,6 +194,22 @@ go test -race ./... -count=1 -timeout=180s
 
 ResponseDelay 不占处理名额，但会延后同一流读取后续音频，容量实验需能显式配置并记录。默认保持当前启动行为，不在此步暴露全部故障注入参数。内部 Mock 对非正延迟的兼容行为保持不变，命令行负值作为输入错误拒绝；并行度的语义校验继续集中在 mockasr.New。
 
-待开发者实现的接口：workerConfig{ListenAddr string; Mock mockasr.Config}；parseWorkerConfig(args []string) (workerConfig,error)。args 不含程序名，解析不监听端口、不启动 goroutine、不创建 Worker、不退出进程。初始化既有 PartialEvery、PartialTexts、FinalText 默认值，使用 StringVar/IntVar/DurationVar 绑定参数；原样返回 flag.ErrHelp 和语法错误；拒绝位置参数、空白监听地址以及负数处理/响应延迟。非空监听地址的语法与绑定由后续 net.Listen 处理。
+已实现的接口：workerConfig{ListenAddr string; Mock mockasr.Config}；parseWorkerConfig(args []string) (workerConfig,error)。args 不含程序名，解析不监听端口、不启动 goroutine、不创建 Worker、不退出进程。初始化既有 PartialEvery、PartialTexts、FinalText 默认值，使用 StringVar/IntVar/DurationVar 绑定参数；原样返回 flag.ErrHelp 和语法错误；拒绝位置参数、空白监听地址以及负数处理/响应延迟。非空监听地址的语法与绑定由后续 net.Listen 处理。
 
 助手随后补默认值、显式覆盖、持续时间格式、帮助、未知参数、位置参数、空地址和负延迟测试，并组合 mockasr.New 验证负并行度拒绝；后续接线时检查帮助成功退出、配置错误在监听之前失败、双端口启动及启动日志。当前不声称多 Worker 会话分配已实现。
+
+### 参数解析初稿检查（2026-09-27，历史记录）
+
+已有 workerConfig、独立 FlagSet、ContinueOnError、帮助信号传播和位置参数拒绝。当前初稿绑定的是 listen-addr/partial-every/partial-texts/final-text，与本步约定的四个容量实验参数不一致；ProcessingConcurrency、ProcessingDelay、ResponseDelay 尚未绑定。默认 Mock 配置为空，PartialEvery=0 又被末尾校验拒绝，导致无参数调用必然失败；响应等待与输出文本的既有默认值也未迁移。空白监听地址、负处理/响应延迟校验待补。listen-addr 这个名称本身没有技术问题，本步仍统一使用已约定的 listen，避免文档、测试和后续实验命令不一致。
+
+助手新增 cmd/asr-worker/config_test.go，包含 22 个表驱动子用例和 1 个独立调用隔离测试，共 23 项检查。执行 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./cmd/asr-worker -count=1 -timeout=30s`：5 项通过、18 项失败，未报告数据竞争。失败集中在缺失参数、无参数默认值和相应输入校验；错误用例检查具体错误类别，避免以“参数未绑定”误充“非法值已校验”。
+
+业务代码留开发者修正，未接 main/run，未进行网络启动或全项目重复回归。本步未验收、暂不提交未通过的实现与测试。
+
+### 参数解析修正后验收（2026-09-27）
+
+开发者已迁移原入口默认值，绑定 listen、processing-concurrency、processing-delay、response-delay，并拒绝空白监听地址及负数处理/响应延迟。负并行度由 mockasr.New 拒绝，非空地址的语法与可绑定性留给 net.Listen，分层符合设计。解析器不启动网络资源、不创建 Worker 或退出进程。
+
+执行 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./cmd/asr-worker -count=1 -timeout=30s -v`：22 个表驱动子用例及 1 个独立调用隔离测试全部通过（包耗时 1.552s），未报告数据竞争。覆盖默认值保留、两种赋值方式、零值、负并行度在构造边界拒绝、参数格式/溢出、额外位置参数、帮助、空白地址、负延迟，以及重复解析不污染默认配置。
+
+源码与测试通过 gofmt 检查；此次仅新增尚未接入口的解析器，因此运行定向测试，未重复全项目网络回归。main/run 仍使用原硬编码配置，四个新参数暂未对可执行程序生效。下一小步由开发者接入入口和启动日志，助手再验证帮助/错误退出及多端口启动。
