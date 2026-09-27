@@ -12,8 +12,37 @@ ffmpeg \
 
 ## 运行
 ```bash
-go run cmd/asr-worker/main.go
+go run ./cmd/asr-worker
 ```
+
+Worker 已拆分为多个 Go 文件，使用包路径启动。查看帮助：
+
+```bash
+go run ./cmd/asr-worker -h
+```
+
+Worker 启动参数：
+
+| 参数 | 默认值 | 含义 |
+| --- | --- | --- |
+| `-listen` | `:50051` | TCP 监听地址 |
+| `-processing-concurrency` | `0` | 同一 Worker 共享的处理名额；0 关闭限制，负数启动失败 |
+| `-processing-delay` | `0s` | 每个有效音频块的模拟处理耗时；允许 0，拒绝负数 |
+| `-response-delay` | `50ms` | 每条 partial/final 文本响应的等待；进度消息不增加此等待；允许 0，拒绝负数 |
+
+在两个终端分别启动配置不同的 Worker，例如：
+
+```bash
+go run ./cmd/asr-worker -listen=127.0.0.1:50051 -processing-concurrency=1 -processing-delay=10ms -response-delay=0s
+```
+
+```bash
+go run ./cmd/asr-worker -listen=127.0.0.1:50052 -processing-concurrency=2 -processing-delay=20ms -response-delay=5ms
+```
+
+这些是启动示例，不代表稳定容量结论。启动日志记录实际监听地址和三个处理/响应参数；用 `-listen=127.0.0.1:0` 可让系统分配空闲端口，实际端口见日志。参数解析及 Worker 配置校验在监听之前完成，帮助正常退出，配置或监听错误非零退出。
+
+Gateway 当前仍连接 `localhost:50051`，尚不会向第二个 Worker 分配会话。两个独立 Worker 的启动与直接 gRPC 会话已通过测试，多 Worker 分配后续实现。
 
 ```bash
 go run ./cmd/gateway
