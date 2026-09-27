@@ -176,3 +176,24 @@ go test -race ./... -count=1 -timeout=180s
 全项目通过，无数据竞争报告：cmd/gateway 1.651s、internal/gateway 13.039s、internal/mockasr 2.395s。新增五个顶层测试的 22 个子用例全部通过，此前失败的新增 4 个及既有 2 个取消子用例全部恢复通过。验证入口：[processing_capacity_test.go](../../../internal/mockasr/processing_capacity_test.go)。没有开启额外可选负载实验。
 
 本步收益是 Mock 具备可配置、实例共享且可取消的处理瓶颈，为后续多 Worker 容量对照提供可控条件；不能据虚拟时钟测试推断实际稳定容量或真实 ASR 性能。下一步支持 Worker 监听地址和处理参数的启动配置，再推进多 Worker 新会话分配。
+
+## 下一小步：Worker 启动参数解析（待实现）
+
+目标是用同一份程序启动监听地址和处理能力不同的 Worker，并保留可复制的实验启动命令。此小步先新增 cmd/asr-worker/config.go 的纯参数解析，下一小步再接 main/run 与启动日志。当前可执行程序尚不支持以下参数，不能将示例作为已可用命令。
+
+选择标准库 flag.FlagSet + ContinueOnError：命令行适合少量参数和本地实验，已有 Gateway 采用同样方式；环境变量较隐蔽，YAML/TOML 会引入文件格式和多来源优先级，当前暂不增加。进程配置包含 ListenAddr 和 Mock mockasr.Config；监听地址属于启动入口，不放进模型行为配置。
+
+计划参数：
+
+| 参数 | 默认值 | 语义 |
+| --- | --- | --- |
+| -listen | :50051 | TCP 监听地址；下一步由 net.Listen 检查可绑定性 |
+| -processing-concurrency | 0 | 0 关闭共享限制，正值为处理名额数；负值由 mockasr.New 拒绝 |
+| -processing-delay | 0s | 每个有效音频块模拟处理耗时；CLI 拒绝负值 |
+| -response-delay | 50ms | 每条文本响应的额外等待；CLI 拒绝负值，可显式设 0s 以隔离处理瓶颈 |
+
+ResponseDelay 不占处理名额，但会延后同一流读取后续音频，容量实验需能显式配置并记录。默认保持当前启动行为，不在此步暴露全部故障注入参数。内部 Mock 对非正延迟的兼容行为保持不变，命令行负值作为输入错误拒绝；并行度的语义校验继续集中在 mockasr.New。
+
+待开发者实现的接口：workerConfig{ListenAddr string; Mock mockasr.Config}；parseWorkerConfig(args []string) (workerConfig,error)。args 不含程序名，解析不监听端口、不启动 goroutine、不创建 Worker、不退出进程。初始化既有 PartialEvery、PartialTexts、FinalText 默认值，使用 StringVar/IntVar/DurationVar 绑定参数；原样返回 flag.ErrHelp 和语法错误；拒绝位置参数、空白监听地址以及负数处理/响应延迟。非空监听地址的语法与绑定由后续 net.Listen 处理。
+
+助手随后补默认值、显式覆盖、持续时间格式、帮助、未知参数、位置参数、空地址和负延迟测试，并组合 mockasr.New 验证负并行度拒绝；后续接线时检查帮助成功退出、配置错误在监听之前失败、双端口启动及启动日志。当前不声称多 Worker 会话分配已实现。
