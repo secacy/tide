@@ -136,3 +136,24 @@ go test -race ./internal/workerpool -count=1 -timeout=30s -v
 执行 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./... -count=1 -timeout=180s` 全部通过，未报告数据竞争：Gateway 13.674s、cmd/gateway 1.820s、Mock 1.777s、workerpool 2.815s、cmd/asr-worker 4.257s。未开启额外可选负载实验。
 
 这些是分配与清理的正确性证据，不是稳定容量、吞吐或延迟改善结论。Gateway 库已支持传入多 Worker 池，命令入口仍只组装 localhost:50051；下一步补多地址启动配置与连接组装/回收，之后再推进负载工具和指标。
+
+## 下一小步：Gateway 多地址配置与连接组装（2026-09-28，待实现）
+
+目标：通过同一 Gateway 可执行程序配置多个后端，不再修改源码中的单个 workerAddr。选择单个 -workers 逗号分隔列表，默认 localhost:50051，保留输入顺序。相比重复 -worker 参数，无需自定义 flag.Value；相比配置文件，当前两个配置项无需引入文件加载和覆盖规则。重复指定 -workers 沿用标准 flag 字符串参数的后值覆盖前值行为，不累计。
+
+采用入口级 gatewayConfig{WorkerAddrs []string; Gateway gateway.Config}，parseGatewayConfig 返回该类型；后端地址属于依赖组装，不加入内部 gateway.Config。负音频预算仍由 gateway.New 校验。run 改为接收 gatewayConfig，使用 cfg.Gateway 构造 Gateway，原 HTTP 地址及退出协调保持不变。
+
+开发者修改 cmd/gateway/config.go 与 main.go，可新增同包 worker_addresses.go 存放纯函数 parseWorkerAddresses(raw string) ([]string,error)。助手适配旧测试并补参数与生命周期验证。
+
+地址规则：
+
+- 使用 strings.Split 按逗号拆分，逐项 TrimSpace；空列表、空项（包括中间/尾部逗号）报错，不静默过滤。
+- 本步支持 host:port：域名/IPv4 或带方括号的 IPv6。使用 net.SplitHostPort 校验拆分，host 非空且不包含空白、正斜杠或反斜杠；port 为十进制数字且范围 1..65535。解析器 URI（如 dns:///...）不在本步配置范围；这是项目限定，不是 gRPC 能力限制。
+- TrimSpace 后的完整地址字符串用于查重，重复报错；保留顺序、大小写及其余原始表示，不做 DNS 查询、域名/IP 别名归并或端口写法归一化。因此不是物理后端去重，也不支持用重复地址表达权重。
+- 解析失败返回零配置；帮助原样返回 flag.ErrHelp；保留 max-pending-audio-bytes 的默认值、最大消息上限及既有语义。
+
+连接组装规则：run 在循环前声明 []*grpc.ClientConn 并登记统一 defer 清理，每个 NewClient 成功立即追加，然后构造 Worker{ID: addr, Client: asrv1.NewASRServiceClient(conn)}；列表全部组装后创建 RoundRobin，再创建 Gateway 与 HTTP 服务。中途任意错误均通过该 defer 关闭此前已创建的客户端对象，不在单次会话结束时关闭共享 ClientConn。正常退出先由 serve 取消/等待会话，run 返回时再关连接；退出等待超时则记录原有错误并继续兜底回收，不能声称超时等于清理成功。
+
+已核对本地 grpc-go v1.83.2 clientconn.go：NewClient 不执行网络 I/O，创建客户端成功不意味着 Worker 在线；本步不增加启动探活、健康剔除或自动换 Worker 重试。连接到不可用后端的失败仍由会话处理。创建错误应注明对应地址并保留 %w 错误链；日志记录 Worker 地址列表/顺序与 round_robin 策略，不宣称列表中后端已健康。
+
+后续助手验收：保留单地址默认值，双地址/IPv6/空白修剪/顺序；空项、重复及非法端口/主机形式拒绝；旧预算与帮助规则保持；完整链路轮询及服务退出后的连接关闭。可触发错误路径与仅代码审查的清理分支分别记录，不把 NewClient 构造成功或静态配置检查当成在线探测。此步实现前 docs/command.md 不提前发布可用多地址命令。
