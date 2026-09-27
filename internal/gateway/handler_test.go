@@ -36,7 +36,7 @@ func TestGatewayShutdownBeforeStart(t *testing.T) {
 	t.Cleanup(cancelSessions)
 
 	worker := &recordingWorker{}
-	g, err := New(sessionCtx, worker, Config{})
+	g, err := New(sessionCtx, singleWorkerPool(t, worker), Config{})
 	if err != nil {
 		t.Fatalf("create gateway: %v", err)
 	}

@@ -19,7 +19,7 @@ func TestTailTimeoutConfig(t *testing.T) {
 		{"negative", -time.Second, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			g, err := New(context.Background(), &recordingWorker{}, Config{TailTimeout: tc.configured})
+			g, err := New(context.Background(), singleWorkerPool(t, &recordingWorker{}), Config{TailTimeout: tc.configured})
 			if tc.configured < 0 {
 				if err == nil || g != nil {
 					t.Fatalf("negative timeout: gateway=%v err=%v", g, err)

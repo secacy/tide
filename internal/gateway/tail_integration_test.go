@@ -99,7 +99,7 @@ func runTailIntegration(t *testing.T, tc tailIntegrationCase) {
 	if tc.beforeEnd > 0 {
 		idle = 2 * time.Second
 	}
-	g, err := New(appCtx, workerClient, Config{MaxSessions: 1, InputIdleTimeout: idle, WorkerSendTimeout: 100 * time.Millisecond, TailTimeout: tc.budget})
+	g, err := New(appCtx, singleWorkerPool(t, workerClient), Config{MaxSessions: 1, InputIdleTimeout: idle, WorkerSendTimeout: 100 * time.Millisecond, TailTimeout: tc.budget})
 	if err != nil {
 		stop()
 		t.Fatal(err)

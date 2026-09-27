@@ -134,7 +134,7 @@ func runAdmissionRounds(t *testing.T, rounds int) {
 	w := &admissionWorker{worker: mustMockWorker(t, mockasr.Config{FinalText: "final"}), exits: make(chan baselineWorkerExit, rounds*(limit+1))}
 	workerClient := newBaselineTCPWorkerClient(t, w)
 	appCtx, stop := context.WithCancel(context.Background())
-	g, err := New(appCtx, workerClient, Config{MaxSessions: limit})
+	g, err := New(appCtx, singleWorkerPool(t, workerClient), Config{MaxSessions: limit})
 	if err != nil {
 		stop()
 		t.Fatal(err)
@@ -272,7 +272,7 @@ func TestAdmissionTailKeepsSlot(t *testing.T) {
 	w := &normalEndWorker{inputEnded: make(chan struct{}), releaseTail: make(chan struct{}), finished: make(chan error, 1)}
 	client := newBaselineTCPWorkerClient(t, w)
 	appCtx, stop := context.WithCancel(context.Background())
-	g, err := New(appCtx, client, Config{MaxSessions: 1})
+	g, err := New(appCtx, singleWorkerPool(t, client), Config{MaxSessions: 1})
 	if err != nil {
 		stop()
 		t.Fatal(err)

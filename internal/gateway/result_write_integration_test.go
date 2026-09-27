@@ -20,7 +20,7 @@ func TestResultWriteTimeoutConfig(t *testing.T) {
 		{"negative", -time.Second, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			g, err := New(context.Background(), &recordingWorker{}, Config{ResultWriteTimeout: tc.value})
+			g, err := New(context.Background(), singleWorkerPool(t, &recordingWorker{}), Config{ResultWriteTimeout: tc.value})
 			if tc.value < 0 {
 				if err == nil || g != nil || errors.Is(err, ErrResultWriteTimeout) {
 					t.Fatalf("invalid config: g=%v err=%v", g, err)
@@ -42,7 +42,7 @@ func TestResultWriteTimeoutConfig(t *testing.T) {
 func TestResultWriteSessionTimeout(t *testing.T) {
 	s, client, gate := newResultWriter(t, 75*time.Millisecond, true)
 	w := &slowReaderWorker{exit: make(chan tailWorkerExit, 1)}
-	s.worker = newBaselineTCPWorkerClient(t, w)
+	s.pool = singleWorkerPool(t, newBaselineTCPWorkerClient(t, w))
 	s.startTimeout, s.inputIdleTimeout, s.workerSendTimeout, s.tailTimeout = time.Second, time.Second, time.Second, time.Second
 	appCtx, stop := context.WithCancel(context.Background())
 	defer stop()

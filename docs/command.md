@@ -42,7 +42,7 @@ go run ./cmd/asr-worker -listen=127.0.0.1:50052 -processing-concurrency=2 -proce
 
 这些是启动示例，不代表稳定容量结论。启动日志记录实际监听地址和三个处理/响应参数；用 `-listen=127.0.0.1:0` 可让系统分配空闲端口，实际端口见日志。参数解析及 Worker 配置校验在监听之前完成，帮助正常退出，配置或监听错误非零退出。
 
-Gateway 当前仍连接 `localhost:50051`，尚不会向第二个 Worker 分配会话。两个独立 Worker 的启动与直接 gRPC 会话已通过测试，多 Worker 分配后续实现。
+Gateway 当前仍连接 `localhost:50051`，尚不会向第二个 Worker 分配会话。两个独立 Worker 的启动与直接 gRPC 会话已通过测试；Gateway 库的双 Worker 轮询分配也已通过集成测试，命令入口的多地址配置仍待实现。
 
 ```bash
 go run ./cmd/gateway

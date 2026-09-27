@@ -26,7 +26,7 @@ func TestAudioBacklogConfig(t *testing.T) {
 		{"disabled", 0}, {"enabled", 32000}, {"negative", -1}, {"minimum_int64", -1 << 63},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			g, err := New(context.Background(), &recordingWorker{}, Config{MaxPendingAudioBytes: tc.value})
+			g, err := New(context.Background(), singleWorkerPool(t, &recordingWorker{}), Config{MaxPendingAudioBytes: tc.value})
 			if tc.value < 0 {
 				if err == nil || g != nil {
 					t.Fatal("negative pending audio budget was accepted")
@@ -51,7 +51,7 @@ func TestAudioBacklogConfig(t *testing.T) {
 func TestSessionAudioBacklogFailure(t *testing.T) {
 	s, client, _ := newResultWriter(t, 2*time.Second, false)
 	worker := &heldProgressClient{ready: make(chan *heldProgressStream, 1)}
-	s.worker = worker
+	s.pool = singleWorkerPool(t, worker)
 	s.startTimeout, s.inputIdleTimeout, s.workerSendTimeout, s.tailTimeout = 3*time.Second, 3*time.Second, 3*time.Second, 3*time.Second
 	s.maxPendingAudioBytes = 3199
 	appCtx, stop := context.WithCancel(context.Background())
@@ -175,7 +175,7 @@ func TestGatewayAudioBacklog(t *testing.T) {
 			workerClient := newBaselineTCPWorkerClient(t, worker)
 			appCtx, stop := context.WithCancel(context.Background())
 			defer stop()
-			g, err := New(appCtx, workerClient, Config{MaxSessions: 1, MaxPendingAudioBytes: tc.budget})
+			g, err := New(appCtx, singleWorkerPool(t, workerClient), Config{MaxSessions: 1, MaxPendingAudioBytes: tc.budget})
 			if err != nil {
 				t.Fatal(err)
 			}

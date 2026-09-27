@@ -31,7 +31,7 @@ func dialInputReader(t *testing.T, parent context.Context, timeout time.Duration
 			return
 		}
 		defer ws.CloseNow()
-		s := newSession(ws, &recordingWorker{}, defaultStartTimeout, timeout, defaultWorkerSendTimeout, defaultTailTimeout, defaultResultWriteTimeout, 0)
+		s := newSession(ws, singleWorkerPool(t, &recordingWorker{}), defaultStartTimeout, timeout, defaultWorkerSendTimeout, defaultTailTimeout, defaultResultWriteTimeout, 0)
 		fn(ctx, s)
 	}))
 	var conn *websocket.Conn
@@ -163,7 +163,7 @@ func TestReadInputDeadlineOnlyAppliesWhileReading(t *testing.T) {
 func TestGatewayInputIdleTimeoutConfig(t *testing.T) {
 	for _, timeout := range []time.Duration{0, 2 * time.Second, -time.Second} {
 		t.Run(timeout.String(), func(t *testing.T) {
-			g, err := New(context.Background(), &recordingWorker{}, Config{InputIdleTimeout: timeout})
+			g, err := New(context.Background(), singleWorkerPool(t, &recordingWorker{}), Config{InputIdleTimeout: timeout})
 			if timeout < 0 {
 				if err == nil {
 					t.Fatal("negative input idle timeout was accepted")

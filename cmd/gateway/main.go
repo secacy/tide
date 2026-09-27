@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/secacy/tide-artisan/internal/gateway"
+	"github.com/secacy/tide-artisan/internal/workerpool"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -54,9 +55,20 @@ func run(ctx context.Context, cfg gateway.Config) error {
 
 	workerClient := asrv1.NewASRServiceClient(grpcConn)
 
+	pool, err := workerpool.NewRoundRobin([]workerpool.Worker{
+		{
+			ID:     workerAddr,
+			Client: workerClient,
+		},
+	})
+
+	if err != nil {
+		return fmt.Errorf("create worker pool: %w", err)
+	}
+
 	sessionCtx, cancelSessions := context.WithCancel(context.Background()) // sessionCtx 管理本 Gateway 所有会话的停止通知
 	defer cancelSessions()
-	wsGateway, err := gateway.New(sessionCtx, workerClient, cfg)
+	wsGateway, err := gateway.New(sessionCtx, pool, cfg)
 	if err != nil {
 		return fmt.Errorf("create gateway: %w", err)
 	}

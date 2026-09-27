@@ -28,7 +28,7 @@ func TestAdmissionConfig(t *testing.T) {
 		{"negative", -1, 0},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			g, err := New(context.Background(), &recordingWorker{}, Config{MaxSessions: tc.configured})
+			g, err := New(context.Background(), singleWorkerPool(t, &recordingWorker{}), Config{MaxSessions: tc.configured})
 			if tc.configured < 0 {
 				if err == nil || g != nil {
 					t.Fatalf("negative limit: gateway=%v err=%v", g, err)
@@ -138,7 +138,7 @@ func TestAdmissionRejectedRequestPreservesReservations(t *testing.T) {
 		}
 		t.Run(name, func(t *testing.T) {
 			worker := &recordingWorker{}
-			g, err := New(context.Background(), worker, Config{MaxSessions: 1})
+			g, err := New(context.Background(), singleWorkerPool(t, worker), Config{MaxSessions: 1})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -174,7 +174,7 @@ func TestAdmissionRejectedRequestPreservesReservations(t *testing.T) {
 // 重复无效握手不能逐渐占满 Gateway。
 func TestAdmissionUpgradeFailureReturnsSlot(t *testing.T) {
 	worker := &recordingWorker{}
-	g, err := New(context.Background(), worker, Config{MaxSessions: 1})
+	g, err := New(context.Background(), singleWorkerPool(t, worker), Config{MaxSessions: 1})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -166,7 +166,7 @@ func TestSessionProgressIntegration(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			s, client, _ := newResultWriter(t, 2*time.Second, false)
 			worker := &heldProgressClient{ready: make(chan *heldProgressStream, 1)}
-			s.worker = worker
+			s.pool = singleWorkerPool(t, worker)
 			s.startTimeout, s.inputIdleTimeout, s.workerSendTimeout, s.tailTimeout = 3*time.Second, 3*time.Second, 3*time.Second, 3*time.Second
 			if overflow {
 				if err := s.progress.addReceived(^uint64(0) - 1); err != nil {

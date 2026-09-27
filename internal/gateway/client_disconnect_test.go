@@ -87,7 +87,7 @@ func TestGatewayClientDisconnectIsolated(t *testing.T) {
 	workerClient := newTestWorkerClient(t, worker)
 	sessionCtx, cancelSessions := context.WithCancel(context.Background())
 	t.Cleanup(cancelSessions)
-	g, err := New(sessionCtx, workerClient, Config{})
+	g, err := New(sessionCtx, singleWorkerPool(t, workerClient), Config{})
 	if err != nil {
 		t.Fatal(err)
 	}

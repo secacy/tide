@@ -145,7 +145,7 @@ func runSlowWorkerBaseline(t *testing.T, name string, delay time.Duration) {
 	}
 	client := newBaselineTCPWorkerClient(t, worker)
 	sessionCtx, cancelSessions := context.WithCancel(context.Background())
-	g, err := New(sessionCtx, client, Config{})
+	g, err := New(sessionCtx, singleWorkerPool(t, client), Config{})
 	if err != nil {
 		cancelSessions()
 		fail(err)

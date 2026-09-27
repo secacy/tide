@@ -208,7 +208,7 @@ func runProtectionCleanup(t *testing.T, rounds int) {
 	client := &protectionClient{ASRServiceClient: asrv1.NewASRServiceClient(conn)}
 	appCtx, stop := context.WithCancel(context.Background())
 	defer stop()
-	g, err := New(appCtx, client, Config{MaxSessions: 1, MaxPendingAudioBytes: 3200, WorkerSendTimeout: protectionTimeout, TailTimeout: protectionTimeout, ResultWriteTimeout: protectionTimeout})
+	g, err := New(appCtx, singleWorkerPool(t, client), Config{MaxSessions: 1, MaxPendingAudioBytes: 3200, WorkerSendTimeout: protectionTimeout, TailTimeout: protectionTimeout, ResultWriteTimeout: protectionTimeout})
 	if err != nil {
 		t.Fatal(err)
 	}

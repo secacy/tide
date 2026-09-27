@@ -134,7 +134,7 @@ func runProgressBacklogBaseline(t *testing.T, name string, delay, pause time.Dur
 	workerClient := &pauseClient{ASRServiceClient: newBaselineTCPWorkerClient(t, worker), probe: probe}
 	appCtx, stop := context.WithCancel(context.Background())
 	defer stop()
-	g, err := New(appCtx, workerClient, Config{MaxSessions: 1})
+	g, err := New(appCtx, singleWorkerPool(t, workerClient), Config{MaxSessions: 1})
 	if err != nil {
 		fail(err)
 	}
@@ -158,7 +158,7 @@ func runProgressBacklogBaseline(t *testing.T, name string, delay, pause time.Dur
 		}
 		defer ws.CloseNow()
 		ws.SetReadLimit(g.cfg.MaxMessageBytes)
-		s := newSession(ws, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout, uint64(g.cfg.MaxPendingAudioBytes))
+		s := newSession(ws, g.pool, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout, uint64(g.cfg.MaxPendingAudioBytes))
 		ready <- s
 		err = s.run(g.ctx)
 		runExit <- sessionExit{time.Now(), err}

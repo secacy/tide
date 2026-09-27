@@ -109,7 +109,7 @@ func TestSlowReaderBaselineExperiment(t *testing.T) {
 	w := &slowReaderWorker{exit: make(chan tailWorkerExit, 1)}
 	workerClient := newBaselineTCPWorkerClient(t, w)
 	appCtx, stop := context.WithCancel(context.Background())
-	g, err := New(appCtx, workerClient, Config{MaxSessions: 1, InputIdleTimeout: 30 * time.Second})
+	g, err := New(appCtx, singleWorkerPool(t, workerClient), Config{MaxSessions: 1, InputIdleTimeout: 30 * time.Second})
 	if err != nil {
 		stop()
 		t.Fatal(err)

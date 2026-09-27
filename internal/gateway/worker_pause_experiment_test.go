@@ -224,7 +224,7 @@ func runWorkerPause(t *testing.T, name string, pause time.Duration) {
 	probe := &pauseSendProbe{}
 	client := &pauseClient{ASRServiceClient: newBaselineTCPWorkerClient(t, w), probe: probe}
 	appCtx, stop := context.WithCancel(context.Background())
-	g, err := New(appCtx, client, Config{WorkerSendTimeout: 2 * time.Second})
+	g, err := New(appCtx, singleWorkerPool(t, client), Config{WorkerSendTimeout: 2 * time.Second})
 	if err != nil {
 		stop()
 		fail(err)

@@ -29,7 +29,7 @@ func TestGatewayStartTimeoutConfig(t *testing.T) {
 		{name: "negative", input: -time.Second, wantErr: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			g, err := New(context.Background(), &recordingWorker{}, Config{StartTimeout: tc.input})
+			g, err := New(context.Background(), singleWorkerPool(t, &recordingWorker{}), Config{StartTimeout: tc.input})
 			if tc.wantErr {
 				if err == nil {
 					t.Fatal("negative start timeout was accepted")
@@ -52,7 +52,7 @@ func TestGatewayStartTimeoutReleasesSession(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	worker := &recordingWorker{}
-	g, err := New(ctx, worker, Config{StartTimeout: 50 * time.Millisecond})
+	g, err := New(ctx, singleWorkerPool(t, worker), Config{StartTimeout: 50 * time.Millisecond})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -107,7 +107,7 @@ func dialSessionWithTimeouts(t *testing.T, parent context.Context, worker asrv1.
 			return
 		}
 		defer ws.CloseNow()
-		result <- newSession(ws, worker, startTimeout, inputIdleTimeout, defaultWorkerSendTimeout, defaultTailTimeout, defaultResultWriteTimeout, 0).run(ctx)
+		result <- newSession(ws, singleWorkerPool(t, worker), startTimeout, inputIdleTimeout, defaultWorkerSendTimeout, defaultTailTimeout, defaultResultWriteTimeout, 0).run(ctx)
 	}))
 	var conn *websocket.Conn
 	t.Cleanup(func() {

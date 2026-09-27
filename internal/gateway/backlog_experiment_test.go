@@ -144,7 +144,7 @@ func runAudioBacklogExperiment(t *testing.T, name string, budget uint64, delay, 
 	workerClient := &pauseClient{ASRServiceClient: newBaselineTCPWorkerClient(t, worker), probe: probe}
 	appCtx, stop := context.WithCancel(context.Background())
 	defer stop()
-	g, err := New(appCtx, workerClient, Config{MaxSessions: 1, MaxPendingAudioBytes: int64(budget)})
+	g, err := New(appCtx, singleWorkerPool(t, workerClient), Config{MaxSessions: 1, MaxPendingAudioBytes: int64(budget)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -172,7 +172,7 @@ func runAudioBacklogExperiment(t *testing.T, name string, budget uint64, delay, 
 		}
 		defer ws.CloseNow()
 		ws.SetReadLimit(g.cfg.MaxMessageBytes)
-		s := newSession(ws, g.worker, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout, uint64(g.cfg.MaxPendingAudioBytes))
+		s := newSession(ws, g.pool, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout, uint64(g.cfg.MaxPendingAudioBytes))
 		ready <- s
 		err = s.run(g.ctx)
 		runDone <- exit{time.Now(), err}

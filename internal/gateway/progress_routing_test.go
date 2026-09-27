@@ -177,7 +177,7 @@ func TestGatewayProgressRouting(t *testing.T) {
 			workerClient := newTestWorkerClient(t, worker)
 			appCtx, cancelApp := context.WithCancel(context.Background())
 			t.Cleanup(cancelApp)
-			g, err := New(appCtx, workerClient, Config{})
+			g, err := New(appCtx, singleWorkerPool(t, workerClient), Config{})
 			if err != nil {
 				t.Fatal(err)
 			}

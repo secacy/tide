@@ -202,7 +202,7 @@ func runStalledWorker(t *testing.T, mode string, requireTimeout bool) {
 	sendProbe, writeProbe := &stallIOProbe{}, &stallIOProbe{}
 	client := &stallClient{ASRServiceClient: newBaselineTCPWorkerClient(t, worker), probe: sendProbe, rpcDone: make(chan struct{})}
 	sessionCtx, cancelSessions := context.WithCancel(context.Background())
-	g, err := New(sessionCtx, client, Config{})
+	g, err := New(sessionCtx, singleWorkerPool(t, client), Config{})
 	if err != nil {
 		cancelSessions()
 		fail(err)

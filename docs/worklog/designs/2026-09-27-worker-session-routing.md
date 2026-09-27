@@ -1,10 +1,10 @@
 # 第五阶段：多 Worker 新会话分配
 
-方案日期：2026-09-27；最后核对：2026-09-28。状态：独立轮询选择器已通过验收，尚未接入 Gateway。
+方案日期：2026-09-27；最后核对：2026-09-28。状态：独立轮询选择器已接入 Gateway 并通过双 Worker 集成及全项目 race 回归；生产入口仍配置一个 Worker。
 
 ## 背景与目标
 
-多个 Mock Worker 已能独立启动，具备实例共享的处理名额；Gateway 目前仍只使用一个 ASRServiceClient。下一步在合法 start 校验后、StreamingRecognize 创建前为会话选择一个 Worker，后续音频、进度和识别结果始终使用同一条 stream。不能逐块换 Worker，否则有状态 ASR 的上下文和结果归属会被打散。
+多个 Mock Worker 已能独立启动，具备实例共享的处理名额；接入前 Gateway 只使用一个 ASRServiceClient。现已在合法 start 校验后、StreamingRecognize 创建前为会话选择一个 Worker，后续音频、进度和识别结果始终使用同一条 stream。不能逐块换 Worker，否则有状态 ASR 的上下文和结果归属会被打散。
 
 目标是建立可解释的新会话分配基线，并保留 Worker ID 供后续会话归属及指标使用；此时不预填容量提升或延迟改善数字。
 
@@ -92,7 +92,7 @@ go test -race ./internal/workerpool -count=1 -timeout=30s -v
 
 源码格式和 git diff --check 通过。本步尚未接入其他包，因此仅复验 workerpool 包，未重复网络回归。选择次数的均匀性不代表活跃会话、计算负载或稳定容量均衡。下一步接入 Gateway：合法 start 后选择一次，整场复用选中的 stream，再验证协议失败不分配、会话归属和异常清理。
 
-## 下一小步：Gateway 与 session 接入轮询（2026-09-28，待实现）
+## Gateway 与 session 接入轮询（2026-09-28，已验收）
 
 目标：让现有选择器进入真实会话路径，并保持第三、四阶段的收尾与保护行为。生产入口本步仍组装一个 Worker，测试使用两个 Worker；多地址命令行配置留后续独立小步。
 
@@ -117,3 +117,22 @@ go test -race ./internal/workerpool -count=1 -timeout=30s -v
 适配所有旧测试里的 Gateway.New/newSession 调用，使用单 Worker 选择器保留旧测试意图；开发者无需修改测试。补验证 nil pool 拒绝、未发/非法/超时 start 不推进轮询、停止/准入拒绝不选择、合法会话只 Pick 一次、同会话多块音频和结果固定归属、两个 Worker 并发无串流、选中 Worker 建流失败后下个会话仍分到下一个 Worker且无隐式重试、异常后清理及名额复用。
 
 运行相应集成测试和完整 race 回归；只记录实际执行的会话数、分配数与清理结果，不将短测试写成容量或吞吐结论。实际多 Worker 启动配置尚未完成，Gateway 默认仍使用 localhost:50051。
+
+## 2026-09-28 Gateway 接入验收
+
+开发者已完成三个生产文件：Gateway/session 共享一个 RoundRobin；start 校验成功后保存选中 Worker ID 并创建一次 stream；建流错误保留 ID 与错误链；生产入口复用原 grpcConn，以 localhost:50051 组装单项池。现有 finish、取消、goroutine 等待及 tracker 清理逻辑保持不变。
+
+助手适配旧测试的构造参数及测试 session 字段，新增单后端组装帮助函数 [worker_pool_test.go](../../../internal/gateway/worker_pool_test.go) 和七个顶层路由测试 [worker_routing_test.go](../../../internal/gateway/worker_routing_test.go)。测试使用真实 WebSocket 与两个独立临时 TCP gRPC 后端；建流失败在客户端方法处可控注入。
+
+验证结果：
+
+- 6 个顺序会话轮流分配为 A/B 各 3；12 个已建立且同时保持的会话分配为各 6，确认 Gateway 活跃数为 12 后并行完成剩余传输。每个正常路由会话三块音频及尾部结果均保持后端/会话归属，正常关闭后 Worker 退出、handler 返回、活跃数归零。会话建立顺序由测试控制，未将此写成并发到达负载。
+- 非法 start、等待 start 超时、start 前断连、start 前停服、停止接入后拒绝、WebSocket 升级失败六类场景均没有后端调用，清理后轮询仍从 A 开始。
+- MaxSessions=1 时额外连接被 503 拒绝，原会话在 A 正常完成后，新会话到 B，拒绝不消耗轮询且名额可复用。
+- A 建流失败 → B 正常完成 → A 再次建流失败：失败没有隐式重试或回退；每次 handler 返回后活跃数为 0，失败 RPC context 已取消。另直接检查 session.run 返回值的 Worker ID、%w 错误链和 session.workerID。
+- 两个后端都有活动会话时，A 客户端断开后只清理 A，B 继续完整结束；服务停止时两个后端 RPC 均取消，handler 和总会话计数完成清理。
+- Gateway 构造拒绝 nil pool；此前单后端生命周期、准入和背压测试继续通过。
+
+执行 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./... -count=1 -timeout=180s` 全部通过，未报告数据竞争：Gateway 13.674s、cmd/gateway 1.820s、Mock 1.777s、workerpool 2.815s、cmd/asr-worker 4.257s。未开启额外可选负载实验。
+
+这些是分配与清理的正确性证据，不是稳定容量、吞吐或延迟改善结论。Gateway 库已支持传入多 Worker 池，命令入口仍只组装 localhost:50051；下一步补多地址启动配置与连接组装/回收，之后再推进负载工具和指标。

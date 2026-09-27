@@ -47,7 +47,7 @@ func TestTailStallBaselineExperiment(t *testing.T) {
 	w := &normalEndWorker{inputEnded: make(chan struct{}), releaseTail: make(chan struct{}), finished: make(chan error, 1)}
 	workerClient := newBaselineTCPWorkerClient(t, w)
 	appCtx, stop := context.WithCancel(context.Background())
-	g, err := New(appCtx, workerClient, Config{MaxSessions: 1, InputIdleTimeout: 100 * time.Millisecond, WorkerSendTimeout: 100 * time.Millisecond})
+	g, err := New(appCtx, singleWorkerPool(t, workerClient), Config{MaxSessions: 1, InputIdleTimeout: 100 * time.Millisecond, WorkerSendTimeout: 100 * time.Millisecond})
 	if err != nil {
 		stop()
 		t.Fatal(err)

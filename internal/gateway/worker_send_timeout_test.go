@@ -28,7 +28,7 @@ func TestWorkerSendTimeoutConfig(t *testing.T) {
 		{"negative", -time.Second, 0, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			g, err := New(context.Background(), &recordingWorker{}, Config{WorkerSendTimeout: tc.value})
+			g, err := New(context.Background(), singleWorkerPool(t, &recordingWorker{}), Config{WorkerSendTimeout: tc.value})
 			if tc.invalid {
 				if err == nil || errors.Is(err, ErrWorkerSendTimeout) {
 					t.Fatalf("expected configuration error, got %v", err)
@@ -129,7 +129,7 @@ func (*blockedSendStream) CloseSend() error { return nil }
 func TestGatewayWorkerSendTimeout(t *testing.T) {
 	worker := &blockedSendClient{ctxReady: make(chan context.Context, 1), sendDone: make(chan struct{})}
 	serviceCtx, cancelService := context.WithCancel(context.Background())
-	g, err := New(serviceCtx, worker, Config{WorkerSendTimeout: 40 * time.Millisecond})
+	g, err := New(serviceCtx, singleWorkerPool(t, worker), Config{WorkerSendTimeout: 40 * time.Millisecond})
 	if err != nil {
 		cancelService()
 		t.Fatal(err)

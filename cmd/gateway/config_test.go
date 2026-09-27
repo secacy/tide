@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/secacy/tide-artisan/internal/gateway"
+	"github.com/secacy/tide-artisan/internal/workerpool"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 )
 
@@ -44,7 +45,11 @@ func TestParseGatewayConfigValues(t *testing.T) {
 				t.Fatalf("config=%+v, want %+v", cfg, want)
 			}
 			// 解析成功只表示语法合法，负数仍由构造边界拒绝。
-			g, err := gateway.New(context.Background(), &configOnlyWorker{}, cfg)
+			pool, err := workerpool.NewRoundRobin([]workerpool.Worker{{ID: "config-test", Client: &configOnlyWorker{}}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			g, err := gateway.New(context.Background(), pool, cfg)
 			if tc.budget < 0 {
 				if g != nil || err == nil || !strings.Contains(err.Error(), "max pending audio bytes") {
 					t.Fatalf("negative budget not rejected by Gateway: gateway=%v err=%v", g, err)
