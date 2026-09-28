@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/secacy/tide-artisan/internal/audio"
@@ -14,7 +15,7 @@ import (
 
 // send 完成客户端发送方向的完整生命周期
 func (c *Client) send(ctx context.Context, conn *websocket.Conn, source io.Reader) error {
-	if err := c.writeJSON(ctx, conn, wsprotocol.StartMessage{
+	if err := c.writeJSON(ctx, conn, WriteStart, wsprotocol.StartMessage{
 		Type:    wsprotocol.MessageTypeStart,
 		Version: "v1",
 	}); err != nil {
@@ -25,7 +26,7 @@ func (c *Client) send(ctx context.Context, conn *websocket.Conn, source io.Reade
 		return err
 	}
 
-	if err := c.writeJSON(ctx, conn, wsprotocol.EndMessage{
+	if err := c.writeJSON(ctx, conn, WriteEnd, wsprotocol.EndMessage{
 		Type: wsprotocol.MessageTypeEnd,
 	}); err != nil {
 		return fmt.Errorf("send end message: %w", err)
@@ -48,7 +49,7 @@ func (c *Client) sendAudio(ctx context.Context, conn *websocket.Conn, source io.
 					return fmt.Errorf("wait before sending PCM: %w", err)
 				}
 			}
-			if err := conn.Write(ctx, websocket.MessageBinary, buf[:n]); err != nil {
+			if err := c.writeObserved(ctx, conn, WriteAudio, websocket.MessageBinary, buf[:n]); err != nil {
 				return fmt.Errorf("write PCM websocket message (%d bytes): %w", n, err)
 			}
 			pacer.Advance(n)
@@ -68,13 +69,41 @@ func (c *Client) sendAudio(ctx context.Context, conn *websocket.Conn, source io.
 }
 
 // writeJSON 把应用层控制消息编码为 WebSocket Text Message。
-func (c *Client) writeJSON(ctx context.Context, conn *websocket.Conn, v any) error {
+func (c *Client) writeJSON(ctx context.Context, conn *websocket.Conn, kind WriteKind, v any) error {
 	data, err := json.Marshal(v)
 	if err != nil {
 		return fmt.Errorf("marshal websocket message: %w", err)
 	}
-	if err := conn.Write(ctx, websocket.MessageText, data); err != nil {
+
+	if err := c.writeObserved(ctx, conn, kind, websocket.MessageText, data); err != nil {
 		return fmt.Errorf("write websocket text message: %w", err)
 	}
+
 	return nil
+}
+
+// writeObserved 执行一次 WebSocket 写入，同步报告结果并返回原始错误。
+// kind 表示业务用途；messageType 表示 WebSocket 消息类型。
+// data 只用于本次写入，不交给观察回调。
+func (c *Client) writeObserved(ctx context.Context, conn *websocket.Conn, kind WriteKind, messageType websocket.MessageType, data []byte) error {
+	startedAt := time.Now()
+	err := conn.Write(ctx, messageType, data)
+	finishedAt := time.Now()
+
+	audioBytes := 0
+	if kind == WriteAudio {
+		audioBytes = len(data)
+	}
+
+	if c.cfg.OnWrite != nil {
+		c.cfg.OnWrite(WriteEvent{
+			Kind:       kind,
+			AudioBytes: audioBytes,
+			StartedAt:  startedAt,
+			FinishedAt: finishedAt,
+			Err:        err,
+		})
+	}
+
+	return err
 }

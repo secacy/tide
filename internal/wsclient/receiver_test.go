@@ -123,7 +123,9 @@ func TestResultObservationThroughRun(t *testing.T) {
 			var got []wsprotocol.ResultMessage
 			var times []time.Time
 			var callbackStarts []time.Time
+			var writes []WriteEvent
 			cfg := Config{URL: "ws" + strings.TrimPrefix(server.URL, "http"), ChunkBytes: 4}
+			cfg.OnWrite = func(event WriteEvent) { writes = append(writes, event) }
 			if tc.observe {
 				cfg.OnResult = func(result wsprotocol.ResultMessage, at time.Time) {
 					callbackStarts = append(callbackStarts, time.Now())
@@ -138,6 +140,18 @@ func TestResultObservationThroughRun(t *testing.T) {
 			before := time.Now()
 			err = client.Run(ctx, bytes.NewReader([]byte{0, 0, 0, 0}))
 			checkObservationError(t, err, tc.wantErr)
+			if len(writes) != 3 {
+				t.Fatalf("write events = %+v, want start/audio/end", writes)
+			}
+			for i, kind := range []WriteKind{WriteStart, WriteAudio, WriteEnd} {
+				wantBytes := 0
+				if kind == WriteAudio {
+					wantBytes = 4
+				}
+				if writes[i].Kind != kind || writes[i].AudioBytes != wantBytes || writes[i].Err != nil {
+					t.Fatalf("write event %d = %+v", i, writes[i])
+				}
+			}
 			select {
 			case err := <-serverDone:
 				if err != nil {

@@ -19,6 +19,7 @@ type Config struct {
 	Realtime   bool          // 是否模拟真实麦克风速度。true: 10 秒音频大约需要 10 秒发送完成; false: 尽可能快地发送，适合吞吐测试
 	ReadLimit  int64         // 限制服务端单个 WebSocket message 的最大大小，它影响客户端读取 Gateway 返回消息，不影响客户端发送 PCM
 	OnResult   ResultHandler // 在识别结果成功解析后调用。nil 表示不观察、不打印，但仍执行协议校验
+	OnWrite    WriteHandler  // 在每次实际 Write 返回后调用，包括失败。nil 表示不观察；不影响实际写入和错误处理。
 }
 
 // ResultHandler 观察一个成功解析的识别结果。
