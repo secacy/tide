@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器及 RunSession 执行/报告已实现并验收；并发批次与汇总待实现。已有多 Worker 配置、会话轮询与连接回收验收；本方案尚无容量实测数据。
 
-当前小步：RunSession 已验收，将有限音频、收发观察与完整收尾连接起来；采用当前 Mock 的预期尾部校验。新增 23 项及原有 23 项检查通过 loadgen 包 race，包含真实 Gateway/Mock 单会话。下一步设计有限并发批次与结果保留。
+当前小步：RunSession 已验收，新增 23 项及原有 23 项检查通过 loadgen 包 race，包含真实 Gateway/Mock 单会话。开始实现 RunBatch：一次释放 N 个独立会话，保留每场报告与错误，单场失败不取消其他会话；等待开发者实现。
 
 ## 为什么先准备负载与观测
 
@@ -423,3 +423,83 @@ func RunSession(ctx context.Context, cfg SessionConfig) (SessionReport, error)
 - 实际 RunSession → WebSocket Gateway → TCP gRPC Mock：Mock 单处理名额、无额外模拟延迟，预算 32000 字节；输入 16002 字节分为 6 块，收到 1 条 partial、1 条 final，报告 completed。随后停止接纳，Gateway.Wait 在主动取消 Gateway 之前成功返回，验证正常会话清理。
 
 所有网络服务均在同一测试进程的本地临时端口运行，不是程序入口或多进程部署实验。本步未改动客户端、Gateway、Worker，因此只运行新增执行器所在包及其真实链路测试；未重复全项目测试。尚未运行并发批次或得出稳定容量，后续推进有限并发运行和原始报告保留。
+
+## 第四步之一：有限并发批次（2026-09-28，待实现）
+
+### 负载模型与取舍
+
+一次配置 N 场同参数会话，每场只调用一次 RunSession；无补位、自动重试、到达速率或稳态窗口。共同开始信号只约束最早放行时刻，goroutine 调度和拨号仍有偏差；配置 Sessions=N 不代表 N 个连接已经建立，更不保证全程 N 个活动会话。后续以实际开始时间、服务端观测和输入速率检验负载。
+
+| 方案 | 优点 | 代价 / 选择 |
+| --- | --- | --- |
+| 顺序调用 N 次 | 最简单，便于单会话诊断 | 无法观察会话争用；不用于本批次 |
+| 每场一个 goroutine + WaitGroup | 与有限批次直接对应，无任务队列 | goroutine 和结果记录数量随 N 增长；本步采用 |
+| 固定 worker pool 消费更多任务 | 适合总任务量大于并发度的持续运行 | 引入排队和补位，改变负载模型；后续有需要再加 |
+| errgroup.WithContext，直接返回每场错误 | 首错后统一终止方便 | 某场被拒绝会取消健康会话，扭曲失败率；不采用这种失败传播方式 |
+
+errgroup 并非不能用，也可以吞掉子任务错误再存储；但本步只有等待语义，WaitGroup 更直接。每场已有独立超时，整批共用调用方 context。内存为 O(N) 的 goroutine 和报告，不在执行期间累计每块音频事件；N 必须由实验人员按客户端资源合理配置，不宣称任意 N 都安全。
+
+### 先统一前置校验
+
+SessionConfig 新增私有 validate() error，在任何网络操作之前检查现有全部参数约束：Timeout > 0、ChunkBytes > 0 且采样对齐、AudioBytes > 0 且采样对齐、ExpectedFinalText 非空、URL 非空。使用 audio.BytesDepth，不增加 URL 在线探测、总量与期限关系等新限制。
+
+RunSession 开头调用 cfg.validate()；source/client 的构造与错误处理保留。这些组件仍独立维护自身约束，而批次层借助共同的会话配置校验，避免同一无效配置启动 N 个必然失败的任务。允许改进错误说明，保持前置失败返回零报告的契约。
+
+### 类型与接口
+
+新增 internal/loadgen/batch.go：
+
+```go
+// BatchConfig 定义一次有限批次，不会在会话结束后补充新会话。
+type BatchConfig struct {
+    Sessions int           // 本批计划调用 RunSession 的次数，必须为正。
+    Session  SessionConfig // 所有会话使用的相同负载条件。
+}
+
+// SessionResult 保存一个计划位置对应的报告和错误。
+// 即使 Err 非 nil，也必须保留 Report 中已发生的事实。
+type SessionResult struct {
+    Index  int           // 从 0 开始的批次内序号，不是服务端 session ID。
+    Report SessionReport // RunSession 原样返回的报告。
+    Err    error         // RunSession 原样返回的错误，completed 时为 nil。
+}
+
+// BatchReport 保存全部单会话结果，不在本步计算成功率或分位数。
+type BatchReport struct {
+    Config     BatchConfig     // 本批输入参数。
+    StartedAt  time.Time       // 放行所有任务前立即记录，不包含构造 goroutine 的时间。
+    FinishedAt time.Time       // 等待所有任务返回后立即记录。
+    Results    []SessionResult // 按 Index 保存，长度固定为 Sessions，不按完成顺序排列。
+}
+
+// RunBatch 启动一个有限批次，等待每场 RunSession 返回并保存所有结果。
+// 前置失败返回零报告；运行中单场失败不作为批次级错误。
+// 父 context 取消时仍等待所有任务退出，返回完整报告和父 context 错误。
+func RunBatch(ctx context.Context, cfg BatchConfig) (BatchReport, error)
+```
+
+### 执行与并发责任
+
+1. 检查 Sessions > 0，再调用 cfg.Session.validate()，最后检查 ctx.Err()。任一步失败返回 BatchReport{} 和可追溯错误，不分配结果切片或启动会话。调用方传入非 nil context。
+2. 预分配长度为 N 的 []SessionResult，建立 start := make(chan struct{}) 和局部 WaitGroup。结果切片不得在运行期间 append 或重新赋值。
+3. 循环 N 次，每次在启动 goroutine 前 wg.Add(1)；通过参数明确传入 index。协程 defer wg.Done()，先 <-start，再调用 RunSession(ctx, cfg.Session)，将报告和错误一起写到 results[index]。每场只有一个写者，不修改共享计数器。
+4. N 个 goroutine 创建完毕后设置 BatchReport.Config 和 StartedAt，close(start) 放行。它只是共同放行信号，不保证同一纳秒执行或网络连接同时建立。
+5. wg.Wait() 后立刻记录 FinishedAt，此后主协程才能读取所有结果。采样父 ctx.Err()：若非 nil，返回完整报告及该错误；否则返回报告和 nil。
+
+每个协程写不同切片元素，且主协程在 Wait 返回后才读；不需要为写结果额外加 mutex。不要并发 append，也不要在运行中遍历未完成结果。如果后续要实时展示进度，需另设同步机制。
+
+start 放行前或创建协程期间收到取消，仍会放行已规划的全部 N 个任务；它们调用 RunSession 时使用已取消的 context，通常无需建立连接即可返回 canceled/timed_out 报告。本步不引入 skipped 分类。因此 N 表示 RunSession 调用次数，不是成功拨号或进入服务端的次数。
+
+### 两层错误与取消边界
+
+- 某场的网络错误、尾部缺失、单场 Timeout 到期等，保存在该 SessionResult.Err；其他会话继续，不触发父 context 取消。
+- 批次运行完毕且父 context 有效时，RunBatch 的 error 为 nil，即使部分或全部会话失败。nil 表示批次收集工作完成，不表示所有会话成功。
+- 父 context 取消或到期时，所有会话共享该停止请求；仍须 Wait 后返回报告，不能 select 到 ctx.Done 就立即返回半填充的结果。
+- 父 context 状态在 Wait 后采样，边界上可能所有会话已完成、父取消刚好到来，批次仍返回 context 错误；原单会话 completed 状态不被改写。批次错误用于说明最终观察到的父级停止状态，不宣称是每场结束的原因。
+- 单场报告中的 Timeout 从各场开始运行时计算；不是整个批次的额外全局期限。需要限制整批总时长时由调用方提供带期限的父 context。
+
+当前不添加 JSON 输出、成功率/p95 统计、命令行参数或 Worker 调度策略改动；先保证每个结果不遗漏、不互相覆盖，再在下一步整理可保存的批次统计。
+
+### 后续验收
+
+助手验证：无效批次/会话配置及预取消 context 不发请求；服务端屏障证明多个会话确实重叠；混合成功与失败时健康会话继续，报告数为 N 且 Index 唯一；单场期限不取消其他会话；父取消后仍等待全部任务返回且保留各场报告；结果元素隔离及 race 检查。保留现有 RunSession 配置/网络回归，尚无本步新增测试或容量结论。
