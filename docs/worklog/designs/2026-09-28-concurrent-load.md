@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端结果和发送观察回调已实现并验收；完整单会话报告与并发运行待实现。已有多 Worker 配置、会话轮询与连接回收验收；本方案尚无容量实测数据。
 
-当前小步：OnWrite 发送观察已验收，记录 start/audio/end 实际 Write 的类型、音频字节数、开始/结束时间及原始错误。新增 12 项检查与原有 20 项接收检查通过定向 race；完整会话报告留后续步骤。
+当前小步：OnWrite 发送观察已验收，新增 12 项检查与原有 20 项接收检查通过定向 race。开始实现每场独立的 SessionRecorder，汇总两侧观测并提供一致快照；等待开发者实现。完整会话执行与成功判定留后续步骤。
 
 ## 为什么先准备负载与观测
 
@@ -231,3 +231,87 @@ OnWrite 由发送协程调用，OnResult 由接收协程调用。Worker 的尾�
 - 原有 20 项接收检查继续通过，其中 5 个真实 WebSocket 场景同时验证 Run 接线输出 start/audio/end，接收错误不抹除此前的成功写入事实。测试分别保存收发记录，等待 Run 返回后断言，不声称任意共享回调实现都并发安全。
 
 本步只验收客户端观测事实，没有实现成功字节数累计或最终成功分类；未运行 Gateway/Worker 容量实验。失败字节如何排除、缺失 end 如何表示以及完整会话报告，仍由下一步汇总设计落实。
+
+## 第三步之一：单会话事实汇总（2026-09-28，待实现）
+
+### 目标与权衡
+
+在 internal/loadgen 新增独立 SessionRecorder，把 OnWrite/OnResult 的观察汇总为 SessionObservation。它不建立连接、不决定会话成败、不保存全部事件或识别正文；后续 runner 再组合计划输入、Run 起止时间和返回错误形成最终报告。当前只提供内存快照，不定义 JSON 导出格式。
+
+| 方案 | 好处 | 代价 / 选择 |
+| --- | --- | --- |
+| 将每条事件追加到切片 | 细节完整，方便事后分析 | 长时、多会话下记录量持续增长，可能干扰被测系统；不作为默认汇总 |
+| 多个 atomic 字段 | 独立计数简单 | 时间、控制消息和相关字段的整体一致读取更复杂；当前不采用 |
+| channel 加专门汇总协程 | 一处更新数据 | 新增队列、满队列策略和退出等待；当前没有需要这些复杂度的证据 |
+| 每场一个 mutex 和固定字段 | 状态简单、快照一致，跨会话不共享锁 | 同场收发回调短暂竞争；采用，锁内只做赋值、加法和比较 |
+
+保存固定数量的统计字段，不保留音频和结果正文，记录空间不随事件条数增长。这是实现结构上的性质，不是整个负载进程内存上界或零开销的实测结论。后续若需逐块分位数或发送落后轨迹，另行设计有界直方图/采样，当前最大值无法替代分布。
+
+### 类型与接口
+
+新增 internal/loadgen/recorder.go：
+
+```go
+// SessionObservation 保存一场会话的观测事实，不表示最终成功或失败。
+// 未出现的时间为零值；控制写入 Kind 为空表示尚未观察到该写入。
+type SessionObservation struct {
+    AudioBytesWritten    int64         // Err == nil 的音频写入累计字节数。
+    AudioChunksWritten   int64         // Err == nil 的音频写入次数。
+    WriteFailures        int64         // 所有用途的失败 Write 次数，不包含读源/编码错误。
+    MaxAudioWriteDuration time.Duration // 所有音频 Write（含失败）的最大耗时。
+    FirstAudioStartedAt  time.Time     // 首次成功音频 Write 的开始时间。
+    LastAudioFinishedAt  time.Time     // 最后一次成功音频 Write 的结束时间。
+    StartWrite           wsclient.WriteEvent // 开始控制消息事件，保留失败事件。
+    EndWrite             wsclient.WriteEvent // 输入结束控制消息事件，保留失败事件。
+    ResultCount          int64         // 成功解析的结果消息数。
+    FinalResultCount     int64         // 其中 IsFinal 的消息数，不是会话完成数。
+    FirstResultAt        time.Time     // 第一条结果的 receivedAt。
+    LastResultAt         time.Time     // 最后一条结果的 receivedAt。
+    LastFinalAt          time.Time     // 最后一条 IsFinal 结果的 receivedAt，不保证是整场尾部。
+}
+
+// SessionRecorder 汇总单场会话的有序收发事件。
+// 零值可用，首次使用后不得复制；不同会话必须分别创建实例。
+// ObserveWrite、ObserveResult 与 Snapshot 可以并发调用。
+type SessionRecorder struct {
+    mu sync.Mutex
+    observation SessionObservation
+}
+
+// ObserveWrite 记录来自 wsclient 的一次实际写入结果。
+// 同场写入由一个发送协程按顺序提供，成功/失败均可传入。
+func (r *SessionRecorder) ObserveWrite(event wsclient.WriteEvent)
+
+// ObserveResult 记录成功解析的结果及其原始接收时间，不保留正文。
+// 同场结果由一个接收协程按顺序提供，不在此处重新 time.Now。
+func (r *SessionRecorder) ObserveResult(result wsprotocol.ResultMessage, receivedAt time.Time)
+
+// Snapshot 返回锁保护下的一致值副本；运行中快照可能尚未包含全部事件。
+// Run 返回后且不再向该实例写入时，才可将快照作为完整观察记录。
+func (r *SessionRecorder) Snapshot() SessionObservation
+```
+
+本步方法只接受当前 wsclient 产生的有效、有序事件，不作为通用事件导入/纠错接口。每个实例只对应一次 Run，无 Reset、合并或跨会话复用。预期有限音频任务的总量不超过 int64；本步不扩展至无限输入或任意恶意事件导致的计数溢出处理。
+
+### 更新规则
+
+ObserveWrite 加锁后，若 Err != nil 则增加 WriteFailures，但不要直接 return，否则会丢掉失败的 start/end 或失败音频的耗时。
+
+- WriteStart/WriteEnd：原样保存到对应字段，成功失败都保存。当前客户端每场各至多一次，不增加重试或去重策略。
+- WriteAudio：先计算 FinishedAt.Sub(StartedAt)，更新 MaxAudioWriteDuration，包含失败尝试。仅 Err == nil 时增加 AudioBytesWritten 和 AudioChunksWritten；首次成功用此前 AudioChunksWritten == 0 判断并记录 StartedAt，每次成功更新 LastAudioFinishedAt。
+
+ObserveResult 加锁；用此前 ResultCount == 0 判断首条，保存传入 receivedAt；每次增加 ResultCount 并更新 LastResultAt。若 IsFinal，再增加 FinalResultCount 并更新 LastFinalAt。不能因已经看到 final 而停止记录后续片段。
+
+Snapshot 加同一把锁，直接返回 observation 值副本；不返回内部指针。当前字段没有 slice/map 或可变记录指针，因此修改返回值的计数、时间或控制事件字段不会改写记录器。错误值按现有客户端只读错误语义保留，不要求对 error 的任意动态类型进行深拷贝。
+
+### 缺失数据与成功判定
+
+EndWrite 的零值 Err 也是 nil，因此单看 EndWrite.Err == nil 无法区分没发送 end 和发送成功。必须先验证 EndWrite.Kind == wsclient.WriteEnd，再检查 Err；StartWrite 同理。没有结果的时间保持零值，后续不能把零时间或缺失样本当作零延迟。
+
+例如一条 3200 字节音频成功，下一条 3200 字节失败，应为 AudioBytesWritten=3200、AudioChunksWritten=1、WriteFailures=1。即使收到 final，也不能仅凭这份记录判定成功。
+
+OnResult 可能早于 end 的 OnWrite 回调取得锁；只分别保存事实，不在线计算尾部等待或设置 Success。下一步等 Run 完成，再结合计划量、实际量、控制消息及协议结束判断，保留“尚无尾部证据”的情况。LastFinalAt 不能无条件当成整场尾部时间。
+
+### 后续验收
+
+助手补测试：零值/缺失控制事件、成功与失败计数、失败控制消息保存、最大耗时包含失败而成功时间范围不包含失败、final 后继续记录、输入时间原样保留、修改快照不影响内部状态、两个实例隔离，以及一个发送协程/一个接收协程/并发快照的 race 检查。不启动网络或正式负载；通过后再指导 runner 接线与完整报告。
