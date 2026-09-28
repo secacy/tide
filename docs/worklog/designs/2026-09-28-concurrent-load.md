@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch 及批次摘要已实现并验收；可保存输出待实现。已有多 Worker 配置、会话轮询与连接回收验收；本方案尚无容量实测数据。
 
-当前小步：SummarizeBatch 已验收，固定完成率分母、四类结果数量、计划/实际音频量和成功会话尾部延迟口径。新增 41 项摘要检查及原有 66 项全部通过定向 race；下一步设计可保存的实验输出。
+当前小步：SummarizeBatch 已验收，新增 41 项摘要检查及原有 66 项全部通过定向 race。开始实现 WriteBatchJSON，将同一报告的配置、各场观测、错误和重算摘要写成一个有版本的 JSON 文档；等待开发者实现。文件命名与命令行入口留下一步。
 
 ## 为什么先准备负载与观测
 
@@ -634,3 +634,102 @@ rank := (n/100)*percent + ((n%100)*percent+99)/100
 - 真实 WebSocket 批次的两种 5 场混合场景均汇总为 4 completed、完成率 0.8、实际 50 字节和 4 个尾部样本，分别保留 1 failed 或 1 timed_out。3 场 HTTP 503 全部拒绝时得到失败 3、完成率 0、实际字节 0、Tail=nil。
 
 人工样本数字只验证算法，不是性能实验数据；真实 WebSocket 接线验证也不是稳定容量实验。当前摘要计算已可用，但原始报告、错误及配置的可保存输出尚未实现，后续先补输出再组织可复核实验。
+
+## 第四步之三：可保存的 JSON 输出（2026-09-29，待实现）
+
+### 目的与取舍
+
+将同一批次的负载配置、逐会话观测、单场/批次错误及摘要放在一个文档，支持离线核对与对比；不能只保留终端上的成功率/p95。本步新增输出能力，不运行实验，也不从客户端猜测 Worker/网关配置。正式容量实验还需要代码版本、硬件和服务端参数清单，后续命令入口及实验记录再补。
+
+| 格式 / 实现 | 优点 | 代价 / 选择 |
+| --- | --- | --- |
+| 终端日志 | 便于临时阅读 | 难以完整、稳定地复算；不作为实验记录 |
+| CSV | 表格分析便利 | 配置、摘要和嵌套写入事件通常要拆多份文件；后续可从 JSON 派生 |
+| JSON Lines | 适合持续流式落盘 | 需要开始/结束记录和不完整批次规则；当前运行完才汇总，本步不采用 |
+| 每批一个 JSON 对象 | 配置、原始统计事实与摘要集中，容易核对 | 编码时暂存整个对象，O(N) 额外空间；本步采用 |
+
+使用独立的私有输出结构体，不给 wsclient.WriteEvent 等运行类型添加 MarshalJSON，也不修改业务结构来适配文件。普通 error 直接编码可能成为空对象；必须转换为明确的字符串/空值。输出类型字段均添加固定 snake_case JSON 标签和含义说明，不使用 map[string]any 拼装整份文档。
+
+### 唯一公开入口
+
+新增 internal/loadgen/json_output.go：
+
+```go
+// WriteBatchJSON 将已收尾批次及其批次级错误写为一个 JSON 文档。
+// 摘要由 report 重新计算，不接收另一份可能不匹配的摘要。
+// 返回值只表示校验/编码/写入是否成功；batchErr 非 nil 不阻止有效报告输出。
+// 函数不创建或关闭文件，不修改 report；写入失败可能留下部分字节。
+func WriteBatchJSON(w io.Writer, report BatchReport, batchErr error) error
+```
+
+调用方必须等 RunBatch 返回后再调用，不允许边修改报告边输出。w 为 nil 时返回错误；不尝试通过反射识别接口中的 typed-nil 指针。无效配置/预取消产生的零报告会被 SummarizeBatch 拒绝，不输出伪造实验结果。
+
+### v1 顶层对象
+
+```go
+// batchJSON 是输出格式 v1；所有时长字段以 _ns 明确标记整数纳秒。
+type batchJSON struct {
+    SchemaVersion       int               `json:"schema_version"`         // 固定为 1。
+    TailPercentileMethod string           `json:"tail_percentile_method"` // 固定为 nearest_rank。
+    Config              batchConfigJSON   `json:"config"`                 // 共同负载配置，保存一次。
+    StartedAt           time.Time         `json:"started_at"`             // 批次开始，转换到 UTC。
+    FinishedAt          time.Time         `json:"finished_at"`            // 批次结束，转换到 UTC。
+    BatchError          *string           `json:"batch_error"`            // nil 错误输出 null。
+    Summary             batchSummaryJSON  `json:"summary"`                // 本次重算的摘要。
+    Sessions            []sessionJSON     `json:"sessions"`               // 保持原 Index 顺序。
+}
+```
+
+不使用 omitempty 隐藏错误、缺失尾部或时间。单会话配置与共同配置的一致性由 SummarizeBatch 检查，因此每条 session 不重复保存配置。
+
+### 嵌套对象字段契约
+
+每一行对应一个私有输出结构体；括号内为有必要明确的类型/单位，其余沿用原字段类型。结构体自身及字段需要简短注释。
+
+| 类型 | JSON 字段 |
+| --- | --- |
+| batchConfigJSON | sessions；session（sessionConfigJSON） |
+| sessionConfigJSON | url、audio_bytes、chunk_bytes、realtime、timeout_ns（int64）、expected_final_text |
+| sessionJSON | index、started_at（UTC time.Time）、finished_at（UTC time.Time）、outcome、error（*string）、tail_latency_ns（*int64）、observation（observationJSON） |
+| observationJSON | audio_bytes_written、audio_chunks_written、write_failures、max_audio_write_duration_ns（int64）、first_audio_started_at（*time.Time）、last_audio_finished_at（*time.Time）、start_write（*writeEventJSON）、end_write（*writeEventJSON）、result_count、final_result_count、first_result_at（*time.Time）、last_result_at（*time.Time）、last_final_at（*time.Time） |
+| writeEventJSON | kind、audio_bytes、started_at（UTC time.Time）、finished_at（UTC time.Time）、error（*string） |
+| batchSummaryJSON | planned_sessions、completed、failed、canceled、timed_out、completion_rate、planned_audio_bytes、audio_bytes_written、elapsed_ns（int64）、tail（*latencySummaryJSON） |
+| latencySummaryJSON | samples、min_ns、p50_ns、p95_ns、max_ns（四个时长为 int64） |
+
+所有时间戳用 time.Time.UTC() 后交给 encoding/json 输出 RFC3339 格式，不转 Unix 秒，不使用 time.String()。所有 duration 直接转 int64 纳秒，不转整数毫秒，以免截断小样本。CompletionRate 保留 0..1；显示百分号属于界面层。
+
+零值观察时间用 nil 指针输出 null；缺失 start/end 由事件 Kind 为空识别，整个事件输出 null。存在但失败的 start/end 必须保留事件与错误，不能只凭 Err 是否为空决定事件存在。
+
+TailLatency == nil 输出 null；合法 0ns 输出数字 0。摘要无样本时 tail=null。nil error 输出 null，非 nil error 用 Error() 字符串，即使 Error() 是空字符串也不能改成 null。JSON 会转义 errors.Join 产生的换行；文件不保留 error 的 Go 类型/解包结构，Outcome 仍负责稳定分类。写入函数自身的错误则继续通过 %w 保留链。
+
+### 建议的转换 helper
+
+```go
+// errorText 保留错误文本；nil 表示不存在错误，而空文本错误仍有值。
+func errorText(err error) *string
+
+// optionalTime 将缺失观察时间转成 nil，其余返回 UTC 时间的独立副本。
+func optionalTime(at time.Time) *time.Time
+
+// optionalDurationNS 将可选时长复制为整数纳秒，保留 nil 与零的区别。
+func optionalDurationNS(value *time.Duration) *int64
+
+// toWriteEventJSON 转换已观察到的控制写入；Kind 为空返回 nil。
+func toWriteEventJSON(event wsclient.WriteEvent) *writeEventJSON
+```
+
+其他配置、观察、单场、摘要转换按表逐字段赋值，可各自拆私有 helper 并补注释。不能对 report 中的指针执行就地转换，不能改变会话顺序、原始时间的时区或错误对象。输出对象不包含识别正文历史或音频数据；expected_final_text 是当前 Mock 验收配置。
+
+### 写入步骤与失败边界
+
+1. 检查 w != nil；调用 SummarizeBatch(report)，失败则包装错误返回，writer 不收到任何字节。
+2. 按字段契约构造输出对象，其中 Summary 只能用步骤 1 的结果，BatchError 来自单独传入的 batchErr。BatchError 非 nil 不视为输出失败，例如整批被取消但报告完整，仍应保存。
+3. json.MarshalIndent（两个空格缩进），编码失败包装返回，尚未调用 writer。完成编码后追加一个换行。
+4. 调用 w.Write(data)。若 err != nil，通过 %w 返回写入错误；若 err == nil 但 n != len(data)，返回包装后的 io.ErrShortWrite。不要假设 writer 总会一次写满，也不要在这个函数里自动重跑批次。
+5. 只有完整写出才返回 nil。不关闭 w，不承诺磁盘持久化，也不承诺写入失败时 writer 中没有半份内容。后续若要保证文件可见时必然完整，再由文件层实现临时文件和最终发布策略。
+
+先构造并完整编码再写，能保证参数/报告/JSON 编码失败不会产生部分输出；不能因此声称底层写入也是原子的。暂存 JSON 的额外空间随 N 增长，是当前有限批次方案的明确取舍。
+
+### 后续验收
+
+助手使用 bytes.Buffer 解码验证版本、字段、纳秒/UTC、共同配置、每场观察与错误、重新计算的摘要及顺序；验证 nil/0、空文本错误、errors.Join 文本、失败控制事件、输入不被修改；使用故障 writer 验证错误链、短写及校验失败零写入；使用真实批次报告走完整输出路径。当前尚未实现，不发布可运行的命令行参数或容量结果。
