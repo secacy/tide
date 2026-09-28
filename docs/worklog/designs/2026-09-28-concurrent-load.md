@@ -1,8 +1,8 @@
 # 第五阶段：并发负载工具与实验口径
 
-状态：有限静音 PCM 源、客户端收发观察回调和单会话事实记录器已实现并验收；完整单会话执行/报告与并发运行待实现。已有多 Worker 配置、会话轮询与连接回收验收；本方案尚无容量实测数据。
+状态：有限静音 PCM 源、客户端收发观察、单会话记录器及 RunSession 执行/报告已实现并验收；并发批次与汇总待实现。已有多 Worker 配置、会话轮询与连接回收验收；本方案尚无容量实测数据。
 
-当前小步：SessionRecorder 已验收，新增 11 项检查及原有 12 项音频源检查通过 loadgen 包 race。开始实现 RunSession，将有限音频、收发观察与完整收尾连接起来；采用当前 Mock 的预期尾部校验，等待开发者实现。
+当前小步：RunSession 已验收，将有限音频、收发观察与完整收尾连接起来；采用当前 Mock 的预期尾部校验。新增 23 项及原有 23 项检查通过 loadgen 包 race，包含真实 Gateway/Mock 单会话。下一步设计有限并发批次与结果保留。
 
 ## 为什么先准备负载与观测
 
@@ -328,7 +328,7 @@ OnResult 可能早于 end 的 OnWrite 回调取得锁；只分别保存事实，
 
 这些数值来自直接构造事件的行为测试，不是实际音频发送、网络吞吐、负载容量或资源上界实验。当前仍未将记录器接入真实 Run，也未实现最终报告或成功分类；下一步完成单会话执行与汇总。
 
-## 第三步之二：单会话执行与最终报告（2026-09-28，待实现）
+## 第三步之二：单会话执行与最终报告（2026-09-28，已验收）
 
 ### 范围与选择
 
@@ -408,6 +408,18 @@ func RunSession(ctx context.Context, cfg SessionConfig) (SessionReport, error)
 
 最后消息是预期 final 的检查故意严格：如果正常关闭却尾部缺失、文本不符，或预期 final 后又收到其他片段，不把它算入当前 Mock 的完整完成数。这不验证 Worker 的实际处理字节数或识别质量；这些仍需服务端测量及未来真实模型评估。lastResult 只留一条受客户端 ReadLimit 限制的消息，退出后释放，不写入报告正文。
 
-### 后续验收
+### 验收计划与结果
 
-助手补配置拒绝、正常有限输入和尾块、缺少/错误/提前 final、结果错误、异常关闭、取消与超时的本地 WebSocket 验证，确认失败也保留观测、缺失尾部时延为 nil、错误链可诊断，并复验现有 loadgen 测试。有条件再通过现有 Gateway/Mock 实际链路验证一场完整会话；这些仍属于单会话正确性验收，不是并发容量数据。本节为待实现设计，尚无新增结果。
+计划补配置拒绝、正常有限输入和尾块、缺少/错误/提前 final、结果错误、异常关闭、取消与超时的本地 WebSocket 验证，确认失败也保留观测、缺失尾部时延为 nil、错误链可诊断，并复验现有 loadgen 测试；再通过现有 Gateway/Mock 实际链路验证一场完整会话。这些属于单会话正确性验收，不是并发容量数据。
+
+开发者已完成 session.go：前置失败返回零报告；独立 source/client/recorder 配合整场 context；Run 返回后采样结束时间与 context 状态，读取快照和最后结果；分类和完整性检查均按约定执行。原始错误链通过 errors.Join 和 %w 保留，只有 completed 生成尾部等待指针。实现无需修改，助手新增 session_test.go。
+
+执行 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./internal/loadgen -count=1 -timeout=60s -v`：全包 17 个顶层测试、46 项叶级检查通过（3.777s），包括 RunSession 新增 23 项及原记录器/音频源 23 项，未报告数据竞争。
+
+- 10 类无效配置返回零报告和错误，未进入 Run；HTTP 503 则返回带配置与起止时间的 failed 报告，观测为空，不将其直接命名为容量拒绝。
+- 7 类上传完成后的响应/关闭组合：正常 10 字节输入分为 4/4/2，完成 start/audio/end，收到 partial 和预期尾部，报告 completed 且尾部计时等于 LastResultAt - EndWrite.StartedAt；无结果、只有 partial、错误尾部、final 后又有 partial、final 后异常关闭、partial 后 Gateway 错误都返回 failed，保留实际输入与结果数量，TailLatency 为 nil。异常关闭状态可以从返回错误链提取。
+- 提前 final 测试以实时节奏发送两块各 32000 字节，首块后服务端返回预期 final，随后仍读完输入并正常关闭；完整输入及 final 都存在，但接收时间早于 end 写入开始，因此判为 failed。约 1 秒块间隔用于构造该场景，不是发送精度或容量测量。
+- 等待尾部时的父级取消、500ms 会话期限、500ms 父级期限分别报告 canceled/timed_out/timed_out，保留 10 字节成功输入、错误链及 nil 尾部计时。未把这些预算或测试运行时长当作精确退出延迟指标。
+- 实际 RunSession → WebSocket Gateway → TCP gRPC Mock：Mock 单处理名额、无额外模拟延迟，预算 32000 字节；输入 16002 字节分为 6 块，收到 1 条 partial、1 条 final，报告 completed。随后停止接纳，Gateway.Wait 在主动取消 Gateway 之前成功返回，验证正常会话清理。
+
+所有网络服务均在同一测试进程的本地临时端口运行，不是程序入口或多进程部署实验。本步未改动客户端、Gateway、Worker，因此只运行新增执行器所在包及其真实链路测试；未重复全项目测试。尚未运行并发批次或得出稳定容量，后续推进有限并发运行和原始报告保留。
