@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源和客户端结果观察回调已实现并验收；发送侧观测、完整单会话报告与并发运行待实现。已有多 Worker 配置、会话轮询与连接回收验收；本方案尚无容量实测数据。
 
-当前小步：客户端结果输出已改为可选同步回调，并记录客户端读完消息的时间；20 项检查及定向 race 通过。发送量、end 时间和完整会话报告留后续步骤。
+当前小步：结果观察回调已验收；开始设计 OnWrite 发送观察，记录 start/audio/end 实际 Write 的类型、音频字节数、开始/结束时间及原始错误，等待实现。完整会话报告留后续步骤。
 
 ## 为什么先准备负载与观测
 
@@ -142,3 +142,78 @@ is_final 仅表示片段定稿。看到 final 不能停止接收或标记整场�
 4. 正常链路返回第一段 final、第二段 partial、第二段 final，三条全部按顺序到达；每条时间落在 Run 开始与对应回调开始之间。精确记录位置通过源码审查确认，不将时间区间断言当作解析前后耗时的性能测量。
 
 本步使用测试 WebSocket 服务端验证客户端接线，没有启动 Gateway/Worker，未运行真实音频示例程序或并发容量实验。命令行打印行为完成代码审查和入口编译，未声称有终端输出端到端测试。现有 Run 的退出语义未改动，完整会话成功判定留下一步。
+
+## 第二步之二：发送观察出口（2026-09-28，待实现）
+
+### 问题与选择
+
+音频源被读取不意味着网络 Write 成功，Write 成功也不意味着 Gateway 已读取或 Worker 已处理。只观察成功写入还会遗漏失败的 end 尝试，因此统一记录每次实际 Write 尝试的结果，再由报告层统计成功音频量与失败情况。
+
+| 方案 | 好处 | 代价 / 选择 |
+| --- | --- | --- |
+| 包装 io.Reader 计数 | 改动集中在音频源 | 只能测取出量，不能测网络成功量或 end；不采用 |
+| 分别提供 OnAudioSent、OnEndSent | 成功路径直观 | 丢失失败尝试，新增类别需继续增加接口；不采用 |
+| 统一 OnWrite 事件 | 一套接口记录三类写入及失败，计时位置一致 | 调用方需按类型与 Err 分类；本步采用 |
+| Client 内置完整统计器 | 调用方直接得到报告 | 汇总规则与传输层耦合，仍需明确并发收尾语义；汇总留后续负载层 |
+
+保持与 OnResult 一致的同步回调方式。只包含小型元数据，不暴露 data 切片，不为事件分配额外 goroutine 或 channel。回调耗时仍会影响下一次发送；观测不等于零开销。
+
+### 接口
+
+新增 internal/wsclient/write_observer.go：
+
+```go
+// WriteKind 区分一次客户端写入的业务用途，与 WebSocket 帧类型不同。
+type WriteKind string
+
+const (
+    WriteStart WriteKind = "start" // 会话开始控制消息。
+    WriteAudio WriteKind = "audio" // PCM 二进制音频消息。
+    WriteEnd   WriteKind = "end"   // 输入结束控制消息。
+)
+
+// WriteEvent 描述一次已经返回的 conn.Write 调用，不代表服务端处理完成。
+type WriteEvent struct {
+    Kind       WriteKind // 写入用途。
+    AudioBytes int       // 本次尝试写入的 PCM 字节数；控制消息为 0。
+    StartedAt  time.Time // 紧邻 conn.Write 调用前采样，不含读取、节奏等待和 JSON 编码。
+    FinishedAt time.Time // conn.Write 返回后立即采样，不含观察回调执行时间。
+    Err        error     // conn.Write 原始错误；nil 表示本次客户端写入成功。
+}
+
+// WriteHandler 在发送协程内同步观察写入结果，应快速返回。
+// 同一会话内依写入顺序调用；可能与 OnResult 并发执行。
+// 多场共用回调也可能并发，调用方负责共享状态的同步。
+type WriteHandler func(event WriteEvent)
+```
+
+Config 增加 OnWrite WriteHandler，nil 表示不观察、不输出，不能跳过实际写入或错误处理。事件只保存本次字节数，不在 Client 字段保存累计量，避免不同 Run 混账。AudioBytes 表示尝试量；仅 Kind == WriteAudio 且 Err == nil 时才可计入成功写出量。失败 Write 可能已有部分数据进入网络，但 API 没有返回可靠字节数，不能猜测部分成功量。
+
+### 接线顺序
+
+在 sender.go 新增私有 helper：
+
+```go
+// writeObserved 执行一次 WebSocket 写入，随后同步报告结果并返回原始错误。
+// kind 表示业务用途，messageType 表示 WebSocket 消息类型，data 仅在调用内使用。
+func (c *Client) writeObserved(ctx context.Context, conn *websocket.Conn,
+    kind WriteKind, messageType websocket.MessageType, data []byte) error
+```
+
+helper 顺序为：StartedAt = time.Now → conn.Write → FinishedAt = time.Now → 如有回调则传入事件 → 返回同一个 err。只有 WriteAudio 填入 len(data)，控制消息 AudioBytes 为 0。成功失败均报告一次；不在这里包裹错误，保留现有调用方错误说明和错误链。
+
+sendAudio 在现有 WaitBeforeSend 之后用 helper 替换直接 conn.Write，传 WriteAudio / MessageBinary / buf[:n]；原错误返回、成功后 pacer.Advance、源错误处理顺序保持。节奏等待或读取在调用 Write 前失败，不生成虚构 WriteEvent。
+
+writeJSON 新增 kind WriteKind 参数，先完成 json.Marshal，再调用 helper（MessageText）；编码失败直接返回原编码错误，不产生 Write 事件。send 中 start/end 两处分别传 WriteStart/WriteEnd。end 的开始时间由 helper 紧邻 conn.Write 记录，不从调用 writeJSON 之前计时，避免把 JSON 编码算入 end 写入等待。
+
+命令入口不增加逐块打印。后续负载报告配置 OnWrite；本步仅新增观察能力，保留原正常/异常收发行为。
+
+### 并发与测量边界
+
+OnWrite 由发送协程调用，OnResult 由接收协程调用。Worker 的尾部结果可能已被接收回调观察到，而 end 的写入回调尚未执行；不能按两个回调的到达顺序推断网络因果。报告层应同步保存两侧事实，等待 Run 返回后综合判断，不在结果回调里提前宣布成功或把缺失的 end 时间当成 0。
+
+本次 Write 耗时 = FinishedAt - StartedAt，包含本地写入路径及阻塞等待，不是识别延迟。成功音频量只计 Err == nil 的音频事件。尾部计时可以使用 WriteEnd.StartedAt，但是否存在合法完成、预期尾部以及 end 成功，仍需最终报告核对；WriteEnd 成功不表示识别完成。
+
+本步还没有记录每块计划发送时刻，不能仅凭 Write 耗时证明输入符合实时节奏；发送落后与实际速率留后续负载记录。回调不保留每块大对象，未来汇总也应控制观测记录的内存量。
+
+助手后续验证：start/audio/end 顺序及控制消息零音频量、完整块和尾部实际字节数、成功/失败时间边界、失败 Write 恰好报告一次且原错误可追溯、读取/节奏等待/编码失败不虚构写入、nil 回调行为不变，并运行此前结果回调回归。本节为待实现方案，尚无新增测试结果。
