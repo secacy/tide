@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession 及有限并发 RunBatch 已实现并验收；批次统计与可保存输出待实现。已有多 Worker 配置、会话轮询与连接回收验收；本方案尚无容量实测数据。
 
-当前小步：RunBatch 已验收，AudioBytes 采样对齐前置校验已补齐，完成条件 helper 已整理接入。新增 20 项批次检查及原有 46 项全部通过定向 race；下一步设计批次统计与可保存输出。
+当前小步：RunBatch 已验收，新增 20 项批次检查及原有 46 项全部通过定向 race。开始实现 SummarizeBatch 纯统计函数，固定完成率分母、四类结果数量、计划/实际音频量和成功会话尾部延迟口径；等待开发者实现。文件输出留下一小步。
 
 ## 为什么先准备负载与观测
 
@@ -531,3 +531,94 @@ RunBatch 使用固定结果切片、按索引写入、统一开始信号和 Wait
 再次执行 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./internal/loadgen -count=1 -timeout=60s -v`：22 个顶层测试、66 项叶级检查全部通过（4.842s），未报告数据竞争。原失败用例现在在批次开始前返回零报告与非 nil 错误，14 项前置检查均不产生 HTTP 请求；8 场重叠、混合结果、父取消/期限收尾及全部拒绝的完整收集继续通过。原 46 项音频源、记录器和 RunSession 检查（含实际 Gateway/Mock 单会话）也全部通过。
 
 本步验收的是有限批次执行、错误隔离与完整结果保留，未计算成功率/分位数、导出原始记录或开展正式容量实验。有限批次已经可以作为下一步统计与输出的输入，仍不把计划 N 当作持续 N 个活动会话。
+
+## 第四步之二：批次统计口径（2026-09-28，待实现）
+
+### 目的与方案选择
+
+将已收尾的 BatchReport 转成可重复计算的摘要，保持原逐会话记录不变。只有完成率和成功延迟同时展示，才能避免失败越多、剩余少量成功会话的延迟反而越低所产生的误读。本步只实现纯函数，不写文件、不启动网络或新增并发，不在 RunBatch 运行途中计算。
+
+| 方案 | 优点 | 代价 / 选择 |
+| --- | --- | --- |
+| 只统计平均耗时 | 简单 | 容易掩盖尾部，混入快速失败会造成误导；不采用 |
+| 保存成功会话的尾部样本并排序 | 样本精确、算法透明，方便对原报告复算 | O(N) 临时空间、O(N log N) 排序；当前已有 O(N) 报告且每场仅一个样本，本步采用 |
+| 固定直方图或近似分位数算法 | 适合大量持续采样 | 需定义桶/精度与合并规则；以后逐块长期观测时再评估 |
+
+默认提供 p50、p95、最小值、最大值和样本数；暂不增加 p99 或均值。当前统计的是 completed 会话的客户端尾部等待，不是逐段转录延迟、纯推理耗时或全部尝试的响应时间。
+
+### 类型与接口
+
+新增 internal/loadgen/summary.go：
+
+```go
+// LatencySummary 是非空尾部延迟样本的精确排序摘要。
+// 分位数采用 nearest-rank；Samples 必须随延迟一起展示。
+type LatencySummary struct {
+    Samples int           // 纳入统计的 completed 会话数量。
+    Min     time.Duration // 最小尾部等待。
+    P50     time.Duration // 排序后第 ceil(0.50 * Samples) 个值。
+    P95     time.Duration // 排序后第 ceil(0.95 * Samples) 个值。
+    Max     time.Duration // 最大尾部等待。
+}
+
+// BatchSummary 保存有限批次的统计，不是稳定容量判定。
+type BatchSummary struct {
+    PlannedSessions  int           // 本批计划会话数，也是完成率分母。
+    Completed        int           // completed 数量。
+    Failed           int           // failed 数量，不包括取消/超时。
+    Canceled         int           // canceled 数量。
+    TimedOut         int           // timed_out 数量。
+    CompletionRate   float64       // Completed / PlannedSessions，范围 0..1。
+    PlannedAudioBytes int64        // 计划会话数 × 单场计划音频字节数。
+    AudioBytesWritten int64        // 所有会话中成功 Write 的音频字节数，包含失败会话已写出的部分。
+    Elapsed          time.Duration // 批次 FinishedAt - StartedAt，包含拨号和收尾。
+    Tail             *LatencySummary // 只有 completed 会话有样本；无 completed 时为 nil。
+}
+
+// SummarizeBatch 汇总已结束的完整批次，不修改输入报告或其指针字段。
+// 统计必要字段矛盾、批次缺失结果或发生整数溢出时，返回零摘要和错误。
+// 无效配置/预取消产生的零 BatchReport 不作为一个 0% 完成的实验。
+func SummarizeBatch(report BatchReport) (BatchSummary, error)
+
+// nearestRank 返回已经升序排列的非空样本的指定分位数。
+// 调用方保证 1 <= percent <= 100，函数不排序也不修改输入。
+func nearestRank(sorted []time.Duration, percent int) time.Duration
+```
+
+### 完成率与样本选择
+
+分母固定为 Config.Sessions，先验证正值且 Results 长度相等。Completed + Failed + Canceled + TimedOut 必须等于 PlannedSessions，不把取消或超时排除后重新计算一个更高的完成率。它衡量当前批次全部计划尝试的完成比例，不是 Worker 对已接纳会话的成功率。
+
+每场 Outcome 为 completed 且 Err == nil，TailLatency 非 nil 且值非负，才符合成功样本契约。任一条件矛盾直接返回错误，不悄悄跳过样本或改写 Outcome。其他三类 Outcome 要求 Err != nil、TailLatency == nil；未知/空 Outcome 返回错误，不归入普通失败以掩盖报告缺项。
+
+失败会话中的成功音频写入仍累加到 AudioBytesWritten；不要只累计 completed 会话的字节数。该值只代表客户端成功 Write，不代表服务端处理量。失败时尝试但未成功的块已经由 SessionRecorder 排除，摘要不从计划量或块数重新推算。
+
+批次级错误不参与该函数：即使 RunBatch 因父 context 返回错误，只要完整报告已收集，仍可汇总。未来输出同时保存批次错误与摘要，不把摘要存在等同于整个实验正常结束。
+
+### 输入检查与执行顺序
+
+1. 检查 Config.Sessions > 0、调用 Config.Session.validate()、Results 长度等于计划数；检查批次 StartedAt/FinishedAt 非零且结束不早于开始。零时长允许，不在这里计算吞吐率。
+2. 检查计划音频乘法溢出：单场字节数已经为正，如果 int64(Sessions) > math.MaxInt64 / Config.Session.AudioBytes，返回错误，再进行乘法。
+3. 遍历 Results。要求 result.Index 等于当前槽位、result.Report.Config 等于 Config.Session；按上述 Outcome/Err/TailLatency 契约检查并计数。completed 会话的实际成功字节数还必须等于单场计划量。
+4. 所有会话的 AudioBytesWritten 必须在 [0, 单场计划量] 内，再累加，保留失败会话已写出的部分。前面已经确认 N × 单场计划量可表示，且恰好只有 N 份结果，因此总实际量也不会溢出，不必再增加重复的累计溢出分支。统计检查不重跑完整协议验收，不对原始错误正文做分类。
+5. 将 completed 的 *TailLatency 值复制到新的 []time.Duration，不能重排 report.Results 或改写原指针。遍历完成后计算 Elapsed、CompletionRate。统计结果只保存在局部变量，任一步失败都返回 BatchSummary{} 和错误，不返回半成品摘要。
+6. 样本为空时 Tail=nil；否则对新切片 slices.Sort，填 Samples/Min/P50/P95/Max。合法的零延迟样本保留为 0，不能当成缺失值。
+
+本步输入契约是由当前 RunBatch 产生的已收尾报告，不设计通用、不可信 JSON 报告导入器。上面的检查针对计算依赖和基本一致性，不能代替服务端处理进度证据或原始完成协议校验。
+
+### 分位数算法与解释
+
+nearest-rank 使用从 1 开始的位置 rank = ceil(percent * n / 100)，返回 sorted[rank-1]。只调用 p50/p95，所有样本按实际 time.Duration 排序，不先转毫秒截断精度。可用整数计算避免浮点取整：
+
+```go
+n := len(sorted)
+rank := (n/100)*percent + ((n%100)*percent+99)/100
+```
+
+这种分拆避免先做 n*percent 的整数溢出。调用方保证非空和合法百分位，不为此私有 helper 增加通用输入解析。
+
+举例（仅说明规则，非实验结果）：10 场中 8 completed、1 failed、1 timed_out，完成率 0.8；成功尾部样本为 10/20/30/40/50/60/70/80ms，p50=40ms、p95=80ms、Samples=8。失败会话即使 1ms 就返回，也不能混入这些尾部样本。8 个样本时该算法的 p95 就是最大值，必须保留样本数，不以少量成功样本推断稳定容量。
+
+### 后续验收
+
+助手验证四类数量及固定分母、失败会话部分音频计量、全失败时 Tail=nil、合法零延迟、单样本/偶数样本/20 样本分位数、乱序输入和不修改原报告、缺失或矛盾报告被拒绝、计划量和累计量的边界保护，以及对真实 RunBatch 报告的接线。该步骤尚无实现或新增实验结果；通过后再设计保留原始记录、错误和摘要的输出格式。
