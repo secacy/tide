@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/secacy/tide-artisan/internal/wsclient"
+	"github.com/secacy/tide-artisan/internal/wsprotocol"
 )
 
 func main() {
@@ -30,6 +33,9 @@ func run(ctx context.Context) error {
 			URL:        "ws://localhost:8080/v1/asr",
 			ChunkBytes: 3200, // 默认模拟 100ms 左右的音频块
 			Realtime:   true,
+			OnResult: func(result wsprotocol.ResultMessage, _ time.Time) {
+				fmt.Printf("result text=%q final=%v\n", result.Text, result.IsFinal)
+			},
 		},
 	)
 	if err != nil {

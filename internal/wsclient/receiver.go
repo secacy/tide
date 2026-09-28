@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/secacy/tide-artisan/internal/wsprotocol"
@@ -21,11 +22,13 @@ func (c *Client) receive(ctx context.Context, conn *websocket.Conn) error {
 			return fmt.Errorf("read websocket message: %w", err)
 		}
 
+		receivedAt := time.Now()
+
 		if messageType != websocket.MessageText {
 			return fmt.Errorf("unexpected websocket message type from gateway: %v", messageType)
 		}
 
-		if err := c.handleTextMessage(data); err != nil {
+		if err := c.handleTextMessage(data, receivedAt); err != nil {
 			return err
 		}
 	}
@@ -36,8 +39,9 @@ type envelope struct {
 	Type wsprotocol.MessageType `json:"type"`
 }
 
-// handleTextMessage 处理 Gateway 返回的应用层消息。
-func (c *Client) handleTextMessage(data []byte) error {
+// handleTextMessage 解析应用层消息，并向观察者传递有效结果。
+// receivedAt 由读取消息的调用方提供，避免使用解析完成时间代替接收时间。
+func (c *Client) handleTextMessage(data []byte, receivedAt time.Time) error {
 	var env envelope
 
 	if err := json.Unmarshal(data, &env); err != nil {
@@ -52,10 +56,9 @@ func (c *Client) handleTextMessage(data []byte) error {
 			return fmt.Errorf("decode result message: %w", err)
 		}
 
-		// 示例阶段直接输出。
-		//
-		// 后续可以进一步抽成 ResultHandler，让 WebSocket transport 不再依赖 stdout。
-		fmt.Printf("result text=%q final=%v\n", result.Text, result.IsFinal)
+		if c.cfg.OnResult != nil {
+			c.cfg.OnResult(result, receivedAt)
+		}
 
 		return nil
 

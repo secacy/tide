@@ -4,19 +4,31 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/coder/websocket"
 	"github.com/secacy/tide-artisan/internal/audio"
+	"github.com/secacy/tide-artisan/internal/wsprotocol"
 	"golang.org/x/sync/errgroup"
 )
 
 // Config 描述 WebSocket 模拟客户端配置。
 type Config struct {
-	URL        string // Gateway 的 WebSocket 地址，例如：ws://localhost:8080/v1/asr
-	ChunkBytes int    // 一次最多读取并发送多少 PCM 字节(客户端的发送粒度)，默认3200bytes(100ms)
-	Realtime   bool   // 是否模拟真实麦克风速度。true: 10 秒音频大约需要 10 秒发送完成; false: 尽可能快地发送，适合吞吐测试
-	ReadLimit  int64  // 限制服务端单个 WebSocket message 的最大大小，它影响客户端读取 Gateway 返回消息，不影响客户端发送 PCM
+	URL        string        // Gateway 的 WebSocket 地址，例如：ws://localhost:8080/v1/asr
+	ChunkBytes int           // 一次最多读取并发送多少 PCM 字节(客户端的发送粒度)，默认3200bytes(100ms)
+	Realtime   bool          // 是否模拟真实麦克风速度。true: 10 秒音频大约需要 10 秒发送完成; false: 尽可能快地发送，适合吞吐测试
+	ReadLimit  int64         // 限制服务端单个 WebSocket message 的最大大小，它影响客户端读取 Gateway 返回消息，不影响客户端发送 PCM
+	OnResult   ResultHandler // 在识别结果成功解析后调用。nil 表示不观察、不打印，但仍执行协议校验
 }
+
+// ResultHandler 观察一个成功解析的识别结果。
+//
+// 回调在接收协程中同步执行，应快速返回。
+// 同一场会话内按接收顺序调用；多个 Run 共用回调时，调用方需要保证回调访问的数据并发安全。
+type ResultHandler func(
+	result wsprotocol.ResultMessage,
+	receivedAt time.Time, // 客户端读完消息后立即记录的本地时间
+)
 
 // validate 检查客户端配置是否合法。
 func (c Config) validate() error {
