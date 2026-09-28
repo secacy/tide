@@ -1,8 +1,8 @@
 # 第五阶段：并发负载工具与实验口径
 
-状态：有限静音 PCM 源、客户端收发观察、单会话记录器及 RunSession 执行/报告已实现并验收；并发批次与汇总待实现。已有多 Worker 配置、会话轮询与连接回收验收；本方案尚无容量实测数据。
+状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession 及有限并发 RunBatch 已实现并验收；批次统计与可保存输出待实现。已有多 Worker 配置、会话轮询与连接回收验收；本方案尚无容量实测数据。
 
-当前小步：RunSession 已验收，新增 23 项及原有 23 项检查通过 loadgen 包 race，包含真实 Gateway/Mock 单会话。开始实现 RunBatch：一次释放 N 个独立会话，保留每场报告与错误，单场失败不取消其他会话；等待开发者实现。
+当前小步：RunBatch 已验收，AudioBytes 采样对齐前置校验已补齐，完成条件 helper 已整理接入。新增 20 项批次检查及原有 46 项全部通过定向 race；下一步设计批次统计与可保存输出。
 
 ## 为什么先准备负载与观测
 
@@ -424,7 +424,7 @@ func RunSession(ctx context.Context, cfg SessionConfig) (SessionReport, error)
 
 所有网络服务均在同一测试进程的本地临时端口运行，不是程序入口或多进程部署实验。本步未改动客户端、Gateway、Worker，因此只运行新增执行器所在包及其真实链路测试；未重复全项目测试。尚未运行并发批次或得出稳定容量，后续推进有限并发运行和原始报告保留。
 
-## 第四步之一：有限并发批次（2026-09-28，待实现）
+## 第四步之一：有限并发批次（2026-09-28，已验收）
 
 ### 负载模型与取舍
 
@@ -503,3 +503,31 @@ start 放行前或创建协程期间收到取消，仍会放行已规划的全�
 ### 后续验收
 
 助手验证：无效批次/会话配置及预取消 context 不发请求；服务端屏障证明多个会话确实重叠；混合成功与失败时健康会话继续，报告数为 N 且 Index 唯一；单场期限不取消其他会话；父取消后仍等待全部任务返回且保留各场报告；结果元素隔离及 race 检查。保留现有 RunSession 配置/网络回归，尚无本步新增测试或容量结论。
+
+### 初稿检查与待修正项
+
+RunBatch 使用固定结果切片、按索引写入、统一开始信号和 WaitGroup 收尾；单场错误保存在结果，父 context 错误在全部任务退出后返回，主体符合方案。助手只格式化 batch.go 并新增 batch_test.go，没有修改生产逻辑。
+
+共享 SessionConfig.validate 缺少 AudioBytes 的采样对齐检查。输入 AudioBytes=3、Sessions=3 时，批次前置校验通过，随后每场由 NewSilenceSource 拒绝，最终 RunBatch 返回非零批次报告、三个零值单场报告和 nil 批次错误。虽然没有发出网络请求，但无效实验参数被当作已执行批次收集，违反前置失败返回零报告的约定。应在 AudioBytes > 0 检查后补 `cfg.AudioBytes % int64(audio.BytesDepth) != 0` 的错误返回。
+
+检查期间 session.go 另新增 validateSessionCompletion，目前 RunSession 仍使用原来的内联检查，没有调用 helper；helper 中又保留两套重复条件。若继续此抽取，应保留一套检查（含 end 开始时间非零），补函数说明，并由 RunSession 调用 helper 替代原整段内联判断、统一设置 SessionFailed 和包装错误。未将未调用 helper 的逻辑算作已验证的运行路径。
+
+执行 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./internal/loadgen -count=1 -timeout=60s -v`：全包 22 个顶层测试、66 项叶级检查中 65 通过、1 失败（3.772s），未报告数据竞争。失败项为 TestRunBatchPreflight/unaligned_audio；旧 46 项回归全部通过。新增批次共 20 项，结果包括：
+
+- 14 项前置检查中仅音频总量未对齐失败；检查期间 HTTP 请求数为 0，失败在于报告/返回错误契约，而非已经发送非法 PCM。
+- 服务端屏障等 8 场全部上传结束后才释放尾部，8 场均 completed，证明真实重叠；每场 10 字节、3 块，索引、时间范围及尾部样本存储独立。
+- 5 场混合结果中，错误尾部场景为 4 completed/1 failed；单场期限场景为 4 completed/1 timed_out；批次错误均为 nil。期限场景健康会话先完成，不声称检验了在它到期之后继续运行的同期限会话。
+- 父取消和父期限各运行 4 场，均保留 4 份包含完整 10 字节输入的 canceled/timed_out 报告并返回可追溯父级错误；测试服务端处理均结束。
+- 3 场 HTTP 503 全部失败，保留 3 个结果，RunBatch 仍返回 nil 批次错误，符合单场错误与批次收集结果分离的约定。
+
+本次属于可控本地 WebSocket 并发正确性测试；旧单会话 Gateway/Mock 回归也通过，但没有进行多 Worker 并发容量实验。待前置校验和未完成的 helper 抽取整理后复验；本次不提交未通过的整体实现。
+
+同轮最新复验：开发者已去掉 validateSessionCompletion 的重复检查，并在 RunSession 中调用它替代内联逻辑；助手补函数注释。按最新代码重新执行同一包 race（省略 -v），仍仅 TestRunBatchPreflight/unaligned_audio 失败，耗时 3.749s；其余检查通过，未报告数据竞争。当前只需补 AudioBytes 采样对齐的共享前置校验，helper 抽取不再是待修正项。测试和文档保留在工作区，尚未提交。
+
+### 修正后验收
+
+开发者已在 SessionConfig.validate 中补齐 `cfg.AudioBytes % int64(audio.BytesDepth) != 0` 的错误返回。助手仅运行 gofmt 规范新增校验行的格式，没有修改逻辑。
+
+再次执行 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./internal/loadgen -count=1 -timeout=60s -v`：22 个顶层测试、66 项叶级检查全部通过（4.842s），未报告数据竞争。原失败用例现在在批次开始前返回零报告与非 nil 错误，14 项前置检查均不产生 HTTP 请求；8 场重叠、混合结果、父取消/期限收尾及全部拒绝的完整收集继续通过。原 46 项音频源、记录器和 RunSession 检查（含实际 Gateway/Mock 单会话）也全部通过。
+
+本步验收的是有限批次执行、错误隔离与完整结果保留，未计算成功率/分位数、导出原始记录或开展正式容量实验。有限批次已经可以作为下一步统计与输出的输入，仍不把计划 N 当作持续 N 个活动会话。

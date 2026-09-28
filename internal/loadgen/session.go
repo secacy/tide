@@ -6,9 +6,37 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/secacy/tide-artisan/internal/audio"
 	"github.com/secacy/tide-artisan/internal/wsclient"
 	"github.com/secacy/tide-artisan/internal/wsprotocol"
 )
+
+// validate 检查会话负载参数，不建立连接。
+// RunSession 和 RunBatch 共用，避免无效配置启动一批失败任务。
+func (cfg SessionConfig) validate() error {
+	if cfg.Timeout <= 0 {
+		return fmt.Errorf("timeout must be a positive number")
+	}
+	if cfg.ChunkBytes <= 0 {
+		return fmt.Errorf("chunk bytes must be a positive number")
+	}
+	if cfg.ChunkBytes%audio.BytesDepth != 0 {
+		return fmt.Errorf("chunk bytes %d must align to %d-byte PCM samples", cfg.ChunkBytes, audio.BytesDepth)
+	}
+	if cfg.AudioBytes <= 0 {
+		return fmt.Errorf("audio bytes must be a positive number")
+	}
+	if cfg.AudioBytes%int64(audio.BytesDepth) != 0 {
+		return fmt.Errorf("audio bytes %d must align to %d-byte PCM samples", cfg.AudioBytes, audio.BytesDepth)
+	}
+	if cfg.ExpectedFinalText == "" {
+		return fmt.Errorf("expected final text must be a non-empty string")
+	}
+	if cfg.URL == "" {
+		return fmt.Errorf("URL must be a non-empty string")
+	}
+	return nil
+}
 
 // SessionConfig 定义一次 Mock 负载会话的输入和验证条件。
 type SessionConfig struct {
@@ -48,14 +76,8 @@ type SessionReport struct {
 // 已开始的尝试即使失败，也返回包含已有观测的报告和非 nil 错误。
 func RunSession(ctx context.Context, cfg SessionConfig) (SessionReport, error) {
 	// 1. 检查参数、准备组件
-	if cfg.Timeout <= 0 {
-		return SessionReport{}, fmt.Errorf("timeout must be a positive number")
-	}
-	if cfg.ChunkBytes <= 0 {
-		return SessionReport{}, fmt.Errorf("chunk bytes must be a positive number")
-	}
-	if cfg.ExpectedFinalText == "" {
-		return SessionReport{}, fmt.Errorf("expected final text must be a non-empty string")
+	if err := cfg.validate(); err != nil {
+		return SessionReport{}, err
 	}
 	source, err := NewSilenceSource(cfg.AudioBytes)
 	if err != nil {
@@ -119,59 +141,9 @@ func RunSession(ctx context.Context, cfg SessionConfig) (SessionReport, error) {
 
 	observation := report.Observation
 
-	if observation.StartWrite.Kind != wsclient.WriteStart {
+	if err := validateSessionCompletion(cfg, observation, lastResult); err != nil {
 		report.Outcome = SessionFailed
-		return report, errors.New("session incomplete: start write was not observed")
-	}
-
-	if observation.StartWrite.Err != nil {
-		report.Outcome = SessionFailed
-		return report, fmt.Errorf("session incomplete: start write failed: %w", observation.StartWrite.Err)
-	}
-
-	if observation.AudioBytesWritten != cfg.AudioBytes {
-		report.Outcome = SessionFailed
-		return report, fmt.Errorf("session incomplete: wrote %d audio bytes, want %d", observation.AudioBytesWritten, cfg.AudioBytes)
-	}
-
-	if observation.WriteFailures != 0 {
-		report.Outcome = SessionFailed
-		return report, fmt.Errorf("session incomplete: observed %d write failures", observation.WriteFailures)
-	}
-
-	if observation.EndWrite.Kind != wsclient.WriteEnd {
-		report.Outcome = SessionFailed
-		return report, errors.New("session incomplete: end write was not observed")
-	}
-
-	if observation.EndWrite.Err != nil {
-		report.Outcome = SessionFailed
-		return report, fmt.Errorf("session incomplete: end write failed: %w", observation.EndWrite.Err)
-	}
-
-	if observation.ResultCount == 0 {
-		report.Outcome = SessionFailed
-		return report, errors.New("session incomplete: no result received")
-	}
-
-	if !lastResult.IsFinal {
-		report.Outcome = SessionFailed
-		return report, errors.New("session incomplete: last result is not final")
-	}
-
-	if lastResult.Text != cfg.ExpectedFinalText {
-		report.Outcome = SessionFailed
-		return report, fmt.Errorf("session incomplete: final text mismatch: got %q, want %q", lastResult.Text, cfg.ExpectedFinalText)
-	}
-
-	if observation.LastResultAt.IsZero() {
-		report.Outcome = SessionFailed
-		return report, errors.New("session incomplete: last result time is zero")
-	}
-
-	if observation.LastResultAt.Before(observation.EndWrite.StartedAt) {
-		report.Outcome = SessionFailed
-		return report, fmt.Errorf("session incomplete: last result arrived before end write started")
+		return report, fmt.Errorf("session incomplete: %w", err)
 	}
 
 	tail := observation.LastResultAt.Sub(
@@ -182,4 +154,54 @@ func RunSession(ctx context.Context, cfg SessionConfig) (SessionReport, error) {
 	report.TailLatency = &tail
 
 	return report, nil
+}
+
+// validateSessionCompletion 核对正常返回的会话是否满足当前 Mock 的完整完成条件。
+// 只检查已收集的事实；状态分类和尾部等待计算由 RunSession 负责。
+func validateSessionCompletion(cfg SessionConfig, observation SessionObservation, lastResult wsprotocol.ResultMessage) error {
+	if observation.StartWrite.Kind != wsclient.WriteStart {
+		return errors.New("start write was not observed")
+	}
+	if observation.StartWrite.Err != nil {
+		return fmt.Errorf("start write failed: %w", observation.StartWrite.Err)
+	}
+
+	if observation.WriteFailures != 0 {
+		return fmt.Errorf("observed %d write failures", observation.WriteFailures)
+	}
+
+	if observation.AudioBytesWritten != cfg.AudioBytes {
+		return fmt.Errorf("wrote %d audio bytes, want %d", observation.AudioBytesWritten, cfg.AudioBytes)
+	}
+
+	if observation.EndWrite.Kind != wsclient.WriteEnd {
+		return errors.New("end write was not observed")
+	}
+	if observation.EndWrite.Err != nil {
+		return fmt.Errorf("end write failed: %w", observation.EndWrite.Err)
+	}
+
+	if observation.ResultCount == 0 {
+		return errors.New("no result received")
+	}
+	if !lastResult.IsFinal {
+		return errors.New("last result is not final")
+	}
+	if lastResult.Text != cfg.ExpectedFinalText {
+		return fmt.Errorf("final text mismatch: got %q, want %q", lastResult.Text, cfg.ExpectedFinalText)
+	}
+
+	if observation.LastResultAt.IsZero() {
+		return errors.New("last result time is zero")
+	}
+	if observation.EndWrite.StartedAt.IsZero() {
+		return errors.New("end write start time is zero")
+	}
+	if observation.LastResultAt.Before(observation.EndWrite.StartedAt) {
+		return errors.New(
+			"last result arrived before end write started",
+		)
+	}
+
+	return nil
 }
