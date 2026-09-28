@@ -40,7 +40,7 @@ func TestParseGatewayConfigValues(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			want := gateway.Config{MaxMessageBytes: 1024 * 1024, MaxPendingAudioBytes: tc.budget}
+			want := gatewayConfig{WorkerAddrs: []string{"localhost:50051"}, Gateway: gateway.Config{MaxMessageBytes: 1024 * 1024, MaxPendingAudioBytes: tc.budget}}
 			if !reflect.DeepEqual(cfg, want) {
 				t.Fatalf("config=%+v, want %+v", cfg, want)
 			}
@@ -49,7 +49,7 @@ func TestParseGatewayConfigValues(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			g, err := gateway.New(context.Background(), pool, cfg)
+			g, err := gateway.New(context.Background(), pool, cfg.Gateway)
 			if tc.budget < 0 {
 				if g != nil || err == nil || !strings.Contains(err.Error(), "max pending audio bytes") {
 					t.Fatalf("negative budget not rejected by Gateway: gateway=%v err=%v", g, err)
@@ -83,7 +83,7 @@ func TestParseGatewayConfigInvalidArguments(t *testing.T) {
 			if err == nil || errors.Is(err, flag.ErrHelp) {
 				t.Fatalf("expected argument error, got %v", err)
 			}
-			if cfg != (gateway.Config{}) {
+			if !reflect.DeepEqual(cfg, gatewayConfig{}) {
 				t.Fatalf("invalid arguments returned usable partial config: %+v", cfg)
 			}
 		})

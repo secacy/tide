@@ -1,6 +1,6 @@
 # 第五阶段：多 Worker 新会话分配
 
-方案日期：2026-09-27；最后核对：2026-09-28。状态：独立轮询选择器已接入 Gateway 并通过双 Worker 集成及全项目 race 回归；生产入口仍配置一个 Worker。
+方案日期：2026-09-27；最后核对：2026-09-28。状态：独立轮询选择器已接入 Gateway 并通过双 Worker 集成及全项目 race 回归；生产入口已支持 -workers 有序地址列表及统一连接回收。
 
 ## 背景与目标
 
@@ -137,7 +137,7 @@ go test -race ./internal/workerpool -count=1 -timeout=30s -v
 
 这些是分配与清理的正确性证据，不是稳定容量、吞吐或延迟改善结论。Gateway 库已支持传入多 Worker 池，命令入口仍只组装 localhost:50051；下一步补多地址启动配置与连接组装/回收，之后再推进负载工具和指标。
 
-## 下一小步：Gateway 多地址配置与连接组装（2026-09-28，待实现）
+## Gateway 多地址配置与连接组装（2026-09-28，已验收）
 
 目标：通过同一 Gateway 可执行程序配置多个后端，不再修改源码中的单个 workerAddr。选择单个 -workers 逗号分隔列表，默认 localhost:50051，保留输入顺序。相比重复 -worker 参数，无需自定义 flag.Value；相比配置文件，当前两个配置项无需引入文件加载和覆盖规则。重复指定 -workers 沿用标准 flag 字符串参数的后值覆盖前值行为，不累计。
 
@@ -157,3 +157,52 @@ go test -race ./internal/workerpool -count=1 -timeout=30s -v
 已核对本地 grpc-go v1.83.2 clientconn.go：NewClient 不执行网络 I/O，创建客户端成功不意味着 Worker 在线；本步不增加启动探活、健康剔除或自动换 Worker 重试。连接到不可用后端的失败仍由会话处理。创建错误应注明对应地址并保留 %w 错误链；日志记录 Worker 地址列表/顺序与 round_robin 策略，不宣称列表中后端已健康。
 
 后续助手验收：保留单地址默认值，双地址/IPv6/空白修剪/顺序；空项、重复及非法端口/主机形式拒绝；旧预算与帮助规则保持；完整链路轮询及服务退出后的连接关闭。可触发错误路径与仅代码审查的清理分支分别记录，不把 NewClient 构造成功或静态配置检查当成在线探测。此步实现前 docs/command.md 不提前发布可用多地址命令。
+
+### 多地址初稿检查（2026-09-28）
+
+入口级 gatewayConfig、-workers 参数和 run 的有序连接组装已实现；run 在循环前登记 defer，每个成功创建的 ClientConn 立即追加，后续返回时统一关闭，代码结构符合清理责任约定。当前发现两项解析问题：
+
+1. parseGatewayConfig 仍直接 strings.Split，未调用已新增的 parseWorkerAddresses，导致去空白、空项、重复及格式校验被命令行入口绕过。应调用辅助函数，失败返回零配置，成功保存校验后的列表。
+2. parseWorkerAddresses 使用 strconv.Atoi，接受 +50051，与本步无符号十进制端口规则不一致。可改用 strconv.ParseUint(port,10,16)，处理错误并拒绝 0，保留地址原始表示。
+
+助手已适配旧配置测试，并新增 worker_addresses_test.go。有效地址与非法地址同时经过 helper 和完整 CLI 两条路径验证；保留默认值、预算语义、帮助、重复参数后值覆盖和多次解析隔离检查。
+
+执行 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./cmd/gateway -count=1 -timeout=30s -v`：77 项叶级检查中 54 通过、23 失败，未报告数据竞争。旧 20 项配置检查通过；新增 57 项中 23 项失败，分别是 CLI 首尾空白未去除、21 类非法 CLI 地址被接受，以及 helper 接受带加号端口。
+
+业务代码留开发者修正；连接回收目前只有代码审查结论，尚未执行本步的多地址入口链路/退出回收验证。本次未运行全项目重复回归，不标记完成、不提交未通过的代码，也不发布已可用的多地址命令。
+
+### 地址修正复验及入口日志问题（2026-09-28）
+
+parseGatewayConfig 已调用 parseWorkerAddresses 并传播错误，端口已改为 ParseUint(port,10,16) 且拒绝 0。当前 main 的配置日志改成 slog.Info，但仍使用 Printf 格式串和单个值参数，普通包测试被 vet 拒绝：slog.Info 的 cfg.WorkerAddrs 参数应对应字符串键或 slog.Attr。应改为消息加键值对，例如 slog.Info("gateway backend configuration", "strategy", "round_robin", "workers", cfg.WorkerAddrs)。
+
+为独立确认解析修正，在 cmd/gateway 目录执行：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+go test -race config.go worker_addresses.go config_test.go worker_addresses_test.go -count=1 -timeout=30s -v
+```
+
+全部 77 项配置检查通过（1.635s），未报告数据竞争。该命令只编译列出的配置源码及测试，不包含 main.go，不能视为 Gateway 包或完整启动验收；没有关闭 vet。修正启动日志后，继续多地址完整链路和连接回收验证。当前不提交未通过的整体实现。
+
+### 多地址入口修正后验收（2026-09-28）
+
+地址校验已接入，端口 ParseUint 与 slog 键值对写法均已修正。助手新增 [startup_test.go](../../../cmd/gateway/startup_test.go)，没有修改生产逻辑。
+
+执行：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+go test -race ./cmd/gateway -count=1 -timeout=120s -v
+```
+
+整包测试及默认 vet 通过（3.188s），共 86 项叶级检查：原配置和地址 helper/CLI 共 77 项、真实可执行程序退出检查 8 项、完整多地址启动链路 1 项。未报告数据竞争。
+
+真实可执行程序验证两种帮助退出 0；空列表、重复、带加号端口、尾部空项、未知参数以及负预算均退出 1，均未启动 HTTP 监听。负预算在地址解析成功后由 Gateway 构造拒绝，其配置日志按键值对记录策略和有序地址，无 !BADKEY。子程序通过普通 go build 构建，未声称对子程序开启 race。
+
+网络集成直接调用当前 parseGatewayConfig → run，使用两个仍在运行的真实 TCP gRPC 测试后端。以含首尾空白的 B,A 地址顺序配置，6 个真实 WebSocket 会话依次到 B,A,B,A,B,A；前 4 个发送两块音频并正常收到尾部结果与 1000 关闭，后 2 个保持活动并在应用 context 取消后收到 1001，Worker RPC 返回 Canceled，run 返回 nil。
+
+通过服务端 gRPC stats.ConnBegin/ConnEnd 观测：首次 RPC 前没有建立后端连接；每个 Worker 的 3 条 stream 共用 1 条连接（opened=1、closed=0），run 退出后两者均 opened=1、closed=1。断言时测试后端尚未 Stop，测试进程仍在运行，因而此结果不依赖服务端或进程退出帮忙关闭连接。两个仍活动的 RPC 和共享连接均完成清理。
+
+该测试因当前 HTTP 地址固定 :8080，会在端口已占用时明确跳过；本次实际执行并通过，没有跳过。中途 NewClient 构造失败后的统一 defer 清理只完成代码审查，未通过故障注入验证；不混同为实测证据。
+
+本步只改变 cmd/gateway 的启动组装，定向包测试已覆盖受影响入口及真实链路，未重复其他包的网络回归。更新 [运行文档](../../command.md) 发布 -workers 与预算组合命令。这些属于配置、分配与资源回收正确性证据，不是容量或吞吐结论；后续进入并发负载工具、指标口径和容量实验。

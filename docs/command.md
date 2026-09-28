@@ -42,7 +42,22 @@ go run ./cmd/asr-worker -listen=127.0.0.1:50052 -processing-concurrency=2 -proce
 
 这些是启动示例，不代表稳定容量结论。启动日志记录实际监听地址和三个处理/响应参数；用 `-listen=127.0.0.1:0` 可让系统分配空闲端口，实际端口见日志。参数解析及 Worker 配置校验在监听之前完成，帮助正常退出，配置或监听错误非零退出。
 
-Gateway 当前仍连接 `localhost:50051`，尚不会向第二个 Worker 分配会话。两个独立 Worker 的启动与直接 gRPC 会话已通过测试；Gateway 库的双 Worker 轮询分配也已通过集成测试，命令入口的多地址配置仍待实现。
+Gateway 默认使用 `localhost:50051`；配置上述两个 Worker 时：
+
+```bash
+go run ./cmd/gateway -workers=127.0.0.1:50051,127.0.0.1:50052
+```
+
+`-workers` 为逗号分隔的有序 `host:port` 列表，IPv6 使用 `[::1]:50051` 格式。每项首尾空白会去除；空项、重复地址、非法格式或非 1～65535 的纯数字端口会导致启动失败。地址按去空白后的字符串查重，不合并域名/IP 别名；本步不支持 `dns:///...` 等解析器 URI。重复指定 `-workers` 时使用最后一个值。
+
+新会话在合法 `start` 后按列表顺序轮询，整场固定使用选中的 Worker。每个后端复用一个 gRPC 客户端；Gateway 退出时统一关闭。启动日志记录地址列表与 `round_robin` 策略，配置成功不代表后端在线；当前没有健康剔除或跨 Worker 自动重试。
+
+多 Worker 与积压预算可同时配置：
+
+```bash
+go run ./cmd/gateway -workers=127.0.0.1:50051,127.0.0.1:50052 -max-pending-audio-bytes=32000
+```
+
 
 ```bash
 go run ./cmd/gateway

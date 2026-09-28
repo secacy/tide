@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -22,9 +23,8 @@ import (
 )
 
 const (
-	gatewayAddr     = ":8080"           // WebSocket Gateway 对外监听地址
-	workerAddr      = "localhost:50051" // gRPC Mock Worker 地址
-	shutdownTimeout = 15 * time.Second  // HTTP Server 优雅关闭和已有会话退出的等待时间上限
+	gatewayAddr     = ":8080"          // WebSocket Gateway 对外监听地址
+	shutdownTimeout = 15 * time.Second // HTTP Server 优雅关闭和已有会话退出的等待时间上限
 )
 
 func main() {
@@ -36,6 +36,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	slog.Info("gateway backend configuration",
+		"strategy", "round_robin",
+		"workers", cfg.WorkerAddrs,
+	)
+
 	// SIGINT 对应 Ctrl+C，SIGTERM 通常用于容器或进程管理器停止服务。
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -45,30 +50,41 @@ func main() {
 	}
 }
 
-// run 使用启动配置组装应用依赖，并运行服务；配置的语义校验由 gateway.New 完成。
-func run(ctx context.Context, cfg gateway.Config) error {
-	grpcConn, err := grpc.NewClient(workerAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return fmt.Errorf("create worker grpc client: %w", err)
+// run 根据启动配置组装后端客户端、选择器和 Gateway，并协调退出。
+// 所有后端客户端由本函数创建和关闭，会话只拥有自己的 RPC stream。
+func run(ctx context.Context, cfg gatewayConfig) error {
+	var conns []*grpc.ClientConn
+	defer func() {
+		for _, conn := range conns {
+			_ = conn.Close()
+		}
+	}()
+
+	workers := make([]workerpool.Worker, 0, len(cfg.WorkerAddrs))
+
+	for _, addr := range cfg.WorkerAddrs {
+		conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		if err != nil {
+			return fmt.Errorf("create worker grpc client %q: %w", addr, err)
+		}
+
+		// 必须在成功创建后立即登记，确保后续任一步骤失败时都能关闭。
+		conns = append(conns, conn)
+
+		workers = append(workers, workerpool.Worker{
+			ID:     addr,
+			Client: asrv1.NewASRServiceClient(conn),
+		})
 	}
-	defer grpcConn.Close()
 
-	workerClient := asrv1.NewASRServiceClient(grpcConn)
-
-	pool, err := workerpool.NewRoundRobin([]workerpool.Worker{
-		{
-			ID:     workerAddr,
-			Client: workerClient,
-		},
-	})
-
+	pool, err := workerpool.NewRoundRobin(workers)
 	if err != nil {
 		return fmt.Errorf("create worker pool: %w", err)
 	}
 
 	sessionCtx, cancelSessions := context.WithCancel(context.Background()) // sessionCtx 管理本 Gateway 所有会话的停止通知
 	defer cancelSessions()
-	wsGateway, err := gateway.New(sessionCtx, pool, cfg)
+	wsGateway, err := gateway.New(sessionCtx, pool, cfg.Gateway)
 	if err != nil {
 		return fmt.Errorf("create gateway: %w", err)
 	}
