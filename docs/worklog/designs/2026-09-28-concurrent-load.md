@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察回调和单会话事实记录器已实现并验收；完整单会话执行/报告与并发运行待实现。已有多 Worker 配置、会话轮询与连接回收验收；本方案尚无容量实测数据。
 
-当前小步：SessionRecorder 已验收，汇总两侧观测并提供一致快照；新增 11 项检查及原有 12 项音频源检查通过 loadgen 包 race。完整会话执行与成功判定留后续步骤。
+当前小步：SessionRecorder 已验收，新增 11 项检查及原有 12 项音频源检查通过 loadgen 包 race。开始实现 RunSession，将有限音频、收发观察与完整收尾连接起来；采用当前 Mock 的预期尾部校验，等待开发者实现。
 
 ## 为什么先准备负载与观测
 
@@ -327,3 +327,87 @@ OnResult 可能早于 end 的 OnWrite 回调取得锁；只分别保存事实，
 - 并发测试用一个发送协程记录 2000 次成功音频写入和一次失败 end，一个接收协程记录 1500 条结果（500 条 final），第三个协程取 2000 次快照。相关计数/时间字段保持一致，最终成功量 6400000 字节、失败 1 次，快照与最终预期相符。
 
 这些数值来自直接构造事件的行为测试，不是实际音频发送、网络吞吐、负载容量或资源上界实验。当前仍未将记录器接入真实 Run，也未实现最终报告或成功分类；下一步完成单会话执行与汇总。
+
+## 第三步之二：单会话执行与最终报告（2026-09-28，待实现）
+
+### 范围与选择
+
+新增 internal/loadgen/session.go，连接有限静音源、独立记录器和 wsclient.Run，产生一次尝试的最终报告。当前用于确定性 Mock；不增加并发批次、命令行或跨会话共享状态，不改 wsclient 的退出逻辑。
+
+完成标准可选：只看 Run 返回 nil（无法证明输入和尾部完整）；再要求任意 final（可能只是较早片段）；校验当前 Mock 的预期尾部并同时核对输入/正常结束（本步选择）；新增通用 session_done 协议（可供未来模型使用，但本步没有必要扩展整个服务端协议）。选择 Mock 明确的完成契约，不把特定文本断言推广为真实 ASR 质量校验。
+
+结果通过 `(SessionReport, error)` 返回：前置配置或构造失败返回零报告和错误，尚未开始尝试；一旦调用 Run，成功失败都返回带起止时间与观测的报告，非完整完成时 error 非 nil。调用方遇错仍应保留报告；未来并发批次不能因单场失败直接丢弃统计。报告不重复存储同一个 error，最终导出时由汇总层把返回错误转换为可保存字段。
+
+### 数据结构
+
+```go
+// SessionConfig 定义一次 Mock 负载会话的输入与验证条件。
+// 不在执行器里隐式调整块大小、音频量或超时。
+type SessionConfig struct {
+    URL               string        // Gateway WebSocket 地址。
+    AudioBytes        int64         // 计划 PCM 总字节数，正值且采样对齐。
+    ChunkBytes        int           // 每次音频写入上限，正值且采样对齐。
+    Realtime          bool          // true 按现有 Pacer 节奏发送；false 尽快发送。
+    Timeout           time.Duration // 整场期限，涵盖拨号、发送和等待关闭，必须为正。
+    ExpectedFinalText string        // 本次 Mock 配置的尾部文本，必须非空，不内置默认文本。
+}
+
+// SessionOutcome 表示一次已开始尝试的最终分类；空值表示尚未开始。
+type SessionOutcome string
+const (
+    SessionCompleted SessionOutcome = "completed" // 完成当前 Mock 的全部验收条件。
+    SessionFailed    SessionOutcome = "failed"    // 运行错误或完整性检查失败。
+    SessionCanceled  SessionOutcome = "canceled"  // 运行失败，观察到取消。
+    SessionTimedOut  SessionOutcome = "timed_out" // 运行失败，观察到期限到达。
+)
+
+// SessionReport 保存一次已开始尝试的配置、收尾时间和观察记录。
+// 它不是服务端资源回收证明，也不是识别质量评估。
+type SessionReport struct {
+    Config      SessionConfig      // 本次实际采用的负载参数。
+    StartedAt   time.Time          // 建立会话 context 前、调用 Run 前记录，包含拨号阶段。
+    FinishedAt  time.Time          // Run 返回后立即记录，尚未做报告整理。
+    Outcome     SessionOutcome     // 最终分类。
+    Observation SessionObservation // Run 返回后读取的完整快照。
+    TailLatency *time.Duration     // 仅完整完成时填写；nil 表示缺失，不是零延迟。
+}
+
+// RunSession 执行一场有限输入的 Mock 会话，并在双向收发结束后形成报告。
+// 前置失败返回零报告；已开始的尝试即使失败也返回完整观察及非 nil 错误。
+func RunSession(ctx context.Context, cfg SessionConfig) (SessionReport, error)
+```
+
+前置检查 Timeout > 0、ChunkBytes > 0、ExpectedFinalText 非空；音频总量和采样对齐由 NewSilenceSource 检查，块采样对齐与 URL 非空由 wsclient.New 检查。ChunkBytes 要提前检查，避免普通客户端的非正值默认逻辑改变实验输入。非空但不可拨号的 URL 或 HTTP 拒绝等仍作为实际 Run 失败报告，不在本步实现完整 URL 静态诊断。Timeout 可以小于音频发送时长，用于有意的取消/超时验证。
+
+### 执行步骤
+
+1. 完成前置检查，构造 source；声明零值 SessionRecorder 和一个局部 lastResult wsprotocol.ResultMessage。
+2. 创建 wsclient.Config，URL/ChunkBytes/Realtime 来自本次参数，ReadLimit 保留当前默认。OnWrite 绑定 recorder.ObserveWrite；OnResult 使用一个短闭包调用 recorder.ObserveResult，并将 result 赋给 lastResult。只保留最后一条消息，不保存结果历史。
+3. source 与 client 构造都成功后记录 StartedAt，创建 context.WithTimeout(ctx, cfg.Timeout)，defer cancel。每次调用都拥有独立 source/client/recorder/lastResult；没有全局实例。
+4. 调用 client.Run；返回后立即记录 FinishedAt，再读取 runCtx.Err()，最后 Snapshot。必须在 defer cancel 执行前读取 context 状态，不能把自己的清理取消误当成运行取消。
+5. 填写 Config、时间和 Observation，再分类。结果回调只由接收协程修改 lastResult，主协程只在 Run/errgroup.Wait 完成后读取，因此不需要为 lastResult 再加锁；不可提前或在 OnWrite 中读取它。
+
+### 运行错误与分类
+
+若 Run 返回非 nil 错误，以返回错误及 Run 返回时采样的会话 context 错误共同分类：任一 errors.Is(..., context.DeadlineExceeded) 为真则 timed_out；否则任一 errors.Is(..., context.Canceled) 为真则 canceled；否则 failed。用 errors.Join(runErr, ctxErr) 保留两者，再按需要用 %w 增加说明。
+
+这里是确定的报告分类规则，不声称还原并发错误的最早根因：网络失败与截止/取消可能接近同时发生。原始错误链保留用于诊断。记录器里的失败事件也保留；不要只返回 context 错误而丢掉网络错误。
+
+若 Run 返回 nil，不因为随后到来的 context 取消改写结果，继续以下完整性检查。检查失败均 classified failed 并返回描述缺口的非 nil 错误。任何非 completed 报告 TailLatency 为 nil。
+
+### 完整完成条件（全部满足）
+
+- Run 返回 nil；当前客户端语义意味着两个方向均正常返回、接收侧观察到 1000 关闭，而不是只收到一个结果。
+- StartWrite.Kind == WriteStart 且 Err == nil。
+- AudioBytesWritten == cfg.AudioBytes，且 WriteFailures == 0。
+- EndWrite.Kind == WriteEnd 且 Err == nil。
+- ResultCount > 0，最后收到的消息 lastResult.IsFinal 为真且 Text == cfg.ExpectedFinalText。
+- 最后一条结果的接收时间非零，且不早于 EndWrite.StartedAt。先核实控制消息存在、时间非零，再比较；相同时间允许。
+
+满足后 Outcome = completed，TailLatency 指向 `Observation.LastResultAt.Sub(Observation.EndWrite.StartedAt)`。使用 end 写入开始而非完成，是因为尾部可能在 end 的 OnWrite 回调执行前已被接收。该值包含 end 写入及传输/处理等待，是当前 Mock 的客户端尾部等待，不是模型纯计算时延或全程转录 p95。
+
+最后消息是预期 final 的检查故意严格：如果正常关闭却尾部缺失、文本不符，或预期 final 后又收到其他片段，不把它算入当前 Mock 的完整完成数。这不验证 Worker 的实际处理字节数或识别质量；这些仍需服务端测量及未来真实模型评估。lastResult 只留一条受客户端 ReadLimit 限制的消息，退出后释放，不写入报告正文。
+
+### 后续验收
+
+助手补配置拒绝、正常有限输入和尾块、缺少/错误/提前 final、结果错误、异常关闭、取消与超时的本地 WebSocket 验证，确认失败也保留观测、缺失尾部时延为 nil、错误链可诊断，并复验现有 loadgen 测试。有条件再通过现有 Gateway/Mock 实际链路验证一场完整会话；这些仍属于单会话正确性验收，不是并发容量数据。本节为待实现设计，尚无新增结果。
