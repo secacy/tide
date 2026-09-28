@@ -187,6 +187,13 @@ func TestRunBatchMixedOutcomes(t *testing.T) {
 			if completed != 4 || unsuccessful != 1 {
 				t.Fatalf("completed=%d unsuccessful=%d, want 4/1", completed, unsuccessful)
 			}
+			summary, summaryErr := loadgen.SummarizeBatch(report)
+			if summaryErr != nil || summary.Completed != 4 || summary.CompletionRate != 0.8 || summary.AudioBytesWritten != 50 || summary.Tail == nil || summary.Tail.Samples != 4 {
+				t.Fatalf("real batch summary = %+v, err = %v", summary, summaryErr)
+			}
+			if (mode == "bad_tail" && summary.Failed != 1) || (mode == "session_timeout" && summary.TimedOut != 1) {
+				t.Fatalf("failed outcome lost from summary: %+v", summary)
+			}
 			wait()
 		})
 	}
@@ -271,6 +278,10 @@ func TestRunBatchAllRejectedStillCollects(t *testing.T) {
 		if session.Err == nil || session.Report.Outcome != loadgen.SessionFailed || session.Report.TailLatency != nil || !reflect.DeepEqual(session.Report.Observation, loadgen.SessionObservation{}) {
 			t.Fatalf("rejection not preserved: %+v", session)
 		}
+	}
+	summary, summaryErr := loadgen.SummarizeBatch(report)
+	if summaryErr != nil || summary.Failed != 3 || summary.Completed != 0 || summary.CompletionRate != 0 || summary.AudioBytesWritten != 0 || summary.Tail != nil {
+		t.Fatalf("all-rejected batch summary = %+v, err = %v", summary, summaryErr)
 	}
 }
 
