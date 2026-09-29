@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：逐块发送排期事件已验收，Pacer.NextSendAt 与实时音频 WriteEvent.PlannedAt 已接入；新增 11 项检查，四个相关包共 231 项检查通过 race。下一步接记录器统计，再扩展 JSON 与复测；服务端观测及稳定容量仍待完成。
+当前小步：发送计划事件已验收。开始在 SessionRecorder 中汇总 AudioScheduleSamples 与 MaxAudioScheduleLag，区分缺失与零值，失败写入也保留排期事实；等待开发者实现。JSON 演进与复测留下一小步，服务端观测及稳定容量仍待完成。
 
 ## 为什么先准备负载与观测
 
@@ -1010,3 +1010,68 @@ writeJSON 调用该 helper 时传 time.Time{}。writeObserved 保持 StartedAt �
 执行 `go test -race ./internal/audio ./internal/wsclient ./internal/loadgen ./cmd/loadgen -count=1 -timeout=120s -v`：audio 5 项（1.494s）、wsclient 38 项（2.155s）、loadgen 126 项（5.565s）、命令包 62 项（5.616s），共 231 项全部通过，未报告数据竞争。耗时为测试执行时间，不作业务延迟指标。
 
 本步共新增 11 项检查，JSON v1 契约和既有命令行为回归通过。SessionRecorder 尚未汇总 PlannedAt，因此没有新的落盘排期指标或基线数据；下一步在同进程使用 Sub 计算并固定空间汇总，再明确输出演进与复测。
+
+
+## 第七步之二：会话内排期统计（2026-09-29，待实现）
+
+### 问题与方案取舍
+
+上一小步提供 PlannedAt，但音频回调结束后没有长期保存逐块事件。需要将这些事实变成每场报告可携带的统计，使长会话也保持固定空间。
+
+| 方案 | 收益 | 代价 / 决定 |
+| --- | --- | --- |
+| 保存所有块的落后样本 | 可以回看完整轨迹、精确计算分位数 | 内存与会话时长增长，本步不采用 |
+| 固定桶直方图 | 固定空间，可估计分布 | 需要提前确定桶边界与精度，本步先不增加 |
+| 样本数 + 最大落后 | 更新简单、固定空间，能检查是否曾明显落后 | 无法说明落后频率、持续时间或 p95；本步采用 |
+
+只记录最大值会混淆未观察到和观察到零落后；采用样本数与 time.Duration 值的组合，保留 SessionObservation 按值复制的快照性质。无需可变时长指针，不增加锁、channel、goroutine 或逐块容器。
+
+### 唯一生产文件改动：internal/loadgen/recorder.go
+
+在 SessionObservation 增加字段：
+
+```go
+// 有计划且有实际开始时间的音频 Write 样本数，包含失败尝试。
+// 为 0 表示没有可用排期样本，不能解释成发送准时。
+AudioScheduleSamples int64
+
+// max(0, StartedAt.Sub(PlannedAt)) 的最大值，包含失败尝试。
+// 仅 AudioScheduleSamples > 0 时有意义；无样本时保持 0。
+MaxAudioScheduleLag time.Duration
+```
+
+这是每场会话的音频发送开始落后，不是本次 Write 耗时、Worker 排队或结果延迟。仍在进行而未返回的 Write 尚未有回调，因此不在这些已观察样本中。
+
+### ObserveWrite 更新规则
+
+在现有锁内、case wsclient.WriteAudio 分支中增加排期统计，放在只处理 event.Err == nil 的成功量分支之外。事件满足 `!event.PlannedAt.IsZero() && !event.StartedAt.IsZero()` 时：
+
+1. 计算 `lag := event.StartedAt.Sub(event.PlannedAt)`，负值归零；仍在同进程使用 Sub，不转换 UTC/Unix 时间或格式化再解析。
+2. AudioScheduleSamples 增加 1。是否成功写出不影响此计数。
+3. 如果 lag 大于当前 MaxAudioScheduleLag，更新最大值。
+
+其他情况不产生排期样本：控制消息即使意外带 PlannedAt 也忽略该字段；PlannedAt 缺失包括正常非实时发送；StartedAt 缺失时无法计算，跳过排期统计，不能将缺失当成有效零落后。
+
+仅跳过新增排期统计，不能从 ObserveWrite 提前 return，原有音频成功量、写入失败数、控制事件与最大 Write 耗时继续按原规则更新。记录器依据事件字段工作，不额外读取 Realtime 配置或推断音频时长。
+
+实际开始早于计划的输入，按非负“落后”定义记为零并贡献一个样本；这不表示提前发送被证明符合节奏要求。当前正常 Pacer 不会主动提前发送，负值分支用于明确统计定义，不增加独立早发检测器。
+
+### 缺失值、并发与一致性
+
+| 已观察事实 | AudioScheduleSamples | MaxAudioScheduleLag | 含义 |
+| --- | --- | --- | --- |
+| 尚无音频尝试，或全部非实时 | 0 | 0 | 无可用样本 |
+| 一次有计划音频，实际与计划相同 | 1 | 0 | 有样本，本次没有晚发 |
+| 一次落后 5ms 成功，另一次落后 40ms 写入失败 | 2 | 40ms | 失败尝试保留已发生的落后；成功音频量只计前者 |
+
+计数与最大值在现有同一把 r.mu 下更新，Snapshot 仍锁内直接返回 observation 值，不需要改签名或深拷贝。运行中快照的二者必须来自同一时刻；之后的新事件、其他会话或调用方修改快照不影响已取出的值。
+
+保持不变量：计数非负，最大落后非负；计数为 0 时最大落后为 0。计数不一定等于成功块数：有计划失败尝试计入排期而不计成功块数，无计划成功尝试则相反。不要从两个计数的差值推导失败次数。
+
+给 ObserveWrite 补注释说明排期样本含失败尝试；字段注释注明计数为零时最大值没有测量意义。本步不在 RunSession 结束时二次计算，不根据 lag 更改 Outcome，也不引入判定异常的阈值。
+
+### 后续与验收
+
+本步暂不修改 SummarizeBatch、JSON DTO、schema_version 或命令参数；现有 JSON v1 尚不导出新字段。下一步明确输出演进：无样本的最大落后需要输出 null，有样本且没有晚发输出 0；不能通过重新相减序列化时间来恢复运行时统计。最大值不能推导每块落后的分位数。
+
+助手后续编写测试：零值；缺失计划/开始时间；零、负和纳秒级差值；多个样本取最大值；失败尝试参与样本但不计成功音频；控制事件不污染统计；原有账目保持；快照值隔离、跨会话隔离与并发一致性；真实 Realtime RunSession 的样本数与报告接线。测试完成后再记录数据，不预写性能改进结论。
