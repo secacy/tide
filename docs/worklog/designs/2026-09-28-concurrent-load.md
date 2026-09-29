@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：SessionRecorder 排期统计已验收；新增 12 项检查，loadgen 与命令包共 200 项检查通过 race。内存报告已有样本数与最大落后，下一步明确 JSON 演进并接入，再复测。
+当前小步：SessionRecorder 排期统计已验收。开始将样本数与最大落后导出到 JSON v2，并校验二者的不变量；等待开发者实现。历史 v1 原样保留，助手在验收时适配测试与实验读取脚本，之后另行复测。
 
 ## 为什么先准备负载与观测
 
@@ -1087,3 +1087,58 @@ MaxAudioScheduleLag time.Duration
 - 真实 WebSocket 的 Realtime 与非实时会话各发送 642 字节、3 块并完整完成；前者产生 3 个排期样本，后者保持 0 样本/0 最大值。
 
 `go test -race ./internal/loadgen ./cmd/loadgen -count=1 -timeout=120s -v` 通过：loadgen 39 个顶层测试、138 项检查（5.319s）；命令包 8 个顶层测试、62 项检查（5.291s），共 200 项，未报告数据竞争。测试耗时不是负载性能数据。JSON v1 仍不导出新增字段，下一步接输出。
+
+
+## 第七步之三：排期统计的 JSON v2 输出（2026-09-29，待实现）
+
+### 目的与格式选择
+
+会话内存报告已有排期统计，当前 JSON v1 仍丢弃这两个字段。必须落盘，才能核对实验中的样本覆盖和最大落后；不从序列化的首尾时间戳推算运行时最大值。
+
+方案比较：沿用 v1 添加可选字段通常可以兼容忽略未知字段的读者，但必须额外约定“缺字段表示旧版未知”；本项目读者规模小且已有严格版本检查，为清楚区分老报告不具备观测能力与新报告确实没有样本，本步选择 schema_version=2。新程序只写 v2，历史 v1 原始实验文件保持不动，不增加命令格式选择开关。
+
+助手验收时同步测试及实验脚本：读取端明确接受 v1/v2，未知版本拒绝；v1 排期指标标记缺失，不能自动补为零；v2 要求新字段存在并校验数值与 null 规则。旧版基线复算不能因为新增指标失效，不改写历史原始 JSON、旧汇总或原清单哈希；复核使用内存或临时输出。
+
+### 用户生产改动一：json_output.go
+
+将 batchJSON 的版本说明、SchemaVersion 字段注释和 WriteBatchJSON 的赋值由 1 更新为 2；旧字段名、类型、单位、错误语义及 nearest-rank 规则保持。
+
+在 observationJSON 中增加：
+
+```go
+// 有计划且有实际开始时间的音频 Write 样本数，包含失败尝试。
+AudioScheduleSamples int64 `json:"audio_schedule_samples"`
+
+// 最大开始发送落后，整数纳秒；无样本为 null，有样本可以为 0。
+MaxAudioScheduleLagNS *int64 `json:"max_audio_schedule_lag_ns"`
+```
+
+不加 omitempty。toObservationJSON 直接复制样本数；仅样本数 > 0 时，把 observation.MaxAudioScheduleLag 转为局部 int64 值，输出它的指针；否则输出 nil。不要取输入可变字段指针，也不要根据最大值是否为零决定 null。
+
+| 内存统计 | JSON v2 |
+| --- | --- |
+| Samples=0，MaxLag=0 | audio_schedule_samples: 0，max_audio_schedule_lag_ns: null |
+| Samples=1，MaxLag=0 | audio_schedule_samples: 1，max_audio_schedule_lag_ns: 0 |
+| Samples=3，MaxLag=40ms | audio_schedule_samples: 3，max_audio_schedule_lag_ns: 40000000 |
+
+字段属于每场 observation，包括最终失败、取消和超时会话；不只导出 completed。writeEventJSON 当前只保存 start/end，二者没有音频计划，不增加 PlannedAt 字段。batchSummaryJSON 本步不增加全批排期分位数：每场最大值不能复原每块落后的 p95。
+
+### 用户生产改动二：summary.go
+
+SummarizeBatch 已在输出前核对报告一致性。在遍历每场结果时增加对排期字段的三个检查，任一不满足均返回零 BatchSummary 与包含会话序号的错误：
+
+1. AudioScheduleSamples 不得小于 0。
+2. MaxAudioScheduleLag 不得小于 0。
+3. AudioScheduleSamples == 0 时，MaxAudioScheduleLag 必须为 0。
+
+放在当前会话贡献统计之前；沿用现有返回零摘要的错误路径。这防止负计数或“无样本但非零最大值”被转换成貌似合法的 JSON。合法负载报告由 recorder 自然满足，无需更改 RunSession。
+
+不要求样本数等于成功块数，不从计数差值推导失败数；不增加与会话结果无关的强制完整性检查。本步未对实时配置与样本覆盖建立额外推断规则，实际覆盖在实验核对阶段观察。
+
+WriteBatchJSON 已先调用 SummarizeBatch，因此此类矛盾报告会在调用 writer 前被拒绝，不用在 DTO 转换里再写一遍验证。
+
+### 验收与边界
+
+助手补 v2 字段/版本、零样本 null、有样本零值、纳秒精度、失败会话保留、输入不变及矛盾报告零写入测试，保留既有 writer 错误覆盖；用真实实时/非实时批次核对最终 JSON。同步已有 v1 精确期望为当前 v2 期望，并适配分析脚本读取历史 v1（未知）及新 v2（实际统计），历史基线不能补造排期数据。
+
+本步只接输出与读取兼容，不自动给最大落后设置通过阈值，也不声称已经复测。验收后再按相同负载条件采集新指标，比较时明确源码与观测字段变化。
