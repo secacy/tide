@@ -186,7 +186,7 @@ func TestPacingCancellationHasNoExtraWrite(t *testing.T) {
 	if !errors.Is(err, context.Canceled) || !strings.Contains(err.Error(), "wait before sending PCM") {
 		t.Fatalf("error = %v, want pacing cancellation", err)
 	}
-	if len(events) != 1 || events[0].Kind != WriteAudio || events[0].AudioBytes != chunk || events[0].Err != nil {
+	if len(events) != 1 || events[0].Kind != WriteAudio || events[0].AudioBytes != chunk || events[0].Err != nil || events[0].PlannedAt.IsZero() {
 		t.Fatalf("events = %+v, want only first successful audio write", events)
 	}
 }
@@ -212,7 +212,7 @@ func TestWriteObservedReturnsOriginalError(t *testing.T) {
 		calls++
 		observed = event.Err
 	}}}
-	err := client.writeObserved(ctx, conn, WriteAudio, websocket.MessageBinary, []byte{0, 0})
+	err := client.writeObserved(ctx, conn, WriteAudio, websocket.MessageBinary, []byte{0, 0}, time.Time{})
 	if err == nil || err != observed || calls != 1 {
 		t.Fatalf("returned = %v, observed = %v, callbacks = %d; want same non-nil error and one callback", err, observed, calls)
 	}

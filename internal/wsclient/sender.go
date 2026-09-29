@@ -44,12 +44,17 @@ func (c *Client) sendAudio(ctx context.Context, conn *websocket.Conn, source io.
 	for {
 		n, readErr := io.ReadFull(source, buf)
 		if n > 0 {
+			var plannedAt time.Time
+
 			if c.cfg.Realtime {
+				plannedAt = pacer.NextSendAt()
+
 				if err := pacer.WaitBeforeSend(ctx); err != nil {
 					return fmt.Errorf("wait before sending PCM: %w", err)
 				}
 			}
-			if err := c.writeObserved(ctx, conn, WriteAudio, websocket.MessageBinary, buf[:n]); err != nil {
+
+			if err := c.writeObserved(ctx, conn, WriteAudio, websocket.MessageBinary, buf[:n], plannedAt); err != nil {
 				return fmt.Errorf("write PCM websocket message (%d bytes): %w", n, err)
 			}
 			pacer.Advance(n)
@@ -75,7 +80,7 @@ func (c *Client) writeJSON(ctx context.Context, conn *websocket.Conn, kind Write
 		return fmt.Errorf("marshal websocket message: %w", err)
 	}
 
-	if err := c.writeObserved(ctx, conn, kind, websocket.MessageText, data); err != nil {
+	if err := c.writeObserved(ctx, conn, kind, websocket.MessageText, data, time.Time{}); err != nil {
 		return fmt.Errorf("write websocket text message: %w", err)
 	}
 
@@ -85,7 +90,8 @@ func (c *Client) writeJSON(ctx context.Context, conn *websocket.Conn, kind Write
 // writeObserved 执行一次 WebSocket 写入，同步报告结果并返回原始错误。
 // kind 表示业务用途；messageType 表示 WebSocket 消息类型。
 // data 只用于本次写入，不交给观察回调。
-func (c *Client) writeObserved(ctx context.Context, conn *websocket.Conn, kind WriteKind, messageType websocket.MessageType, data []byte) error {
+// plannedAt 为实时音频的原计划时刻，其他消息传零值；此处不等待或修改计划。
+func (c *Client) writeObserved(ctx context.Context, conn *websocket.Conn, kind WriteKind, messageType websocket.MessageType, data []byte, plannedAt time.Time) error {
 	startedAt := time.Now()
 	err := conn.Write(ctx, messageType, data)
 	finishedAt := time.Now()
@@ -99,6 +105,7 @@ func (c *Client) writeObserved(ctx context.Context, conn *websocket.Conn, kind W
 		c.cfg.OnWrite(WriteEvent{
 			Kind:       kind,
 			AudioBytes: audioBytes,
+			PlannedAt:  plannedAt,
 			StartedAt:  startedAt,
 			FinishedAt: finishedAt,
 			Err:        err,

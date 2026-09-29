@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：小规模完整链路基线已完成。开始补逐块发送排期观测：Pacer 暴露原计划时间，实时音频 WriteEvent 带 PlannedAt；等待开发者实现。统计、JSON 与复测留随后小步，服务端活动/排队/资源观测及稳定容量仍待完成。
+当前小步：逐块发送排期事件已验收，Pacer.NextSendAt 与实时音频 WriteEvent.PlannedAt 已接入；新增 11 项检查，四个相关包共 231 项检查通过 race。下一步接记录器统计，再扩展 JSON 与复测；服务端观测及稳定容量仍待完成。
 
 ## 为什么先准备负载与观测
 
@@ -918,7 +918,7 @@ main 先 parseLoadConfig(os.Args[1:])：flag.ErrHelp 正常返回；其他解析
 目前只有客户端固定字段和启动/退出日志，无进程级服务端活跃会话、Worker 排队和资源采样。优先补逐块发送排期落后，防止总跨度掩盖中途停顿与追赶；其后再补服务端观察及稳定区间，不能直接扩大并发并宣称容量。
 
 
-## 第七步之一：暴露音频计划发送时间（2026-09-29，待实现）
+## 第七步之一：暴露音频计划发送时间（2026-09-29，已验收）
 
 ### 问题、指标与取舍
 
@@ -994,3 +994,19 @@ writeJSON 调用该 helper 时传 time.Time{}。writeObserved 保持 StartedAt �
 慢源/慢观察回调作为可控测试扰动，不当作真实网络背压实验。仍在阻塞中的 Write 尚未生成返回事件，取消发生在 Write 之前也不会贡献样本；后续分析需要结合超时/失败及样本数，不能把缺失解释成准时。
 
 本步完成后事件能携带计划，但现有 SessionRecorder 不保存逐块音频事件，因此 JSON 中还看不到新指标。下一小步再接固定空间统计、明确 JSON 演进和复测，避免把回调已支持误记为实验报告已支持。
+
+
+### 发送计划事件验收（2026-09-29）
+
+实现：[pacer.go](../../../internal/audio/pacer.go)、[sender.go](../../../internal/wsclient/sender.go)、[write_observer.go](../../../internal/wsclient/write_observer.go)。生产逻辑无需修正，助手补充 Advance 的实际字节/尾块注释与 writeObserved 的 plannedAt 参数说明。
+
+新增 [pacer_test.go](../../../internal/audio/pacer_test.go) 两个顶层测试、5 项叶子检查；新增 [planned_write_test.go](../../../internal/wsclient/planned_write_test.go) 五个顶层测试、6 项叶子检查。同步已有直接调用 helper 的测试签名，强化原等待取消测试的 PlannedAt 非零断言。
+
+- 使用 synctest 验证首块计划为构造时刻；连续推进 3200/1600/2 字节后计划分别增加 100ms/50ms/62500ns，重复读取与时间流逝不改计划。虚拟时间下，目标在 200ms 后时等待准确到期；目标已过立即返回；取消和 50ms 期限中断等待且不推进计划。
+- 真实 WebSocket 检查 3200/3200/2 字节三块及控制消息：实时音频计划按 100ms 递增，实际 Write 不早于计划；非实时音频与 start/end 的 PlannedAt 为零。
+- 首次源读取注入 80ms 延迟，首块计划仍早于读取开始，实际首块落后至少 80ms；首个写入回调注入 80ms 延迟、块间计划为 10ms，第二块落后至少 70ms，计划未随回调漂移。它们是可控客户端扰动，不是网络或 Worker 性能数据。
+- 已关闭连接的真实 Write 失败仍携带原计划及错误；helper 按值保留计划与单调时钟信息。原等待取消场景只产生第一块事件，没有虚构尚未执行的下一块 Write。
+
+执行 `go test -race ./internal/audio ./internal/wsclient ./internal/loadgen ./cmd/loadgen -count=1 -timeout=120s -v`：audio 5 项（1.494s）、wsclient 38 项（2.155s）、loadgen 126 项（5.565s）、命令包 62 项（5.616s），共 231 项全部通过，未报告数据竞争。耗时为测试执行时间，不作业务延迟指标。
+
+本步共新增 11 项检查，JSON v1 契约和既有命令行为回归通过。SessionRecorder 尚未汇总 PlannedAt，因此没有新的落盘排期指标或基线数据；下一步在同进程使用 Sub 计算并固定空间汇总，再明确输出演进与复测。

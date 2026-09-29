@@ -20,6 +20,11 @@ type WriteEvent struct {
 	// 只有 Err == nil 时，才能计入成功写出的音频量。
 	AudioBytes int
 
+	// 仅实时音频写入设置，来自 Pacer 原始计划，保留单调时钟信息。
+	// 控制消息及 Realtime=false 的音频使用零值，表示不适用。
+	// 零值不表示准时；与 StartedAt 相减可计算开始发送前的落后。
+	PlannedAt time.Time
+
 	// 紧邻 conn.Write 调用前记录，不包含读取、节奏等待和 JSON 编码。
 	StartedAt time.Time
 
