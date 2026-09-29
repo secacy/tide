@@ -46,12 +46,12 @@ func TestBatchJSONContract(t *testing.T) {
 		t.Fatal("document must end with a newline")
 	}
 	want := `{
-		"schema_version":1,"tail_percentile_method":"nearest_rank",
+		"schema_version":2,"tail_percentile_method":"nearest_rank",
 		"config":{"sessions":1,"session":{"url":"ws://summary.invalid/","audio_bytes":1000,"chunk_bytes":4,"realtime":false,"timeout_ns":3000000000,"expected_final_text":"expected tail"}},
 		"started_at":"2026-09-29T02:00:00.000000123Z","finished_at":"2026-09-29T02:00:01.000000123Z","batch_error":null,
 		"summary":{"planned_sessions":1,"completed":1,"failed":0,"canceled":0,"timed_out":0,"completion_rate":1,"planned_audio_bytes":1000,"audio_bytes_written":1000,"elapsed_ns":1000000000,"tail":{"samples":1,"min_ns":1000000000,"p50_ns":1000000000,"p95_ns":1000000000,"max_ns":1000000000}},
 		"sessions":[{"index":0,"started_at":"2026-09-29T02:00:00.000000123Z","finished_at":"2026-09-29T02:00:01.000000123Z","outcome":"completed","error":null,"tail_latency_ns":1000000000,
-		"observation":{"audio_bytes_written":1000,"audio_chunks_written":250,"write_failures":0,"max_audio_write_duration_ns":123,"first_audio_started_at":"2026-09-29T02:00:00.000000123Z","last_audio_finished_at":"2026-09-29T02:00:00.000000123Z",
+		"observation":{"audio_bytes_written":1000,"audio_chunks_written":250,"write_failures":0,"max_audio_write_duration_ns":123,"audio_schedule_samples":0,"max_audio_schedule_lag_ns":null,"first_audio_started_at":"2026-09-29T02:00:00.000000123Z","last_audio_finished_at":"2026-09-29T02:00:00.000000123Z",
 		"start_write":{"kind":"start","audio_bytes":0,"started_at":"2026-09-29T02:00:00.000000123Z","finished_at":"2026-09-29T02:00:00.000000123Z","error":null},
 		"end_write":{"kind":"end","audio_bytes":0,"started_at":"2026-09-29T02:00:00.000000123Z","finished_at":"2026-09-29T02:00:00.000000123Z","error":null},
 		"result_count":3,"final_result_count":2,"first_result_at":"2026-09-29T02:00:00.000000123Z","last_result_at":"2026-09-29T02:00:01.000000123Z","last_final_at":"2026-09-29T02:00:01.000000123Z"}}]

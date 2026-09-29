@@ -77,7 +77,21 @@ func SummarizeBatch(report BatchReport) (BatchSummary, error) {
 			return BatchSummary{}, fmt.Errorf("invalid session result %d: session config does not match batch config", i)
 		}
 
-		written := result.Report.Observation.AudioBytesWritten
+		observation := result.Report.Observation
+
+		if observation.AudioScheduleSamples < 0 {
+			return BatchSummary{}, fmt.Errorf("invalid session result %d: audio schedule samples is negative: %d", i, observation.AudioScheduleSamples)
+		}
+
+		if observation.MaxAudioScheduleLag < 0 {
+			return BatchSummary{}, fmt.Errorf("invalid session result %d: max audio schedule lag is negative: %s", i, observation.MaxAudioScheduleLag)
+		}
+
+		if observation.AudioScheduleSamples == 0 && observation.MaxAudioScheduleLag != 0 {
+			return BatchSummary{}, fmt.Errorf("invalid session result %d: max audio schedule lag is %s with zero schedule samples", i, observation.MaxAudioScheduleLag)
+		}
+
+		written := observation.AudioBytesWritten
 		if written < 0 || written > audioBytesPerSession {
 			return BatchSummary{}, fmt.Errorf("invalid session result %d: audio bytes written is %d, want range [0, %d]", i, written, audioBytesPerSession)
 		}

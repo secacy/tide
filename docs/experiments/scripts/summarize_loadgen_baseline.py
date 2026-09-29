@@ -23,7 +23,15 @@ def summarize(directory):
         rows = [row for b in batches for row in b["sessions"]]
         spans = [r["audio_send_span_ns"] for r in rows]
         clock_diffs = [r["wall_tail_minus_recorded_tail_ns"] for r in rows]
+        # 含旧版未知数据时不补造零值；明确版本，避免输出不完整的混合汇总。
+        schedule = None
+        if all(r["audio_schedule_samples"] is not None for r in rows):
+            maxima = [r["max_audio_schedule_lag_ns"] for r in rows if r["max_audio_schedule_lag_ns"] is not None]
+            schedule = dict(samples=sum(r["audio_schedule_samples"] for r in rows),
+                            sessions_with_samples=sum(r["audio_schedule_samples"] > 0 for r in rows),
+                            max_lag_ns=max(maxima) if maxima else None)
         groups.append(dict(planned_sessions_per_batch=n, batches=3, completed=len(rows),
+                           schema_versions=sorted({b["schema_version"] for b in batches}), audio_schedule=schedule,
                            successful_audio_bytes=sum(b["summary"]["audio_bytes_written"] for b in batches),
                            audio_chunks=len(rows)*50, results=len(rows)*5,
                            first_result_before_end=sum(r["first_result_before_end"] for r in rows),
@@ -35,6 +43,7 @@ def summarize(directory):
                   warmup_excluded=True, groups=groups,
                   limits=["tail percentiles pool three batches per N; each p95 equals the observed maximum",
                           "no server independent byte/active/queue/resource measurement",
+                          "audio_schedule null means unknown legacy data; no per-chunk lag percentile can be reconstructed",
                           "send span uses serialized wall clock; recorded tail uses process monotonic clock"])
     helpers["save"](directory/"groups.json", result)
     inputs = [directory/"manifest.json"] + [directory/(label+".json") for label in expected]

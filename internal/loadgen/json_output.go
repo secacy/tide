@@ -10,10 +10,10 @@ import (
 	"github.com/secacy/tide-artisan/internal/wsclient"
 )
 
-// batchJSON 是输出格式 v1。
+// batchJSON 是输出格式 v2。
 // 时长字段使用 _ns 后缀，明确表示整数纳秒。
 type batchJSON struct {
-	SchemaVersion        int              `json:"schema_version"`         // 固定为 1。
+	SchemaVersion        int              `json:"schema_version"`         // 固定为 2。
 	TailPercentileMethod string           `json:"tail_percentile_method"` // 固定为 nearest_rank。
 	Config               batchConfigJSON  `json:"config"`                 // 共同负载配置。
 	StartedAt            time.Time        `json:"started_at"`             // 批次开始，UTC。
@@ -56,6 +56,8 @@ type observationJSON struct {
 	AudioChunksWritten      int64           `json:"audio_chunks_written"`        // 成功写出的音频块数。
 	WriteFailures           int64           `json:"write_failures"`              // 所有失败 Write 次数。
 	MaxAudioWriteDurationNS int64           `json:"max_audio_write_duration_ns"` // 最大音频 Write 耗时，纳秒。
+	AudioScheduleSamples    int64           `json:"audio_schedule_samples"`      // 有计划且有实际开始时间的音频 Write 样本数，包含失败尝试。
+	MaxAudioScheduleLagNS   *int64          `json:"max_audio_schedule_lag_ns"`   // 最大开始发送落后，整数纳秒；无样本为 null，有样本可以为 0。
 	FirstAudioStartedAt     *time.Time      `json:"first_audio_started_at"`      // 首次成功音频写入开始时间。
 	LastAudioFinishedAt     *time.Time      `json:"last_audio_finished_at"`      // 最后一次成功音频写入结束时间。
 	StartWrite              *writeEventJSON `json:"start_write"`                 // start 事件；未观察到为 null。
@@ -166,11 +168,19 @@ func toBatchConfigJSON(cfg BatchConfig) batchConfigJSON {
 
 // toObservationJSON 转换单场观测。
 func toObservationJSON(observation SessionObservation) observationJSON {
+	var maxAudioScheduleLagNS *int64
+	if observation.AudioScheduleSamples > 0 {
+		value := int64(observation.MaxAudioScheduleLag)
+		maxAudioScheduleLagNS = &value
+	}
+
 	return observationJSON{
 		AudioBytesWritten:       observation.AudioBytesWritten,
 		AudioChunksWritten:      observation.AudioChunksWritten,
 		WriteFailures:           observation.WriteFailures,
 		MaxAudioWriteDurationNS: int64(observation.MaxAudioWriteDuration),
+		AudioScheduleSamples:    observation.AudioScheduleSamples,
+		MaxAudioScheduleLagNS:   maxAudioScheduleLagNS,
 		FirstAudioStartedAt:     optionalTime(observation.FirstAudioStartedAt),
 		LastAudioFinishedAt:     optionalTime(observation.LastAudioFinishedAt),
 		StartWrite:              toWriteEventJSON(observation.StartWrite),
@@ -247,7 +257,7 @@ func WriteBatchJSON(w io.Writer, report BatchReport, batchErr error) error {
 	}
 
 	output := batchJSON{
-		SchemaVersion:        1,
+		SchemaVersion:        2,
 		TailPercentileMethod: "nearest_rank",
 		Config:               toBatchConfigJSON(report.Config),
 		StartedAt:            report.StartedAt.UTC(),

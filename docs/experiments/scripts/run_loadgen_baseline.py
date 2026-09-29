@@ -55,13 +55,36 @@ def distribution(values):
                 p95_ns=values[(n*95+99)//100-1], max_ns=values[-1])
 
 
+def read_schedule_metrics(version, observation):
+    """兼容旧版未知观测与 v2 显式空值；不把缺字段或布尔值当成合法计数。"""
+    if type(version) is not int or version not in (1, 2):
+        raise ValueError(f"unsupported report schema: {version!r}")
+    if version == 1:
+        return dict(audio_schedule_samples=None, max_audio_schedule_lag_ns=None)
+    keys = ("audio_schedule_samples", "max_audio_schedule_lag_ns")
+    if any(key not in observation for key in keys):
+        raise ValueError("v2 observation is missing schedule fields")
+    count, lag = (observation[key] for key in keys)
+    if type(count) is not int or not 0 <= count <= 2**63-1:
+        raise ValueError("schedule sample count must be a nonnegative int64")
+    if count == 0:
+        if lag is not None:
+            raise ValueError("zero samples require null lag")
+    elif type(lag) is not int or not 0 <= lag <= 2**63-1:
+        raise ValueError("positive samples require a nonnegative int64 lag")
+    return dict(zip(keys, (count, lag)))
+
+
 def check_report(path, sessions, audio_bytes):
     """从原始报告复核输入、结果和摘要；保留失败事实，不能只挑成功样本。"""
     doc = json.loads(path.read_text())
+    version = doc["schema_version"]
+    if type(version) is not int or version not in (1, 2):
+        raise ValueError(f"unsupported report schema: {version!r}")
     checks = []
     rows = []
     cfg = doc["config"]["session"]
-    checks.append(doc["schema_version"] == 1 and doc["tail_percentile_method"] == "nearest_rank")
+    checks.append(doc["tail_percentile_method"] == "nearest_rank")
     checks.append(doc["config"]["sessions"] == sessions and cfg["audio_bytes"] == audio_bytes)
     checks.append(cfg["chunk_bytes"] == 3200 and cfg["realtime"] is True)
     checks.append(cfg["expected_final_text"] == "今天天气不错" and cfg["timeout_ns"] == 20_000_000_000)
@@ -76,6 +99,10 @@ def check_report(path, sessions, audio_bytes):
             checks.append(event is not None and event["kind"] == kind and event["error"] is None)
         row = dict(index=i, outcome=s["outcome"], tail_ns=s["tail_latency_ns"],
                    max_audio_write_ns=o["max_audio_write_duration_ns"])
+        row.update(read_schedule_metrics(version, o))
+        if version == 2:
+            # 本夹具要求完整的实时输入；一般失败报告并无样本数等于成功块数的约束。
+            checks.append(row["audio_schedule_samples"] == audio_bytes//3200)
         if o["first_audio_started_at"] and o["last_audio_finished_at"]:
             row["audio_send_span_ns"] = timestamp_ns(o["last_audio_finished_at"])-timestamp_ns(o["first_audio_started_at"])
         if o["first_result_at"] and o["end_write"]:
@@ -98,7 +125,7 @@ def check_report(path, sessions, audio_bytes):
     checks.append(all(summary[k] == 0 for k in ("failed", "canceled", "timed_out")))
     checks.append(summary["planned_audio_bytes"] == sessions*audio_bytes and summary["audio_bytes_written"] == sessions*audio_bytes)
     checks.append(summary["completion_rate"] == 1)
-    return dict(checks_passed=all(checks), summary=summary, sessions=rows)
+    return dict(schema_version=version, checks_passed=all(checks), summary=summary, sessions=rows)
 
 
 def run(output):
