@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令行及文件输出待实现。已有多 Worker 配置、会话轮询与连接回收验收；本方案尚无容量实测数据。
 
-当前小步：WriteBatchJSON 已验收，新增 13 项输出检查及原有 107 项全部通过定向 race。已能将同一报告的配置、各场观测、错误和重算摘要写成有版本的 JSON 文档；文件命名、覆盖策略与命令行入口留下一步。
+当前小步：WriteBatchJSON 已验收，新增 13 项输出检查及原有 107 项全部通过定向 race。开始实现 cmd/loadgen 参数解析与共享 BatchConfig.Validate；等待开发者实现。运行接线、文件创建/覆盖和退出行为留后续。
 
 ## 为什么先准备负载与观测
 
@@ -747,3 +747,68 @@ func toWriteEventJSON(event wsclient.WriteEvent) *writeEventJSON
 - 真实本机 WebSocket 两场批次，一场完成、一场尾部文本校验失败；导出保留两场观测，每场 10 字节、3 块、1 条 final，摘要完成率 0.5、实际成功写出总量 20 字节。该场景验证接线与失败留存，不能推导稳定容量。
 
 当前通过 io.Writer 写出完整 JSON 文档；测试使用内存 buffer 和故障 writer，尚未验收文件创建、关闭、覆盖或原子发布。编码暂存仍需 O(N) 额外空间，底层写入失败可能留下部分内容；正式容量测量还需命令入口及环境/服务端配置记录。
+
+
+## 第五步之一：命令参数与共享校验（2026-09-29，待实现）
+
+### 为什么与方案取舍
+
+现有 RunBatch 和 WriteBatchJSON 已能执行并输出结果，但尚无用户命令入口。先将实验条件解析为明确配置，使坏参数在创建文件、连接和 goroutine 前返回；下一小步再接运行与输出。
+
+- 独立 cmd/loadgen 复用 internal/loadgen，保留 cmd/ws-client 的单文件调试用途。把两类用途并入旧命令会增加运行模式、参数与输出分支，当前选择独立命令。
+- 本轮用标准 flag，参数少且与已有服务命令一致；YAML/JSON 配置文件可保存复杂配置，但会引入两套来源的优先级规则；后续批量实验有需要再增加。
+- 暂时直接配置每场 audio-bytes，复用已有精确字节口径；audio-duration 更直观，但要另外定义不足一个 PCM 采样的取整、溢出及与字节参数冲突规则。本步采用字节数，60 秒对应 1920000 字节。
+- 每处各写校验会产生规则漂移，依赖 RunBatch 校验又太晚。提取无副作用 BatchConfig.Validate，命令解析、RunBatch、SummarizeBatch 共用；每个入口继续检查自身负责的条件。
+
+### 本步实现接口
+
+在 internal/loadgen/batch.go 增加：
+
+```go
+// Validate 检查批次参数及计划总音频量是否可用 int64 表示。
+// 不分配会话、不建立连接，也不检查目标服务是否可达。
+func (cfg BatchConfig) Validate() error
+```
+
+顺序：Sessions > 0；调用已有 cfg.Session.validate()；随后检查 int64(cfg.Sessions) > math.MaxInt64/cfg.Session.AudioBytes 时拒绝。必须先校验单场字节数为正，再做除法。只验证可表达性，不把 int64 上界当成可运行容量。
+
+RunBatch 将原来的批次/会话参数检查替换成 cfg.Validate()，放在 context 检查及资源创建前。SummarizeBatch 在最前调用 report.Config.Validate()，移除重复的批次/会话校验与计划字节乘积溢出检查，再安全计算计划总量；其他报告一致性检查保留。SessionConfig.validate 仍保持私有，RunSession 继续使用。
+
+新增 cmd/loadgen/config.go，package main：
+
+```go
+// loadConfig 描述一次负载命令的输入与输出位置。
+type loadConfig struct {
+    Batch loadgen.BatchConfig // 有限批次负载条件。
+    OutputPath string         // 报告文件路径；本步仅解析，不创建文件。
+}
+
+// parseLoadConfig 解析不含程序名的参数并校验，不运行负载或访问文件。
+// 请求帮助时返回 flag.ErrHelp；其他错误返回零配置。
+func parseLoadConfig(args []string) (loadConfig, error)
+```
+
+使用 flag.NewFlagSet("loadgen", flag.ContinueOnError)，帮助与解析诊断沿用标准 flag 输出。本步不写 main，不调用 os.Exit；不连接服务器、不创建结果文件，不检查目录是否存在或目标是否已经存在。
+
+| 参数 | flag 类型 | 默认值 / 含义 |
+| --- | --- | --- |
+| -url | StringVar | ws://localhost:8080/v1/asr |
+| -sessions | IntVar | 1，计划尝试数，不表示全程活跃连接数 |
+| -audio-bytes | Int64Var | 1920000，每场 60 秒静音 PCM 对应字节数 |
+| -chunk-bytes | IntVar | 3200，100ms 音频块 |
+| -realtime | BoolVar | true；关闭时使用 -realtime=false |
+| -session-timeout | DurationVar | 90s，含连接、发送、等待尾部和收尾 |
+| -expected-final-text | StringVar | 空，必须显式提供与 Mock 对应的非空尾部文本 |
+| -output | StringVar | 空，必须显式提供报告文件路径 |
+
+fs.Parse 失败返回零配置与原错误，保留 flag.ErrHelp；拒绝任何位置参数；调用 cfg.Batch.Validate；额外用 net/url.Parse 校验 URL scheme 为 ws/wss 且 Hostname 非空，不进行 DNS 或可达性检查；OutputPath 的 TrimSpace 非空且不为 "-"，本轮仅接受文件路径。检查时不要修改路径和预期文本，空白也可能是文件名或 Mock 文本的一部分。URL 不静默补协议或修复输入。
+
+预期文本仅要求非空，与库校验一致；必须显式提供，避免默认值掩盖不同 Mock 配置。不要强制 session-timeout 大于音频时长，较短期限可以是有意的失败实验。
+
+### 后续运行与文件层边界
+
+本步只确定 -output 指向文件；拒绝覆盖已有结果是后续文件层的预定方向，需要通过独占创建等文件操作实现，不能用解析阶段的 exists 检查保证。运行开始后的取消/失败仍应尽量保存已收尾报告，并区分负载失败与保存失败；具体接线与退出规则下一小步设计。本步不发布可运行命令，不增加标准输出 JSON、自动命名、重试或持续补充负载。
+
+### 预定验收
+
+开发者实现后，助手补参数与共享校验测试：显式必填参数下的默认配置、全部覆盖值、Bool=false、帮助、未知/位置参数、数字与 duration 格式错误、零负值、PCM 对齐、总量溢出、URL 与输出路径拒绝规则；确认非法配置在批次启动前返回，摘要原有校验仍生效。检查解析不修改尾部文本或路径。暂不启动正式容量实验。
