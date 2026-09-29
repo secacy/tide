@@ -2,8 +2,8 @@ package loadgen
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"math"
 	"sync"
 	"time"
 )
@@ -36,11 +36,8 @@ type BatchReport struct {
 // 父 context 取消时仍等待全部会话退出，返回报告和父 context 错误。
 func RunBatch(ctx context.Context, cfg BatchConfig) (BatchReport, error) {
 	// 前置检查
-	if cfg.Sessions <= 0 {
-		return BatchReport{}, errors.New("sessions must be greater than zero")
-	}
-	if err := cfg.Session.validate(); err != nil {
-		return BatchReport{}, err
+	if err := cfg.Validate(); err != nil {
+		return BatchReport{}, fmt.Errorf("invalid batch config: %w", err)
 	}
 	if ctx.Err() != nil {
 		return BatchReport{}, ctx.Err()
@@ -81,4 +78,22 @@ func RunBatch(ctx context.Context, cfg BatchConfig) (BatchReport, error) {
 	}
 
 	return report, nil
+}
+
+// Validate 检查批次参数及计划总音频量是否可用 int64 表示。
+// 不分配会话、不建立连接，也不检查目标服务是否可达。
+func (cfg BatchConfig) Validate() error {
+	if cfg.Sessions <= 0 {
+		return fmt.Errorf("sessions must be greater than zero: %d", cfg.Sessions)
+	}
+
+	if err := cfg.Session.validate(); err != nil {
+		return fmt.Errorf("invalid session config: %w", err)
+	}
+
+	if int64(cfg.Sessions) > math.MaxInt64/cfg.Session.AudioBytes {
+		return fmt.Errorf("planned audio bytes overflow: %d sessions * %d bytes", cfg.Sessions, cfg.Session.AudioBytes)
+	}
+
+	return nil
 }

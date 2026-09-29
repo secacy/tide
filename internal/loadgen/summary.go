@@ -3,7 +3,6 @@ package loadgen
 import (
 	"errors"
 	"fmt"
-	"math"
 	"slices"
 	"time"
 )
@@ -40,11 +39,8 @@ type BatchSummary struct {
 // 统计所需字段矛盾、结果缺失或计划量溢出时，返回零摘要和错误。
 func SummarizeBatch(report BatchReport) (BatchSummary, error) {
 	// 1. 验证批次本身
-	if report.Config.Sessions <= 0 {
-		return BatchSummary{}, errors.New("sessions must be greater than zero")
-	}
-	if err := report.Config.Session.validate(); err != nil {
-		return BatchSummary{}, err
+	if err := report.Config.Validate(); err != nil {
+		return BatchSummary{}, fmt.Errorf("invalid batch report config: %w", err)
 	}
 	if len(report.Results) != report.Config.Sessions {
 		return BatchSummary{}, fmt.Errorf("expected %d results, got %d", report.Config.Sessions, len(report.Results))
@@ -61,11 +57,6 @@ func SummarizeBatch(report BatchReport) (BatchSummary, error) {
 
 	sessions := int64(report.Config.Sessions)
 	audioBytesPerSession := report.Config.Session.AudioBytes
-
-	if sessions > math.MaxInt64/audioBytesPerSession {
-		return BatchSummary{}, errors.New("sessions too big")
-	}
-
 	plannedAudioBytes := sessions * audioBytesPerSession
 
 	summary := BatchSummary{

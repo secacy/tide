@@ -3,6 +3,7 @@ package loadgen_test
 import (
 	"context"
 	"errors"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -40,6 +41,10 @@ func TestRunBatchPreflight(t *testing.T) {
 		{"unaligned_audio", func(c *loadgen.BatchConfig) { c.Session.AudioBytes = 3 }},
 		{"empty_tail", func(c *loadgen.BatchConfig) { c.Session.ExpectedFinalText = "" }},
 		{"empty_url", func(c *loadgen.BatchConfig) { c.Session.URL = "" }},
+		{"planned_total_overflow", func(c *loadgen.BatchConfig) {
+			c.Sessions = 2
+			c.Session.AudioBytes = math.MaxInt64/2 + 1
+		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := loadgen.BatchConfig{Sessions: 3, Session: sessionConfig("ws" + strings.TrimPrefix(server.URL, "http"))}
