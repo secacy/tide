@@ -1,0 +1,418 @@
+{
+  "batches": [
+    {
+      "label": "r1-n1",
+      "planned_sessions": 1,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 1,
+        "completed": 1,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 160000,
+        "audio_bytes_written": 160000,
+        "elapsed_ns": 4919684333,
+        "tail": {
+          "samples": 1,
+          "min_ns": 16487334,
+          "p50_ns": 16487334,
+          "p95_ns": 16487334,
+          "max_ns": 16487334
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 16487334,
+          "max_audio_write_ns": 832500,
+          "audio_send_span_ns": 4901239000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -334
+        }
+      ]
+    },
+    {
+      "label": "r1-n2",
+      "planned_sessions": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 2,
+        "completed": 2,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 320000,
+        "audio_bytes_written": 320000,
+        "elapsed_ns": 4931966291,
+        "tail": {
+          "samples": 2,
+          "min_ns": 18361625,
+          "p50_ns": 18361625,
+          "p95_ns": 28458542,
+          "max_ns": 28458542
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 18361625,
+          "max_audio_write_ns": 577958,
+          "audio_send_span_ns": 4901462000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -625
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 28458542,
+          "max_audio_write_ns": 602167,
+          "audio_send_span_ns": 4901444000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -542
+        }
+      ]
+    },
+    {
+      "label": "r1-n4",
+      "planned_sessions": 4,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 4,
+        "completed": 4,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 640000,
+        "audio_bytes_written": 640000,
+        "elapsed_ns": 4952404125,
+        "tail": {
+          "samples": 4,
+          "min_ns": 17665167,
+          "p50_ns": 28470417,
+          "p95_ns": 49286459,
+          "max_ns": 49286459
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 28470417,
+          "max_audio_write_ns": 535791,
+          "audio_send_span_ns": 4901226000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -417
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 17665167,
+          "max_audio_write_ns": 371334,
+          "audio_send_span_ns": 4901166000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -167
+        },
+        {
+          "index": 2,
+          "outcome": "completed",
+          "tail_ns": 49286459,
+          "max_audio_write_ns": 347750,
+          "audio_send_span_ns": 4901192000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -459
+        },
+        {
+          "index": 3,
+          "outcome": "completed",
+          "tail_ns": 39438875,
+          "max_audio_write_ns": 274167,
+          "audio_send_span_ns": 4901178000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 125
+        }
+      ]
+    },
+    {
+      "label": "r2-n1",
+      "planned_sessions": 1,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 1,
+        "completed": 1,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 160000,
+        "audio_bytes_written": 160000,
+        "elapsed_ns": 4920948083,
+        "tail": {
+          "samples": 1,
+          "min_ns": 17851250,
+          "p50_ns": 17851250,
+          "p95_ns": 17851250,
+          "max_ns": 17851250
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 17851250,
+          "max_audio_write_ns": 406042,
+          "audio_send_span_ns": 4901352000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -250
+        }
+      ]
+    },
+    {
+      "label": "r2-n2",
+      "planned_sessions": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 2,
+        "completed": 2,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 320000,
+        "audio_bytes_written": 320000,
+        "elapsed_ns": 4931092500,
+        "tail": {
+          "samples": 2,
+          "min_ns": 17554500,
+          "p50_ns": 17554500,
+          "p95_ns": 28446459,
+          "max_ns": 28446459
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 17554500,
+          "max_audio_write_ns": 497625,
+          "audio_send_span_ns": 4901226000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -500
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 28446459,
+          "max_audio_write_ns": 705209,
+          "audio_send_span_ns": 4901243000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -459
+        }
+      ]
+    },
+    {
+      "label": "r2-n4",
+      "planned_sessions": 4,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 4,
+        "completed": 4,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 640000,
+        "audio_bytes_written": 640000,
+        "elapsed_ns": 4952806708,
+        "tail": {
+          "samples": 4,
+          "min_ns": 18089416,
+          "p50_ns": 28529333,
+          "p95_ns": 49855208,
+          "max_ns": 49855208
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 39643667,
+          "max_audio_write_ns": 229459,
+          "audio_send_span_ns": 4900894000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 333
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 28529333,
+          "max_audio_write_ns": 356125,
+          "audio_send_span_ns": 4901089000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -333
+        },
+        {
+          "index": 2,
+          "outcome": "completed",
+          "tail_ns": 18089416,
+          "max_audio_write_ns": 295000,
+          "audio_send_span_ns": 4901358000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 584
+        },
+        {
+          "index": 3,
+          "outcome": "completed",
+          "tail_ns": 49855208,
+          "max_audio_write_ns": 286292,
+          "audio_send_span_ns": 4901224000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -208
+        }
+      ]
+    },
+    {
+      "label": "r3-n1",
+      "planned_sessions": 1,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 1,
+        "completed": 1,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 160000,
+        "audio_bytes_written": 160000,
+        "elapsed_ns": 4921609583,
+        "tail": {
+          "samples": 1,
+          "min_ns": 17202250,
+          "p50_ns": 17202250,
+          "p95_ns": 17202250,
+          "max_ns": 17202250
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 17202250,
+          "max_audio_write_ns": 1197208,
+          "audio_send_span_ns": 4902324000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 750
+        }
+      ]
+    },
+    {
+      "label": "r3-n2",
+      "planned_sessions": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 2,
+        "completed": 2,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 320000,
+        "audio_bytes_written": 320000,
+        "elapsed_ns": 4930342333,
+        "tail": {
+          "samples": 2,
+          "min_ns": 16953834,
+          "p50_ns": 16953834,
+          "p95_ns": 27846208,
+          "max_ns": 27846208
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 27846208,
+          "max_audio_write_ns": 946833,
+          "audio_send_span_ns": 4900817000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -208
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 16953834,
+          "max_audio_write_ns": 762958,
+          "audio_send_span_ns": 4900815000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 166
+        }
+      ]
+    },
+    {
+      "label": "r3-n4",
+      "planned_sessions": 4,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 4,
+        "completed": 4,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 640000,
+        "audio_bytes_written": 640000,
+        "elapsed_ns": 4951314833,
+        "tail": {
+          "samples": 4,
+          "min_ns": 17651375,
+          "p50_ns": 26784541,
+          "p95_ns": 48398875,
+          "max_ns": 48398875
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 37588959,
+          "max_audio_write_ns": 336917,
+          "audio_send_span_ns": 4901283000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 41
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 48398875,
+          "max_audio_write_ns": 506042,
+          "audio_send_span_ns": 4901283000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 125
+        },
+        {
+          "index": 2,
+          "outcome": "completed",
+          "tail_ns": 17651375,
+          "max_audio_write_ns": 283375,
+          "audio_send_span_ns": 4901134000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 625
+        },
+        {
+          "index": 3,
+          "outcome": "completed",
+          "tail_ns": 26784541,
+          "max_audio_write_ns": 599000,
+          "audio_send_span_ns": 4901114000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 459
+        }
+      ]
+    }
+  ]
+}

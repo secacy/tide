@@ -1,0 +1,88 @@
+{
+  "formal_batches": 9,
+  "planned_sessions": 21,
+  "completed_sessions": 21,
+  "warmup_excluded": true,
+  "groups": [
+    {
+      "planned_sessions_per_batch": 1,
+      "batches": 3,
+      "completed": 3,
+      "successful_audio_bytes": 480000,
+      "audio_chunks": 150,
+      "results": 15,
+      "first_result_before_end": 3,
+      "tail": {
+        "samples": 3,
+        "min_ns": 16487334,
+        "p50_ns": 17202250,
+        "p95_ns": 17851250,
+        "max_ns": 17851250
+      },
+      "audio_send_span_ns": {
+        "min": 4901239000,
+        "max": 4902324000
+      },
+      "max_audio_write_ns": 1197208,
+      "wall_tail_minus_recorded_tail_ns": {
+        "min": -334,
+        "max": 750
+      }
+    },
+    {
+      "planned_sessions_per_batch": 2,
+      "batches": 3,
+      "completed": 6,
+      "successful_audio_bytes": 960000,
+      "audio_chunks": 300,
+      "results": 30,
+      "first_result_before_end": 6,
+      "tail": {
+        "samples": 6,
+        "min_ns": 16953834,
+        "p50_ns": 18361625,
+        "p95_ns": 28458542,
+        "max_ns": 28458542
+      },
+      "audio_send_span_ns": {
+        "min": 4900815000,
+        "max": 4901462000
+      },
+      "max_audio_write_ns": 946833,
+      "wall_tail_minus_recorded_tail_ns": {
+        "min": -625,
+        "max": 166
+      }
+    },
+    {
+      "planned_sessions_per_batch": 4,
+      "batches": 3,
+      "completed": 12,
+      "successful_audio_bytes": 1920000,
+      "audio_chunks": 600,
+      "results": 60,
+      "first_result_before_end": 12,
+      "tail": {
+        "samples": 12,
+        "min_ns": 17651375,
+        "p50_ns": 28529333,
+        "p95_ns": 49855208,
+        "max_ns": 49855208
+      },
+      "audio_send_span_ns": {
+        "min": 4900894000,
+        "max": 4901358000
+      },
+      "max_audio_write_ns": 599000,
+      "wall_tail_minus_recorded_tail_ns": {
+        "min": -459,
+        "max": 625
+      }
+    }
+  ],
+  "limits": [
+    "tail percentiles pool three batches per N; each p95 equals the observed maximum",
+    "no server independent byte/active/queue/resource measurement",
+    "send span uses serialized wall clock; recorded tail uses process monotonic clock"
+  ]
+}

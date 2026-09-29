@@ -1,0 +1,3 @@
+2026/09/29 15:36:44 INFO gateway backend configuration strategy=round_robin workers=[127.0.0.1:63434]
+2026/09/29 15:36:44 websocket gateway listening on :8080
+2026/09/29 15:37:31 shutting down websocket gateway

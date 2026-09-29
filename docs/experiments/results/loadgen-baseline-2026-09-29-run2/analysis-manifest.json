@@ -1,0 +1,20 @@
+{
+  "generated_at": "2026-09-29T07:38:20.909313+00:00",
+  "input_sha256": {
+    "manifest.json": "08cacd67bb515789265f1728ca31bc86ea1e7c8099e14e27f39fdb4fcda0be58",
+    "r1-n1.json": "0e3cd5c2a9aa91c3d8b7ab6c2687f6bf44dd692daae52f0881ac388d335ab7d0",
+    "r1-n2.json": "cedce330f8e19f7aa3d696ae534db2d1abcf14ec0e07fd1944b92c9feed12da4",
+    "r1-n4.json": "2c06d04b14edb956657bd91efb61a125bd5798334591abec429ae082a7b99017",
+    "r2-n1.json": "ff0723c20da561086d95eaf5bec811ddaa7530782d3d0789ddef22d2c9a2f424",
+    "r2-n2.json": "833821dfc8ff7f47e574e566fccc752e6655495f430e0e28a68482facc4e5e1a",
+    "r2-n4.json": "9b89dd8196e336cee6762f2486c0ce329bc079e088b11258f4784af3c61feb09",
+    "r3-n1.json": "952378d2f153e9e71282fed47aa33955700103a279d3cbdeba6f69a226c49e73",
+    "r3-n2.json": "663a5c02a2c6c67f3df7ace6aac90ca1610ad084b7113d9ad5117c1b469196a6",
+    "r3-n4.json": "263299fa36645e99e8a874fc8e9e11697c119d776b7be09aa8a436cf0dd71ed0"
+  },
+  "script_sha256": {
+    "summarize_loadgen_baseline.py": "c457c2d7e9b38d8bf9214f6c749ef4e945e0b75f528560cd863f940ed11de165",
+    "run_loadgen_baseline.py": "157cfca804856442a799ada44e13579a30684b9621c64e64c078a624c2acf6b8"
+  },
+  "groups_sha256": "7ae904988c50e82b0d3e1b320543896e89667ecd6d63721016189718ce311c14"
+}
