@@ -82,6 +82,50 @@ go run cmd/ws-client/main.go
 ```
 
 
+## 有限并发负载
+
+先启动上文的 Mock Worker 与 Gateway，再从项目根目录构建负载程序。使用直接运行的二进制测试 Ctrl+C/SIGTERM，避免混入 `go run` 工具进程的信号行为。
+
+```bash
+go build -o /tmp/tide-loadgen ./cmd/loadgen
+mkdir -p /tmp/tide-loadgen-reports
+/tmp/tide-loadgen -h
+```
+
+运行两场、每场 2 秒静音 PCM 的短批次（当前默认 Mock 的尾部文本为“今天天气不错”）：
+
+```bash
+/tmp/tide-loadgen \
+  -url=ws://localhost:8080/v1/asr \
+  -sessions=2 \
+  -audio-bytes=64000 \
+  -chunk-bytes=3200 \
+  -realtime=true \
+  -session-timeout=10s \
+  -expected-final-text='今天天气不错' \
+  -output=/tmp/tide-loadgen-reports/smoke-001.json
+```
+
+| 参数 | 默认值 | 含义 |
+| --- | --- | --- |
+| `-url` | `ws://localhost:8080/v1/asr` | Gateway WebSocket 地址 |
+| `-sessions` | `1` | 有限批次计划会话数；结束后不补充新会话 |
+| `-audio-bytes` | `1920000` | 每场静音 PCM 字节数，默认对应 60 秒音频 |
+| `-chunk-bytes` | `3200` | 音频块上限；当前格式对应 100ms |
+| `-realtime` | `true` | 按现有 Pacer 节奏发送；关闭用 `-realtime=false` |
+| `-session-timeout` | `90s` | 包含连接、发送及尾部等待的单场期限 |
+| `-expected-final-text` | 无，必填 | 与本次 Mock 配置一致的非空尾部文本 |
+| `-output` | 无，必填 | JSON 文件路径；本轮不支持 `-` 标准输出 |
+
+输出文件在负载开始前独占创建，已有路径会导致失败且不启动负载；再次运行请换新文件名。程序不自动创建父目录。报告保存共同配置、每场观测、错误及摘要；时间为 UTC，时长字段后缀 `_ns` 表示整数纳秒，`null` 表示缺失样本。
+
+帮助或全部会话完整完成且报告写入、关闭成功时退出 0；参数、运行、非完整会话或保存错误退出 1。部分/全部会话失败仍会保存报告，`batch_error=null` 不代表全部会话完成，应结合逐场 outcome 和摘要。运行中 Ctrl+C/SIGTERM 会取消负载，等待收尾后保存报告并退出 1；运行开始前取消没有报告。
+
+运行期间文件可能为空；写入失败可能留下不完整文件。仅在命令返回后读取报告，且检查命令错误。当前不承诺原子发布、掉电持久化或强杀后保留结果；关闭错误合并已代码审查，未通过实际磁盘故障注入验收。
+
+此例是小批次操作示例，尚未作为容量实验记录。`-sessions` 是计划尝试数，不能解释为持续活跃连接数；第一块立即发送，音频时长也不等同于发送墙钟耗时。
+
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \
