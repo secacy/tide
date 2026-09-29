@@ -17,6 +17,14 @@ type SessionObservation struct {
 
 	MaxAudioWriteDuration time.Duration // 音频 Write 的最大耗时，包含失败尝试。
 
+	// 有计划且有实际开始时间的音频 Write 样本数，包含失败尝试。
+	// 为 0 表示没有可用排期样本，不能解释成发送准时。
+	AudioScheduleSamples int64
+
+	// max(0, StartedAt.Sub(PlannedAt)) 的最大值，包含失败尝试。
+	// 仅 AudioScheduleSamples > 0 时有意义；无样本时保持 0。
+	MaxAudioScheduleLag time.Duration
+
 	FirstAudioStartedAt time.Time // 首次成功音频写入的开始时间。
 	LastAudioFinishedAt time.Time // 最后一次成功音频写入的结束时间。
 
@@ -41,6 +49,7 @@ type SessionRecorder struct {
 
 // ObserveWrite 汇总客户端的一次实际写入。
 // 同一场会话的写入事件由发送协程按顺序提供。
+// 有计划和实际开始时间的音频尝试参与排期统计，包含写入失败的尝试。
 func (r *SessionRecorder) ObserveWrite(event wsclient.WriteEvent) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -59,6 +68,15 @@ func (r *SessionRecorder) ObserveWrite(event wsclient.WriteEvent) {
 		duration := event.FinishedAt.Sub(event.StartedAt)
 		if duration > r.observation.MaxAudioWriteDuration {
 			r.observation.MaxAudioWriteDuration = duration
+		}
+
+		if !event.PlannedAt.IsZero() && !event.StartedAt.IsZero() {
+			lag := max(event.StartedAt.Sub(event.PlannedAt), 0)
+
+			r.observation.AudioScheduleSamples++
+			if lag > r.observation.MaxAudioScheduleLag {
+				r.observation.MaxAudioScheduleLag = lag
+			}
 		}
 
 		if event.Err == nil {

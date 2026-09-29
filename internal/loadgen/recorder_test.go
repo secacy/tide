@@ -169,7 +169,10 @@ func TestRecorderConcurrentSnapshots(t *testing.T) {
 		<-begin
 		recorder.ObserveWrite(start)
 		for i := range audioCount {
-			recorder.ObserveWrite(recorderWrite(wsclient.WriteAudio, 3200, base.Add(time.Duration(i)*time.Millisecond), time.Microsecond, nil))
+			event := recorderWrite(wsclient.WriteAudio, 3200, base.Add(time.Duration(i)*time.Millisecond), time.Microsecond, nil)
+			// 每个样本落后递增 1ns，使快照中的样本数与最大值存在可核对关系。
+			event.PlannedAt = event.StartedAt.Add(-time.Duration(i + 1))
+			recorder.ObserveWrite(event)
 			if i%32 == 0 {
 				runtime.Gosched()
 			}
@@ -191,6 +194,10 @@ func TestRecorderConcurrentSnapshots(t *testing.T) {
 		<-begin
 		for range snapshots {
 			got := recorder.Snapshot()
+			if got.AudioScheduleSamples != got.AudioChunksWritten || got.MaxAudioScheduleLag != time.Duration(got.AudioScheduleSamples) {
+				t.Errorf("inconsistent schedule snapshot: %+v", got)
+				return
+			}
 			if got.AudioBytesWritten != got.AudioChunksWritten*3200 || got.FinalResultCount != got.ResultCount/3 {
 				t.Errorf("inconsistent counts: %+v", got)
 				return
@@ -214,6 +221,7 @@ func TestRecorderConcurrentSnapshots(t *testing.T) {
 	wg.Wait()
 	assertObservation(t, recorder.Snapshot(), loadgen.SessionObservation{
 		AudioBytesWritten: audioCount * 3200, AudioChunksWritten: audioCount, WriteFailures: 1,
+		AudioScheduleSamples: audioCount, MaxAudioScheduleLag: audioCount * time.Nanosecond,
 		MaxAudioWriteDuration: time.Microsecond, FirstAudioStartedAt: base,
 		LastAudioFinishedAt: base.Add((audioCount-1)*time.Millisecond + time.Microsecond),
 		StartWrite:          start, EndWrite: end, ResultCount: resultCount, FinalResultCount: resultCount / 3,
