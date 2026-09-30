@@ -77,6 +77,23 @@ go run ./cmd/gateway -h
 
 Gateway 已拆分为多个 Go 文件，使用包路径启动，避免单独运行 `main.go` 时遗漏配置解析代码。
 
+Gateway 状态查询（使用现有 HTTP 监听器）：
+
+```bash
+curl -i http://127.0.0.1:8080/debug/gateway
+```
+
+正常响应为 200，Content-Type: application/json，Cache-Control: no-store，例如：
+
+```json
+{"schema_version":1,"active_sessions":2,"max_sessions":64,"stopping":false}
+```
+
+这是查询接口自身的 v1 格式，与负载报告的 JSON v2 独立。active_sessions 表示已接纳、尚未完成清理的会话数，含连接升级、等待 start、识别和收尾；max_sessions 是配置接纳上限，不是实测稳定容量；stopping 表示已停止接纳新会话，不代表已有会话全部退出。
+
+查询不占用会话名额，只要 HTTP 服务仍能响应，满额或停止接入都可返回当前快照。支持 HEAD（无响应体），其他方法返回 405。服务关闭或网络异常导致查询失败时，状态应记为未知，不能记为活动数零。此接口复用当前 :8080 监听范围，/debug 路径不意味着仅本机可达。后续定时采样由实验端实现，目前没有后台采样或历史曲线。
+
+
 ```bash
 go run cmd/ws-client/main.go
 ```

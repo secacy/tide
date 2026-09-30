@@ -99,11 +99,14 @@ func run(ctx context.Context, cfg gatewayConfig) error {
 }
 
 // routes 负责声明 Gateway 暴露的 HTTP 接口。
-func routes(wsGateway http.Handler) http.Handler {
+func routes(wsGateway *gateway.Gateway) http.Handler {
 	mux := http.NewServeMux()
 
 	// 一个 WebSocket Connection 对应一个音频 Session，并在 Gateway 内部进一步对应一个 gRPC bidi stream
 	mux.Handle("/v1/asr", wsGateway)
+
+	// 查询 Gateway 当前会话状态，不占用会话名额。
+	mux.HandleFunc("GET /debug/gateway", gatewaySnapshotHandler(wsGateway))
 
 	// 简单的进程存活检查
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {

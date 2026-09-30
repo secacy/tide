@@ -188,7 +188,7 @@ cmd/loadgen 参数解析与共享 BatchConfig.Validate 已验收：参数解析�
 
 GatewaySnapshot 与 Gateway.Snapshot 已于 2026-09-30 验收：同一 tracker 锁下复制 ActiveSessions、MaxSessions、Stopping，复用原有登记/清理边界。新增五个顶层测试、七项叶子检查，Gateway 与命令包共 264 项检查通过 race，12 个需显式启用的实验默认跳过；真实升级失败、等待 start、容量拒绝、正常结束和断开清理的快照符合口径。生产逻辑未改动，HTTP 查询和实验采样留下一步，当前尚无服务端活动曲线或容量数据。
 
-当前小步明确 HTTP 查询：GET /debug/gateway（同时支持 HEAD），独立 schema_version=1 输出现有快照；满额或停止接入时仍可查询，不占会话名额。等待开发者实现私有 JSON DTO、handler 与路由接入；实验采样留后续。
+Gateway 快照 HTTP 查询已验收：GET /debug/gateway（同时支持 HEAD）返回独立 v1 JSON，满额和停止接入时可查询，不占会话名额。新增 11 项检查，两个包共 275 项通过 race，12 个显式实验默认跳过。真实链路验证等待 start、拒绝、正常尾部与清理状态，慢查询写回不阻塞停止接入；写回失败不追加错误页。查询说明已发布，下一步设计外部采样与失败记录，当前没有服务端活动曲线或新容量数据。
 
 ## 维护约定
 
@@ -294,3 +294,4 @@ GatewaySnapshot 与 Gateway.Snapshot 已于 2026-09-30 验收：同一 tracker �
 | 2026-09-29 | 明确 Gateway 活动会话快照：复用 tracker 同锁读取活动数、接纳上限和停止状态，保持生命周期行为；等待实现，HTTP 查询与实验采样留后续 |
 | 2026-09-30 | Gateway 活动会话快照验收通过：新增七项检查，两包共 264 项通过 race，12 个显式实验默认跳过；快照隔离、并发读取与真实 handler 登记/清理边界符合约定，下一步接 HTTP 查询 |
 | 2026-09-30 | 明确 Gateway 快照 HTTP 查询：GET /debug/gateway 返回独立 v1 JSON，快照后编码、锁外写回，不参与会话准入；等待实现，测试由助手补齐，实验采样留后续 |
+| 2026-09-30 | Gateway 快照 HTTP 查询验收通过：新增 11 项，两包共 275 项检查通过 race；格式/路由、满额与停止查询、真实链路清理、写回故障及慢写回符合约定，下一步设计外部采样 |

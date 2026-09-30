@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：设计 Gateway 快照 HTTP 查询，GET /debug/gateway 返回独立版本的 JSON，复用已验收 Snapshot；等待开发者实现。查询不经过会话准入，实验采样留后续。
+当前小步：Gateway 快照 HTTP 查询已验收，GET /debug/gateway 返回独立 v1 JSON，查询不经过会话准入，慢写回不持有 tracker 锁。下一步设计外部采样与失败记录，当前尚无服务端活动曲线。
 
 ## 为什么先准备负载与观测
 
@@ -1245,7 +1245,7 @@ tracker.snapshot 用现有 mu 加锁，复制 active/maxActive/stopping 到上�
 当前只有进程内快照，还未接 HTTP 或定时采样，暂无新增活跃会话曲线、采样峰值或稳定容量数据。下一步明确查询接口和编码边界，再由实验端采样；不在 Gateway 内新增轮询 goroutine。
 
 
-## 第八步之二：Gateway 快照 HTTP 查询（2026-09-30，待实现）
+## 第八步之二：Gateway 快照 HTTP 查询（2026-09-30，已验收）
 
 ### 目的与备选方案
 
@@ -1294,3 +1294,20 @@ schema_version=1 是本接口自己的格式版本，与负载报告的 v2 独�
 实现后由助手补测试及使用文档：精确字段/版本/零值保留、默认与显式上限、JSON 与 no-store 头、GET/真实 HTTP HEAD/405/未知路径、满额或停止状态仍能查询、查询不占用会话名额、与真实 WebSocket 接入/退出的接线、原 healthz/ASR 路由回归，以及响应 Write 失败不二次写错误页。状态变化与查询并发时运行 race 检测。
 
 本步不运行新的容量实验，不生成活动曲线。下一步再设计采样周期、请求期限、失败样本和停止采样条件；定期样本的最大值只能称采样峰值，不能冒充真实瞬时峰值。
+
+
+### HTTP 查询验收（2026-09-30）
+
+开发者实现符合方案，业务代码无需修改。routes 接收具体 Gateway，查询在获取一次值快照后编码；显式 WriteHeader(200) 位于成功编码和设置响应头之后，符合接口约定。
+
+新增 [cmd/gateway/snapshot_test.go](../../../cmd/gateway/snapshot_test.go) 五个顶层测试、11 项叶子检查：
+
+- 独立按 JSON 字段检查版本、精确字段集合、数字/布尔类型、0/false 保留、默认上限 64、显式上限及停止状态；不复用生产 DTO 解码。重复查询不改状态，不调用 Worker。
+- 真实 HTTP GET/HEAD 路由、HEAD 无响应体、POST/DELETE 返回 405 并包含 Allow、未注册子路径返回 404，以及 /healthz 仍返回 ok。正常查询 Content-Type 与 Cache-Control 符合约定。
+- 真实 WebSocket/gRPC 路由中，等待 start 的一场占满名额；四个查询调用者各执行 20 次查询，均返回 active=1，Worker 尚未建流。第二场被 503 拒绝，查询仍可读取；停止接入后查询返回 active=1、stopping=true，已有会话继续完成 start/audio/end/final。30 次查询与收尾并发，handler 退出后查询返回 active=0、stopping=true；全程仅创建一条业务 Worker 流。
+- 注入部分响应写入和 io.ErrClosedPipe，确认仅一次 Write、一次 200 状态，没有追加错误页。
+- 阻塞响应 Write 时，StopAccepting 仍能完成，另一请求读取到停止状态；解除阻塞后，原响应仍保留其读取时的 stopping=false，证明响应不混用后来状态。固定 int/bool DTO 的编码失败分支仅代码审查，未伪造生产编码错误。
+
+`go test -race ./cmd/gateway ./internal/gateway -count=1 -timeout=180s -json` 通过：命令包 13 个顶层测试、97 项叶子检查（3.569s），Gateway 包 82 个顶层测试、178 项叶子检查（13.597s），共 275 项，未报告数据竞争。12 个需显式启用的实验默认跳过；此处请求次数与运行时间仅为行为验证，不是性能实验。
+
+[使用说明](../../command.md)已补查询示例。尚未接实验采样，下一步固定采样周期、单次请求期限、开始/结束时刻与失败样本口径，然后再采集活动曲线。
