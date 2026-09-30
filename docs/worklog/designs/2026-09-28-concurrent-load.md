@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：WriteGatewayRecordingJSON 已验收，清单 v1 的格式、错误分类、计数边界与真实采样文件核对通过 race。下一步设计 JSONL 与清单两个产物的文件编排；尚未接命令和正式负载实验。
+当前小步：设计 RunGatewayRecording：新目录中固定 samples.jsonl/manifest.json，清单先独占创建，样本收尾后保存清单，外层结果区分清单错误；等待开发者实现。命令和正式负载实验留后续。
 
 ## 为什么先准备负载与观测
 
@@ -1786,3 +1786,78 @@ stop_reason 使用如下优先级（判断错误本身，不看字符串）：
 `go test -race ./internal/loadgen ./cmd/loadgen -count=1 -timeout=120s -json` 通过：loadgen 76 个顶层测试、318 项叶子检查（5.907s），命令包 8 个顶层测试、62 项叶子检查（6.045s），共 380 项，未报告数据竞争。测试耗时和构造样本不作为性能或容量数据。
 
 本步清单输出仍写入调用方 writer，没有实现清单文件创建、关闭或发布。下一步统一处理 JSONL 与清单路径、独占创建和错误合并，再接命令与负载协调。临时文件接线测试不等于已经完成正式采样实验。
+
+
+## 第八步之八：两个记录产物的文件编排（2026-09-30，待实现）
+
+### 目标与方案选择
+
+已有两个输出函数和样本文件层。本步组合它们，形成一次运行的目录；不复制采样循环，不在已有 RunGatewaySamplingToFile 内隐式追加清单副作用。
+
+| 方案 | 优点 | 代价与选择 |
+| --- | --- | --- |
+| 用户分别指定两个文件路径 | 灵活 | 路径可能相同或别名冲突，文件归属与迁移更难管理 |
+| 一个新目录、两个固定文件名 | 同一次运行的文件聚合，避免参数间冲突，可整体移动 | 每次运行使用新目录；本步采用 |
+| 文件都结束后再统一发布目录 | 读者易识别最终产物 | 需要临时目录、发布与崩溃恢复协议，当前先不实现 |
+
+目录必须新建，固定文件名 samples.jsonl 与 manifest.json。父目录必须已存在；不覆盖、不追加、不复用已有目录，即使旧目录为空也拒绝。先创建清单文件，尽早发现路径问题；这不保证之后磁盘一定可写，运行中的保存错误仍必须保留。
+
+清单中的 output_path 固定为相对于清单所在目录的 samples.jsonl，方便整体移动。函数返回的记录报告仍保留实际绝对样本路径：写清单时复制报告再改副本，不修改返回报告。此处是对上一小步暂未固定的相对路径解释作出明确选择。
+
+### 新类型与函数
+
+新增 internal/loadgen/gateway_recording_run.go：
+
+```go
+// GatewayRecordingResult 描述样本记录和清单保存两个层次的结果。
+type GatewayRecordingResult struct {
+    Recording GatewayRecordingReport // 样本文件层的原始报告，OutputPath 为实际绝对路径。
+    ManifestPath string // 清单的绝对路径；目录创建成功后填写。
+    ManifestErr error // 清单创建、编码/写入、关闭错误，多个错误用 errors.Join 保留。
+    ManifestSaved bool // 仅清单写入及关闭均成功时为 true，不表示实验成功或掉电持久化。
+}
+
+// RunGatewayRecording 在新的 outputDir 中记录样本并保存清单。
+// ctx/client/cfg/outputDir 前置检查失败返回零结果，不创建目录、不查询。
+// 目录创建后保留所有已有产物，失败不删除；函数返回前关闭所拥有的清单文件。
+// result.Recording 仍只描述样本文件，清单错误单独记录；err 合并两个层次的错误。
+// 不吞掉父取消，不修改或关闭 client；本函数本身不启动后台 goroutine。
+func RunGatewayRecording(
+    ctx context.Context,
+    client *http.Client,
+    cfg GatewaySamplingConfig,
+    outputDir string,
+) (result GatewayRecordingResult, err error)
+```
+
+ManifestSaved=true 不能取代 Recording.OutputErr/CloseErr：可能成功保存的是一份“样本输出失败”的报告。ManifestErr=nil 也不单独意味着清单已保存：记录流程未启动时，清单可能保持空文件，ManifestSaved=false。不要把清单错误写进 Recording.CloseErr 或 SamplingErr，否则清单自己的错误会冒充样本文件的错误。
+
+### 执行顺序
+
+1. 检查 nil ctx/client、cfg.Validate、outputDir 非空白且不为 "-"，用 filepath.Abs 解析绝对目录，检查 ctx.Err()。不 TrimSpace 后替换实际目录字符串。前置失败零结果、零文件系统创建、零查询。
+2. os.Mkdir(absDir,0700)，不使用 MkdirAll；已有目录/文件/链接均失败。创建失败返回零结果。创建成功后计算固定绝对路径，填写 result.ManifestPath。
+3. os.OpenFile(manifestPath,os.O_WRONLY|os.O_CREATE|os.O_EXCL,0600)，此时只是空文件。打开失败记录带路径且 %w 包装的 result.ManifestErr，返回该错误，不调用采样函数，已创建目录保留。
+4. 清单打开后立即登记关闭 defer，声明局部 manifestWritten=false。defer 中关闭一次清单，关闭错误同时合入 result.ManifestErr 和具名 err；最后 result.ManifestSaved=manifestWritten && closeErr==nil。不要在 Write 成功后就提前宣布已保存。
+5. 调用 RunGatewaySamplingToFile(ctx,client,cfg,samplesPath)，将其报告放进 result.Recording，保留返回的 recordingErr。该调用返回时样本文件的关闭尝试已完成，清单可以记录样本 CloseErr。
+6. 如果 Recording.StartedAt 为零，说明样本文件记录尚未启动：不将零报告交给清单序列化，直接返回 result 和 recordingErr；空清单及目录保留，由 defer 关闭，ManifestSaved 保持 false。根据现有子函数契约，此时 recordingErr 必须非 nil。
+7. 已启动则无论 recordingErr 是否非 nil，均尝试保存最终清单。复制 manifestReport:=result.Recording，把副本 OutputPath 设为 "samples.jsonl"，调用 WriteGatewayRecordingJSON(manifestFile,manifestReport)。成功设置 manifestWritten=true；失败以 %w 和清单路径包装，保存到 result.ManifestErr。
+8. 返回 result 与 errors.Join(recordingErr,result.ManifestErr)，随后关闭 defer 补齐关闭结果。recordingErr 已含样本关闭错误，不再单独 join Recording.SamplingErr/OutputErr/CloseErr，避免重复。清单关闭错误只在 defer 中添加一次。
+
+父取消是正常协调过程中可能出现的停止原因，但本函数继续保留 context.Canceled/DeadlineExceeded 错误链；后续命令层必须结合 Recording.OutputErr、Recording.CloseErr、ManifestSaved 与 ManifestErr 决定退出码，不能仅凭 errors.Is(err,context.Canceled) 忽略其余错误。清单保存不再受已经取消的请求 context 控制，以便尽力记录最后事实；普通同步文件写入仍可能阻塞，不新增强行中断或后台写入承诺。
+
+### 文件状态与完整性解释
+
+- 运行前已经取消：零结果，不创建目录。
+- 创建目录后、样本文件创建前取消：可能只留下空清单，Recording 为零、ManifestSaved=false；本步不尝试编造一次采样报告。
+- 样本文件已经创建、首次查询前取消：允许零行 JSONL 与合法零计数最终清单，依据已有记录报告写出。
+- 采样因取消/期限/样本保存错误退出：先完成样本关闭，再尽力保存包含这些事实的清单。
+- 清单编码/写入/关闭失败：保留样本文件与空或部分清单，ManifestErr 非 nil、ManifestSaved=false，返回错误；不重试、不删除证据。
+- 进程强杀可能留下空清单、截断清单或恰好可解析的内容；清单不是跨文件事务或原子发布。本轮只保证函数正常返回路径上的错误与关闭处理，不承诺掉电持久化。
+
+最终读者还需结合外层进程退出结果、清单错误事实、样本行数/序号/分类计数和实验时间窗口核对。尤其清单自身关闭错误只能由本函数返回结果及后续命令报告，不能靠清单自证其关闭成功。代码提交、完整环境和文件哈希继续由已有实验编排层归档，本步不重复塞入采样核心。
+
+### 验收计划
+
+助手补前置拒绝不创建目录、已有目录/文件/链接保护、缺少父目录、同目录并发竞争、实际 HTTP 样本与清单计数和相对路径一致、主动取消仍保存最终清单、返回报告绝对路径不变、两份产物移至另一目录后按清单相对路径可读取等测试。核对异常路径不覆盖旧数据、保存结果不冒充查询成功。
+
+普通临时文件测试不证明真实磁盘故障；无法确定性注入的清单创建/写入/关闭或竞争窗口按代码审查明确记录，不为了注入而随意关闭其他进程文件描述符。验收通过后再接命令入口、信号和退出码，最后接基线实验。当前仍无正式采样曲线或容量数据。
