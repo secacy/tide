@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：FetchGatewaySnapshot 单次查询已验收，覆盖合法响应、格式/范围拒绝、读取上限、错误链、取消/期限、重定向与连接复用。下一步设计串行周期采样和样本记录；命令、落盘及实验接线留后续。
+当前小步：设计 RunGatewaySampling 串行采样与 GatewaySample。首次立即查询，每次查询并交付样本后再等待 Interval；失败保留记录，父 context 取消停止，等待开发者实现。文件、命令及实验接线留后续。
 
 ## 为什么先准备负载与观测
 
@@ -1389,3 +1389,84 @@ GatewayState 不导入 internal/gateway：客户端通过 HTTP 契约读取，�
 `go test -race ./internal/loadgen ./cmd/loadgen -count=1 -timeout=120s -json` 通过：loadgen 包 49 个顶层测试、203 项叶子检查（5.728s），命令包 8 个顶层测试、62 项叶子检查（5.240s），共 265 项，未报告数据竞争。
 
 当前只完成一次请求及校验，还未接周期采样、时间记录、文件或实验命令，不产生服务端活动曲线或新的容量结论。下一步明确样本结构、串行执行、超时/取消及漏过时刻的处理方式。
+
+
+## 第八步之四：串行采样与样本交付（2026-09-30，待实现）
+
+### 目的、节奏与方案权衡
+
+单次查询已能返回可靠状态或明确错误。本步连续观察变化，同时保证观测自身不会堆积请求、无限保存样本，且可以停止。成功的零活动与失败的未知状态必须在记录结构上区分。
+
+| 方案 | 优点 | 代价与选择 |
+| --- | --- | --- |
+| 每次查询并交付后等待固定间隔 | 一个串行循环，无补发/积压，慢请求自然降低频率，停止逻辑清楚 | 不是固定起点间隔；本步选用并记录实际时刻 |
+| 固定起点时间表，忙时跳过 | 更接近固定时间网格，方便描述漏过的计划时刻 | 需定义错过时刻、跳过数与调度延迟；当前无需这些字段 |
+| 每个周期并发发起一次查询 | 可以维持更密集的尝试 | 慢请求导致并发增长、响应乱序，观测可能干扰被测系统，本轮不采用 |
+
+本步将 Interval 明确定义为“上条样本交付结束后，到下次查询之前的等待时长”。首次立即尝试。例如查询从 0ms 开始，230ms 返回，样本立即交付，Interval=100ms，则下一次最早约 330ms 开始；不补发 100ms/200ms 的请求，也没有固定时间网格的漏采计数。回调耗时也影响采样频率。100ms/200ms（间隔/请求期限）仍是后续实验候选配置，不在本函数内设默认值、不承诺精确 10Hz。
+
+样本存储比较：返回持续增长的 slice 会使长时间采样占用越来越多内存；通过 channel 异步交付又需要定义缓冲和满时策略。因此选同步 emit 回调：循环只持有当前样本，调用方决定保存方式。emit 必须及时返回；阻塞的任意回调无法由本函数强行中断，context 不提供此保证。落盘、异步化或回调期限留后续设计，不新增后台 goroutine 掩盖阻塞。
+
+### 本步类型与函数
+
+新增 internal/loadgen/gateway_sampling.go：
+
+```go
+// GatewaySamplingConfig 指定串行采样条件，两个时长都必须为正。
+type GatewaySamplingConfig struct {
+    Endpoint string // 完整的 http/https 查询 URL，必须包含主机名。
+    Interval time.Duration // 上条样本交付完成后的等待时长，不是固定起点周期。
+    RequestTimeout time.Duration // 每次查询（含响应读取）的子 context 期限。
+}
+
+// Validate 只检查配置，不创建请求、连接、计时器或后台任务。
+func (cfg GatewaySamplingConfig) Validate() error
+
+// GatewaySample 保存一次已开始的查询尝试，包含失败尝试。
+type GatewaySample struct {
+    Index int // 本次运行内从 0 递增的尝试序号。
+    StartedAt time.Time // 调用单次查询前的本地时间，保留单调读数。
+    FinishedAt time.Time // 查询返回后立即记录的本地时间。
+    Duration time.Duration // FinishedAt.Sub(StartedAt)，不包含 emit 和后续等待。
+    State *GatewayState // 查询成功时非 nil；失败时 nil，不能补造零活动。
+    Err error // 查询原始错误；成功时 nil，保留 errors.Is 错误链。
+}
+
+// RunGatewaySampling 在调用方当前 goroutine 中串行查询并交付样本。
+// ctx 控制整体运行，client 由调用方创建并复用，emit 必须非 nil 且及时返回。
+// 每次查询结果同步交付一次；查询失败不会自行终止循环。
+// 父 ctx 结束或 emit 返回错误才退出；本函数不保存样本历史，也不关闭 client。
+// 配置、nil 参数或启动前取消会在首次尝试前返回，不交付样本。
+func RunGatewaySampling(
+    ctx context.Context,
+    client *http.Client,
+    cfg GatewaySamplingConfig,
+    emit func(GatewaySample) error,
+) error
+```
+
+Validate 要求 Endpoint 由 url.Parse 成功解析，Scheme 为 http 或 https，Hostname 非空，Interval/RequestTimeout > 0；不探测服务是否可达，不限定调用方使用某个固定路径。nil ctx/client/emit 属于前置错误。前置校验完成后检查父 context；已经结束则返回 ctx.Err()，不发起查询。
+
+### 循环顺序与停止规则
+
+1. 每轮开始检查 ctx.Err()，结束则直接返回。
+2. 保存 StartedAt=time.Now()，创建 context.WithTimeout(ctx,cfg.RequestTimeout)，用它调用 FetchGatewaySnapshot。
+3. 查询返回后立即保存 FinishedAt=time.Now()，马上 cancel 子 context，不在循环内累积 defer cancel。若 client.Timeout 更短或父期限更早，实际请求会更早结束。
+4. 构造当前样本。Duration 使用两个原始 time.Time 的 Sub；不先转 UTC，不通过序列化墙钟相减重算。成功才把本轮独立 GatewayState 值的地址放入 State；失败 State=nil、Err 为查询返回的错误。每轮使用独立局部值，后续查询不能覆盖旧样本。
+5. 同步 emit(sample) 一次；若交付失败，返回含样本序号、以 %w 包装的交付错误，不重试，避免重复记录。此次交付错误优先于同时发生的父取消错误；不能把交付失败伪装成 HTTP 查询失败。
+6. 交付成功后检查父 ctx。父 context 已结束则返回 ctx.Err()；否则等待 Interval，再进入下一轮。等待使用可取消 Timer/select，退出时停止 Timer，不使用不可取消的 time.Sleep。
+
+不因查询 HTTP 错误、解析错误、单次请求超时、State.Stopping=true 或 active=0 自动退出。父 context 仍有效时，这些都只是需要保留的事实；是否负载已结束由之后的协调层决定。函数没有“达到某个样本数即成功”的隐含条件；调用方取消后返回 context.Canceled 是运行结束原因，后续协调层可区分主动停止与异常，不在这里统一吞掉。
+
+取消边界：
+
+- 初始或两次尝试之间取消：不新增样本。
+- 进行中的查询因父取消返回错误：先交付该次失败样本，再返回父错误；即使父已经取消也调用 emit，以保留最后一次尝试。
+- 查询已成功但交付前父被取消：仍交付成功样本，不用后来的取消推翻已经拿到的有效状态，然后返回父错误。
+- 检查 context 与真正开始请求之间仍可能发生取消；已经进入查询尝试就保留其结果，不声称取消时绝对没有新的网络调用。
+
+调用方若需要并发运行负载和采样，应在后续协调层启动并等待这个同步函数，采样器本身不创建 goroutine。历史记录由 emit 的接收方拥有；这里仅保证自身不累计 slice，不承诺接收方存储也有界。暂不增加 JSON 标签、输出文件、命令参数、采样峰值统计或批次报告字段。
+
+### 验收计划
+
+由助手补测试，优先使用 Go testing/synctest 与受控 HTTP transport 验证时间顺序，不依赖很短的真实 sleep：前置失败零请求/零样本、首次立即、间隔包含交付后等待、慢查询不重叠或补发、查询失败/子期限后继续、父取消时的在途记录、等待取消不造样本、成功与取消边界、emit 失败停止且保留错误链、连续序号、时间/耗时、独立历史值。另验证实际 FetchGatewaySnapshot 接线。通过后再设计输出与负载生命周期协调，暂无新的负载实验或容量数字。
