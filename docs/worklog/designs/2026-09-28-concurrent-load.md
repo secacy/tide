@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：WriteGatewaySampleJSON 已验收，单行格式、缺失/错误、纳秒精度、零写入及短写边界符合约定，真实采样 emit 接线通过。下一步设计文件保存与运行完整性记录，命令和负载协调尚未接入。
+当前小步：设计 RunGatewaySamplingToFile 独占创建样本文件、关闭文件并返回 GatewayRecordingReport。写出计数与查询失败分开，运行/输出/关闭错误保留，等待开发者实现；运行清单持久化及命令协调留下一步。
 
 ## 为什么先准备负载与观测
 
@@ -1586,3 +1586,72 @@ func WriteGatewaySampleJSON(w io.Writer, sample GatewaySample) error
 初次 `go test -race ./internal/loadgen ./cmd/loadgen -count=1 -timeout=120s -json` 中命令包通过（8 个顶层测试、62 项叶子检查，5.222s）；修正期望后 `go test -race ./internal/loadgen -count=1 -timeout=120s -json` 通过（64 个顶层测试、259 项叶子检查，5.214s）。最终两包共 321 项检查通过，未报告数据竞争；测试耗时不作为性能数据。
 
 本步只完成 writer 层与采样回调接线；未创建正式样本文件或运行清单，尚无活动曲线或新容量实验。下一步设计独占创建、关闭/错误传播及整场运行完整性记录，再接命令和负载协调。
+
+
+## 第八步之六：采样文件与内存运行报告（2026-09-30，待实现）
+
+### 目的与拆分
+
+单行 writer 已验收，下一步需要把文件所有权与整场结果明确下来。分两小步推进：本步独占创建样本文件、连接 emit、关闭并返回 GatewayRecordingReport；后续将这个报告和配置写成运行清单，再接命令与负载协调。本步返回报告还只在内存，不能仅凭 JSONL 文件末尾判断完整结束，强杀后可能没有报告。
+
+| 方案 | 优点 | 代价与选择 |
+| --- | --- | --- |
+| 覆盖已有输出 | 使用简单 | 可能销毁旧证据，不采用 |
+| 追加到已有文件 | 能接着保存 | 不同运行的配置/序号混合，恢复与去重未设计，不采用 |
+| 独占创建新文件 | 路径冲突立即暴露，保留一次运行的证据 | 调用方每次选择新路径；本步采用，与负载报告一致 |
+
+先直接写 os.File，不增加 bufio.Writer，避免本轮再引入 Flush 失败及未刷新的数据。直接写入也不保证掉电持久化，且写入耗时会影响同步采样频率。此时请求量小，是否缓冲应由后续测量决定。
+
+不把查询失败等同记录失败。比如两条成功观测和一条查询超时均写出，则 SamplesWritten=3、SuccessfulSamples=2、FailedSamples=1；查询超时行不是缺失。如果第三条输出失败，则它不增加任何“写出成功”计数，OutputErr 保留失败，采样停止；即使文件看起来可解析，也不能忽略该错误宣布记录完整。
+
+### 用户实现接口
+
+新增 internal/loadgen/gateway_recording.go：
+
+```go
+// GatewayRecordingReport 保存一次文件记录的配置、时间、计数和退出事实。
+// StartedAt 为零表示文件记录尚未启动；本报告本步不直接序列化。
+type GatewayRecordingReport struct {
+    Config GatewaySamplingConfig // 实际使用的采样配置。
+    OutputPath string // 实际使用的输出路径，不自动改名或规范化。
+    StartedAt time.Time // 文件创建成功后、调用采样循环前记录。
+    FinishedAt time.Time // 文件关闭尝试完成后记录，不仅是最后查询的时间。
+    SamplesWritten int64 // WriteGatewaySampleJSON 返回 nil 的记录数。
+    SuccessfulSamples int64 // 上述已写出记录中，查询成功的数量。
+    FailedSamples int64 // 上述已写出记录中，查询失败的数量。
+    SamplingErr error // RunGatewaySampling 返回的原错误，含取消或输出传播错误。
+    OutputErr error // emit 中 WriteGatewaySampleJSON 的原错误；没有输出错误时为 nil。
+    CloseErr error // 本函数关闭样本文件的原错误；成功时 nil。
+}
+
+// RunGatewaySamplingToFile 独占创建输出文件，串行采样并在返回前关闭文件。
+// cfg/client/ctx/path 在创建文件前校验；前置失败返回零报告且不查询。
+// 文件创建后即使取消或失败，也返回已记录事实并保留文件，不自动删除或重试。
+// 返回错误合并采样与关闭错误，保留 errors.Is 链；client 仍由调用方拥有。
+func RunGatewaySamplingToFile(
+    ctx context.Context,
+    client *http.Client,
+    cfg GatewaySamplingConfig,
+    outputPath string,
+) (report GatewayRecordingReport, err error)
+```
+
+### 顺序与错误所有权
+
+1. 检查 nil ctx/client，cfg.Validate，strings.TrimSpace(outputPath) 非空，拒绝 outputPath=="-"（本函数不输出到 stdout）；检查 ctx.Err()。这些失败返回零报告、零文件创建、零请求。只用 TrimSpace 判断空白，不擅自修改实际路径。
+2. 使用 os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)。不创建父目录；已有文件、目录或符号链接均由独占创建拒绝，不先 Stat 再普通创建。创建失败也返回零报告，不能运行采样。
+3. 文件创建成功后初始化 report 的 Config、OutputPath、StartedAt；立即登记 defer 关闭文件。采用具名返回值，让 defer 可以填写原始 CloseErr、在关闭尝试后填写 FinishedAt，并以 errors.Join 把包装后的关闭错误合入最终 err。无论运行因何返回，都只关闭一次，不让调用方再次关闭本函数拥有的文件。
+4. 调用现有 RunGatewaySampling，不复制查询循环。emit 调用 WriteGatewaySampleJSON(file,sample)：失败时保存 report.OutputErr 原错误并返回它；成功时 SamplesWritten++，按 sample.Err 是否为 nil 增加 SuccessfulSamples 或 FailedSamples。不能在写之前增加计数。
+5. 保存 report.SamplingErr 为 RunGatewaySampling 的原返回错误，并返回报告与该错误；关闭 defer 在真正返回前补齐。不要再次把 OutputErr 加入 errors.Join：它已通过 emit 被 SamplingErr 包装保留。CloseErr 则是独立错误，需要合并。
+
+完整运行中保持 SamplesWritten=SuccessfulSamples+FailedSamples。计数是 WriteGatewaySampleJSON 成功返回的事实，不是独立磁盘持久化计数；关闭失败不回滚此前计数，而是通过 CloseErr 说明收尾失败。
+
+不能仅因 errors.Is(err,context.Canceled) 就忽略整个返回错误，因为 errors.Join 可能还包含 CloseErr。本层也不吞掉父取消：控制流主动取消与异常如何映射为命令退出码，留后续协调层结合报告单独判断。单次查询超时可以写成 FailedSamples 并继续，不是 OutputErr。
+
+创建文件与启动采样之间取消的竞争允许留下空的新文件：报告 StartedAt 非零，写出数为零，SamplingErr 保留父错误。这里 StartedAt 表示记录流程已拥有输出文件，不承诺已经发起网络查询。启动前就已观察到父取消，则不创建文件。对任意同步文件 I/O 不承诺 context 能强行中断。
+
+本步没有 manifest/status/complete 字段，没有原子发布、重连追加或失败删除。后续运行清单要保存此报告、配置与结束原因；读取端需同时检查清单、计数和 JSONL，而不能把完整行的存在当作整场成功证据。
+
+### 验收计划
+
+助手补测试：前置失败/已有路径/缺少父目录零请求、不覆盖旧内容；实际文件与真实 HTTP 成功/失败样本统计、取消后的最后样本及错误链、时间边界、空或部分记录保留、输入配置不变。验证 SamplesWritten 的计数口径及输出错误沿 emit 停止的接线。单行 writer 和 emit 的故障注入已在前步覆盖；真实 os.File 的写入/关闭故障如未注入必须明确只做代码审查，不把普通临时文件测试说成磁盘故障验收。文件层通过后再设计运行清单的格式与保存方式，不预写新的容量结果。
