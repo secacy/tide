@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：设计独立 gateway-sampler 命令，先实现纯参数解析，复用 GatewaySamplingConfig.Validate；等待开发者实现 cmd/gateway-sampler/config.go。文件编排已验收，命令运行、信号、退出码及正式采样实验留后续。
+当前小步：gateway-sampler 参数解析已验收，包名已统一为 main，duration 帮助文案明确文件收尾可能超过预算；45 项参数检查及三个相关包共 448 项检查通过 race。下一步接命令运行、信号与退出码；尚未提供可运行入口或正式采样实验。
 
 ## 为什么先准备负载与观测
 
@@ -1880,7 +1880,7 @@ ManifestSaved=true 不能取代 Recording.OutputErr/CloseErr：可能成功保�
 本步使一次采样具备可搬移、可核对的两份文件。命令入口、信号处理、退出码和与负载实验的协调仍待实现；正式活动会话采样曲线及容量结果尚未取得。
 
 
-## 第八步之九：采样命令参数（2026-10-01，待实现）
+## 第八步之九：采样命令参数（2026-10-01，已验收）
 
 ### 问题与方案选择
 
@@ -1943,3 +1943,21 @@ func parseSamplerConfig(args []string) (samplerConfig, error)
 ### 验收计划
 
 开发者完成后，助手补参数测试：默认值（显式给输出目录）、全部覆盖、帮助、未知参数、位置参数、URL/时长解析及非正值、缺失/空白/标准输出目录、保留合法路径空格、解析不检查或创建目录、失败返回零配置。运行定向测试并按变更范围回归；当前仅设计，无新测试结果或容量数据。
+
+
+### 初审与行为验证（2026-10-01，待包名修正）
+
+参数绑定、共享校验、错误时零配置返回和路径保持符合约定。助手新增 [config_test.go](../../../cmd/gateway-sampler/config_test.go)，暂时与当前实现使用相同的 package gateway_sampler，以便独立验证解析行为：4 个顶层测试、45 项叶子检查，通过 `go test -race ./cmd/gateway-sampler -count=1 -timeout=30s -json`（1.474s）。
+
+覆盖 9 项默认值/覆盖值/时间独立性/路径保持检查、28 项非法输入、4 项必填与帮助、4 项文件系统无副作用检查。已有目录和普通文件在解析时不被拒绝或修改，缺少父目录时也不创建文件；这些可用性判断仍交给实际运行层。
+
+尚未完成本小步验收：config.go 首行为 package gateway_sampler，与独立命令需要的 package main 不符；需将实现与测试文件的包名一起改为 main，再复验。当前通过仅说明解析行为正确，不代表命令已可运行。另外建议把 duration 参数帮助文本明确为采样预算，说明文件收尾可能超过该时长，与字段注释保持一致。未添加 main/run，未运行网络实验，无新增容量数据。
+
+
+### 修正后验收（2026-10-01）
+
+开发者已将 config.go 与 config_test.go 的包名统一为 main，并将 duration 帮助文案改为 `sampling time budget; file finalization may take longer`。参数解析行为保持不变，格式检查通过。
+
+复验 `go test -race ./cmd/gateway-sampler ./internal/loadgen ./cmd/loadgen -count=1 -timeout=120s -json`：采样命令包 4 个顶层测试、45 项叶子检查通过（1.515s）；loadgen 包 81 个顶层测试、341 项叶子检查通过（6.172s）；负载命令包 8 个顶层测试、62 项叶子检查通过（6.159s）。共 448 项检查通过，无跳过或数据竞争报告。
+
+本小步完成参数解析验收；main/run 尚未实现，因此当前不能把 gateway-sampler 作为完整命令运行。下一步明确运行预算、停止信号与产物错误的退出策略后接入入口。此次为正确性回归，无新增正式采样曲线或容量结果。
