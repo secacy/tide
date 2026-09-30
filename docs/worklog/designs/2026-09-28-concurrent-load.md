@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：Gateway 活动会话快照已验收，复用 tracker 在同一锁内读取活动数、接纳上限与停止接入状态；真实 handler 接线及并发读取通过 race。下一步接 HTTP 查询，再接实验采样。
+当前小步：设计 Gateway 快照 HTTP 查询，GET /debug/gateway 返回独立版本的 JSON，复用已验收 Snapshot；等待开发者实现。查询不经过会话准入，实验采样留后续。
 
 ## 为什么先准备负载与观测
 
@@ -1243,3 +1243,54 @@ tracker.snapshot 用现有 mu 加锁，复制 active/maxActive/stopping 到上�
 `go test -race ./internal/gateway ./cmd/gateway -count=1 -timeout=180s -json` 通过：gateway 包 82 个顶层测试、178 项叶子检查（12.918s），命令包 8 个顶层测试、86 项叶子检查（4.140s），共 264 项，未报告数据竞争。12 个需显式环境开关的实验测试按默认跳过，本轮未重跑这些负载实验。测试运行时间不是性能测量。
 
 当前只有进程内快照，还未接 HTTP 或定时采样，暂无新增活跃会话曲线、采样峰值或稳定容量数据。下一步明确查询接口和编码边界，再由实验端采样；不在 Gateway 内新增轮询 goroutine。
+
+
+## 第八步之二：Gateway 快照 HTTP 查询（2026-09-30，待实现）
+
+### 目的与备选方案
+
+独立实验进程无法直接调用 Go 对象的 Snapshot；需要一个进程外读取入口。查询只暴露现有事实，不改变会话处理，也不在服务端启动定时任务。
+
+| 方案 | 优点 | 代价与选择 |
+| --- | --- | --- |
+| HTTP JSON 查询 | 复用已有监听器与 Python 读取能力，容易保留原始响应 | 后续需由实验端管理采样时刻和失败；本步采用 |
+| 每次会话进出写日志 | 能保留事件时间，可能重建变化过程 | 并发日志重排、完整性与解析另需设计，按事件写日志也有开销 |
+| Prometheus 指标端点 | 适合后续持续采集和监控生态 | 当前只有三个状态字段，暂不引入额外依赖和指标命名约定；仍需明确同样的统计口径 |
+
+路由层已负责组装 Gateway。routes 参数从 http.Handler 改为 *gateway.Gateway，使其同时能注册 ASR handler 和读取快照；当前只有一个具体实现，不为此新增接口或运行时类型断言。HTTP 返回格式由 cmd/gateway 私有 DTO 定义，内部 GatewaySnapshot 保持进程内语义，不增加 JSON 标签。
+
+### HTTP 契约
+
+在现有监听器注册 `GET /debug/gateway`。使用标准 ServeMux 方法模式；根据本地 Go net/http.ServeMux 文档，GET 模式也匹配 HEAD，真实 HTTP Server 对 HEAD 不发送响应体。其他方法返回 405，由 ServeMux 处理；路径不带末尾斜杠，未注册子路径。
+
+正常响应为 200，Content-Type 为 application/json，Cache-Control 为 no-store。全部字段始终存在，不使用 omitempty：
+
+```json
+{
+  "schema_version": 1,
+  "active_sessions": 2,
+  "max_sessions": 64,
+  "stopping": false
+}
+```
+
+schema_version=1 是本接口自己的格式版本，与负载报告的 v2 独立。三个状态字段来自同一次 Snapshot 调用；数字使用 int，停止标志使用 bool。不输出时间戳、会话列表、历史峰值或累计请求数。后续采样脚本记录请求开始/结束时刻；一个响应只代表服务端读取时的状态，不表示整个请求期间状态不变。
+
+只要 HTTP 服务仍可处理请求，活动数满额或 Stopping=true 都返回 200 和实际状态。查询不调用 tryEnter/leave，不经过 Gateway.ServeHTTP，不创建 Worker 流；仍保留 /healthz 的现有语义。实际服务关闭时查询可能失败，不能承诺停止期间端点一直可达，也不能把失败当作 active=0。
+
+本步复用当前 :8080 监听范围，不建立独立观测端口或访问控制；它是当前实验查询入口，不把 /debug 前缀解释为仅本机可达。
+
+### 用户实现任务
+
+1. 新增 cmd/gateway/snapshot.go，声明私有 gatewaySnapshotJSON，字段为 SchemaVersion int、ActiveSessions int、MaxSessions int、Stopping bool，JSON 标签依次为 schema_version、active_sessions、max_sessions、stopping；字段及类型补充含义注释。
+2. 实现 `func gatewaySnapshotHandler(g *gateway.Gateway) http.HandlerFunc`，返回只读 HTTP 处理函数。注释说明 g 必须由 gateway.New 成功创建，每请求只读一次 Snapshot，查询不占用名额。
+3. 处理函数调用一次 g.Snapshot，将值映射至 DTO，SchemaVersion 固定 1；用 json.Marshal 先完成编码。此时 tracker 锁已释放，序列化与网络 I/O 都不在锁内。编码出错时记录错误并返回 HTTP 500，不先发送 200；成功后设置上述两个响应头，调用 Write 输出 JSON，省略显式 WriteHeader 时默认 200。Write 出错只记录日志，不再调用 http.Error 追加第二份响应。当前 DTO 只有 int/bool，正常编码不会失败，但保留常规错误处理；不通过修改生产类型专门制造编码故障。
+4. 修改 routes 为 `func routes(wsGateway *gateway.Gateway) http.Handler`，保留原 ASR/healthz 注册，并增加 `mux.HandleFunc("GET /debug/gateway", gatewaySnapshotHandler(wsGateway))`。run 已传入对应 Gateway，无需新增依赖注入层。
+
+可用 slog.Error 记录 encoding/write 错误，日志仅包含操作和错误。不新建 goroutine，不缓存响应，不增加计数或调用 Wait/StopAccepting。
+
+### 验收计划与范围
+
+实现后由助手补测试及使用文档：精确字段/版本/零值保留、默认与显式上限、JSON 与 no-store 头、GET/真实 HTTP HEAD/405/未知路径、满额或停止状态仍能查询、查询不占用会话名额、与真实 WebSocket 接入/退出的接线、原 healthz/ASR 路由回归，以及响应 Write 失败不二次写错误页。状态变化与查询并发时运行 race 检测。
+
+本步不运行新的容量实验，不生成活动曲线。下一步再设计采样周期、请求期限、失败样本和停止采样条件；定期样本的最大值只能称采样峰值，不能冒充真实瞬时峰值。
