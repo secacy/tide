@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：RunGatewaySampling 与 GatewaySample 已验收，虚拟时间验证串行节奏、失败继续、取消与交付边界，真实 HTTP 接线通过。下一步设计样本输出，文件、命令及负载协调尚未接入。
+当前小步：设计单条 GatewaySample 的 JSON Lines 输出，先校验后编码、一次写入完整一行，查询失败作为合法样本保存；等待开发者实现。文件、运行清单与负载协调留后续。
 
 ## 为什么先准备负载与观测
 
@@ -1488,3 +1488,81 @@ Validate 要求 Endpoint 由 url.Parse 成功解析，Scheme 为 http 或 https�
 先运行 `go test -race ./internal/loadgen ./cmd/loadgen -count=1 -timeout=120s -json` 通过；补充停止状态不终止循环的测试后，再运行 `go test -race ./internal/loadgen -count=1 -timeout=120s -json` 通过。最终覆盖 loadgen 57 个顶层测试、230 项叶子检查（5.288s），命令包 8 个顶层测试、62 项叶子检查（前次回归 5.851s），共 292 项，未报告数据竞争。上述毫秒数为受控虚拟时间，测试运行耗时也不作为性能指标。
 
 本步证明采样循环的行为，不代表采样已接入实验；仍没有样本文件、活动曲线或新的容量数据。下一步明确输出格式与错误/缺失值表达，随后再接命令和负载协调。同步 emit 阻塞仍由调用方负责，不声称 context 能强行中断任意回调。
+
+
+## 第八步之五：采样 JSON Lines 输出（2026-09-30，待实现）
+
+### 格式选择与目标
+
+采样循环已通过同步 emit 交付记录，但仍不能作为实验文件复核。本步实现一条样本到 io.Writer 的转换，复用现有负载 JSON 的纳秒/UTC/null 口径，不修改 BatchReport 或批次 JSON v2。
+
+| 方案 | 优点 | 代价与选择 |
+| --- | --- | --- |
+| 收集完整 slice 后输出 JSON 数组 | 整份文档易于一次读取 | 采样越久内存越多，结束前无法保存完整样本；本步不选 |
+| 流式写 JSON 数组 | 可以逐条写出，整体格式常见 | 首项逗号、关闭括号和中断恢复需额外状态 |
+| 每条样本一行 JSON（JSON Lines） | 当前样本编码后即可写出，无历史积累，完整前缀可逐行解析 | 需要另行描述运行元信息与结束状态；本步选用 |
+
+文件名未来使用 .jsonl，当前函数只接收 writer。Endpoint、采样间隔、期限、源码等共同配置及运行结束原因计划由后续运行清单记录，暂不重复到每行。只有若干完整行不能证明整场采样完整；文件截断、最后一行不完整或运行失败必须在后续读者与清单中显式处理，不能悄悄过滤后宣布成功。
+
+### 单行 v1 契约
+
+每次调用输出紧凑 JSON 加恰好一个换行符；字段全部存在，不使用 omitempty：
+
+```json
+{"schema_version":1,"index":0,"started_at":"2026-09-30T00:00:00Z","finished_at":"2026-09-30T00:00:00.012Z","duration_ns":12000000,"state":{"active_sessions":0,"max_sessions":64,"stopping":false},"error":null}
+```
+
+失败样本保持同样字段，state=null，error 为查询错误文本；不是字符串 "null"，也不是一个所有值都为零的 state。非 nil 但 Error() 返回空字符串的错误仍输出空字符串，不转成 null。错误文本里的换行由 JSON 编码转义，不能生成额外记录行。schema_version=1 为采样行格式自己的版本，与 HTTP 查询 v1、负载报告 v2 相互独立。
+
+时间戳使用 UTC 的 time.Time JSON 编码；duration_ns 是 int64(sample.Duration)，保留运行时记录的整数纳秒。不要从 UTC/序列化墙钟重新相减计算或强制验证与 duration 相等。墙钟可能校正，单调时长和序列化墙钟差值也未必逐纳秒一致；单行校验要求时间非零、记录耗时非负，不依据墙钟顺序裁掉合法观测。
+
+### 用户实现任务
+
+新增 internal/loadgen/gateway_sample_json.go，定义私有 DTO 并补注释：
+
+```go
+// gatewayStateJSON 是采样行中的成功状态；外层为 nil 时输出 null。
+type gatewayStateJSON struct {
+    ActiveSessions int `json:"active_sessions"` // 已接纳但尚未完成清理的会话数。
+    MaxSessions int `json:"max_sessions"` // 配置接纳上限。
+    Stopping bool `json:"stopping"` // 是否已停止接纳。
+}
+
+// gatewaySampleJSON 是采样行 v1；全部字段显式输出，时长为整数纳秒。
+type gatewaySampleJSON struct {
+    SchemaVersion int `json:"schema_version"` // 固定为 1。
+    Index int `json:"index"` // 本次运行内的尝试序号。
+    StartedAt time.Time `json:"started_at"` // 查询开始，UTC。
+    FinishedAt time.Time `json:"finished_at"` // 查询返回，UTC。
+    DurationNS int64 `json:"duration_ns"` // 原样保留的查询耗时。
+    State *gatewayStateJSON `json:"state"` // 查询失败时为 null。
+    Error *string `json:"error"` // 查询成功时为 null。
+}
+
+// WriteGatewaySampleJSON 校验并将一条采样记录写为一行 JSON。
+// sample.Err 是查询事实，合法失败样本仍可成功写出；返回值只表示输出失败。
+// 函数不修改 sample、不创建/关闭/刷新 writer，不保存跨行状态。
+// 校验/编码失败不写入；写入错误可能留下部分行，调用方应停止继续写入。
+func WriteGatewaySampleJSON(w io.Writer, sample GatewaySample) error
+```
+
+按以下顺序实现：
+
+1. nil writer 拒绝；Index >= 0；StartedAt/FinishedAt 均非零；Duration >= 0。
+2. 成功必须 Err==nil 且 State!=nil；失败必须 Err!=nil 且 State==nil。两者同时有值或同时为空均拒绝。
+3. State 非 nil 时检查 MaxSessions > 0，0 <= ActiveSessions <= MaxSessions；Stopping=true 且有活动会话合法。单行函数无历史，不能验证序号从零连续；不要硬编码 Index 必须为零。
+4. 通过校验后映射私有 DTO：时间使用 .UTC() 的返回值，耗时直接 int64，状态逐字段复制至新值。Error 复用包内 errorText，保持 nil 与空文本错误的区别。不要修改输入时间或输入 State。
+5. json.Marshal（不用 MarshalIndent），编码成功后 append '\n'。时间超出 JSON 支持范围等编码错误也必须在任何 Write 前返回。
+6. 对 writer 调用一次 Write，出错用 %w 包装原错误；err==nil 但 n!=len(data) 返回包装的 io.ErrShortWrite。不循环续写或重试，不吞写入错误。成功返回 nil。
+
+校验错误注明字段或样本序号即可，无需新增错误分类体系。无需额外公开转换函数，也不用改变 GatewaySample/GatewayState 或既有 errorText。函数不加锁，同一 writer 的调用由外部串行协调；未来可直接作为 RunGatewaySampling 的 emit 实现，不另建异步写队列。
+
+### 错误与所有权边界
+
+查询超时、取消、服务错误都是合法失败样本：保存成功就返回 nil，使父 context 仍有效的采样能够继续。相反，磁盘或 writer 出错属于样本无法交付，返回错误后 RunGatewaySampling 会停止；不要自动重试部分行，否则可能产生重复或拼接坏数据。
+
+一次 Write 并不保证文件原子写入或掉电持久化；writer 如果是缓冲器，Flush/Close 由后续文件层负责。当前仍可能被阻塞的 writer 阻塞，保持同步 emit 的既有边界；本函数不声称强行取消任意 I/O。完整运行的文件创建、关闭、元信息和异常结束记录留下一步。
+
+### 验收计划
+
+由助手补单行精确格式、UTC、纳秒精度、0/false/null、空文本和多行错误、成功/失败/取消样本、连续调用逐行可解析、输入不变；非法样本零写入、编码失败零写入、原始 writer 错误及短写、不关闭 writer，以及真实 RunGatewaySampling emit 到 writer 的接线。当前只定义格式，没有活动曲线、采样性能或新容量结果。
