@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：Gateway 快照 HTTP 查询已验收，GET /debug/gateway 返回独立 v1 JSON，查询不经过会话准入，慢写回不持有 tracker 锁。下一步设计外部采样与失败记录，当前尚无服务端活动曲线。
+当前小步：开始客户端单次 Gateway 查询与校验，FetchGatewaySnapshot 复用 context/http.Client，失败不伪造零值样本；等待开发者实现。定时采样、时间记录、文件与实验接线留后续。
 
 ## 为什么先准备负载与观测
 
@@ -1311,3 +1311,62 @@ schema_version=1 是本接口自己的格式版本，与负载报告的 v2 独�
 `go test -race ./cmd/gateway ./internal/gateway -count=1 -timeout=180s -json` 通过：命令包 13 个顶层测试、97 项叶子检查（3.569s），Gateway 包 82 个顶层测试、178 项叶子检查（13.597s），共 275 项，未报告数据竞争。12 个需显式启用的实验默认跳过；此处请求次数与运行时间仅为行为验证，不是性能实验。
 
 [使用说明](../../command.md)已补查询示例。尚未接实验采样，下一步固定采样周期、单次请求期限、开始/结束时刻与失败样本口径，然后再采集活动曲线。
+
+
+## 第八步之三：客户端单次 Gateway 查询（2026-09-30，待实现）
+
+### 目标与分工
+
+HTTP 查询已可用，但实验端必须能区分“合法观测到零活动”和“本次未获得有效观测”。先实现单次查询与响应校验；循环、计时、保存分别接入，不一次修改负载执行、报告版本及实验编排。
+
+采样组件继续使用 Go，放在负载工具 internal/loadgen 中，生产实现由开发者完成、测试由助手补齐。后续在负载客户端一侧独立串行运行，Python 脚本继续负责进程编排和分析。这里的“外部”指 Gateway 进程之外，不要求每次查询另起进程。Python 直接采集也可减少 Go 代码，但本项目客户端已有 context 和 Go 测试体系；选择 Go 便于明确请求取消并复用 HTTP 连接。接线时不会放进音频发送/接收回调，以免观测请求直接阻塞音频流。
+
+### 后续周期采样的原则（本步不实现）
+
+- 当前实验候选采样间隔 100ms、单次完整查询期限 200ms，均需显式记录；属于实验配置，不是服务 SLA。
+- 同时最多一个查询。请求变慢时不积压待执行任务、不并发补发漏掉的采样；具体定时推进与跳过记录在下一小步固定。
+- 每次尝试记录开始/结束墙钟、单调耗时和序号，失败保留错误且状态为 null；停止时取消在途请求并等待采样退出。
+- 覆盖负载前、负载运行中及负载结束后的有限观察窗口。尚未固定窗口与停止条件，不据此宣称退出或持续并发。
+- 周期采样可能遗漏短暂峰值，只能称“采样到的最大活动数”。成功请求不是零成本，后续实验需记录频率与开销。
+
+### 本步接口
+
+新增 internal/loadgen/gateway_snapshot.go：
+
+```go
+// GatewayState 是从一个合法 HTTP 快照响应读取的 Gateway 状态。
+// 只有 FetchGatewaySnapshot 返回 nil 错误时，该值才代表有效观测。
+type GatewayState struct {
+    // ActiveSessions 是已接纳但尚未完成清理的会话数。
+    ActiveSessions int
+    // MaxSessions 是接纳配置上限，不是实测容量。
+    MaxSessions int
+    // Stopping 表示已永久停止接纳新会话。
+    Stopping bool
+}
+
+// FetchGatewaySnapshot 向 endpoint 执行一次 GET，校验 HTTP 与快照 v1 格式。
+// endpoint 是完整查询 URL；ctx 控制本次完整请求及响应读取的期限和取消。
+// client 由调用方创建并复用，本函数不修改它、不关闭其连接池。
+// 不自动跟随重定向、不主动重试；失败返回零 GatewayState 和可追溯错误。
+// ctx 与 client 不能为 nil；调用方应为每次查询设置期限。
+func FetchGatewaySnapshot(ctx context.Context, client *http.Client, endpoint string) (GatewayState, error)
+```
+
+GatewayState 不导入 internal/gateway：客户端通过 HTTP 契约读取，不依赖服务实现包。JSON 读取用私有 gatewaySnapshotResponse，字段为 SchemaVersion *int、ActiveSessions *int、MaxSessions *int、Stopping *bool；标签与 HTTP 契约一致。指针用于区分合法的 0/false 与字段缺失/null。不要给业务返回类型加指针以传播这层解析细节。
+
+### 执行流程与边界
+
+1. nil ctx/client 返回错误；用 http.NewRequestWithContext 创建 GET，可设置 Accept: application/json。保持调用方 client 不变。
+2. 浅拷贝 http.Client，复用 Transport/Timeout 等配置，仅在副本上设置 CheckRedirect 返回 http.ErrUseLastResponse。这样仍共享连接池，但不让重定向把观测带到另一个地址；3xx 当作非 200 错误。不要每次新建 Transport，也不调用 CloseIdleConnections。
+3. 对副本调用一次 Do；出错用 %w 包装原错误。取得响应后及时 defer Body.Close，所有后续路径都关闭 Body。正常 200 要读取到 EOF；错误路径不为复用连接而无限排空响应。
+4. 非 200 返回含状态码的错误。用 mime.ParseMediaType 检查 Content-Type 为 application/json，允许合法参数（例如 charset=utf-8）。
+5. 响应体上限固定 4096 字节，用 io.LimitReader(resp.Body, 4097) 后 io.ReadAll；读取失败包装 %w，超过 4096 拒绝。上限是本小型快照协议的保护值，不是全链路内存保证。
+6. 对完整字节串 json.Unmarshal 到私有响应类型，拒绝非法 JSON、错误类型、小数整数、整数溢出和第二份尾随 JSON。未知附加字段允许忽略，格式版本仍须为 1；不额外实现重复键检测，本步使用 Go 标准 JSON 解码行为。
+7. 四个指针都必须非 nil；版本必须 1；MaxSessions > 0；0 <= ActiveSessions <= MaxSessions。Stopping=true 且 ActiveSessions>0 合法。只在全部检查通过后构造返回 GatewayState。
+
+零值响应并非成功：有效的零活动状态仍需完整四字段及合法正上限。错误时 GatewayState 零值仅满足函数约定，采样层必须检查 error，不能落盘为观测到 active=0。保留取消/超时错误链，后续可用 errors.Is 判断。这里不新增 Sample 类型、时间戳、goroutine、ticker、落盘、命令参数或负载报告版本。
+
+### 验收计划
+
+助手在实现后补测试：合法空闲/忙碌/停止状态、缺失/null、未知版本、类型和范围、非法与尾随 JSON、媒体类型、非 200、响应体边界/读取错误、错误返回零值及关闭响应体；真实本地 HTTP 的请求取消、响应体读取超时、重定向不跟随及调用方 client 不被修改。时间期限覆盖完整响应读取，不只等待响应头；不通过 sleep 估算生产性能。通过后再明确周期采样和样本记录结构。
