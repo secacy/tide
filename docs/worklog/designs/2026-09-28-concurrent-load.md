@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：RunGatewaySamplingToFile 与 GatewayRecordingReport 已验收，独占创建、真实文件计数、取消保留及路径竞争通过 race。下一步设计运行清单保存；尚未接命令和负载协调，临时测试文件不作为正式实验数据。
+当前小步：设计 WriteGatewayRecordingJSON，将已收尾运行报告导出为清单 v1，分别记录停止原因与采样/输出/关闭错误；等待开发者实现。清单文件创建、命令与负载协调留后续。
 
 ## 为什么先准备负载与观测
 
@@ -1674,3 +1674,97 @@ func RunGatewaySamplingToFile(
 真实 os.File 写入/关闭故障本轮未注入，相关路径仅代码审查：输出失败计数不增加、OutputErr 经 SamplingErr 传播；defer 保存 CloseErr 并通过 errors.Join 合并，不会覆盖先前错误。前步 io.Writer 注入证明的是行输出和 emit 传播，不冒充本轮磁盘故障验证。文件创建后、首次尝试前发生取消而留下空文件的竞争窗口也未做确定性注入；依据现有控制流保留设计约定。
 
 目前内存报告返回后尚未保存为运行清单，单独 JSONL 不足以证明整场记录完整；下一步设计清单格式与写入流程，再接命令及负载协调。没有新增活动曲线或容量数据。
+
+
+## 第八步之七：采样运行清单 JSON（2026-09-30，待实现）
+
+### 目标与表达方式
+
+GatewayRecordingReport 目前只在内存。清单保存一次记录的配置、路径、时间、计数和错误，使后续读者能够结合 JSONL 复核运行结果。本步只实现 io.Writer 输出，不在 RunGatewaySamplingToFile 里面隐式创建第二个文件；文件与命令层在后续明确两份产物的所有权和失败处理。
+
+| 方案 | 优点 | 代价与选择 |
+| --- | --- | --- |
+| 只保存总体 success/complete | 展示简单 | 混淆主动取消、查询失败、写入失败和关闭失败，容易过度解释 |
+| 只保存错误文本 | 保留信息 | 读者必须解析错误字符串判断取消/期限，脆弱 |
+| 结构化停止原因 + 各类原始错误与计数 | 容易分析，保留诊断信息，各种失败不会互相覆盖 | 字段稍多；本步采用 |
+
+停止原因仅解释采样循环为什么返回，不代替文件收尾状态。主动取消 + 关闭失败仍输出 stop_reason=canceled 和非空 close_error；全部查询失败但记录成功时，failed_samples 可以等于 samples_written。不能仅看到 canceled 或完整 JSON 就宣布负载实验成功。
+
+### 清单契约
+
+独立格式 schema_version=1，一个清单对应一份采样 JSONL（当前采样行格式 v1）。使用易读缩进 JSON，末尾一个换行；全部字段存在，不用 omitempty：
+
+```json
+{
+  "schema_version": 1,
+  "config": {
+    "endpoint": "http://127.0.0.1:8080/debug/gateway",
+    "interval_ns": 100000000,
+    "request_timeout_ns": 200000000
+  },
+  "output_path": "samples.jsonl",
+  "started_at": "2026-09-30T00:00:00Z",
+  "finished_at": "2026-09-30T00:00:03Z",
+  "samples_written": 3,
+  "successful_samples": 2,
+  "failed_samples": 1,
+  "stop_reason": "canceled",
+  "sampling_error": "context canceled",
+  "output_error": null,
+  "close_error": null
+}
+```
+
+配置数值为整数纳秒，计数为 int64；时间转 UTC 副本，保留输出路径原文。错误用已有 errorText 保留 nil/null 与空文本错误的区别；不从文本判断类型。清单未加入性能结论、活动数峰值或覆盖时长，也不新增总体 complete 布尔值。
+
+### 用户实现范围
+
+新增 internal/loadgen/gateway_recording_json.go：
+
+- 私有 gatewaySamplingConfigJSON：Endpoint string、IntervalNS int64、RequestTimeoutNS int64，标签对应 config 内三个字段。
+- 私有 gatewayRecordingJSON：SchemaVersion int、Config gatewaySamplingConfigJSON、OutputPath string、StartedAt/FinishedAt time.Time、SamplesWritten/SuccessfulSamples/FailedSamples int64、StopReason string、SamplingError/OutputError/CloseError *string。标签与契约一致，各字段注明含义。
+- 私有 gatewayRecordingStopReason(report GatewayRecordingReport) string，注释说明只分类循环退出原因，不判定关闭是否成功。
+- 导出函数如下：
+
+```go
+// WriteGatewayRecordingJSON 将已收尾的记录报告导出为清单 v1。
+// 报告中的运行/输出/关闭错误是待保存事实，不阻止有效清单输出。
+// 返回错误仅表示校验、编码或清单写入失败。
+// 不修改 report，不访问其 OutputPath，也不创建/关闭/刷新 writer。
+// 校验/编码失败零写入；写入失败可能留下部分清单，调用方负责处理。
+func WriteGatewayRecordingJSON(w io.Writer, report GatewayRecordingReport) error
+```
+
+### 校验与分类规则
+
+先完成校验，再编码和写入：
+
+1. w 非 nil；report.Config.Validate() 通过。
+2. OutputPath 非空白，且不为 "-"；只检查文本，不 Stat/读取 JSONL、不推断路径相对于清单的位置。本步不转换相对路径。
+3. StartedAt 与 FinishedAt 均非零，表示报告已启动并完成关闭尝试；不从序列化墙钟判断单调顺序，不新增重算耗时。
+4. 三个计数均非负。先检查 SuccessfulSamples <= SamplesWritten，再检查 FailedSamples == SamplesWritten - SuccessfulSamples；使用减法避免直接相加 int64 溢出。0/0/0 合法，代表可能已创建文件却尚无成功写出的行。
+5. OutputErr 非 nil 时，SamplingErr 也必须非 nil：当前输出错误通过 emit 使采样退出。无需比较错误文本或验证 errors.Is(SamplingErr,OutputErr)，不拒绝 CloseErr 非 nil 的报告。
+
+stop_reason 使用如下优先级（判断错误本身，不看字符串）：
+
+| 条件 | stop_reason |
+| --- | --- |
+| OutputErr != nil | output_error |
+| errors.Is(SamplingErr, context.DeadlineExceeded) | deadline_exceeded |
+| errors.Is(SamplingErr, context.Canceled) | canceled |
+| SamplingErr != nil | sampling_error |
+| SamplingErr == nil | returned |
+
+输出错误优先，是因为写入失败也可能包着 context.Canceled；不能把交付失败误报为普通取消。DeadlineExceeded 优先于 Canceled，若一个构造错误链同时包含二者，分类明确。returned 只表示采样无错误返回；当前无限采样循环通常以取消结束，但清单允许没有采样错误的已收尾报告，不把 returned 当作关闭成功。CloseErr 不参与该分类，单独保存。
+
+校验通过后构造私有 DTO，转换 UTC、纳秒并使用 errorText；json.MarshalIndent 后追加换行，调用一次 Write。底层错误使用 %w 包装；err==nil 但 n!=len(data) 返回包装的 io.ErrShortWrite。不续写或重试，不返回报告自身的 SamplingErr/OutputErr/CloseErr 作为清单写入结果：错误报告写成功同样返回 nil。
+
+### 完整性与后续接线
+
+本函数只序列化报告，不能证明实际文件与报告匹配。后续分析应核对样本行数、序号与分类计数，并检查 output_error/close_error；再结合外层运行清单与负载时间窗口确认采样覆盖。相对路径需要由后续运行目录约定解释。没有清单、清单截断或清单保存失败都不能默认为运行成功；原 JSONL 仍应保留。
+
+这一步既不创建清单文件，也不修改采样记录函数。下一步统一设计两个产物的路径、独占创建与关闭顺序、保存失败返回规则，以及停止原因与命令退出码的关系，避免在序列化层隐式承担文件编排。
+
+### 验收计划
+
+助手补精确格式、版本/单位/UTC/null、空错误、三类错误同时保留、分类优先级、零样本/int64 边界与防溢出、矛盾报告零写入、编码失败/短写/错误链及输入不变测试；用真实 RunGatewaySamplingToFile 返回报告输出清单，并与临时 JSONL 行数核对。负载实验与清单发布完整性仍未实现，不预写容量结果。
