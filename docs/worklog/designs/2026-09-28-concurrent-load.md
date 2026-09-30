@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：gateway-sampler 参数解析已验收，包名已统一为 main，duration 帮助文案明确文件收尾可能超过预算；45 项参数检查及三个相关包共 448 项检查通过 race。下一步接命令运行、信号与退出码；尚未提供可运行入口或正式采样实验。
+当前小步：设计 gateway-sampler 的 main/run 与命令结果判定；计划到期、至少一个有效快照且两份产物保存成功才正常退出，外部提前停止返回非零并保留证据。用独立的 context 到期原因区分计划时长与父取消/期限，等待开发者实现；正式采样实验尚未运行。
 
 ## 为什么先准备负载与观测
 
@@ -1961,3 +1961,103 @@ func parseSamplerConfig(args []string) (samplerConfig, error)
 复验 `go test -race ./cmd/gateway-sampler ./internal/loadgen ./cmd/loadgen -count=1 -timeout=120s -json`：采样命令包 4 个顶层测试、45 项叶子检查通过（1.515s）；loadgen 包 81 个顶层测试、341 项叶子检查通过（6.172s）；负载命令包 8 个顶层测试、62 项叶子检查通过（6.159s）。共 448 项检查通过，无跳过或数据竞争报告。
 
 本小步完成参数解析验收；main/run 尚未实现，因此当前不能把 gateway-sampler 作为完整命令运行。下一步明确运行预算、停止信号与产物错误的退出策略后接入入口。此次为正确性回归，无新增正式采样曲线或容量结果。
+
+
+## 第八步之十：命令运行、停止与退出状态（2026-10-01，待实现）
+
+### 问题、方案与取舍
+
+参数解析已经完成，需要把有限时长、HTTP 客户端所有权、文件编排和进程退出连接起来。核心函数会在父 context 结束时返回原始取消/到期错误，即使两份文件已完整保存；命令不能直接把所有非 nil 错误当失败，也不能把含有 DeadlineExceeded 的合并错误全部忽略。
+
+| 方案 | 优点 | 代价与本次选择 |
+| --- | --- | --- |
+| 核心层把取消/到期都改为 nil | 命令判断简单 | 改变可复用层契约，丢失真实停止信息，不采用 |
+| 命令忽略所有取消/到期错误 | 接线短 | 外部提前中断与计划完成混淆，还可能漏报合并的保存错误，不采用 |
+| 命令识别自己设置的到期原因，同时检查采样和保存事实 | 核心报告保留原始信息，进程退出语义可解释 | 多一个命令层判定函数，本次采用 |
+
+不新增 goroutine 等待定时器，也不复制采样循环。run 建立有限预算 context，调用已验收的 RunGatewayRecording，待其文件收尾完成后再判断命令是否正常完成。采样停止由 context 协作完成，同步文件收尾仍可能超过预算。
+
+### 退出规则
+
+| 场景 | 退出码与含义 |
+| --- | --- |
+| -h/-help | 0，不启动采样 |
+| 计划时长到期、至少一个有效快照、样本和清单保存成功 | 0，有限采样运行完成 |
+| 查询有成功也有失败，最终满足上一行条件 | 0，必须报告成功/失败数量；不代表数据达到实验质量要求 |
+| 零成功样本（包括零行） | 1，即使失败证据已成功保存，也没有得到有效网关观测 |
+| SIGINT/SIGTERM 或调用方 context 提前结束 | 1，计划观察窗口提前结束；核心仍尽力保存已有记录 |
+| 配置/路径/启动错误，样本输出或关闭失败，清单未保存或清单错误 | 1，保留已有产物与原始错误 |
+| 未按约定原因返回 | 1，不猜测为正常结束 |
+
+信号停止也可以选择作为正常结束，但本命令先采用有限观察窗口契约，便于实验脚本发现窗口被提前截断。后续若改用“负载完成后发信号结束采样”的协议，应显式调整契约和实验判定，不能悄悄忽略信号退出。当前只区分 0/1，暂不增加平台相关的 130/143 退出码。
+
+只要求至少一个有效快照，是为了捕获地址错误/整段不可查询等明显不可用情况，不设置任意成功率门槛。一个有效快照不证明观察覆盖足够；可接受的缺口比例、窗口覆盖与网关健康由后续实验判断。active=0、stopping=true 也可以是合法的有效快照。
+
+### 停止原因的实现原理
+
+新增包内标记错误 errSamplingDurationReached，表示本命令自己的运行预算到期。run 使用：
+
+```go
+runCtx, cancel := context.WithTimeoutCause(ctx, cfg.Duration, errSamplingDurationReached)
+defer cancel()
+```
+
+到期时 runCtx.Err() 仍为 context.DeadlineExceeded，已有采样与清单逻辑无需修改；context.Cause(runCtx) 则为命令自有标记。父 context 提前取消/到期时 cause 为父原因，不会被误判为本命令完成。原因以先触发者为准：自身预算已经先到期后，晚到的外部取消不回溯改写原因。
+
+在核心调用返回后、defer cancel 执行前读取 cause 并完成判定，避免人为清理 context 改变未结束的 context 原因。计划到期仍会如实写成清单的 deadline_exceeded；命令退出 0 表示这一停止符合有限时长计划，二者不矛盾。命令配置中的 duration 和进程退出结果还需由启动日志及后续实验编排保留。
+
+### 文件与函数
+
+新增 cmd/gateway-sampler/run.go 和 main.go，均为 package main。生产代码由开发者实现。
+
+```go
+// errSamplingDurationReached 标记本命令设定的采样预算到期，区别于父 context 提前结束。
+var errSamplingDurationReached = errors.New("sampling duration reached")
+
+// run 执行一次有限时长采样，创建并回收自己的 HTTP 连接池。
+// ctx 控制外部提前停止；cfg 通常来自参数解析，Duration 仍在本层校验。
+// 返回原始文件编排结果；error 表示命令是否完成约定窗口并保存可用观测。
+// 不修改报告中的原始错误，不注册信号，不退出进程。
+func run(ctx context.Context, cfg samplerConfig) (loadgen.GatewayRecordingResult, error)
+
+// samplerRunError 根据当前 RunGatewayRecording 契约判断命令运行结果。
+// result 为原始产物结果，recordingErr 为核心返回错误，stopCause 在清理运行 context 前读取。
+// 仅计划到期、至少一个有效快照、产物完整保存时返回 nil；不执行 I/O 或修改输入。
+func samplerRunError(result loadgen.GatewayRecordingResult, recordingErr, stopCause error) error
+
+// main 解析参数、注册停止信号、输出运行摘要，并将命令错误转换为 0/1 退出状态。
+// 调用 os.Exit 前显式释放 signal 资源；文件与连接池由 run 完成清理。
+func main()
+```
+
+### run 的执行顺序
+
+1. 拒绝 nil ctx、非正 Duration、已经结束的父 ctx：返回零结果和错误，原始 context 错误使用 %w 保留。其余采样配置和目录校验复用核心层，不再复制 URL/路径规则。
+2. 取得标准 http.DefaultTransport 的 *http.Transport 并 Clone，避免修改或关闭共享连接池；若类型断言不成立，返回明确错误。创建 `&http.Client{Transport: transport}`，defer `transport.CloseIdleConnections()`。不设置另一份 client.Timeout；单次查询与整体预算已有 context 控制。
+3. 建立带 errSamplingDurationReached 原因的运行 context，defer cancel。
+4. 同步调用 RunGatewayRecording(runCtx, client, cfg.Sampling, cfg.OutputDir)，获取 result、recordingErr。它返回时两份文件已完成各自关闭尝试。
+5. 读取 context.Cause(runCtx)，调用 samplerRunError，返回原始 result 与判定错误。禁止清空 result.Recording.SamplingErr、修改失败计数或重写清单来制造成功。
+
+### samplerRunError 的判定顺序
+
+1. Recording.StartedAt 为零则视为未启动，返回包含 recordingErr 的非 nil 错误，不能因 context 到期而放行路径错误。
+2. 检查 Recording.OutputErr、Recording.CloseErr、ManifestErr，任何非 nil 均为失败；ManifestSaved=false 也必须失败。错误保留原有原因，可用 errors.Join 添加描述，不能只返回一条丢失底层原因的字符串。
+3. stopCause 必须等于 errSamplingDurationReached。其他原因即提前结束或异常返回；返回错误并保留 recordingErr 和非 nil 的 stopCause。stopCause=nil 时明确报告“没有计划到期原因”，不使用 %w 包装 nil。
+4. recordingErr 和 Recording.SamplingErr 均应通过 errors.Is 匹配 context.DeadlineExceeded，否则视为未按约定结束。该判断依赖当前核心层错误已在样本/清单字段完整分层的契约；不是通用的“从任意合并错误中删除超时错误”。新增错误来源时必须同步审视本判定。
+5. Recording.SuccessfulSamples 必须大于零，否则返回明确的“没有有效快照”错误，并保留 recordingErr。
+6. 所有条件满足返回 nil。失败样本数大于零仍允许本层正常完成；完整的成功/失败数量必须输出，后续实验不得仅凭退出码判断数据质量。
+
+此纯函数使“计划到期和保存错误同时出现”的组合可以直接测试，无需破坏真实文件描述符或往生产文件层塞测试钩子。构造报告测试不等于真实磁盘故障注入。
+
+### main 的接线顺序
+
+1. parseSamplerConfig(os.Args[1:])；flag.ErrHelp 直接返回，其他错误打印到 stderr 后退出 1。
+2. 打印启动配置：URL、interval、request-timeout、duration、output-dir，以便终端日志和后续脚本保存实际运行条件。
+3. 用 signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM) 创建父 context。
+4. 调用 run(ctx,cfg)，随后显式 stop()。os.Exit 不执行 defer，因此不能只依赖 main 中的 defer stop。
+5. 输出摘要：SamplesWritten、SuccessfulSamples、FailedSamples、样本路径、ManifestPath、ManifestSaved；失败时附命令错误。前置失败时路径可能为空，日志应保留 cfg.OutputDir 便于定位。
+6. run 返回错误则退出 1；否则正常 return。成功文案使用“采样运行完成”，避免写成“网关健康”或“所有查询成功”。不重新写入或删除产物。
+
+### 验收计划
+
+助手补纯判定矩阵、run 的真实 HTTP 与文件核对、真实编译后命令的帮助/错误/按期完成/全失败/SIGINT/SIGTERM 退出测试，并验证停止后产物保留和私有连接清理。通过本轮检查后再更新可运行命令说明。当前仅设计，未改变核心、未接 main/run、无新增测试结果或正式容量数据。
