@@ -108,3 +108,15 @@ func (t *sessionTracker) wait(ctx context.Context) error {
 		return ctx.Err()
 	}
 }
+
+// snapshot 在同一个临界区复制活动数、接纳上限和停止状态。
+// 只读取状态，不修改计数、不关闭 drained，也不等待会话退出。
+func (t *sessionTracker) snapshot() GatewaySnapshot {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return GatewaySnapshot{
+		ActiveSessions: t.active,
+		MaxSessions:    t.maxActive,
+		Stopping:       t.stopping,
+	}
+}
