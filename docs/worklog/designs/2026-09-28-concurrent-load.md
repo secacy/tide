@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：名额池快照已验收，开始 Worker 层 ProcessingSnapshot 访问方法：返回值快照和 enabled，关闭限制时返回零值与 false，防止把未采集解释为零占用。见 [第二步设计](2026-10-01-worker-processing-observation.md)。等待开发者实现，进程外查询与新实验留后续。
+当前小步：Worker 层 ProcessingSnapshot 访问方法已验收，返回值快照与 enabled，区分已启用空闲和未启用/未采集。新增四项检查，Mock 包共 87 项检查通过 race，见 [第二步设计与验收](2026-10-01-worker-processing-observation.md)。下一步设计进程外 HTTP 查询及命令接入，尚无新性能实验。
 
 ## 为什么先准备负载与观测
 
