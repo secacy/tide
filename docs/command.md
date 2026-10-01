@@ -26,6 +26,7 @@ Worker 启动参数：
 | 参数 | 默认值 | 含义 |
 | --- | --- | --- |
 | `-listen` | `:50051` | TCP 监听地址 |
+| `-debug-listen` | 空字符串 | 可选 HTTP 状态查询监听地址；空值关闭，纯空白拒绝；与处理限制开关独立 |
 | `-processing-concurrency` | `0` | 同一 Worker 共享的处理名额；0 关闭限制，负数启动失败 |
 | `-processing-delay` | `0s` | 每个有效音频块的模拟处理耗时；允许 0，拒绝负数 |
 | `-response-delay` | `50ms` | 每条 partial/final 文本响应的等待；进度消息不增加此等待；允许 0，拒绝负数 |
@@ -41,6 +42,31 @@ go run ./cmd/asr-worker -listen=127.0.0.1:50052 -processing-concurrency=2 -proce
 ```
 
 这些是启动示例，不代表稳定容量结论。启动日志记录实际监听地址和三个处理/响应参数；用 `-listen=127.0.0.1:0` 可让系统分配空闲端口，实际端口见日志。参数解析及 Worker 配置校验在监听之前完成，帮助正常退出，配置或监听错误非零退出。
+
+开启 Worker 状态查询时，为每个实例指定独立地址。以下使用编译后的程序，便于直接管理进程信号：
+
+```bash
+go build -o /tmp/tide-asr-worker ./cmd/asr-worker
+/tmp/tide-asr-worker -listen=127.0.0.1:50051 -debug-listen=127.0.0.1:50081 -processing-concurrency=1 -processing-delay=10ms -response-delay=0s
+```
+
+在另一个终端查询：
+
+```bash
+curl -i http://127.0.0.1:50081/debug/worker
+```
+
+启用限制且空闲时返回：
+
+```json
+{"schema_version":1,"processing_limit_enabled":true,"processing":{"limit":1,"in_use":0,"waiting":0}}
+```
+
+若 `-processing-concurrency=0`，即使启用 HTTP，也返回 `processing_limit_enabled=false` 和 `processing=null`，表示没有这项名额计数，不能解释为没有处理任务。`in_use` 是已登记持有的处理名额，`waiting` 是已登记、尚未完成获取或取消收尾的请求数，均不是活跃会话数或 CPU 使用率。查询支持 GET/HEAD，响应禁止缓存；网络查询失败应保留未知状态，不能记为零。
+
+`-debug-listen=127.0.0.1:0` 可由系统分配 HTTP 端口，启动日志的 `debug_address` 记录实际地址；`address` 仍是 gRPC 地址，`debug_enabled` 表示是否启用查询。默认不创建 HTTP 监听器。`:50081` 是通配监听地址，`/debug` 路径本身不限制访问范围，本机实验使用 `127.0.0.1`。
+
+HTTP 显式启用时，两个端口全部取得成功后才运行服务，HTTP 绑定失败会释放此前取得的 gRPC 端口；两个服务查询/处理同一个 Worker。运行中任何一方异常会触发另一方清理。收到 SIGINT（Ctrl+C）或 SIGTERM 后，两个服务共享五秒自然收尾窗口；正常收尾退出 0，到期强制关闭并保留错误，退出 1。强制停止会中断未完成的转录，不能记为成功完成。五秒限制的是优雅等待阶段，不是任意 handler 退出的硬期限；HTTP 服务另有 5 秒请求头/写回期限和 30 秒空闲连接期限，这些均为开发保护值。
 
 Gateway 默认使用 `localhost:50051`；配置上述两个 Worker 时：
 

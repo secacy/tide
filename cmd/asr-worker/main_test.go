@@ -26,7 +26,7 @@ func TestRunStartupErrors(t *testing.T) {
 		cfg := expectedWorkerConfig()
 		cfg.ListenAddr = "not-a-tcp-address"
 		cfg.Mock.ProcessingConcurrency = -1
-		err := run(cfg)
+		err := run(context.Background(), cfg)
 		if status.Code(err) != codes.InvalidArgument || !strings.Contains(err.Error(), "create mock ASR worker") {
 			t.Fatalf("configuration was not rejected before listen: %v", err)
 		}
@@ -39,9 +39,9 @@ func TestRunStartupErrors(t *testing.T) {
 		defer listener.Close()
 		cfg := expectedWorkerConfig()
 		cfg.ListenAddr = listener.Addr().String()
-		err = run(cfg)
+		err = run(context.Background(), cfg)
 		var networkErr *net.OpError
-		if !errors.As(err, &networkErr) || !strings.Contains(err.Error(), "listen on "+cfg.ListenAddr) {
+		if !errors.As(err, &networkErr) || !strings.Contains(err.Error(), "listen for gRPC on "+cfg.ListenAddr) {
 			t.Fatalf("lost listen context or cause: %v", err)
 		}
 	})
@@ -70,7 +70,7 @@ func TestWorkerExecutable(t *testing.T) {
 		{"negative_response", []string{"-response-delay=-1ms"}, 1, "response-delay must be >= 0"},
 		{"blank_listen", []string{"-listen= "}, 1, "missing listen address"},
 		{"negative_concurrency_before_listen", []string{"-listen=invalid", "-processing-concurrency=-1"}, 1, "create mock ASR worker"},
-		{"malformed_address", []string{"-listen=invalid"}, 1, "listen on invalid"},
+		{"malformed_address", []string{"-listen=invalid"}, 1, "listen for gRPC on invalid"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -130,11 +130,14 @@ func TestWorkerExecutable(t *testing.T) {
 			}
 		}
 	})
+	t.Run("lifecycle", func(t *testing.T) { verifyWorkerProcessLifecycle(t, binary) })
 }
 
 // workerProcess 保存测试进程与实际监听地址；err 仅在 done 关闭后读取。
 type workerProcess struct {
 	address, startLog string
+	debugAddress      string
+	process           *os.Process
 	done              chan struct{}
 	err               error
 }
@@ -157,7 +160,7 @@ func startWorkerProcess(t *testing.T, binary string, args ...string) *workerProc
 		logFile.Close()
 		t.Fatal(err)
 	}
-	p := &workerProcess{done: make(chan struct{})}
+	p := &workerProcess{done: make(chan struct{}), process: cmd.Process}
 	go func() { p.err = cmd.Wait(); close(p.done) }()
 	t.Cleanup(func() {
 		cancel()
@@ -171,6 +174,7 @@ func startWorkerProcess(t *testing.T, binary string, args ...string) *workerProc
 		}
 	})
 	addressPattern := regexp.MustCompile(`address=(127\.0\.0\.1:\d+)`)
+	debugPattern := regexp.MustCompile(`debug_address=(127\.0\.0\.1:\d+)`)
 	deadline := time.NewTimer(5 * time.Second)
 	defer deadline.Stop()
 	ticker := time.NewTicker(10 * time.Millisecond)
@@ -186,6 +190,9 @@ func startWorkerProcess(t *testing.T, binary string, args ...string) *workerProc
 				if len(match) == 2 {
 					p.address = match[1]
 					p.startLog = line
+					if debug := debugPattern.FindStringSubmatch(line); len(debug) == 2 {
+						p.debugAddress = debug[1]
+					}
 					return p
 				}
 			}
