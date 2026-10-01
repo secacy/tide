@@ -83,7 +83,7 @@ func TestFetchWorkerSnapshotValues(t *testing.T) {
 		want       loadgen.WorkerState
 	}{
 		{"disabled", `{"schema_version":1,"processing_limit_enabled":false,"processing":null}`, loadgen.WorkerState{}},
-		{"disabled_whitespace", `{"schema_version":1,"processing_limit_enabled":false,"processing": 
+		{"disabled_whitespace", `{"schema_version":1,"processing_limit_enabled":false,"processing":
  null 	 }`, loadgen.WorkerState{}},
 		{"idle", `{"schema_version":1,"processing_limit_enabled":true,"processing":{"limit":2,"in_use":0,"waiting":0}}`, loadgen.WorkerState{ProcessingLimitEnabled: true, Processing: loadgen.WorkerProcessingState{Limit: 2}}},
 		{"busy_waiting", workerProbeJSON, loadgen.WorkerState{ProcessingLimitEnabled: true, Processing: loadgen.WorkerProcessingState{Limit: 2, InUse: 1, Waiting: 5}}},
