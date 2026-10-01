@@ -97,6 +97,14 @@ func TestWorkerExecutable(t *testing.T) {
 			if tc.code == 0 && strings.Contains(string(output), "level=ERROR") {
 				t.Fatalf("help logged as failure: %s", output)
 			}
+			if tc.name == "help" || tc.name == "long_help" {
+				// 复用真实命令帮助检查，确认新增参数说明包含协议、关闭方式和本机示例。
+				for _, hint := range []string{"-debug-listen", "HTTP", "empty disables", "127.0.0.1:50081"} {
+					if !strings.Contains(string(output), hint) {
+						t.Errorf("help missing %q: %s", hint, output)
+					}
+				}
+			}
 		})
 	}
 	t.Run("two_workers", func(t *testing.T) {

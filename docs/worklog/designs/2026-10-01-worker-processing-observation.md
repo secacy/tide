@@ -1,7 +1,7 @@
 # 第五阶段：Worker 处理占用与等待观测
 
 日期：2026-10-01
-状态：名额池快照、Worker 层 ProcessingSnapshot 及 HTTP 查询响应与路由均已验收。第四步之一明确可选 debug-listen 参数，等待开发者实现纯配置解析；正式监听和双服务协调尚未接入，进程外采样尚未接入，没有新增性能或容量结果。
+状态：名额池快照、Worker 层 ProcessingSnapshot、HTTP 查询响应与路由及可选 debug-listen 参数均已验收。正式监听和双服务协调尚未接入，下一步设计运行层接线；进程外采样尚未接入，没有新增性能或容量结果。
 相关：[共享处理名额](2026-09-27-worker-processing-capacity.md)、[Gateway 联合观测基线](../../experiments/gateway-observation-baseline.md)
 
 ## 为什么继续补这项
@@ -285,7 +285,7 @@ routes 创建 http.NewServeMux()，注册 `GET /debug/worker` 到该 Handler 后
 
 本步没有修改 main、run 或启动配置，正式 Worker 命令仍只监听 gRPC，不能直接 curl 查询。下一步设计 HTTP 监听及 HTTP/gRPC 启动失败回滚与退出协调；本次没有新增性能或容量数据。
 
-## 第四步之一：HTTP 监听配置（2026-10-01，待实现）
+## 第四步之一：HTTP 监听配置（2026-10-01，已验收）
 
 ### 接入方向与选择
 
@@ -339,3 +339,15 @@ type workerConfig struct {
 用户实现后，助手补测试：默认与显式空值关闭、等号/分离参数语法、多个地址原值保留、空白拒绝、缺少参数值、帮助文案、与处理限制开关独立，以及旧参数默认值和重复解析不受影响。语法不合法但非空的地址应仍能解析，绑定失败属于下一步运行层。
 
 这一步只验证配置契约；之后再设计并接入同一 Worker 的双服务运行、监听失败回滚、信号与退出，最后才可从外部查询。没有新增负载、吞吐或资源消耗结果。
+
+### 第四步之一实现与验收
+
+开发者在 [config.go](../../../cmd/asr-worker/config.go) 增加 DebugListenAddr、-debug-listen 参数、说明文案和纯空白拒绝校验。默认及显式空值关闭、非空地址原值保留均符合约定。助手仅执行 gofmt，未修改生产逻辑。
+
+新增 [debug_config_test.go](../../../cmd/asr-worker/debug_config_test.go)，四个顶层测试、19 项叶子检查：11 项地址/默认值检查、5 项无效输入检查、2 项处理限制独立配置检查和1项重复解析检查。覆盖 IPv4/IPv6、通配地址、系统分配端口、两个相同的 :0 地址不提前拒绝、地址格式校验延后、保留两侧空格、普通/控制/Unicode 空白拒绝及错误返回零配置。两个处理限制用例分别检查 HTTP 开启和关闭，确认两类开关不互相推导。
+
+在已有 [main_test.go](../../../cmd/asr-worker/main_test.go) 的真实进程 -h/-help 检查中，补充核对 debug-listen、HTTP、空值关闭和本机地址示例文案，未新增构建流程。
+
+执行 `go test -race ./cmd/asr-worker -count=1 -timeout=90s -json`，16 个顶层测试、67 项叶子检查全部通过，无失败、跳过或数据竞争报告。包含原有配置、Handler、启动错误及真实 Worker 子进程/RPC 回归；本次未重跑 Mock 包或全项目测试。
+
+run 尚未读取 DebugListenAddr，因此参数解析通过不等于已开放 HTTP 查询。命令使用文档不提前发布可用的监听示例。下一步接入同一 Worker 的双服务启动、失败回滚与退出协调；没有新增性能或容量数据。
