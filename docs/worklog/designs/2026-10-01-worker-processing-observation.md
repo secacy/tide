@@ -1,7 +1,7 @@
 # 第五阶段：Worker 处理占用与等待观测
 
 日期：2026-10-01
-状态：快照、HTTP Handler/路由、可选 debug-listen 参数及双服务运行退出均已实现并验收。正式 Worker 可提供进程外 HTTP 查询；下一步设计查询客户端与采样接入，没有新增性能或容量实验结果。
+状态：Worker 进程外 HTTP 查询已实现并验收；第五步已明确单次查询客户端、响应校验及未采集语义，等待开发者实现。周期采样尚未接入，没有新增性能或容量实验结果。
 相关：[共享处理名额](2026-09-27-worker-processing-capacity.md)、[Gateway 联合观测基线](../../experiments/gateway-observation-baseline.md)
 
 ## 为什么继续补这项
@@ -456,3 +456,96 @@ Serve 返回值的归类顺序：先识别是否正常停止候选，再结合 g
 先运行新增启动/协调/收尾定向检查通过；补齐真实 Mock 与进程用例后，运行 `go test -race ./... -count=1 -timeout=120s -json`，全项目 1000 项叶子检查通过，12 个需显式开启的实验默认跳过，无失败或数据竞争报告。Worker 命令包 84 项检查通过。测试没有对任意不响应取消的 handler 给出有界退出保证，也未独立注入 HTTP Close 自身返回错误的分支。
 
 已发布 [命令用法](../../command.md)，包含可选查询地址、实际端口日志、未启用 null、信号和退出码。当前能从正式进程查询状态，但尚未实现 Worker 专用查询客户端、周期采样或新的联合负载实验。下一步设计单次 Worker 查询，保持未知与零的区别，再接入采样；不把本次测试计数当作容量或性能改善数据。
+
+## 第五步：单次 Worker 查询客户端（2026-10-01，待实现）
+
+### 为什么实现与方案取舍
+
+正式 Worker 已能返回 HTTP 状态，但负载工具还不能把网络响应转成经过校验的有效观测。单次查询先处理请求取消、错误响应、数据完整性和名额含义，后续周期采样才可可靠地区分未采集、有效零值与查询失败。
+
+| 方案 | 好处 | 代价与本次选择 |
+| --- | --- | --- |
+| 在未来采样循环中直接请求并解码 | 初始文件少 | 请求错误、周期控制与协议校验混在一起，暂不采用 |
+| 单次 FetchWorkerSnapshot 加私有纯解码函数 | 一次查询独立验证，便于采样和其他调用者复用 | 与 Gateway 存在少量相同 HTTP 处理代码；本步采用 |
+| 立即把 Gateway/Worker 改成通用查询框架 | 减少传输代码重复 | 同时修改已验收 Gateway 路径，并引入不同响应的抽象，本步暂不扩展范围 |
+
+参考 Gateway 的请求处理顺序与边界，不调用 FetchGatewaySnapshot 假装查询 Worker，也不使用 mockasr.ProcessingSnapshot 类型：观测客户端依赖网络协议，不依赖服务端内部结构。当前暂保留明确的两条查询路径，代价是公共 HTTP 规则修改时需要同步检查；待复用范围稳定后可抽取小型公共传输函数，不需要先设计泛型框架。
+
+### 公开返回类型
+
+只新增 internal/loadgen/worker_snapshot.go，package loadgen，由开发者实现：
+
+```go
+// WorkerProcessingState 是已启用共享限制时的瞬时名额状态。
+// 这些计数不是活跃会话数、CPU 使用率或已验证容量。
+type WorkerProcessingState struct {
+    Limit int // 实际名额上限，大于零。
+    InUse int // 已登记持有、尚未归还的名额数。
+    Waiting int // 已登记、尚未完成获取或取消收尾的等待请求数。
+}
+
+// WorkerState 是合法 HTTP v1 响应解析出的值快照。
+// 只有 FetchWorkerSnapshot 返回 nil 错误时才代表成功观测。
+type WorkerState struct {
+    ProcessingLimitEnabled bool // 表示共享处理限制是否启用，不表示 Worker 是否处理音频。
+    Processing WorkerProcessingState // 仅上方为 true 时有效；false 时为零值占位。
+}
+
+// FetchWorkerSnapshot 执行一次 GET 并校验 Worker HTTP 快照。
+// endpoint 为完整查询 URL；ctx 控制请求和响应读取，调用方应设置期限。
+// client 由调用方创建并复用，本函数不修改它或关闭其连接池。
+// ctx/client 不能为 nil；失败返回零 WorkerState 和可追踪原因的错误。
+func FetchWorkerSnapshot(ctx context.Context, client *http.Client, endpoint string) (WorkerState, error)
+
+// decodeWorkerSnapshot 解析并校验一份 Worker v1 JSON 响应，不执行 I/O。
+// data 已由调用方限制大小；错误时返回零状态，不保留部分字段。
+func decodeWorkerSnapshot(data []byte) (WorkerState, error)
+```
+
+成功且未启用限制返回 WorkerState{},nil，这是有效的“未采集”状态；失败返回 WorkerState{},err。调用方必须先检查 err，再判断 ProcessingLimitEnabled；只有启用时才能读取 Processing 的计数。值类型避免历史样本共享可变指针；网络上的 null 与本地值类型不必相同，语义由启用标志保留。
+
+### 网络层行为
+
+沿用 gateway_snapshot.go 的边界：
+
+1. nil ctx/client 明确报错；http.NewRequestWithContext 创建 GET，使用调用方 URL，不修改路径或自动补 /debug/worker。
+2. 对传入 http.Client 做浅拷贝，仅在副本上设置 CheckRedirect 返回 http.ErrUseLastResponse，拒绝跟随重定向。保留原 Transport、Timeout 等配置，不修改调用方客户端，也不关闭共享连接池。
+3. Do 成功取得响应后立即 defer resp.Body.Close。仅接受 200，不重试、无后台 goroutine；30x 作为非 200 错误保留，不跟随到别的观测目标。
+4. 使用 mime.ParseMediaType，媒体类型必须 application/json，允许 charset 等合法参数。
+5. 新增 workerSnapshotMaxBytes=4096。io.LimitReader 读取最多上限加一字节，再判断是否超限，不能只信任 Content-Length，也不能只读取 4096 后误接受截断响应。
+6. 调用 decodeWorkerSnapshot；所有失败返回零状态，用 %w 保留请求/读取/解码等原始错误，不把取消或超时转成空闲状态。
+
+不在 Fetch 内设置固定期限、启动采样循环、自动重试、写文件或记录查询起止时间；这些由后续采样层负责。读取完合法小响应并关闭 Body 可支持连接复用；超限/错误响应关闭即可，不无限排空内容。
+
+### JSON 解码与语义校验
+
+使用独立私有 DTO：顶层 schema_version 为 *int，processing_limit_enabled 为 *bool，processing 为 json.RawMessage；嵌套 limit/in_use/waiting 都为 *int。给 DTO 及字段添加对应说明。
+
+直接用 *workerProcessingResponse 无法区分 processing 缺失和显式 null，因此用 RawMessage。json.Unmarshal 后，缺失时长度为 0；显式 null 的内容去掉空白后为 null；对象则保留嵌套 JSON 供下一次解码。空白比较用 bytes.TrimSpace 与 bytes.Equal，不靠字符串包含判断。
+
+校验顺序：
+
+1. 顶层 json.Unmarshal；格式/类型错误、尾随第二个 JSON、整数溢出均失败。与 Gateway 一样允许未知字段，不使用 DisallowUnknownFields；采用标准 encoding/json 的字段匹配和重复键行为，不声称严格拒绝重复键。
+2. schema_version 必须存在、非 null 且等于 1；processing_limit_enabled 必须存在且非 null。
+3. processing 必须出现，len==0 拒绝。
+4. enabled=false 时，processing 必须显式 null；任何对象（包括全零对象）、数组或其他值均拒绝。通过则返回未启用的零状态和 nil 错误。
+5. enabled=true 时，processing 不能为 null，必须能解码成嵌套 DTO，三个数值字段必须存在且非 null。
+6. Limit>0，0<=InUse<=Limit，Waiting>=0。不要要求 Waiting<=Limit，也不要要求 Waiting>0 时 InUse 必须等于 Limit：等待数可超过可用名额，并发记账与交接也可能产生尚未转为占用的等待者。
+7. 全部通过后构造公开值快照并返回，不提前写出部分状态。
+
+协议示例：
+
+| 响应组合 | 结果 |
+| --- | --- |
+| enabled=false, processing=null | 成功，未启用且无该计数 |
+| enabled=true, limit=2, in_use=0, waiting=0 | 成功，已启用且空闲 |
+| enabled=true, limit=2, in_use=1, waiting=5 | 合法快照，不额外推导跨字段瞬时状态 |
+| enabled=false, processing 缺失或全零对象 | 协议错误 |
+| enabled=true, processing=null 或缺少任一数字 | 协议错误 |
+| 非 200、网络超时、错误媒体类型或超限 | 查询失败，状态未知 |
+
+### 助手验收计划
+
+开发者实现后补测试：正常空闲/忙碌/等待/未启用、字段缺失/null/错类型/非法范围/不支持版本、未知字段兼容、精确 4KiB 与超限/伪造长度、Body 关闭与读取失败、nil 前置条件、真实 HTTP 请求取消及超时、重定向不跟随、客户端配置不变和连接复用。再验证连接到真实 Worker 状态服务的查询，不将模拟响应等同于真实 ASR。
+
+本步只完成一次查询，不直接复用 Gateway 采样函数假装采 Worker，也不增加采样命令、文件格式或正式负载数据。验收后再根据现有两条查询路径设计周期观测与记录方式。

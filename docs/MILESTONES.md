@@ -218,6 +218,8 @@ Worker HTTP 查询 Handler 与私有路由已验收：GET /debug/worker 返回�
 
 双服务运行与退出已验收：main 管理信号，run 取得全部端口后启动共享 Worker 的 gRPC/HTTP 服务，HTTP 绑定失败回滚；errgroup 协调异常与停止，共享五秒自然收尾窗口，超时 Stop/Close 并保留错误。新增 17 项检查，全项目 1000 项通过 race、12 个显式实验默认跳过；真实信号正常退出 0、长流超时退出 1，真实 Mock 强制退出后占用和等待归零。五秒不是任意 handler 退出硬期限。正式命令查询用法已发布，下一步设计 Worker 单次查询客户端，见[第四步之二验收](worklog/designs/2026-10-01-worker-processing-observation.md)。
 
+当前待实现：单次 FetchWorkerSnapshot 与私有纯解码函数，使用独立值类型保存状态；检查 200/JSON/4KiB/v1 与数值范围，处理开关关闭时要求 processing 显式 null。错误返回零状态和 error，不把失败或未采集记成空闲；复用调用方 HTTP 客户端、不跟随重定向。见[第五步设计](worklog/designs/2026-10-01-worker-processing-observation.md)。
+
 ## 维护约定
 
 - 阶段开始时更新目标、范围和验收标准；关键工作完成后补充进展与验证入口。
@@ -352,3 +354,4 @@ Worker HTTP 查询 Handler 与私有路由已验收：GET /debug/worker 返回�
 | 2026-10-01 | 可选 debug-listen 配置验收通过：新增 19 项、命令包共 67 项检查通过 race；空值关闭、空白拒绝、原值保留和开关独立符合约定，正式监听及双服务退出留下一步 |
 | 2026-10-01 | 明确 Worker 双服务运行：双监听成功后启动、同一实例接线、异常联动与信号收尾；共享五秒优雅窗口后强制关闭，保留超时/清理错误，等待开发者实现 main/run 与 serve.go |
 | 2026-10-01 | Worker 双服务接入验收通过：新增 17 项、全项目 1000 项检查通过 race，12 个显式实验跳过；启动回滚、异常联动、强制停止名额归零和真实信号退出通过，发布 HTTP 查询用法，下一步查询客户端 |
+| 2026-10-01 | 明确 Worker 单次查询：值快照、4KiB HTTP 边界与独立协议校验，区分 processing 缺失/null、未启用/查询失败；等待实现 Fetch 与纯解码函数，采样留后续 |

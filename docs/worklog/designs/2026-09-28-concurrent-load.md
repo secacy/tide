@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：Worker 双服务运行与退出已验收，可选 HTTP 查询已在正式命令接通。新增 17 项检查，全项目 1000 项通过 race、12 个显式实验默认跳过；启动回滚、同实例观测、异常联动、自然/强制收尾及真实信号退出符合约定。见 [第四步之二验收](2026-10-01-worker-processing-observation.md)。下一步设计 Worker 单次查询客户端，周期采样与新性能实验尚未接入。
+当前小步：Worker 双服务运行已验收；已明确单次 FetchWorkerSnapshot 与纯解码函数，校验 HTTP/4KiB/v1 协议，显式区分查询失败、未启用与有效计数，并区分 processing 缺失和 null。见 [第五步设计](2026-10-01-worker-processing-observation.md)。等待开发者实现 worker_snapshot.go，周期采样和新性能实验尚未接入。
 
 ## 为什么先准备负载与观测
 
