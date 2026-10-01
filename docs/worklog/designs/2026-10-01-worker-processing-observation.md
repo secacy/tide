@@ -1,7 +1,7 @@
 # 第五阶段：Worker 处理占用与等待观测
 
 日期：2026-10-01
-状态：Worker 进程外 HTTP 查询与单次查询客户端均已实现并验收；响应完整性、未采集语义和网络边界已验证。下一步设计周期观测与记录方式，尚无新的联合采样或性能容量实验结果。
+状态：Worker HTTP 与单次查询客户端已验收；第六步明确串行周期采样和私有通用循环，保留 Gateway 公开接口与语义，等待开发者实现。尚无 Worker 采样文件或新的联合负载实验结果。
 相关：[共享处理名额](2026-09-27-worker-processing-capacity.md)、[Gateway 联合观测基线](../../experiments/gateway-observation-baseline.md)
 
 ## 为什么继续补这项
@@ -571,3 +571,128 @@ func decodeWorkerSnapshot(data []byte) (WorkerState, error)
 执行 `go test -race ./internal/loadgen ./cmd/asr-worker -count=1 -timeout=120s -json`：loadgen 包 417 项、Worker 命令包 84 项，共 501 项叶子检查通过，无失败、跳过或数据竞争报告。本次没有重跑全项目；上一小步全项目 1000 项记录保持历史含义。子进程仍沿用普通二进制构建。
 
 现在已有可复用的单次 Worker 查询入口，尚未新增 Worker 周期采样、采样文件或负载实验。下一步结合现有 Gateway 采样设计周期观测与记录，继续区分有效零值、未采集与失败，不把测试数量当成容量或性能成果。
+
+## 第六步：Worker 串行采样与共享循环（2026-10-01，待实现）
+
+### 价值与方案选择
+
+一次快照只能描述查询时附近的状态；连续样本才能观察忙碌/等待出现在哪些区间、是否连续、停止后是否归零。查询失败也必须成为样本，否则会把观测缺口误当成平稳。本步只负责在当前 goroutine 中查询并交付样本，不保存历史，不写文件或引入新命令。
+
+| 方案 | 好处 | 代价与选择 |
+| --- | --- | --- |
+| ticker 每次触发新 goroutine | 能按计划发起请求 | 慢查询或慢输出时会重叠、积累并发请求，暂不采用 |
+| 完全复制 Gateway 循环 | 最少改动旧代码，直观 | 两套相同取消、交付和等待逻辑会逐渐分歧，暂不采用 |
+| 私有通用循环、两个类型明确的公开入口 | 只维护一份时序和错误优先级，公共接口仍易读 | 需要轻量泛型和 Gateway 回归；采用 |
+| 通用采样插件/调度器/记录框架 | 扩展点较多 | 当前只有两个已知状态类型，本步不引入 |
+
+这次共享基于两条确定的需求：除了查询函数和状态类型，其余循环语义相同。只抽取循环，不连带改造 HTTP Fetch、公开配置、JSON、文件层或命令。与上一小步暂不抽取 HTTP 相比，这里的复用对象是完整且已明确相同的时序规则。
+
+### 周期与错误语义
+
+保留 Gateway 现有约定：首个请求立即开始；每次查询结束后同步 emit 一次，emit 返回成功后等待 Interval，再开始下一次。不是固定起点周期。例如查询 20ms、emit 5ms、Interval=100ms，两次起点至少相隔约 125ms，还可能有调度开销。没有 tick 补发，也不追赶失去的采样点。
+
+| 事件 | 样本及运行结果 |
+| --- | --- |
+| Worker 启用且计数合法 | State 非 nil，Err=nil；包含有效零值 |
+| Worker 明确未启用限制 | State 非 nil，内部 ProcessingLimitEnabled=false；查询成功但没有名额计数 |
+| 单次查询失败或子期限到期 | State=nil，Err 保存 Fetch 原始错误；交付后继续 |
+| 父 context 在查询中结束 | 当前尝试返回后仍交付一次，再返回父 context 错误 |
+| 父取消发生在一次成功查询之后 | 保留成功事实，不改写该样本为失败 |
+| emit 返回错误 | 立即退出，不重试交付；返回 emit 错误，优先于同一时刻父取消 |
+| 父 context 在 Interval 等待中结束 | 立即退出，不生成下一条样本 |
+| 尚未开始，父 context 已结束 | 零查询、零样本，返回 context 错误 |
+
+emit 是同步调用，必须及时返回；context 不会强行中断任意 callback。采样器不创建输出队列、不为 emit 新建 goroutine，不承诺阻塞回调下的硬退出期限。采样器自身不保留历史；调用方若无限追加 slice，仍会无限占用内存。
+
+StartedAt 在创建单次请求 context 前记录，FinishedAt 在 Fetch 返回后立即记录；Duration=FinishedAt.Sub(StartedAt)，不含 emit 或 Interval。查询耗时不是 Worker 的排队时长或音频处理延迟；样本也不是 Gateway 与 Worker 的跨进程同一时刻快照。
+
+### 文件与类型
+
+开发者新增 internal/loadgen/sampling_loop.go、internal/loadgen/worker_sampling.go；只调整 gateway_sampling.go 的 RunGatewaySampling 函数体，保留既有公开类型、字段、Validate 和函数签名。测试由助手补齐，既有样本 JSON/清单及历史文件不修改。
+
+worker_sampling.go 定义：
+
+```go
+// WorkerSamplingConfig 描述单个 Worker 查询端点的串行采样条件。
+type WorkerSamplingConfig struct {
+    Endpoint string // 完整 http/https URL，必须包含主机名。
+    Interval time.Duration // 上条样本交付成功后的等待时长，必须为正。
+    RequestTimeout time.Duration // 单次查询期限，包含响应体读取，必须为正。
+}
+
+// Validate 只检查配置，不创建网络连接或后台任务。
+func (cfg WorkerSamplingConfig) Validate() error
+
+// WorkerSample 是一次已经开始的查询尝试，失败尝试也要交付。
+type WorkerSample struct {
+    Index int // 当前运行内从 0 递增的尝试序号。
+    StartedAt time.Time // 查询前的本地时间，保留单调时钟信息。
+    FinishedAt time.Time // Fetch 返回后立即记录。
+    Duration time.Duration // FinishedAt.Sub(StartedAt)，不包含交付和间隔。
+    State *WorkerState // 查询成功时非 nil，包括限制未启用；失败时 nil。
+    Err error // Fetch 原始错误；成功时 nil。
+}
+
+// RunWorkerSampling 串行查询一个 Worker，并同步交付每次尝试。
+// ctx 控制整体运行；client 由调用方复用，函数不关闭连接池。
+// emit 必须非 nil 且及时返回；函数不保存历史或创建后台 goroutine。
+// 查询失败继续；父取消或交付失败结束，返回可识别的原始错误。
+func RunWorkerSampling(ctx context.Context, client *http.Client,
+    cfg WorkerSamplingConfig, emit func(WorkerSample) error) error
+```
+
+Validate 参照 Gateway：url.Parse 成功、scheme 为 http/https、Hostname 非空、两个时长为正；不修改 Endpoint 或要求路径必须 /debug/worker，不请求端口。Worker 的公开配置保持独立类型，不别名为 GatewaySamplingConfig。
+
+### 私有通用循环
+
+sampling_loop.go 不依赖 net/http，不认识 Worker/Gateway，不根据指标值决定停止：
+
+```go
+// samplingAttempt 保存通用循环的一次查询尝试；T 是具体状态的值类型。
+// 所有字段与公开样本一一对应，仅用于包内适配。
+type samplingAttempt[T any] struct {
+    Index int // 从 0 开始的尝试序号。
+    StartedAt time.Time // 查询前时间。
+    FinishedAt time.Time // 查询返回时间。
+    Duration time.Duration // 仅查询耗时。
+    State *T // 成功时指向该次独立状态副本，失败时 nil。
+    Err error // 查询原始错误，成功时 nil。
+}
+
+// runSamplingLoop 维护串行查询、交付、等待和取消的共同规则。
+// ctx/fetch/emit 非 nil，两个时长为正；由公开入口完成前置校验。
+// fetch 必须响应传入的 context，emit 必须及时返回；函数不保存历史。
+func runSamplingLoop[T any](ctx context.Context,
+    interval, requestTimeout time.Duration,
+    fetch func(context.Context) (T, error),
+    emit func(samplingAttempt[T]) error) error
+```
+
+T 只替换状态类型，不引入运行时类型判断、any 状态容器、类型断言、注册表或接口框架。Fetch 闭包捕获 client 和 Endpoint，循环只知道“给 context，得到状态或错误”；emit 闭包负责映射公开样本。
+
+从现有 RunGatewaySampling 搬移 for 循环，顺序保持：
+
+1. 循环顶部检查父 ctx；未结束才登记 StartedAt、创建单次 WithTimeout。
+2. 调用 fetch(requestCtx)，记录 FinishedAt，然后立即 cancel；不要在无限循环内堆积 defer cancel。
+3. 创建新 samplingAttempt；每次成功查询使用独立的状态值地址。失败 State=nil，Err 保留原始错误；成功不因稍后父取消改写为失败。
+4. 同步调用 emit；失败返回带尝试序号和 %w 的交付错误，不重试、不把查询错误合并成运行终止原因。
+5. emit 成功后检查父 ctx；结束则返回包装的父错误。
+6. 创建 time.NewTimer(interval)，等待 timer 或父取消。取消时 Stop timer 后返回；该 timer 不复用、不共享，不需要阻塞读取 timer.C 清空通道。下一轮再次检查父 ctx。
+
+内部错误写 context ended、emit sample N、wait after sample N 等阶段信息；公开入口统一补 run gateway sampling 或 run worker sampling 前缀，所有包装保留 %w。无需承诺完整错误字符串逐字不变，但错误类别、原因及尝试序号不能丢失。
+
+### 两个公开入口怎样适配
+
+RunGatewaySampling 保留原有 nil ctx/client/emit、cfg.Validate、已取消 ctx 的前置校验。其余部分委托 runSamplingLoop[GatewayState]：
+
+- fetch 闭包只调用 FetchGatewaySnapshot(requestCtx,client,cfg.Endpoint)。
+- emit 闭包将 samplingAttempt 的六个字段逐项映射到 GatewaySample，再调用原 emit；不改变 State/Err，不额外读取状态。
+- 通用循环错误用 run gateway sampling 前缀和 %w 返回，nil 仍返回 nil。
+
+RunWorkerSampling 做相同前置校验，委托 runSamplingLoop[WorkerState]，分别调用 FetchWorkerSnapshot 与映射 WorkerSample。成功的未启用响应必须有非 nil State，不能用“WorkerState 等于零值”判断查询失败，也不能因为限制未启用、InUse=0 或 Waiting=0 自动停止。
+
+### 验收与后续
+
+助手用受控时间验证首条立即、查询/emit/间隔顺序、慢查询不重叠、子超时后继续、父取消中的最终样本、成功之后取消不改写事实、emit 错误优先级和历史 State 独立；补 Worker 未启用/有效零/错误区分及真实 HTTP 接线。原 Gateway 采样、JSON、记录器和命令测试也须回归，不能因共享循环悄悄改变历史接口。
+
+本步完成后仍无 Worker 样本持久化或独立采样命令。下一步再定义记录格式，随后接文件与实验；这次不复制整套 Gateway 文件编排，不增加多目标调度或跨进程时钟同步。
