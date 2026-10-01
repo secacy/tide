@@ -1,0 +1,1080 @@
+{
+  "batches": [
+    {
+      "label": "r1-n1",
+      "planned_sessions": 1,
+      "gateway": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "observed_planned_peak": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 99,
+        "successful_samples": 99,
+        "failed_samples": 0,
+        "window_successful_samples": 48,
+        "window_failed_samples": 0,
+        "observed_peak_active": 1,
+        "max_bracketing_success_gap_ns": 102826000,
+        "first_post_exit_zero_sample_delay_ns": 28502000,
+        "query_duration": {
+          "samples": 99,
+          "min_ns": 274667,
+          "p50_ns": 744833,
+          "p95_ns": 1358167,
+          "max_ns": 1896041
+        },
+        "window_active_histogram": {
+          "1": 48
+        }
+      },
+      "worker": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 461,
+        "successful_samples": 461,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 228,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 0,
+        "window_busy_samples": 25,
+        "window_waiting_samples": 0,
+        "busy_sample_fraction": 0.10964912280701754,
+        "waiting_sample_fraction": 0.0,
+        "window_state_histogram": {
+          "0,0": 203,
+          "1,0": 25
+        },
+        "max_bracketing_success_gap_ns": 23881000,
+        "first_post_exit_idle_sample_delay_ns": 16808000,
+        "query_duration": {
+          "samples": 461,
+          "min_ns": 169291,
+          "p50_ns": 603167,
+          "p95_ns": 1179125,
+          "max_ns": 6905875
+        }
+      },
+      "schema_version": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 1,
+        "completed": 1,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 160000,
+        "audio_bytes_written": 160000,
+        "elapsed_ns": 4918104917,
+        "tail": {
+          "samples": 1,
+          "min_ns": 16603917,
+          "p50_ns": 16603917,
+          "p95_ns": 16603917,
+          "max_ns": 16603917
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 16603917,
+          "max_audio_write_ns": 364833,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1394458,
+          "audio_send_span_ns": 4900580000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 83
+        }
+      ]
+    },
+    {
+      "label": "r1-n2",
+      "planned_sessions": 2,
+      "gateway": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "observed_planned_peak": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 99,
+        "successful_samples": 99,
+        "failed_samples": 0,
+        "window_successful_samples": 49,
+        "window_failed_samples": 0,
+        "observed_peak_active": 2,
+        "max_bracketing_success_gap_ns": 103134000,
+        "first_post_exit_zero_sample_delay_ns": 94381000,
+        "query_duration": {
+          "samples": 99,
+          "min_ns": 208958,
+          "p50_ns": 733542,
+          "p95_ns": 1388041,
+          "max_ns": 1845417
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "2": 48
+        }
+      },
+      "worker": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 461,
+        "successful_samples": 461,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 230,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 1,
+        "window_busy_samples": 51,
+        "window_waiting_samples": 26,
+        "busy_sample_fraction": 0.2217391304347826,
+        "waiting_sample_fraction": 0.11304347826086956,
+        "window_state_histogram": {
+          "0,0": 179,
+          "1,0": 25,
+          "1,1": 26
+        },
+        "max_bracketing_success_gap_ns": 23947000,
+        "first_post_exit_idle_sample_delay_ns": 7078000,
+        "query_duration": {
+          "samples": 461,
+          "min_ns": 142417,
+          "p50_ns": 615958,
+          "p95_ns": 1405208,
+          "max_ns": 3946000
+        }
+      },
+      "schema_version": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 2,
+        "completed": 2,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 320000,
+        "audio_bytes_written": 320000,
+        "elapsed_ns": 4929529750,
+        "tail": {
+          "samples": 2,
+          "min_ns": 16970625,
+          "p50_ns": 16970625,
+          "p95_ns": 26927875,
+          "max_ns": 26927875
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 26927875,
+          "max_audio_write_ns": 949334,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 4593167,
+          "audio_send_span_ns": 4901611000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 125
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 16970625,
+          "max_audio_write_ns": 1945959,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 4919000,
+          "audio_send_span_ns": 4901516000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 375
+        }
+      ]
+    },
+    {
+      "label": "r1-n4",
+      "planned_sessions": 4,
+      "gateway": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "observed_planned_peak": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 99,
+        "successful_samples": 99,
+        "failed_samples": 0,
+        "window_successful_samples": 49,
+        "window_failed_samples": 0,
+        "observed_peak_active": 4,
+        "max_bracketing_success_gap_ns": 104155000,
+        "first_post_exit_zero_sample_delay_ns": 77192000,
+        "query_duration": {
+          "samples": 99,
+          "min_ns": 271458,
+          "p50_ns": 713792,
+          "p95_ns": 1097375,
+          "max_ns": 2017875
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "4": 48
+        }
+      },
+      "worker": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 461,
+        "successful_samples": 461,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 230,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 3,
+        "window_busy_samples": 97,
+        "window_waiting_samples": 70,
+        "busy_sample_fraction": 0.4217391304347826,
+        "waiting_sample_fraction": 0.30434782608695654,
+        "window_state_histogram": {
+          "0,0": 133,
+          "1,0": 27,
+          "1,1": 22,
+          "1,2": 27,
+          "1,3": 21
+        },
+        "max_bracketing_success_gap_ns": 24775000,
+        "first_post_exit_idle_sample_delay_ns": 11807000,
+        "query_duration": {
+          "samples": 461,
+          "min_ns": 156916,
+          "p50_ns": 589917,
+          "p95_ns": 1132666,
+          "max_ns": 3631041
+        }
+      },
+      "schema_version": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 4,
+        "completed": 4,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 640000,
+        "audio_bytes_written": 640000,
+        "elapsed_ns": 4950275000,
+        "tail": {
+          "samples": 4,
+          "min_ns": 17443750,
+          "p50_ns": 27397250,
+          "p95_ns": 48719500,
+          "max_ns": 48719500
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 17443750,
+          "max_audio_write_ns": 353834,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1286167,
+          "audio_send_span_ns": 4900374000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 250
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 48719500,
+          "max_audio_write_ns": 527917,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1401834,
+          "audio_send_span_ns": 4900419000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 500
+        },
+        {
+          "index": 2,
+          "outcome": "completed",
+          "tail_ns": 27397250,
+          "max_audio_write_ns": 196959,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1400709,
+          "audio_send_span_ns": 4900377000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 750
+        },
+        {
+          "index": 3,
+          "outcome": "completed",
+          "tail_ns": 38118375,
+          "max_audio_write_ns": 452375,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1349542,
+          "audio_send_span_ns": 4900321000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -375
+        }
+      ]
+    },
+    {
+      "label": "r2-n1",
+      "planned_sessions": 1,
+      "gateway": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "observed_planned_peak": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 98,
+        "successful_samples": 98,
+        "failed_samples": 0,
+        "window_successful_samples": 48,
+        "window_failed_samples": 0,
+        "observed_peak_active": 1,
+        "max_bracketing_success_gap_ns": 107224000,
+        "first_post_exit_zero_sample_delay_ns": 41374000,
+        "query_duration": {
+          "samples": 98,
+          "min_ns": 244584,
+          "p50_ns": 789708,
+          "p95_ns": 1951334,
+          "max_ns": 3957209
+        },
+        "window_active_histogram": {
+          "1": 48
+        }
+      },
+      "worker": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 458,
+        "successful_samples": 458,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 227,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 0,
+        "window_busy_samples": 24,
+        "window_waiting_samples": 0,
+        "busy_sample_fraction": 0.10572687224669604,
+        "waiting_sample_fraction": 0.0,
+        "window_state_histogram": {
+          "0,0": 203,
+          "1,0": 24
+        },
+        "max_bracketing_success_gap_ns": 27960000,
+        "first_post_exit_idle_sample_delay_ns": 18853000,
+        "query_duration": {
+          "samples": 458,
+          "min_ns": 139584,
+          "p50_ns": 697709,
+          "p95_ns": 1474834,
+          "max_ns": 4504375
+        }
+      },
+      "schema_version": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 1,
+        "completed": 1,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 160000,
+        "audio_bytes_written": 160000,
+        "elapsed_ns": 4919259708,
+        "tail": {
+          "samples": 1,
+          "min_ns": 16561125,
+          "p50_ns": 16561125,
+          "p95_ns": 16561125,
+          "max_ns": 16561125
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 16561125,
+          "max_audio_write_ns": 732708,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1560458,
+          "audio_send_span_ns": 4901609000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -125
+        }
+      ]
+    },
+    {
+      "label": "r2-n2",
+      "planned_sessions": 2,
+      "gateway": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "observed_planned_peak": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 99,
+        "successful_samples": 99,
+        "failed_samples": 0,
+        "window_successful_samples": 48,
+        "window_failed_samples": 0,
+        "observed_peak_active": 2,
+        "max_bracketing_success_gap_ns": 103012000,
+        "first_post_exit_zero_sample_delay_ns": 3495000,
+        "query_duration": {
+          "samples": 99,
+          "min_ns": 234500,
+          "p50_ns": 590708,
+          "p95_ns": 1711750,
+          "max_ns": 5084500
+        },
+        "window_active_histogram": {
+          "2": 48
+        }
+      },
+      "worker": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 462,
+        "successful_samples": 462,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 230,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 1,
+        "window_busy_samples": 47,
+        "window_waiting_samples": 25,
+        "busy_sample_fraction": 0.20434782608695654,
+        "waiting_sample_fraction": 0.10869565217391304,
+        "window_state_histogram": {
+          "0,0": 183,
+          "1,0": 22,
+          "1,1": 25
+        },
+        "max_bracketing_success_gap_ns": 28058000,
+        "first_post_exit_idle_sample_delay_ns": 8786000,
+        "query_duration": {
+          "samples": 462,
+          "min_ns": 128875,
+          "p50_ns": 529958,
+          "p95_ns": 1188292,
+          "max_ns": 2952959
+        }
+      },
+      "schema_version": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 2,
+        "completed": 2,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 320000,
+        "audio_bytes_written": 320000,
+        "elapsed_ns": 4929311417,
+        "tail": {
+          "samples": 2,
+          "min_ns": 16889167,
+          "p50_ns": 16889167,
+          "p95_ns": 27045084,
+          "max_ns": 27045084
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 27045084,
+          "max_audio_write_ns": 370875,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1657542,
+          "audio_send_span_ns": 4901184000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 916
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 16889167,
+          "max_audio_write_ns": 293625,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1633416,
+          "audio_send_span_ns": 4901200000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -167
+        }
+      ]
+    },
+    {
+      "label": "r2-n4",
+      "planned_sessions": 4,
+      "gateway": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "observed_planned_peak": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 99,
+        "successful_samples": 99,
+        "failed_samples": 0,
+        "window_successful_samples": 49,
+        "window_failed_samples": 0,
+        "observed_peak_active": 4,
+        "max_bracketing_success_gap_ns": 102986000,
+        "first_post_exit_zero_sample_delay_ns": 84386000,
+        "query_duration": {
+          "samples": 99,
+          "min_ns": 192959,
+          "p50_ns": 572125,
+          "p95_ns": 1243625,
+          "max_ns": 2648958
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "4": 48
+        }
+      },
+      "worker": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 462,
+        "successful_samples": 462,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 231,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 3,
+        "window_busy_samples": 99,
+        "window_waiting_samples": 71,
+        "busy_sample_fraction": 0.42857142857142855,
+        "waiting_sample_fraction": 0.30735930735930733,
+        "window_state_histogram": {
+          "0,0": 132,
+          "1,0": 28,
+          "1,1": 22,
+          "1,2": 28,
+          "1,3": 21
+        },
+        "max_bracketing_success_gap_ns": 25690000,
+        "first_post_exit_idle_sample_delay_ns": 5524000,
+        "query_duration": {
+          "samples": 462,
+          "min_ns": 148667,
+          "p50_ns": 527375,
+          "p95_ns": 1228666,
+          "max_ns": 10779000
+        }
+      },
+      "schema_version": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 4,
+        "completed": 4,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 640000,
+        "audio_bytes_written": 640000,
+        "elapsed_ns": 4952048750,
+        "tail": {
+          "samples": 4,
+          "min_ns": 17071958,
+          "p50_ns": 27772333,
+          "p95_ns": 49613791,
+          "max_ns": 49613791
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 38849000,
+          "max_audio_write_ns": 233375,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1389750,
+          "audio_send_span_ns": 4901226000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 0
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 17071958,
+          "max_audio_write_ns": 312750,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1516000,
+          "audio_send_span_ns": 4901183000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 42
+        },
+        {
+          "index": 2,
+          "outcome": "completed",
+          "tail_ns": 49613791,
+          "max_audio_write_ns": 181167,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1443958,
+          "audio_send_span_ns": 4901233000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 209
+        },
+        {
+          "index": 3,
+          "outcome": "completed",
+          "tail_ns": 27772333,
+          "max_audio_write_ns": 171583,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1406583,
+          "audio_send_span_ns": 4901207000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 667
+        }
+      ]
+    },
+    {
+      "label": "r3-n1",
+      "planned_sessions": 1,
+      "gateway": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "observed_planned_peak": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 99,
+        "successful_samples": 99,
+        "failed_samples": 0,
+        "window_successful_samples": 48,
+        "window_failed_samples": 0,
+        "observed_peak_active": 1,
+        "max_bracketing_success_gap_ns": 102673000,
+        "first_post_exit_zero_sample_delay_ns": 27502000,
+        "query_duration": {
+          "samples": 99,
+          "min_ns": 217583,
+          "p50_ns": 773958,
+          "p95_ns": 1197375,
+          "max_ns": 1366334
+        },
+        "window_active_histogram": {
+          "1": 48
+        }
+      },
+      "worker": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 461,
+        "successful_samples": 461,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 228,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 0,
+        "window_busy_samples": 25,
+        "window_waiting_samples": 0,
+        "busy_sample_fraction": 0.10964912280701754,
+        "waiting_sample_fraction": 0.0,
+        "window_state_histogram": {
+          "0,0": 203,
+          "1,0": 25
+        },
+        "max_bracketing_success_gap_ns": 23926000,
+        "first_post_exit_idle_sample_delay_ns": 9763000,
+        "query_duration": {
+          "samples": 461,
+          "min_ns": 155375,
+          "p50_ns": 628375,
+          "p95_ns": 1366500,
+          "max_ns": 2423791
+        }
+      },
+      "schema_version": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 1,
+        "completed": 1,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 160000,
+        "audio_bytes_written": 160000,
+        "elapsed_ns": 4920555125,
+        "tail": {
+          "samples": 1,
+          "min_ns": 17992417,
+          "p50_ns": 17992417,
+          "p95_ns": 17992417,
+          "max_ns": 17992417
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 17992417,
+          "max_audio_write_ns": 280250,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1227917,
+          "audio_send_span_ns": 4901315000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 583
+        }
+      ]
+    },
+    {
+      "label": "r3-n2",
+      "planned_sessions": 2,
+      "gateway": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "observed_planned_peak": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 99,
+        "successful_samples": 99,
+        "failed_samples": 0,
+        "window_successful_samples": 49,
+        "window_failed_samples": 0,
+        "observed_peak_active": 2,
+        "max_bracketing_success_gap_ns": 103980000,
+        "first_post_exit_zero_sample_delay_ns": 87307000,
+        "query_duration": {
+          "samples": 99,
+          "min_ns": 256375,
+          "p50_ns": 679208,
+          "p95_ns": 1498333,
+          "max_ns": 2760417
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "2": 48
+        }
+      },
+      "worker": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 462,
+        "successful_samples": 462,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 230,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 1,
+        "window_busy_samples": 50,
+        "window_waiting_samples": 22,
+        "busy_sample_fraction": 0.21739130434782608,
+        "waiting_sample_fraction": 0.09565217391304348,
+        "window_state_histogram": {
+          "0,0": 180,
+          "1,0": 28,
+          "1,1": 22
+        },
+        "max_bracketing_success_gap_ns": 25146000,
+        "first_post_exit_idle_sample_delay_ns": 12494000,
+        "query_duration": {
+          "samples": 462,
+          "min_ns": 162458,
+          "p50_ns": 568792,
+          "p95_ns": 1207542,
+          "max_ns": 2845083
+        }
+      },
+      "schema_version": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 2,
+        "completed": 2,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 320000,
+        "audio_bytes_written": 320000,
+        "elapsed_ns": 4928777625,
+        "tail": {
+          "samples": 2,
+          "min_ns": 16219542,
+          "p50_ns": 16219542,
+          "p95_ns": 26784917,
+          "max_ns": 26784917
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 26784917,
+          "max_audio_write_ns": 599750,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 2011583,
+          "audio_send_span_ns": 4901162000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": -917
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 16219542,
+          "max_audio_write_ns": 737625,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 1612916,
+          "audio_send_span_ns": 4901169000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 458
+        }
+      ]
+    },
+    {
+      "label": "r3-n4",
+      "planned_sessions": 4,
+      "gateway": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "observed_planned_peak": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 99,
+        "successful_samples": 99,
+        "failed_samples": 0,
+        "window_successful_samples": 49,
+        "window_failed_samples": 0,
+        "observed_peak_active": 4,
+        "max_bracketing_success_gap_ns": 105630000,
+        "first_post_exit_zero_sample_delay_ns": 85809000,
+        "query_duration": {
+          "samples": 99,
+          "min_ns": 221708,
+          "p50_ns": 728833,
+          "p95_ns": 1462875,
+          "max_ns": 4366250
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "4": 48
+        }
+      },
+      "worker": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 461,
+        "successful_samples": 461,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 230,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 3,
+        "window_busy_samples": 100,
+        "window_waiting_samples": 72,
+        "busy_sample_fraction": 0.43478260869565216,
+        "waiting_sample_fraction": 0.3130434782608696,
+        "window_state_histogram": {
+          "0,0": 130,
+          "1,0": 28,
+          "1,1": 23,
+          "1,2": 27,
+          "1,3": 22
+        },
+        "max_bracketing_success_gap_ns": 24709000,
+        "first_post_exit_idle_sample_delay_ns": 7991000,
+        "query_duration": {
+          "samples": 461,
+          "min_ns": 152667,
+          "p50_ns": 593667,
+          "p95_ns": 1427833,
+          "max_ns": 3524375
+        }
+      },
+      "schema_version": 2,
+      "checks_passed": true,
+      "summary": {
+        "planned_sessions": 4,
+        "completed": 4,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 640000,
+        "audio_bytes_written": 640000,
+        "elapsed_ns": 4951624625,
+        "tail": {
+          "samples": 4,
+          "min_ns": 17095791,
+          "p50_ns": 27590875,
+          "p95_ns": 48913959,
+          "max_ns": 48913959
+        }
+      },
+      "sessions": [
+        {
+          "index": 0,
+          "outcome": "completed",
+          "tail_ns": 48913959,
+          "max_audio_write_ns": 320542,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 3394458,
+          "audio_send_span_ns": 4901308000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 41
+        },
+        {
+          "index": 1,
+          "outcome": "completed",
+          "tail_ns": 27590875,
+          "max_audio_write_ns": 1331250,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 3508166,
+          "audio_send_span_ns": 4902249000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 125
+        },
+        {
+          "index": 2,
+          "outcome": "completed",
+          "tail_ns": 38305250,
+          "max_audio_write_ns": 1462042,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 3542500,
+          "audio_send_span_ns": 4901863000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 750
+        },
+        {
+          "index": 3,
+          "outcome": "completed",
+          "tail_ns": 17095791,
+          "max_audio_write_ns": 745834,
+          "audio_schedule_samples": 50,
+          "max_audio_schedule_lag_ns": 3000417,
+          "audio_send_span_ns": 4902238000,
+          "first_result_before_end": true,
+          "wall_tail_minus_recorded_tail_ns": 209
+        }
+      ]
+    }
+  ]
+}
