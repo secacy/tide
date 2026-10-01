@@ -1,7 +1,7 @@
 # 第五阶段：Worker 处理占用与等待观测
 
 日期：2026-10-01
-状态：名额池快照、Worker 层 ProcessingSnapshot、HTTP 查询响应与路由及可选 debug-listen 参数均已验收。正式监听和双服务协调尚未接入，下一步设计运行层接线；进程外采样尚未接入，没有新增性能或容量结果。
+状态：快照、HTTP Handler/路由和可选 debug-listen 参数均已验收；第四步之二已明确双服务运行、监听失败回滚和限时收尾契约，等待开发者实现。正式监听尚未接入，进程外采样尚未接入，没有新增性能或容量结果。
 相关：[共享处理名额](2026-09-27-worker-processing-capacity.md)、[Gateway 联合观测基线](../../experiments/gateway-observation-baseline.md)
 
 ## 为什么继续补这项
@@ -351,3 +351,92 @@ type workerConfig struct {
 执行 `go test -race ./cmd/asr-worker -count=1 -timeout=90s -json`，16 个顶层测试、67 项叶子检查全部通过，无失败、跳过或数据竞争报告。包含原有配置、Handler、启动错误及真实 Worker 子进程/RPC 回归；本次未重跑 Mock 包或全项目测试。
 
 run 尚未读取 DebugListenAddr，因此参数解析通过不等于已开放 HTTP 查询。命令使用文档不提前发布可用的监听示例。下一步接入同一 Worker 的双服务启动、失败回滚与退出协调；没有新增性能或容量数据。
+
+## 第四步之二：双服务运行与退出（2026-10-01，待实现）
+
+### 目标与选择
+
+让 -debug-listen 真正开启查询，同时保持默认只运行 gRPC。启用后，两个服务共享一个 Worker，全部端口取得成功才启动服务；启动中失败回滚已取得的资源，运行中一方异常则协调关闭另一方。
+
+协调可以手写结果 channel/select，也可以使用已有 errgroup。两者都可行；这里沿用 Gateway 的 errgroup 加清理任务结构，便于复用认知。注意 errgroup 只有任务返回非 nil 错误才触发内部取消；Serve 无原因返回 nil 也必须转成异常，不能让清理任务永远等不到取消。取消 groupCtx 只是停止通知，不能代替调用 Server 的停止方法。
+
+退出方案比较：直接 Stop/Close 实现简单，但会打断即将完成的尾部；只 GracefulStop/Shutdown 能保留结果，但长时流可能一直不退出。采用共享五秒收尾窗口，两种服务并行停止接入并等待当前请求结束，超时后 gRPC Stop、HTTP Close。五秒是开发阶段收尾策略，不是处理超时、稳定容量或退出硬 SLA。自然完成返回成功；强制停止即使最终释放资源，也保留超时错误并非零退出。
+
+本方案依据本仓库依赖源码核对：gRPC v1.83.2 的 Serve 在正常停止后可返回 nil，在 Serve 前停止可返回 ErrServerStopped；GracefulStop 等待 handler，Stop 关闭传输但默认不等待全部 handler。Go 1.26.5 的 HTTP Shutdown/Close 使 Serve 返回 ErrServerClosed，Shutdown 的返回与 Serve 的返回不同步。这里必须等待收尾任务，不能只等两个 Serve。
+
+### 文件与函数责任
+
+开发者修改 main.go，新增 serve.go；config.go 和 snapshot.go 无需改变。现有 main_test.go 的 run 调用需在验收时由助手适配新签名，测试及命令用法由助手补齐。
+
+```go
+// workerShutdownTimeout 是收到停止通知后的共享收尾窗口，不是音频处理超时。
+const workerShutdownTimeout = 5 * time.Second
+
+// run 使用有效启动配置构造同一个 Worker，取得全部监听器后运行服务。
+// ctx 非 nil，表示外部停止请求；调用方持有取消权。
+// 本函数不注册信号、不退出进程，返回前回收其取得的监听器。
+func run(ctx context.Context, cfg workerConfig) error
+
+// serveWorker 协调 gRPC、可选 HTTP 与清理任务，返回首个运行错误及清理错误。
+// ctx 非 nil；grpcServer/grpcListener 非 nil；debugServer/debugListener 同时为 nil 或同时有效。
+// 所有服务须为尚未运行的新实例，监听器已由 run 成功取得。
+func serveWorker(ctx context.Context, grpcServer *grpc.Server, grpcListener net.Listener,
+    debugServer *http.Server, debugListener net.Listener) error
+
+// shutdownWorkerServers 并行收尾两个服务，共享 timeout 窗口；timeout 必须大于零。
+// grpcServer 非 nil；debugServer 为 nil 表示未启用 HTTP。
+// 到期后强制关闭，并等待已启动的关闭任务返回；保留超时及关闭错误。
+func shutdownWorkerServers(grpcServer *grpc.Server, debugServer *http.Server,
+    timeout time.Duration) error
+```
+
+函数及新增状态变量需要注释，说明所有权、可空含义和同步边界。无需新建通用生命周期框架或服务接口。
+
+### main：信号属于进程入口
+
+保留现有解析/帮助/错误处理。解析成功后调用 signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)。调用 run(ctx,cfg) 后显式执行 stop()，再按返回错误决定是否 os.Exit(1)。不要仅 defer stop 后 os.Exit，因为 os.Exit 不执行 defer。
+
+外部停止信号本身不是错误：运行中的服务正常收尾则返回 nil、进程退出 0。若收尾到期或清理失败则返回错误、退出 1。不因 ctx.Err 已取消而吞掉真实监听或运行错误。若进入 run 前 ctx 已取消，返回 ctx.Err，不创建资源；这与已经运行后按信号正常收尾分开处理。
+
+### run：构造、监听、交给协调者
+
+1. 前置检查 ctx.Err，再 mockasr.New(cfg.Mock)，仍保持 Worker 配置校验先于监听。
+2. net.Listen gRPC 地址。成功后立即 defer 关闭，覆盖之后 HTTP 监听失败的回滚；保留旧错误语境 listen on <address> 和 %w 原因。
+3. DebugListenAddr 非空才 net.Listen HTTP 地址，失败返回带地址和 HTTP 语境的错误。成功后同样立即登记 defer 关闭。关闭 HTTP 时保持 server/listener 为真正 nil，不把 typed nil 包装成非 nil 接口。
+4. 全部监听成功后再创建服务并调用 Serve。注册 gRPC 的 worker 与 routes(worker) 必须为同一个指针。HTTP Server 使用 ReadHeaderTimeout=5s、WriteTimeout=5s、IdleTimeout=30s，均为当前小响应接口的开发保护值；请求处理没有无限输入正文读取，不新增 ReadTimeout 或 BaseContext 取消来提前打断收尾。
+5. 使用日志字段 address 继续记录实际 gRPC 地址，新增 debug_enabled 与 debug_address；关闭时后者为空字符串。HTTP 的 :0 地址必须记录 listener.Addr()，不是配置字符串。日志表示端口已取得，不替代后续真实请求就绪检查。
+6. 调用 serveWorker 并返回结果。正常 Serve/Shutdown 已经关闭的监听器，defer Close 只是所有权兜底，不把预期的重复关闭报成启动失败。
+
+run 只使用由 parseWorkerConfig 产生的有效命令配置；Worker.New 仍执行自身校验。启动期间出现取消由 serveWorker 的清理路径回收，不在取得监听器后直接遗漏资源退出。
+
+### serveWorker：两个服务与一个清理任务
+
+使用 errgroup.WithContext(ctx)，启动 gRPC Serve，可选 HTTP Serve，以及等待 groupCtx.Done 的清理任务。不要在 Serve 循环内重启、重试或定时轮询。
+
+Serve 返回值的归类顺序：先识别是否正常停止候选，再结合 groupCtx 是否收到停止通知判定。候选如下：
+
+| 服务 | 正常停止候选 |
+| --- | --- |
+| gRPC | nil 或 errors.Is(err, grpc.ErrServerStopped) |
+| HTTP | errors.Is(err, http.ErrServerClosed)；意外 nil 也进入下面的是否已取消判断 |
+
+候选且 groupCtx.Err()!=nil 时返回 nil。候选但 groupCtx 仍有效时返回明确的 unexpectedly stopped 错误，保证会触发对方停止。其他真实错误始终用服务语境和 %w 返回，即使碰巧父 context 也取消也不能吞掉。不要把所有 net.ErrClosed 都归为正常，否则会掩盖未经协调的监听器关闭。
+
+清理任务等待 groupCtx.Done 后调用 shutdownWorkerServers(...,workerShutdownTimeout)，将结果保存到仅由它写入的 cleanupErr，然后返回 nil。外层 group.Wait 返回后才能读取 cleanupErr，返回 errors.Join(serveErr,cleanupErr)。这样服务错误先触发取消、清理错误另行保留；若两个服务同时异常，errgroup 保留首个错误，不承诺收集所有并发运行错误。
+
+### shutdownWorkerServers：共享收尾窗口与强制停止
+
+创建新的 context.WithTimeout(context.Background(),timeout)，不要派生自已取消的 groupCtx。两个服务共享此期限，不能串行各等五秒造成十秒窗口。
+
+1. 启动 gRPC GracefulStop goroutine，返回后关闭 grpcDone。
+2. 若启用 HTTP，同时启动 Shutdown(shutdownCtx) goroutine。Shutdown 返回错误则记录原错误，再调用 Close 强制关闭，合并其错误；无论成功失败，最后关闭 httpDone。HTTP 未启用时不用启动任务。
+3. 当前清理函数 select 等待 grpcDone 或 shutdownCtx.Done。若到期，先非阻塞复查 grpcDone，已经完成则接受完成；否则记录带 gRPC 语境的 shutdownCtx.Err，调用 grpcServer.Stop() 强制关闭传输，再等待 grpcDone，确保 GracefulStop goroutine 已退出。
+4. 等待已启动的 HTTP 任务返回后再读取其错误，最后 errors.Join(grpcCleanupErr,httpCleanupErr)。HTTP 任务独占写 httpCleanupErr，通过 httpDone 同步读取，不额外加共享变量锁。
+
+不要启动停止 goroutine 后直接超时 return，也不要仅以 Serve 返回当作全部清理完成。当前 Mock 的等待、停读与处理路径响应 RPC context，强制关闭传输后预期能退出。五秒只约束优雅等待阶段，无法强制终止不响应取消的任意 Go handler；若未来接入不响应取消的模型调用，本方案会在等待 handler 时暴露问题，必须另行设计隔离/终止机制。HTTP Close 关闭连接也不保证任意业务 handler 已返回；当前 Handler 是短快照/编码/写回，没有后台工作，不声称通用任务强制终止。
+
+### 助手验收范围
+
+适配旧 run 签名测试；验证默认 gRPC 模式、启用时两个真实端口可用、查询与处理共享状态、HTTP 绑定失败释放先前端口、原始服务错误保留及联动停止、空闲/短流自然收尾、长流超时强制停止与名额归零、HTTP 收尾失败强制关闭、取消发生在 Serve 启动前后的回收、真实进程 SIGINT/SIGTERM 及退出码、动态端口日志。关闭 helper 可用短 timeout 做确定性测试；不降低生产五秒值来加快测试。
+
+实现验收前不更新命令用法为可用。新增测试验证正确性，不算新的稳定容量、性能改善或恢复实验；历史实验保留旧源码及原退出结果，不能改写成新退出行为。
