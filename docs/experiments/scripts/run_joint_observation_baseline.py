@@ -36,8 +36,18 @@ def wait_sampling_ready(process, directory, kind="gateway"):
     raise RuntimeError("sampler did not record an idle snapshot within 2s")
 
 
-def run(output):
+def run(output, *, pressure=False):
     """每批先启动有限采样再运行负载；所有尝试独立保存，异常也回收自有进程。"""
+    # 复用进程/采样/归档流程；不同实验的负载判据由各自分析器解释。
+    from summarize_pressure_sweep import (AUDIO_BYTES, COUNTS, LAG_BUDGET_NS, SAMPLE_DURATION_S,
+                                          SESSION_TIMEOUT_S, TAIL_BUDGET_NS,
+                                          check_pressure_gateway, check_pressure_report)
+    counts = COUNTS if pressure else (1, 2, 4)
+    audio_bytes = AUDIO_BYTES if pressure else 160000
+    timeout_s = SESSION_TIMEOUT_S if pressure else 20
+    duration_s = SAMPLE_DURATION_S if pressure else 10
+    read_load = check_pressure_report if pressure else check_report
+    read_gateway = check_pressure_gateway if pressure else check_sampling
     output.mkdir(parents=True, exist_ok=False)
     manifest = dict(started_at=now(), status="running", source_commit=capture(["git", "rev-parse", "HEAD"]),
                     tracked_diff=capture(["git", "diff", "HEAD", "--", "cmd", "internal", "proto", "go.mod", "go.sum"]),
@@ -51,15 +61,18 @@ def run(output):
                                 partial_every_ns=500_000_000, partial_texts=["今", "今天", "今天天气", "今天天气不错"], final_text="今天天气不错"),
                     gateway=dict(max_sessions=64, max_message_bytes=1048576, max_pending_audio_bytes=32000,
                                  start_timeout_s=10, input_idle_timeout_s=30, worker_send_timeout_s=2, tail_timeout_s=15, result_write_timeout_s=2),
-                    schedule=dict(session_counts=[1, 2, 4], repetitions=3, audio_bytes=160000, chunk_bytes=3200,
-                                  realtime=True, session_timeout_s=20, warmup_sessions=1, warmup_audio_bytes=64000),
+                    schedule=dict(session_counts=list(counts), repetitions=3, audio_bytes=audio_bytes, chunk_bytes=3200,
+                                  realtime=True, session_timeout_s=timeout_s, warmup_sessions=1, warmup_audio_bytes=64000),
                     limits=["same-host independent processes, no isolation", "no waiting-duration, backlog, CPU or memory sampling", "sample fractions are not time utilization",
-                            "client write success is not a server byte counter", "5s finite batches are not stable capacity",
+                            "client write success is not a server byte counter", "finite batches are not stable capacity",
                             "sampling overhead has no A/B measurement", "Mock emits only four partials then a final"])
+    manifest["experiment"] = "pressure_sweep" if pressure else "joint_baseline"
+    if pressure:
+        manifest["criteria"] = dict(all_completed=True, tail_p95_ns=TAIL_BUDGET_NS, max_audio_schedule_lag_ns=LAG_BUDGET_NS)
     sources = capture(["git", "ls-files", "cmd", "internal", "proto", "go.mod", "go.sum"])
     manifest["source_sha256"] = {p: digest(ROOT/p) for p in sources.splitlines() if p.endswith((".go", ".proto")) or p in ("go.mod", "go.sum")}
-    manifest["sampling"] = dict(gateway_interval_ns=100_000_000, worker_interval_ns=20_000_000, request_timeout_ns=1_000_000_000, duration_ns=10_000_000_000, readiness_timeout_s=2, max_bracketing_success_gap_ns=500_000_000)
-    manifest["script_sha256"] = {name: digest(Path(__file__).with_name(name)) for name in ("run_joint_observation_baseline.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py")}
+    manifest["sampling"] = dict(gateway_interval_ns=100_000_000, worker_interval_ns=20_000_000, request_timeout_ns=1_000_000_000, duration_ns=duration_s*1_000_000_000, readiness_timeout_s=2, max_bracketing_success_gap_ns=500_000_000)
+    manifest["script_sha256"] = {name: digest(Path(__file__).with_name(name)) for name in ("run_joint_observation_baseline.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "summarize_pressure_sweep.py", "run_pressure_sweep.py")}
     processes, handles, results, samplers = [], [], [], []
     save(output/"manifest.json", manifest)
     try:
@@ -110,12 +123,12 @@ def run(output):
             manifest["worker_address"] = address
             endpoint = "http://"+debug_address+"/debug/worker"
             manifest["worker_endpoint"] = endpoint
-            schedule = [("warmup", 1, 64000)] + [(f"r{rep}-n{n}", n, 160000) for rep in range(1, 4) for n in (1, 2, 4)]
+            schedule = [("warmup", 1, 64000)] + [(f"r{rep}-n{n}", n, audio_bytes) for rep in range(1, 4) for n in counts]
             for label, n, size in schedule:
                 if any(p.poll() is not None for _, p in processes): raise RuntimeError("backend exited between batches")
                 path = output/(label+".json")
                 command = [binaries["loadgen"], "-url=ws://127.0.0.1:8080/v1/asr", f"-sessions={n}",
-                           f"-audio-bytes={size}", "-chunk-bytes=3200", "-realtime=true", "-session-timeout=20s",
+                           f"-audio-bytes={size}", "-chunk-bytes=3200", "-realtime=true", f"-session-timeout={timeout_s}s",
                            "-expected-final-text=今天天气不错", "-output="+str(path)]
                 record = dict(label=label, planned_sessions=n, command=command, sampling={})
                 manifest["batches"].append(record)
@@ -127,7 +140,7 @@ def run(output):
                         sample_name = label + "-" + kind
                         sample_dir = output/sample_name
                         sample_command = [binaries[kind+"-sampler"], "-url="+url, "-interval="+interval,
-                                          "-request-timeout=1s", "-duration=10s", "-output-dir="+str(sample_dir)]
+                                          "-request-timeout=1s", f"-duration={10 if label == 'warmup' else duration_s}s", "-output-dir="+str(sample_dir)]
                         item = dict(directory=sample_name, started_at=now(), command=sample_command)
                         record["sampling"][kind] = item
                         manifest["commands"].append(sample_command)
@@ -143,11 +156,11 @@ def run(output):
                     record["started_at"] = now()
                     save(output/"manifest.json", manifest)
                     with (output/(label+".log")).open("w") as log:
-                        attempt = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, timeout=30)
+                        attempt = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, timeout=timeout_s+10)
                     record.update(finished_at=now(), exit_code=attempt.returncode)
                     # 正常运行等待预算结束，不用 SIGTERM 伪装完成。
                     for _, sampler, sample_log, _, item in active_samplers:
-                        item.update(exit_code=sampler.wait(timeout=15), finished_at=now())
+                        item.update(exit_code=sampler.wait(timeout=duration_s+5), finished_at=now())
                         sample_log.close()
                 finally:
                     for _, sampler, _, _, item in active_samplers:
@@ -159,18 +172,21 @@ def run(output):
                         item.setdefault("exit_code", sampler.returncode)
                         item.setdefault("finished_at", now())
                     save(output/"manifest.json", manifest)
-                checked = check_report(path, n, size)
-                gateway_observed = check_sampling(output/record["sampling"]["gateway"]["directory"], record["started_at"], record["finished_at"], n)
+                checked = read_load(path, n, size)
+                gateway_observed = read_gateway(output/record["sampling"]["gateway"]["directory"], record["started_at"], record["finished_at"], n)
                 worker_observed = check_worker_sampling(output/record["sampling"]["worker"]["directory"], record["started_at"], record["finished_at"], n, endpoint)
-                record["checks_passed"] = (checked["checks_passed"] and attempt.returncode == 0
+                record["checks_passed"] = (checked["checks_passed"] and attempt.returncode == checked.get("expected_exit_code", 0)
                     and all(item["exit_code"] == 0 for item in record["sampling"].values())
                     and gateway_observed["checks_passed"] and worker_observed["checks_passed"])
                 record.update(gateway_checks=gateway_observed, worker_checks=worker_observed)
+                if pressure:
+                    record["criteria_met"] = checked["criteria_met"]
+                    record["criteria"] = checked["criteria"]
                 if label != "warmup": results.append(dict(label=label, planned_sessions=n, gateway=gateway_observed, worker=worker_observed, **checked))
                 save(output/"summary.json", dict(batches=results))
                 save(output/"manifest.json", manifest)
-                print(label, "exit", attempt.returncode, "checks", record["checks_passed"], flush=True)
-                if label == "warmup" and not record["checks_passed"]: raise RuntimeError("warmup failed; formal measurement not started")
+                print(label, "exit", attempt.returncode, "evidence", record["checks_passed"], "criteria", record.get("criteria_met", "baseline"), flush=True)
+                if label == "warmup" and (not record["checks_passed"] or not record.get("criteria_met", True)): raise RuntimeError("warmup failed; formal measurement not started")
             manifest["status"] = "passed" if all(r["checks_passed"] for r in manifest["batches"]) else "failed_checks"
             # 先停 Gateway，等待其正常清理，再停具有双服务收尾的 Worker。
             for name, p in reversed(processes):
