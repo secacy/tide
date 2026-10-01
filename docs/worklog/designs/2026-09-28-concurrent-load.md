@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：Worker 单次查询已验收；第六步明确 Worker 串行采样，并将 Gateway 的时序抽为私有泛型循环，保持两个公开入口及 Gateway 既有语义。见 [第六步设计](2026-10-01-worker-processing-observation.md)。等待实现 sampling_loop.go、worker_sampling.go 与 Gateway 入口适配，尚无 Worker 采样文件或新联合实验。
+当前小步：按用户调整后的分工，助手已完成 Worker 串行采样及私有共享循环，Gateway 公开语义保持。新增 27 项检查，相关四包共 685 项通过 race，见 [第六步验收](2026-10-01-worker-processing-observation.md)。后续负载与采集工具由助手承接，尚无 Worker 采样文件或新联合实验。
 
 ## 为什么先准备负载与观测
 

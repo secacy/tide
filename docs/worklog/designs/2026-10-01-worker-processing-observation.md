@@ -1,7 +1,7 @@
 # 第五阶段：Worker 处理占用与等待观测
 
 日期：2026-10-01
-状态：Worker HTTP 与单次查询客户端已验收；第六步明确串行周期采样和私有通用循环，保留 Gateway 公开接口与语义，等待开发者实现。尚无 Worker 采样文件或新的联合负载实验结果。
+状态：Worker HTTP、单次查询和串行采样均已完成，Gateway/Worker 共用私有采样循环并通过兼容回归。用户授权助手承接负载工具与指标采集实现，当前第六步由助手完成；尚无 Worker 采样文件或新的联合负载实验结果。
 相关：[共享处理名额](2026-09-27-worker-processing-capacity.md)、[Gateway 联合观测基线](../../experiments/gateway-observation-baseline.md)
 
 ## 为什么继续补这项
@@ -572,7 +572,7 @@ func decodeWorkerSnapshot(data []byte) (WorkerState, error)
 
 现在已有可复用的单次 Worker 查询入口，尚未新增 Worker 周期采样、采样文件或负载实验。下一步结合现有 Gateway 采样设计周期观测与记录，继续区分有效零值、未采集与失败，不把测试数量当成容量或性能成果。
 
-## 第六步：Worker 串行采样与共享循环（2026-10-01，待实现）
+## 第六步：Worker 串行采样与共享循环（2026-10-01，已验收）
 
 ### 价值与方案选择
 
@@ -696,3 +696,15 @@ RunWorkerSampling 做相同前置校验，委托 runSamplingLoop[WorkerState]，
 助手用受控时间验证首条立即、查询/emit/间隔顺序、慢查询不重叠、子超时后继续、父取消中的最终样本、成功之后取消不改写事实、emit 错误优先级和历史 State 独立；补 Worker 未启用/有效零/错误区分及真实 HTTP 接线。原 Gateway 采样、JSON、记录器和命令测试也须回归，不能因共享循环悄悄改变历史接口。
 
 本步完成后仍无 Worker 样本持久化或独立采样命令。下一步再定义记录格式，随后接文件与实验；这次不复制整套 Gateway 文件编排，不增加多目标调度或跨进程时钟同步。
+
+### 第六步实现与验收
+
+用户在实现前调整分工：负载工具、指标采集及配套测试/文档由助手承接，核心会话管理、背压和调度仍以用户实现与助手指导为主；指标定义、实验条件和结论边界仍需讲清楚。助手沿用用户已创建的仅含 package 声明的 worker_sampling.go，完成本步代码，不再将采样基础设施逐函数拆成用户练习。
+
+新增 [sampling_loop.go](../../../internal/loadgen/sampling_loop.go) 和 [worker_sampling.go](../../../internal/loadgen/worker_sampling.go)，将 [Gateway 入口](../../../internal/loadgen/gateway_sampling.go) 的原循环迁移到私有泛型函数。公开 Gateway 配置、类型、函数签名、校验和错误语义保持；Worker 通过独立公开入口适配同一时序。取消间隔 timer 后直接丢弃，不进行可能阻塞的排空。
+
+新增 [worker_sampling_test.go](../../../internal/loadgen/worker_sampling_test.go)，八个顶层测试、27 项叶子检查，覆盖配置/依赖拒绝、首次立即查询、慢查询不重叠、交付后再计间隔、子期限后继续、父取消中的最后一次尝试、成功事实不被取消改写、交付错误优先级、历史状态独立和真实 HTTP 循环。专门验证未启用限制仍为非 nil 成功 State，有效零值/等待/再次未启用不会自动停止，两条未启用样本也不共享可变存储。时序使用虚拟时间，HTTP 用例不作为负载性能测量。
+
+执行 `go test -race ./internal/loadgen ./cmd/gateway-sampler ./cmd/loadgen ./cmd/asr-worker -count=1 -timeout=120s -json`：loadgen 444 项、gateway-sampler 95 项、loadgen 命令 62 项、Worker 命令 84 项，共 685 项叶子检查通过，无失败、跳过或数据竞争报告。原 Gateway 采样、JSON、文件记录、清单、命令退出以及真实 Worker 查询接线回归通过；没有重跑全项目或正式性能实验。
+
+本轮完成串行采样基础设施，尚未完成 Worker 样本持久化、采样命令和联合实验。后续这些辅助工具由助手继续承接；用户重点理解测量口径、实验假设及根据证据改进核心系统的决策。测试数量仅是正确性验收记录，不作为性能提升结果。
