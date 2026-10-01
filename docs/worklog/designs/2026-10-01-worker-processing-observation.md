@@ -1,7 +1,7 @@
 # 第五阶段：Worker 处理占用与等待观测
 
 日期：2026-10-01
-状态：Worker HTTP、单次查询和串行采样均已完成，Gateway/Worker 共用私有采样循环并通过兼容回归。用户授权助手承接负载工具与指标采集实现，当前第六步由助手完成；尚无 Worker 采样文件或新的联合负载实验结果。
+状态：Worker HTTP、单次查询、串行采样、记录文件及独立命令均已完成。按调整后的分工，第六、七步由助手完成；全项目回归通过，尚无新的 Worker 联合负载实验结果。
 相关：[共享处理名额](2026-09-27-worker-processing-capacity.md)、[Gateway 联合观测基线](../../experiments/gateway-observation-baseline.md)
 
 ## 为什么继续补这项
@@ -708,3 +708,7 @@ RunWorkerSampling 做相同前置校验，委托 runSamplingLoop[WorkerState]，
 执行 `go test -race ./internal/loadgen ./cmd/gateway-sampler ./cmd/loadgen ./cmd/asr-worker -count=1 -timeout=120s -json`：loadgen 444 项、gateway-sampler 95 项、loadgen 命令 62 项、Worker 命令 84 项，共 685 项叶子检查通过，无失败、跳过或数据竞争报告。原 Gateway 采样、JSON、文件记录、清单、命令退出以及真实 Worker 查询接线回归通过；没有重跑全项目或正式性能实验。
 
 本轮完成串行采样基础设施，尚未完成 Worker 样本持久化、采样命令和联合实验。后续这些辅助工具由助手继续承接；用户重点理解测量口径、实验假设及根据证据改进核心系统的决策。测试数量仅是正确性验收记录，不作为性能提升结果。
+
+## 第七步：记录文件与独立命令（2026-10-02，已验收）
+
+助手已完成 Worker JSONL、运行清单与 `worker-sampler`；文件生命周期共用私有实现，Gateway 公开 API 和 v1 文件字段保持。真实进程接线确认空闲、占用、再次空闲状态写入文件；全项目 1295 项检查通过 race，12 个显式实验默认跳过。方案比较、格式、退出规则和验证边界见[本步记录](2026-10-02-worker-recording-tool.md)。下一步由助手推进联合观测实验。

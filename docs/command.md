@@ -214,6 +214,38 @@ mkdir -p /tmp/tide-gateway-sampling
 本命令独立于 loadgen，不会自动等待负载开始或识别负载结束。当前采用有限时长窗口；正式实验的进程协调、时间覆盖和数据分析仍需接入，以上用法不代表容量实验已完成。
 
 
+## Worker 处理状态采样
+
+先启动启用了调试监听和共享处理限制的 Worker（独立终端）：
+
+```bash
+go run ./cmd/asr-worker -listen=127.0.0.1:50051 -debug-listen=127.0.0.1:50081 -processing-concurrency=1 -processing-delay=10ms
+```
+
+从项目根目录构建并运行独立采样器：
+
+```bash
+go build -o /tmp/tide-worker-sampler ./cmd/worker-sampler
+/tmp/tide-worker-sampler \
+  -url=http://127.0.0.1:50081/debug/worker \
+  -interval=100ms \
+  -request-timeout=1s \
+  -duration=10s \
+  -output-dir=/tmp/tide-worker-observation-001
+```
+
+`-url` 默认 `http://localhost:50081/debug/worker`；其余参数默认值与上面的 Gateway 采样命令相同。输出目录必须不存在，父目录必须存在；再次运行请换新目录名。观察负载时，需要另行启动 Gateway 和客户端，采样命令自身不产生音频请求。
+
+输出 `samples.jsonl` 与 `manifest.json`，均带 `schema_version: 1` 和 `source_kind: "worker"`。清单中的 `output_path` 是相对路径。样本保留查询时间、耗时、状态或错误：
+
+- 限制已启用：`state.processing_limit_enabled=true`，`state.processing` 包含 `limit`、`in_use`、`waiting`。
+- 限制未启用：查询成功，但 `state.processing_limit_enabled=false`、`state.processing=null`；不能算作零占用。
+- 查询失败：`state=null`、`error` 为错误文本；保留失败样本并继续查询，不能用前一条状态填补。
+
+按期结束、至少一次查询成功且两份文件保存成功时退出 0；未启用限制也属于查询成功，因此退出 0 不代表取得了容量分析所需的计数。混合成功和失败允许退出 0，分析仍须检查失败数、采样间隔和负载窗口覆盖。全失败、提前停止或保存失败退出 1；Ctrl+C/SIGTERM 会尽力保存已采集数据再退出 1。
+
+正常预算到期时，清单仍保留 `stop_reason=deadline_exceeded` 和原始 `sampling_error`。仅在命令返回后读取完整产物；失败文件保留，文件写入和关闭成功不代表掉电持久化或跨文件原子发布。本轮仅完成采样工具，联合负载实验和稳定容量结论另行记录。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \

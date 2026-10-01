@@ -131,6 +131,7 @@ func TestWorkerExecutable(t *testing.T) {
 		}
 	})
 	t.Run("lifecycle", func(t *testing.T) { verifyWorkerProcessLifecycle(t, binary) })
+	t.Run("sampler_pipeline", func(t *testing.T) { verifyWorkerSamplerPipeline(t, binary) })
 }
 
 // workerProcess 保存测试进程与实际监听地址；err 仅在 done 关闭后读取。

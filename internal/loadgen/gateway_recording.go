@@ -2,16 +2,13 @@ package loadgen
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"io"
 	"net/http"
-	"os"
-	"strings"
 	"time"
 )
 
 // GatewayRecordingReport 保存一次文件记录的配置、时间和退出事实。
-// StartedAt 为零表示文件记录尚未启动；本步不直接序列化。
+// StartedAt 为零表示文件记录尚未启动；序列化由单独的清单写入函数负责。
 type GatewayRecordingReport struct {
 	Config     GatewaySamplingConfig // 实际采样配置。
 	OutputPath string                // 实际输出路径。
@@ -28,73 +25,35 @@ type GatewayRecordingReport struct {
 	CloseErr    error // 关闭样本文件时返回的原错误。
 }
 
-// RunGatewaySamplingToFile 独占创建样本文件，并在返回前关闭。
-// 前置校验失败返回零报告，不创建文件、不发起查询。
-// 文件创建后即使取消或失败，也保留文件并返回已有运行事实。
-// 返回错误合并采样与关闭错误；client 仍由调用方拥有。
-func RunGatewaySamplingToFile(
-	ctx context.Context,
-	client *http.Client,
-	cfg GatewaySamplingConfig,
-	outputPath string,
-) (report GatewayRecordingReport, err error) {
-	if ctx == nil {
-		return GatewayRecordingReport{}, errors.New("run gateway sampling to file: context is nil")
-	}
-	if client == nil {
-		return GatewayRecordingReport{}, errors.New("run gateway sampling to file: client is nil")
-	}
-	if err := cfg.Validate(); err != nil {
-		return GatewayRecordingReport{}, fmt.Errorf("run gateway sampling to file: invalid config: %w", err)
-	}
-	if strings.TrimSpace(outputPath) == "" {
-		return GatewayRecordingReport{}, errors.New("run gateway sampling to file: output path is empty")
-	}
-	if outputPath == "-" {
-		return GatewayRecordingReport{}, errors.New(`run gateway sampling to file: output path "-" is not supported`)
-	}
-	if ctxErr := ctx.Err(); ctxErr != nil {
-		return GatewayRecordingReport{}, fmt.Errorf("run gateway sampling to file: context already done: %w", ctxErr)
-	}
+// GatewayRecordingResult 分别保存样本记录与清单保存的结果。
+type GatewayRecordingResult struct {
+	// 样本文件层的原始报告，保留实际绝对路径。
+	Recording GatewayRecordingReport
 
-	file, openErr := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
-	if openErr != nil {
-		return GatewayRecordingReport{}, fmt.Errorf("create gateway samples %q: %w", outputPath, openErr)
-	}
+	// 清单绝对路径，目录创建成功后填写。
+	ManifestPath string
 
-	report = GatewayRecordingReport{
-		Config:     cfg,
-		OutputPath: outputPath,
-		StartedAt:  time.Now(),
-	}
+	// 清单创建、编码、写入或关闭错误；多个错误合并保留。
+	ManifestErr error
 
-	defer func() {
-		report.CloseErr = file.Close()
-		report.FinishedAt = time.Now()
+	// 仅清单写入和关闭都成功时为 true。
+	// 不表示查询全部成功、实验成功或数据已持久化到磁盘。
+	ManifestSaved bool
+}
 
-		if report.CloseErr != nil {
-			err = errors.Join(err, fmt.Errorf("close gateway samples %q: %w", outputPath, report.CloseErr))
-		}
-	}()
+// RunGatewaySamplingToFile 独占创建并关闭样本文件，失败时保留已写出的事实。
+// client 由调用方拥有；查询失败样本也保留，采样和文件关闭错误分别记录。
+func RunGatewaySamplingToFile(ctx context.Context, client *http.Client, cfg GatewaySamplingConfig, outputPath string) (GatewayRecordingReport, error) {
+	report, err := runSamplingToFile(ctx, client, cfg, outputPath, RunGatewaySampling, WriteGatewaySampleJSON, func(s GatewaySample) bool { return s.Err == nil })
+	return GatewayRecordingReport(report), err
+}
 
-	emit := func(sample GatewaySample) error {
-		if writeErr := WriteGatewaySampleJSON(file, sample); writeErr != nil {
-			report.OutputErr = writeErr
-			return writeErr
-		}
-
-		report.SamplesWritten++
-
-		if sample.Err == nil {
-			report.SuccessfulSamples++
-		} else {
-			report.FailedSamples++
-		}
-
-		return nil
-	}
-
-	report.SamplingErr = RunGatewaySampling(ctx, client, cfg, emit)
-
-	return report, report.SamplingErr
+// RunGatewayRecording 在新的 outputDir 中保存 samples.jsonl 和 manifest.json。
+// 前置失败不创建目录；启动后取消仍保存清单，不覆盖旧目录、不关闭 client。
+func RunGatewayRecording(ctx context.Context, client *http.Client, cfg GatewaySamplingConfig, outputDir string) (GatewayRecordingResult, error) {
+	result, err := runRecording(ctx, client, cfg, outputDir, RunGatewaySampling, WriteGatewaySampleJSON, func(s GatewaySample) bool { return s.Err == nil },
+		func(w io.Writer, r recordingReport[GatewaySamplingConfig]) error {
+			return WriteGatewayRecordingJSON(w, GatewayRecordingReport(r))
+		})
+	return GatewayRecordingResult{Recording: GatewayRecordingReport(result.Recording), ManifestPath: result.ManifestPath, ManifestErr: result.ManifestErr, ManifestSaved: result.ManifestSaved}, err
 }
