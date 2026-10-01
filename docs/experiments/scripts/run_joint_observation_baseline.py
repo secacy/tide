@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+"""在 1/2/4 场负载中同时采集 Gateway 会话与 Worker 处理状态，保留全部尝试。"""
+import argparse
+import os
+from pathlib import Path
+import re
+import signal
+import socket
+import subprocess
+import tempfile
+import time
+import urllib.request
+
+from run_loadgen_baseline import ROOT, capture, check_report, digest, now, save
+from summarize_gateway_observations import check_sampling, read_complete_rows
+from summarize_joint_observations import check_worker_sampling, summarize
+
+
+def wait_sampling_ready(process, directory, kind="gateway"):
+    """等到完整且有效的零活动样本才启动负载；不以进程已创建代替就绪。"""
+    deadline = time.monotonic() + 2
+    while time.monotonic() < deadline:
+        if process.poll() is not None:
+            raise RuntimeError("sampler exited before readiness")
+        path = directory / "samples.jsonl"
+        if path.exists():
+            for row in read_complete_rows(path, live=True):
+                state = row.get("state")
+                if row.get("error") is None and state is not None:
+                    expected = (dict(active_sessions=0, max_sessions=64, stopping=False) if kind == "gateway"
+                                else dict(processing_limit_enabled=True, processing=dict(limit=1, in_use=0, waiting=0)))
+                    if state != expected or (kind == "worker" and row.get("source_kind") != "worker"):
+                        raise RuntimeError(f"{kind} not idle before load: {state}")
+                    return row["index"]
+        time.sleep(0.01)
+    raise RuntimeError("sampler did not record an idle snapshot within 2s")
+
+
+def run(output):
+    """每批先启动有限采样再运行负载；所有尝试独立保存，异常也回收自有进程。"""
+    output.mkdir(parents=True, exist_ok=False)
+    manifest = dict(started_at=now(), status="running", source_commit=capture(["git", "rev-parse", "HEAD"]),
+                    tracked_diff=capture(["git", "diff", "HEAD", "--", "cmd", "internal", "proto", "go.mod", "go.sum"]),
+                    go=capture(["go", "version"]), os=capture(["sw_vers"]),
+                    cpu=capture(["sysctl", "-n", "machdep.cpu.brand_string"]),
+                    logical_cpus=capture(["sysctl", "-n", "hw.logicalcpu"]),
+                    memory_bytes=capture(["sysctl", "-n", "hw.memsize"]),
+                    environment={k: os.environ.get(k) for k in ("GOMAXPROCS", "GOGC", "GOMEMLIMIT", "GOFLAGS")},
+                    race=False, commands=[], batches=[], shutdown=[],
+                    worker=dict(processing_concurrency=1, processing_delay_ns=10_000_000, response_delay_ns=5_000_000,
+                                partial_every_ns=500_000_000, partial_texts=["今", "今天", "今天天气", "今天天气不错"], final_text="今天天气不错"),
+                    gateway=dict(max_sessions=64, max_message_bytes=1048576, max_pending_audio_bytes=32000,
+                                 start_timeout_s=10, input_idle_timeout_s=30, worker_send_timeout_s=2, tail_timeout_s=15, result_write_timeout_s=2),
+                    schedule=dict(session_counts=[1, 2, 4], repetitions=3, audio_bytes=160000, chunk_bytes=3200,
+                                  realtime=True, session_timeout_s=20, warmup_sessions=1, warmup_audio_bytes=64000),
+                    limits=["same-host independent processes, no isolation", "no waiting-duration, backlog, CPU or memory sampling", "sample fractions are not time utilization",
+                            "client write success is not a server byte counter", "5s finite batches are not stable capacity",
+                            "sampling overhead has no A/B measurement", "Mock emits only four partials then a final"])
+    sources = capture(["git", "ls-files", "cmd", "internal", "proto", "go.mod", "go.sum"])
+    manifest["source_sha256"] = {p: digest(ROOT/p) for p in sources.splitlines() if p.endswith((".go", ".proto")) or p in ("go.mod", "go.sum")}
+    manifest["sampling"] = dict(gateway_interval_ns=100_000_000, worker_interval_ns=20_000_000, request_timeout_ns=1_000_000_000, duration_ns=10_000_000_000, readiness_timeout_s=2, max_bracketing_success_gap_ns=500_000_000)
+    manifest["script_sha256"] = {name: digest(Path(__file__).with_name(name)) for name in ("run_joint_observation_baseline.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py")}
+    processes, handles, results, samplers = [], [], [], []
+    save(output/"manifest.json", manifest)
+    try:
+        # 当前 Gateway 固定监听 8080；占用则中止，不使用或停止已有服务。
+        with socket.socket() as probe:
+            probe.bind(("127.0.0.1", 8080))
+        with tempfile.TemporaryDirectory(prefix="tide-load-baseline-") as temp:
+            binaries = {}
+            for name in ("asr-worker", "gateway", "loadgen", "gateway-sampler", "worker-sampler"):
+                target = str(Path(temp)/name)
+                command = ["go", "build", "-o", target, "./cmd/"+name]
+                manifest["commands"].append(command)
+                with (output/("build-"+name+".log")).open("w") as log:
+                    subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, check=True, timeout=60)
+                binaries[name] = target
+            manifest["binary_sha256"] = {name: digest(Path(path)) for name, path in binaries.items()}
+
+            def start(name, args):
+                log = (output/(name+".log")).open("w")
+                handles.append(log)
+                command = [binaries[name], *args]
+                manifest["commands"].append(command)
+                p = subprocess.Popen(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
+                processes.append((name, p))
+                return p
+
+            worker = start("asr-worker", ["-listen=127.0.0.1:0", "-debug-listen=127.0.0.1:0", "-processing-concurrency=1", "-processing-delay=10ms", "-response-delay=5ms"])
+            deadline = time.monotonic()+10
+            address = None
+            while time.monotonic() < deadline:
+                match = re.search(r"address=(127\.0\.0\.1:\d+)", (output/"asr-worker.log").read_text())
+                debug_match = re.search(r"debug_address=(127\.0\.0\.1:\d+)", (output/"asr-worker.log").read_text())
+                if match and debug_match:
+                    address, debug_address = match[1], debug_match[1]
+                    break
+                if worker.poll() is not None: raise RuntimeError("Worker exited before readiness")
+                time.sleep(0.05)
+            if not address: raise RuntimeError("Worker did not announce address")
+            gateway = start("gateway", ["-workers="+address, "-max-pending-audio-bytes=32000"])
+            deadline = time.monotonic()+10
+            while True:
+                if gateway.poll() is not None: raise RuntimeError("Gateway exited before readiness")
+                if "websocket gateway listening on :8080" in (output/"gateway.log").read_text():
+                    with urllib.request.urlopen("http://127.0.0.1:8080/healthz", timeout=2) as response:
+                        if response.status == 200: break
+                if time.monotonic() >= deadline: raise RuntimeError("Gateway readiness timeout")
+                time.sleep(0.05)
+            manifest["worker_address"] = address
+            endpoint = "http://"+debug_address+"/debug/worker"
+            manifest["worker_endpoint"] = endpoint
+            schedule = [("warmup", 1, 64000)] + [(f"r{rep}-n{n}", n, 160000) for rep in range(1, 4) for n in (1, 2, 4)]
+            for label, n, size in schedule:
+                if any(p.poll() is not None for _, p in processes): raise RuntimeError("backend exited between batches")
+                path = output/(label+".json")
+                command = [binaries["loadgen"], "-url=ws://127.0.0.1:8080/v1/asr", f"-sessions={n}",
+                           f"-audio-bytes={size}", "-chunk-bytes=3200", "-realtime=true", "-session-timeout=20s",
+                           "-expected-final-text=今天天气不错", "-output="+str(path)]
+                record = dict(label=label, planned_sessions=n, command=command, sampling={})
+                manifest["batches"].append(record)
+                manifest["commands"].append(command)
+                active_samplers = []
+                try:
+                    # 同批两个采样窗口先启动，再分别等到落盘的空闲样本。
+                    for kind, url, interval in (("gateway", "http://127.0.0.1:8080/debug/gateway", "100ms"), ("worker", endpoint, "20ms")):
+                        sample_name = label + "-" + kind
+                        sample_dir = output/sample_name
+                        sample_command = [binaries[kind+"-sampler"], "-url="+url, "-interval="+interval,
+                                          "-request-timeout=1s", "-duration=10s", "-output-dir="+str(sample_dir)]
+                        item = dict(directory=sample_name, started_at=now(), command=sample_command)
+                        record["sampling"][kind] = item
+                        manifest["commands"].append(sample_command)
+                        save(output/"manifest.json", manifest)
+                        sample_log = (output/(sample_name+".log")).open("w")
+                        handles.append(sample_log)
+                        sampler = subprocess.Popen(sample_command, cwd=ROOT, stdout=sample_log, stderr=subprocess.STDOUT)
+                        samplers.append(sampler)
+                        active_samplers.append((kind, sampler, sample_log, sample_dir, item))
+                    for kind, sampler, _, sample_dir, item in active_samplers:
+                        item["ready_sample_index"] = wait_sampling_ready(sampler, sample_dir, kind)
+                        item["ready_observed_at"] = now()
+                    record["started_at"] = now()
+                    save(output/"manifest.json", manifest)
+                    with (output/(label+".log")).open("w") as log:
+                        attempt = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, timeout=30)
+                    record.update(finished_at=now(), exit_code=attempt.returncode)
+                    # 正常运行等待预算结束，不用 SIGTERM 伪装完成。
+                    for _, sampler, sample_log, _, item in active_samplers:
+                        item.update(exit_code=sampler.wait(timeout=15), finished_at=now())
+                        sample_log.close()
+                finally:
+                    for _, sampler, _, _, item in active_samplers:
+                        if sampler.poll() is None:
+                            sampler.send_signal(signal.SIGTERM)
+                            try: sampler.wait(timeout=3)
+                            except subprocess.TimeoutExpired: sampler.kill(); sampler.wait()
+                            item["forced_cleanup"] = True
+                        item.setdefault("exit_code", sampler.returncode)
+                        item.setdefault("finished_at", now())
+                    save(output/"manifest.json", manifest)
+                checked = check_report(path, n, size)
+                gateway_observed = check_sampling(output/record["sampling"]["gateway"]["directory"], record["started_at"], record["finished_at"], n)
+                worker_observed = check_worker_sampling(output/record["sampling"]["worker"]["directory"], record["started_at"], record["finished_at"], n, endpoint)
+                record["checks_passed"] = (checked["checks_passed"] and attempt.returncode == 0
+                    and all(item["exit_code"] == 0 for item in record["sampling"].values())
+                    and gateway_observed["checks_passed"] and worker_observed["checks_passed"])
+                record.update(gateway_checks=gateway_observed, worker_checks=worker_observed)
+                if label != "warmup": results.append(dict(label=label, planned_sessions=n, gateway=gateway_observed, worker=worker_observed, **checked))
+                save(output/"summary.json", dict(batches=results))
+                save(output/"manifest.json", manifest)
+                print(label, "exit", attempt.returncode, "checks", record["checks_passed"], flush=True)
+                if label == "warmup" and not record["checks_passed"]: raise RuntimeError("warmup failed; formal measurement not started")
+            manifest["status"] = "passed" if all(r["checks_passed"] for r in manifest["batches"]) else "failed_checks"
+            # 先停 Gateway，等待其正常清理，再停具有双服务收尾的 Worker。
+            for name, p in reversed(processes):
+                p.send_signal(signal.SIGTERM)
+                try: code = p.wait(timeout=20)
+                except subprocess.TimeoutExpired:
+                    p.kill(); code = p.wait(); manifest["status"] = "shutdown_timeout"
+                manifest["shutdown"].append(dict(process=name, exit_code=code))
+            if any(item["exit_code"] != 0 for item in manifest["shutdown"]): manifest["status"] = "backend_shutdown_failed"
+    except BaseException as exc:
+        manifest.update(status="error", error=repr(exc))
+        raise
+    finally:
+        for p in samplers:
+            if p.poll() is None: p.kill(); p.wait()
+        for _, p in reversed(processes):
+            if p.poll() is None: p.kill(); p.wait()
+        for log in handles: log.close()
+        manifest["finished_at"] = now()
+        manifest["artifact_sha256"] = {str(p.relative_to(output)): digest(p) for p in output.rglob("*") if p.is_file() and p != output/"manifest.json"}
+        save(output/"manifest.json", manifest)
+    if manifest["status"] != "passed": raise SystemExit("baseline checks failed; all evidence retained")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, required=True, help="new directory; preserve every attempt")
+    directory = parser.parse_args().output.resolve()
+    run(directory)
+    summarize(directory)
