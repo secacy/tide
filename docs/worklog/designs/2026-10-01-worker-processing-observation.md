@@ -1,7 +1,7 @@
 # 第五阶段：Worker 处理占用与等待观测
 
 日期：2026-10-01
-状态：名额池快照及 Worker 层 ProcessingSnapshot 访问方法均已验收，能够区分未启用限制与已启用但空闲。进程外查询与采样尚未接入，没有新增性能或容量结果。
+状态：名额池快照及 Worker 层 ProcessingSnapshot 访问方法均已验收；第三步已明确 HTTP 响应与路由契约，等待开发者实现。Worker 命令尚未启动 HTTP 服务，进程外采样尚未接入，没有新增性能或容量结果。
 相关：[共享处理名额](2026-09-27-worker-processing-capacity.md)、[Gateway 联合观测基线](../../experiments/gateway-observation-baseline.md)
 
 ## 为什么继续补这项
@@ -189,3 +189,81 @@ func (w *Worker) ProcessingSnapshot() (snapshot ProcessingSnapshot, enabled bool
 执行 `go test -race ./internal/mockasr -count=1 -timeout=60s -json`，36 个顶层测试、87 项叶子检查全部通过，无跳过、失败或数据竞争报告。本次只运行相关 Mock 包回归；上一小步的全项目检查结果保留原记录，不冒充本次执行。
 
 本步完成的是进程内公开访问，尚不能通过网络采集 Worker 状态。下一步设计 HTTP 查询接口、未启用时的 JSON 表达及命令中的服务接入；没有新增负载实验或性能结论。
+
+## 第三步：HTTP 查询响应与路由（2026-10-01，待实现）
+
+### 价值与方案选择
+
+进程内的公开方法还不能被外部负载工具调用。需要一个只读查询入口，保留未启用语义，使后续采样可以区分没有计数与有效零占用。Gateway 活动会话数和 Worker 处理名额计数衡量不同阶段，不能互相代替。
+
+| 方案 | 好处 | 代价与本次选择 |
+| --- | --- | --- |
+| 定期输出日志 | 不需要新增监听器 | 采样方需要解析日志、处理交错并统一采样时间，暂不采用 |
+| 新增 gRPC 状态 RPC | 复用现有服务监听和客户端技术 | 需要修改 proto、生成代码和查询客户端；可行，但本项目已有 HTTP 观测模式，暂不采用 |
+| HTTP JSON 查询 | 可以单独请求，沿用 Gateway 的查询和采样思路 | Worker 要新增 HTTP 服务及退出协调；采用，分步接入 |
+| Prometheus 指标 | 便于后续监控、时序查询和看板 | 本轮只需要明确的小型状态快照，暂不引入完整指标接入 |
+
+本步只实现 Handler 和私有路由，不创建监听器、不修改 run 或配置。之后单独设计 HTTP 监听地址、启动失败回滚及 HTTP/gRPC 退出协调。使用显式私有 ServeMux，不修改全局 DefaultServeMux。
+
+### 响应契约
+
+路由为 `GET /debug/worker`，成功状态 200，`Content-Type: application/json`，`Cache-Control: no-store`。与现有 Gateway 路由一致，GET 模式同时允许 HEAD，实际 HTTP 服务不发送 HEAD 响应体；其他方法由 mux 返回 405，未知路径返回 404。
+
+启用限制的响应示例：
+
+```json
+{"schema_version":1,"processing_limit_enabled":true,"processing":{"limit":2,"in_use":1,"waiting":3}}
+```
+
+未启用限制的响应：
+
+```json
+{"schema_version":1,"processing_limit_enabled":false,"processing":null}
+```
+
+不用全零对象表示未启用，也不省略 processing 字段。布尔字段明确说明共享限制开关，null 表示没有该计数；它们必须成对一致。采用嵌套可空对象，是因为三个字段的有效性相同，无需分别维护三个可空数字。字段名不使用 processing_enabled，以免误解为关闭限制后不处理音频。有效空闲仍为 enabled=true、limit>0、in_use=0、waiting=0。
+
+此接口 schema_version 独立于 Gateway 与采样文件版本。响应不加入 Worker ID、时间戳、会话数或时长；后续采样方记录查询地址与请求起止时间。本接口只描述一个 Worker 的瞬时逻辑名额状态，不提供跨实例同时刻快照或 CPU 使用率。
+
+### 开发者实现范围
+
+新增 `cmd/asr-worker/snapshot.go`，package main，定义以下类型与函数，并为每个类型、字段和函数补上说明：
+
+```go
+// workerProcessingJSON 是共享处理限制启用时的名额状态，不代表活跃会话数。
+type workerProcessingJSON struct {
+    Limit int `json:"limit"` // 实际名额上限，不是实测稳定容量。
+    InUse int `json:"in_use"` // 已登记持有、尚未归还的名额数。
+    Waiting int `json:"waiting"` // 已登记、尚未完成获取或取消收尾的等待请求数。
+}
+
+// workerSnapshotJSON 定义 Worker 状态查询 v1；与内部快照类型分开维护。
+type workerSnapshotJSON struct {
+    SchemaVersion int `json:"schema_version"` // 本接口版本，固定为 1。
+    ProcessingLimitEnabled bool `json:"processing_limit_enabled"` // 共享处理限制是否启用。
+    Processing *workerProcessingJSON `json:"processing"` // 未启用时为 null，不使用 omitempty。
+}
+
+// workerSnapshotHandler 创建只读查询处理函数；worker 必须由 mockasr.New 成功创建。
+// 每个请求读取一次快照，不占处理名额；编码和写回发生在快照返回后。
+func workerSnapshotHandler(worker *mockasr.Worker) http.HandlerFunc
+
+// routes 返回本 Worker 的私有状态查询路由，不监听端口，不注册 gRPC 服务。
+func routes(worker *mockasr.Worker) http.Handler
+```
+
+Handler 实现顺序：
+
+1. 在请求处理函数内部调用一次 worker.ProcessingSnapshot()，不能在创建 Handler 时缓存快照。
+2. 构造 schema_version=1、processing_limit_enabled=enabled 的响应；仅 enabled=true 时创建并映射 processing 对象，否则保持 nil。
+3. 先 json.Marshal；若失败，记录日志并返回 500。固定整数/布尔响应正常不会编码失败，保留错误处理即可，不为这一分支新增生产注入点。
+4. 编码成功后设置上述两个响应头，写 200，再写编码后的数据。写入失败记录日志，不在已经开始的 JSON 响应后追加第二个错误响应。
+5. 不重新获取处理名额、不增加 Worker 锁，不持有池锁进行编码或网络写回。复用已有 Gateway Handler 的结构，但使用独立 DTO，不给 mockasr 类型增加 JSON 标签。
+
+routes 创建 http.NewServeMux()，注册 `GET /debug/worker` 到该 Handler 后返回；本步不增加 healthz 或新 goroutine。当前命令没有监听这一路由，因此本步完成后还不能直接用 curl 查询运行中的 Worker。
+
+### 验收安排
+
+实现由开发者完成，助手补测试：未启用 null、启用空闲与忙碌/等待、完成或取消后的新请求状态、版本与响应头、GET/HEAD/不支持的方法/错误路径、写回失败与慢写回不阻塞处理名额释放。忙碌/等待通过实际 Worker 流程构造，不导出私有名额池来满足测试。路由可以用 httptest 临时 HTTP 服务验收，无需提前改造命令启动。
+
+这些检查验证接口语义与隔离性，不作为吞吐、稳定容量或观测开销实验。验收后再接入命令服务生命周期，然后设计外部 Worker 查询与采样。

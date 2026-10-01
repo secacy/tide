@@ -212,6 +212,8 @@ gateway-sampler 运行入口已验收：新增 50 项检查，三个相关包共
 
 Worker.ProcessingSnapshot() 已实现并验收：实际池启用时映射一次池快照；slots=nil 返回零值与 false，表示未启用且无此项计数，不能解释为空闲。新增四项检查覆盖实际处理、等待、完成与取消，以及副本和实例隔离；Mock 包共 87 项检查通过 race。下一步设计进程外 HTTP 查询格式与命令接入，尚无新增性能或容量结果。
 
+当前待实现：Worker HTTP 查询 Handler 与私有路由，GET /debug/worker 返回独立 v1 JSON；共享限制关闭时明确返回 processing_limit_enabled=false、processing=null，查询不占处理名额。只新增命令层 snapshot.go，监听地址及 HTTP/gRPC 服务协调留下一步，见[第三步设计](worklog/designs/2026-10-01-worker-processing-observation.md)。
+
 ## 维护约定
 
 - 阶段开始时更新目标、范围和验收标准；关键工作完成后补充进展与验证入口。
@@ -340,3 +342,4 @@ Worker.ProcessingSnapshot() 已实现并验收：实际池启用时映射一次�
 | 2026-10-01 | Worker 名额池状态快照验收通过：取消分支漏解锁已修正，新增 9 项与全项目 946 项检查通过 race，12 个显式实验默认跳过；占用/等待与归零可观测，对外接口及新性能实验留后续 |
 | 2026-10-01 | 明确 Worker 层处理快照访问：公开值类型加 enabled，区分已启用空闲与未启用/未采集；复用一次内部快照，等待实现，对外查询尚未接入 |
 | 2026-10-01 | Worker 层公开快照验收通过：新增四项检查、Mock 包共 87 项通过 race；未启用语义、实际处理与取消归零、快照及实例隔离符合约定，下一步设计进程外查询 |
+| 2026-10-01 | 明确 Worker HTTP 查询契约：GET /debug/worker、独立 v1 JSON、限制未启用时 processing=null；等待实现 Handler 与私有路由，监听及双服务退出协调留下一步 |
