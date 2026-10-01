@@ -1,7 +1,7 @@
 # 第五阶段：Worker 处理占用与等待观测
 
 日期：2026-10-01
-状态：名额池快照首步已实现并验收；Worker 对外访问与采样尚未接入，没有新增性能或容量结果。
+状态：名额池快照首步已验收；正在设计 Worker 层 ProcessingSnapshot 访问方法与未启用语义，等待开发者实现。进程外查询与采样尚未接入，没有新增性能或容量结果。
 相关：[共享处理名额](2026-09-27-worker-processing-capacity.md)、[Gateway 联合观测基线](../../experiments/gateway-observation-baseline.md)
 
 ## 为什么继续补这项
@@ -119,3 +119,59 @@ snapshot 加锁读取 cap(tokens)、inUse、waiting 后返回值副本。不要�
 定向 `go test -race ./internal/mockasr -run '^TestProcessingSnapshot' -count=1 -timeout=30s -json` 的 9 项检查通过。随后运行 `go test -race ./... -count=1 -timeout=120s -json`，全项目 946 项叶子检查通过，12 个需显式开启的实验默认跳过，无数据竞争报告。Mock 包 34 个顶层测试、83 项叶子检查通过（5.155s）；包含原有名额竞争、取消、Worker 跨流处理与故障边界回归。
 
 本步只增加包内名额状态观测，没有修改 Worker 的开关配置或处理区间，没有新增 HTTP/gRPC 查询，也没有重跑正式负载实验。旧 EXP-005-03 仍对应其记录的源码版本，不能当作新增短锁之后的性能测量。下一步定义 Worker 层的可访问快照，明确 slots=nil 时表示限制未启用，不伪造零占用结论，再考虑对外查询与采样。
+
+
+## 第二步：Worker 层的处理快照访问（2026-10-01，待实现）
+
+### 问题与选择
+
+名额池已经能记录状态，后续命令/查询入口不应访问 Worker 的私有 slots，也不能把 slots=nil 时的零值解释为空闲。ProcessingConcurrency=0 表示不施加这个共享处理限制，processChunk 仍然会执行；只是当前没有名额池来统计这段占用与等待。关闭限制不等于计算能力无限，也不等于没有处理任务。
+
+| 方案 | 好处 | 代价与选择 |
+| --- | --- | --- |
+| 关闭限制时直接返回三个零 | 返回类型简单 | 与已启用但空闲的状态混淆，不采用 |
+| 返回 *ProcessingSnapshot，nil 表示关闭 | 可自然映射缺失值 | 暴露可选指针和解引用，本步只需要一份值与是否启用，暂不采用 |
+| 返回 (ProcessingSnapshot, enabled bool) | 明确区分有效数据与未启用，不引入指针或错误语义 | 调用方必须先检查 enabled；本步采用 |
+| 返回错误表示未启用 | 强制调用方处理 | 未启用是合法配置，不应作为运行失败，不采用 |
+
+公开类型与私有 processingSlotsSnapshot 分开，Worker 负责映射实际池快照；不导出内部类型别名或名额池指针。未来 JSON 是否用 null、哪些字段展示，由传输层单独定义，不在本步添加 JSON tags。
+
+### 实现范围
+
+只新增 internal/mockasr/snapshot.go，package mockasr。生产代码由开发者实现。
+
+```go
+// ProcessingSnapshot 描述本 Worker 已启用的共享处理名额状态。
+// 仅在 Worker.ProcessingSnapshot 返回 enabled=true 时具有观测含义。
+// 它是值副本，不引用内部可变状态，也不是 Worker 活跃会话或 CPU 使用率。
+type ProcessingSnapshot struct {
+    Limit int // 实际名额池上限，大于零，不是实测容量。
+    InUse int // 已登记成功获取、尚未有效归还的名额数。
+    Waiting int // 因满额登记、尚未完成获取或取消收尾的请求数。
+}
+
+// ProcessingSnapshot 返回处理名额的值快照及共享限制是否启用。
+// 未启用时返回零值和 false，零字段是占位值，不能解释为没有任务。
+// 启用时三个字段来自名额池同一次 snapshot，可与处理流程并发调用。
+// w 必须由 New 成功创建；方法不改变状态，不等待处理结束，不执行 I/O。
+func (w *Worker) ProcessingSnapshot() (snapshot ProcessingSnapshot, enabled bool)
+```
+
+执行顺序：
+
+1. w.slots==nil 时返回 ProcessingSnapshot{},false。不为关闭模式临时创建池，也不改变 Worker 配置。
+2. 启用时调用一次 w.slots.snapshot()，取得三个字段来自同一临界区的内部快照。
+3. 将 Limit/InUse/Waiting 映射为公开的 ProcessingSnapshot，返回该值和 true。
+
+不分别调用三次 snapshot 拼接字段，不重新从 cfg 读取 Limit，不复制额外计数器。Worker 的 slots 在 New 中设置后不会被运行逻辑替换，读取该指针不需要增加 Worker 级锁；可变计数已由池内锁保护。本方法可能短暂等待记账锁，但不会等整个处理过程完成。若未来增加动态替换池或开关功能，必须重新设计指针同步与快照语义。
+
+不为 nil Worker 返回 false 来掩盖构造/调用错误；与 Gateway.Snapshot 一样，成功构造是调用前提。未启用是合法 Worker 状态，nil Worker 不是。
+
+### 示例与验收
+
+启用、空闲：`ProcessingSnapshot{Limit:2, InUse:0, Waiting:0}, true`。
+关闭限制：`ProcessingSnapshot{}, false`，即使此时 processChunk 正在运行也仍为 false，当前没有该名额计数。
+
+助手会用实际 processChunk 竞争和取消场景验证公开访问反映占用/等待与最终归零，并检查关闭限制时正在处理也返回未启用、启用空闲可区分、历史值不会跟随内部状态变化。测试重点是业务状态与有效性，不重复每个内部赋值的机械断言。
+
+本步验收后再设计进程外查询接口与传输格式；没有新增 HTTP 服务、采样接入、等待时长或性能结果。
