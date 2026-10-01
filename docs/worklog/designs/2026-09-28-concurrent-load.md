@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：Worker 层 ProcessingSnapshot 已验收；已明确 HTTP 查询响应与路由：GET /debug/worker 返回独立 v1 JSON，未启用共享限制时 processing 为 null。见 [第三步设计](2026-10-01-worker-processing-observation.md)。等待开发者实现 Handler 和私有路由，HTTP 监听与双服务生命周期留下一步，尚无新性能实验。
+当前小步：Worker HTTP 查询 Handler 与私有路由已验收：新增 14 项检查，命令与 Mock 两包共 135 项通过 race；未启用 null、状态变化、路由及慢写回隔离符合约定。见 [第三步设计与验收](2026-10-01-worker-processing-observation.md)。下一步设计 HTTP 监听与双服务生命周期；正式命令尚未开放查询，尚无新性能实验。
 
 ## 为什么先准备负载与观测
 

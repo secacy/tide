@@ -1,7 +1,7 @@
 # 第五阶段：Worker 处理占用与等待观测
 
 日期：2026-10-01
-状态：名额池快照及 Worker 层 ProcessingSnapshot 访问方法均已验收；第三步已明确 HTTP 响应与路由契约，等待开发者实现。Worker 命令尚未启动 HTTP 服务，进程外采样尚未接入，没有新增性能或容量结果。
+状态：名额池快照、Worker 层 ProcessingSnapshot 及 HTTP 查询响应与路由均已验收。Worker 命令尚未启动 HTTP 服务，下一步设计监听与双服务退出协调；进程外采样尚未接入，没有新增性能或容量结果。
 相关：[共享处理名额](2026-09-27-worker-processing-capacity.md)、[Gateway 联合观测基线](../../experiments/gateway-observation-baseline.md)
 
 ## 为什么继续补这项
@@ -190,7 +190,7 @@ func (w *Worker) ProcessingSnapshot() (snapshot ProcessingSnapshot, enabled bool
 
 本步完成的是进程内公开访问，尚不能通过网络采集 Worker 状态。下一步设计 HTTP 查询接口、未启用时的 JSON 表达及命令中的服务接入；没有新增负载实验或性能结论。
 
-## 第三步：HTTP 查询响应与路由（2026-10-01，待实现）
+## 第三步：HTTP 查询响应与路由（2026-10-01，已验收）
 
 ### 价值与方案选择
 
@@ -267,3 +267,20 @@ routes 创建 http.NewServeMux()，注册 `GET /debug/worker` 到该 Handler 后
 实现由开发者完成，助手补测试：未启用 null、启用空闲与忙碌/等待、完成或取消后的新请求状态、版本与响应头、GET/HEAD/不支持的方法/错误路径、写回失败与慢写回不阻塞处理名额释放。忙碌/等待通过实际 Worker 流程构造，不导出私有名额池来满足测试。路由可以用 httptest 临时 HTTP 服务验收，无需提前改造命令启动。
 
 这些检查验证接口语义与隔离性，不作为吞吐、稳定容量或观测开销实验。验收后再接入命令服务生命周期，然后设计外部 Worker 查询与采样。
+
+### 第三步实现与验收
+
+开发者实现 [cmd/asr-worker/snapshot.go](../../../cmd/asr-worker/snapshot.go)：独立 DTO、每请求一次快照、未启用时明确 null、编码后设置响应头与写回、私有 GET 路由均符合约定。助手未修改生产代码。
+
+新增 [snapshot_test.go](../../../cmd/asr-worker/snapshot_test.go)，六个顶层测试、14 项叶子检查：
+
+- 未启用和启用空闲两种响应，独立解码核对所有字段、零值、null、版本、响应头与没有多余响应；重复查询不改变名额状态。
+- 真实临时 HTTP 服务验证 GET、HEAD 无正文、POST/DELETE 返回 405，以及未知路径和子路径返回 404。
+- 正常完成、等待者取消、持有者取消三个场景，通过公开 StreamingRecognize 执行 Worker 处理逻辑，复用同一路由验证空闲、占用、等待、交接和最终归零；正常流完整返回处理进度和 final，取消流不确认未处理音频。
+- 限制关闭但仍在处理音频时，HTTP 响应仍明确未采集，处理完成后也不会伪造有效零计数。
+- 注入部分写入失败，确认不追加第二份响应，随后查询仍成功。
+- 阻塞 HTTP Write 时，音频处理仍完成并归还名额，另一次查询可读取空闲状态；解除阻塞后，旧响应仍保留原先忙碌快照。
+
+执行 `go test -race ./cmd/asr-worker ./internal/mockasr -count=1 -timeout=90s -json`，命令包 48 项、Mock 包 87 项，共 135 项叶子检查通过，无失败、跳过或数据竞争报告。命令包回归包含原有真实 Worker 子进程与 RPC 检查；新增状态转换用例使用内存流替身和虚拟时间，不声称进行了 HTTP 与真实 gRPC 网络的联合负载实验。慢写回/写入失败也使用受控 ResponseWriter，不作为实际弱网测量。
+
+本步没有修改 main、run 或启动配置，正式 Worker 命令仍只监听 gRPC，不能直接 curl 查询。下一步设计 HTTP 监听及 HTTP/gRPC 启动失败回滚与退出协调；本次没有新增性能或容量数据。
