@@ -214,6 +214,8 @@ Worker.ProcessingSnapshot() 已实现并验收：实际池启用时映射一次�
 
 Worker HTTP 查询 Handler 与私有路由已验收：GET /debug/worker 返回独立 v1 JSON，共享限制关闭时明确返回 processing_limit_enabled=false、processing=null，查询不占处理名额。新增 14 项检查，两包共 135 项通过 race；状态变化、路由及慢写回隔离符合约定。正式命令尚未启动 HTTP 服务，下一步设计监听地址及 HTTP/gRPC 服务协调，见[第三步设计与验收](worklog/designs/2026-10-01-worker-processing-observation.md)。
 
+当前待实现：可选 HTTP 监听参数 -debug-listen，默认空字符串关闭，纯空白拒绝，非空地址保留原值，绑定校验留运行层。仅修改配置解析；已明确后续双监听成功后启动、启用的 HTTP 失败则整体失败并回滚、两个服务共享同一个 Worker 的接入方向。具体运行与退出策略留下一小步，见[第四步之一设计](worklog/designs/2026-10-01-worker-processing-observation.md)。
+
 ## 维护约定
 
 - 阶段开始时更新目标、范围和验收标准；关键工作完成后补充进展与验证入口。
@@ -344,3 +346,4 @@ Worker HTTP 查询 Handler 与私有路由已验收：GET /debug/worker 返回�
 | 2026-10-01 | Worker 层公开快照验收通过：新增四项检查、Mock 包共 87 项通过 race；未启用语义、实际处理与取消归零、快照及实例隔离符合约定，下一步设计进程外查询 |
 | 2026-10-01 | 明确 Worker HTTP 查询契约：GET /debug/worker、独立 v1 JSON、限制未启用时 processing=null；等待实现 Handler 与私有路由，监听及双服务退出协调留下一步 |
 | 2026-10-01 | Worker HTTP Handler 与路由验收通过：新增 14 项检查、两包共 135 项通过 race；验证未采集、占用/等待及归零、HEAD/拒绝路由和慢写回隔离，下一步接入监听及双服务生命周期 |
+| 2026-10-01 | 明确可选 -debug-listen 参数：默认关闭、纯空白拒绝、地址原值保留，等待实现纯解析；双监听失败回滚、同一 Worker 接线与退出协调留下一步 |
