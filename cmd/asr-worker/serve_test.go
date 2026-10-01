@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"net"
@@ -15,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/secacy/tide-artisan/internal/loadgen"
 	"github.com/secacy/tide-artisan/internal/mockasr"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 	"google.golang.org/grpc"
@@ -335,22 +335,10 @@ func waitProcessState(t *testing.T, address string, wantInUse, wantWaiting int) 
 	tick := time.NewTicker(5 * time.Millisecond)
 	defer tick.Stop()
 	for {
-		resp, err := client.Get("http://" + address + "/debug/worker")
-		if err == nil {
-			var value struct {
-				Version    int  `json:"schema_version"`
-				Enabled    bool `json:"processing_limit_enabled"`
-				Processing *struct {
-					Limit   int `json:"limit"`
-					InUse   int `json:"in_use"`
-					Waiting int `json:"waiting"`
-				} `json:"processing"`
-			}
-			err = json.NewDecoder(resp.Body).Decode(&value)
-			resp.Body.Close()
-			if err == nil && resp.StatusCode == 200 && value.Version == 1 && value.Enabled && value.Processing != nil && value.Processing.Limit == 1 && value.Processing.InUse == wantInUse && value.Processing.Waiting == wantWaiting {
-				return
-			}
+		// 使用正式客户端查询真实 Worker 路由，协议错误和网络错误都不伪造零计数。
+		value, err := loadgen.FetchWorkerSnapshot(context.Background(), client, "http://"+address+"/debug/worker")
+		if err == nil && value.ProcessingLimitEnabled && value.Processing.Limit == 1 && value.Processing.InUse == wantInUse && value.Processing.Waiting == wantWaiting {
+			return
 		}
 		select {
 		case <-deadline.C:
