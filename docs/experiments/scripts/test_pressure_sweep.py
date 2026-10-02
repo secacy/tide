@@ -144,13 +144,14 @@ class PressureSweepTests(unittest.TestCase):
             for kind in ('gateway','worker'):
                 q=p/('r1-n12-'+kind);q.mkdir()
                 values=[]
-                for sec in (1, 6, 16):
+                for sec in (1, 5, 6, 16):
                     state = dict(active_sessions=12 if sec<5 else 8) if kind=='gateway' else dict(processing_limit_enabled=True,processing=dict(in_use=1,waiting=11 if sec<5 else 7))
                     values.append(dict(started_at=stamp(sec),finished_at=stamp(sec),state=state,error=None))
                 (q/'samples.jsonl').write_text(''.join(json.dumps(v)+'\n' for v in values))
             r=phase_observations(p,dict(label='r1-n12',started_at=stamp(0),finished_at=stamp(12)))
             self.assertEqual(r[0]['gateway']['active_histogram'], {'12':1})
-            self.assertEqual(r[1]['gateway']['active_histogram'], {'8':1})
+            # 恰在 5 秒边界的零时长查询只能进入后一段，不能重复计数。
+            self.assertEqual(r[1]['gateway']['active_histogram'], {'8':2})
             self.assertEqual(r[3]['covered_wall_ns'], 0)
             self.assertEqual(r[3]['worker']['samples'], 0)
             self.assertIsNone(r[3]['worker']['observed_peak_waiting'])

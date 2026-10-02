@@ -118,7 +118,8 @@ def phase_observations(directory, batch):
         left, right = start+second*1_000_000_000, min(finish, start+(second+5)*1_000_000_000)
         phase = dict(offset_s=second, covered_wall_ns=max(0, right-left))
         for kind, rows in data.items():
-            valid = [r["state"] for r in rows if r["error"] is None and left <= timestamp_ns(r["started_at"]) <= timestamp_ns(r["finished_at"]) <= right]
+            valid = [r["state"] for r in rows if r["error"] is None and left <= timestamp_ns(r["started_at"]) < right
+                     and timestamp_ns(r["started_at"]) <= timestamp_ns(r["finished_at"]) <= right]
             if kind == "gateway":
                 phase[kind] = dict(samples=len(valid), active_histogram=dict(sorted(Counter(str(r["active_sessions"]) for r in valid).items())))
             else:

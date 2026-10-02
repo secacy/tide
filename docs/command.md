@@ -246,6 +246,17 @@ go build -o /tmp/tide-worker-sampler ./cmd/worker-sampler
 
 正常预算到期时，清单仍保留 `stop_reason=deadline_exceeded` 和原始 `sampling_error`。仅在命令返回后读取完整产物；失败文件保留，文件写入和关闭成功不代表掉电持久化或跨文件原子发布。本轮仅完成采样工具，联合负载实验和稳定容量结论另行记录。
 
+## 单 Worker 逐级加压实验
+
+从项目根目录运行（脚本会构建并管理自己的进程；8080 被占用时中止）：
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_pressure_sweep.py \
+  --output /tmp/tide-pressure-sweep-new
+```
+
+目录必须不存在。固定 4/8/12 场、每场 20 秒、各三批，另有预热和每批 40 秒采样窗口，整轮约六分钟。输出包含客户端成功和失败报告、Gateway/Worker 样本、配置与退出记录以及分组分析。实验脚本成功退出表示证据完整通过校验；查看 `groups.json` 的 `all_repetitions_meet_criteria` 判断各档位是否达标，不能把根清单的 `status=passed` 当作全部会话成功。具体预算、口径和已测结果见 [EXP-005-05](experiments/pressure-sweep.md)。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \
