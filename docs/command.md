@@ -304,6 +304,21 @@ PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_dual_worker_sweep
 
 固定两个同配置 Worker，16/18/20 场各三批、每场 20 秒，整轮约六分钟。输出目录必须不存在；采集失败和业务失败均保留。`groups.json` 包含完成率、成功尾部、发送落后和逐 Worker 观测，根清单通过不代表所有档位达标。方案和后续选择规则见 [EXP-005-08](experiments/dual-worker-sweep.md)。
 
+## 双 Worker 19 并发细测
+
+```bash
+/usr/bin/caffeinate -i env PYTHONDONTWRITEBYTECODE=1 \
+  python3 docs/experiments/scripts/run_dual_worker_boundary.py \
+  --source docs/experiments/results/dual-worker-sweep-2026-10-02 \
+  --output /tmp/tide-dual-worker-boundary-new
+
+# 对已完成证据复算：
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_dual_worker_boundary.py \
+  --output /tmp/tide-dual-worker-boundary-new --analyze-only
+```
+
+源目录须为完整的双 Worker 16/18/20 采集，且达标次数为 3/3/0；读取时复核原始证据，记录来源哈希。新输出目录必须不存在。固定 19 场、20 秒、三批，预计约两分钟。条件和后续规则见 [EXP-005-09](experiments/dual-worker-boundary.md)。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \

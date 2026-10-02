@@ -15,12 +15,12 @@ SAMPLING = dict(gateway_interval_ns=100_000_000, worker_interval_ns=20_000_000,
 
 def validate_manifest(m):
     """拒绝缺 Worker、重复 endpoint、条件漂移和未正常收尾；不要求业务全部成功。"""
-    require(m.get("experiment") in ("worker_comparison", "dual_worker_sweep") and m.get("status") == "passed", "not completed multi-worker experiment")
+    require(m.get("experiment") in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short") and m.get("status") == "passed", "not completed multi-worker experiment")
     from summarize_pressure_sweep import pressure_profile
     profile = pressure_profile(m["experiment"])
     count = m.get("worker_count")
     require(type(count) is int and count in (1, 2), "worker count")
-    require(m["experiment"] != "dual_worker_sweep" or count == 2, "sweep requires two workers")
+    require(not m["experiment"].startswith("dual_worker_") or count == 2, "dual-worker experiment requires two workers")
     require(m.get("policy") == "round_robin", "policy differs")
     require(m.get("worker") == WORKER and m.get("gateway") == GATEWAY and m.get("criteria") == CRITERIA, "fixture differs")
     require(m.get("sampling") == SAMPLING, "sampling differs")
