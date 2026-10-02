@@ -276,6 +276,20 @@ PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_boundary_study.py
 
 见 [EXP-005-06 报告](experiments/boundary-study.md)及[运行点清单](experiments/results/boundary-study-operating-points-2026-10-02.json)。
 
+## 单 / 双 Worker 对照
+
+```bash
+/usr/bin/caffeinate -i env PYTHONDONTWRITEBYTECODE=1 \
+  python3 docs/experiments/scripts/run_worker_comparison.py \
+  --output /tmp/tide-worker-comparison-new
+
+# 已完成目录可单独复算，不重新产生负载：
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_worker_comparison.py \
+  --output /tmp/tide-worker-comparison-new --analyze-only
+```
+
+输出目录必须新建。两组均为 8/9/10 场各三批、每场 20 秒，总计约 13 分钟；先单 Worker，再双 Worker。Linux 可省略 `caffeinate -i`，但当前环境采集脚本使用 macOS 命令，需先适配环境记录。`comparison.json` 保留双方完整分母和逐 Worker 观测；增加资源后的改善不等于调度策略收益。见 [EXP-005-07](experiments/worker-count-comparison.md)。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \

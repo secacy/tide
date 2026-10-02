@@ -21,6 +21,8 @@ def pressure_profile(experiment="pressure_sweep", near_boundary=None):
     """仅允许预定义实验，避免分析时按结果放宽时长、档位或重复次数。"""
     if experiment == "pressure_sweep":
         return dict(experiment=experiment, counts=(4, 8, 12), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
+    if experiment == "worker_comparison":
+        return dict(experiment=experiment, counts=(8, 9, 10), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
     if experiment == "boundary_short":
         return dict(experiment=experiment, counts=(9, 10, 11), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
     require(experiment == "boundary_extended" and type(near_boundary) is int and 9 <= near_boundary <= 11, "unknown pressure profile")
@@ -119,10 +121,10 @@ def check_pressure_gateway(directory, start, finish, n):
     return result
 
 
-def phase_observations(directory, batch, audio_seconds=20):
+def phase_observations(directory, batch, audio_seconds=20, worker_ids=("worker",)):
     """按负载启动后五秒分段，保留活动会话变化，避免把失败后空闲视为持续承载。"""
     start, finish = timestamp_ns(batch["started_at"]), timestamp_ns(batch["finished_at"])
-    data = {k: read_complete_rows(directory/(batch["label"]+"-"+k)/"samples.jsonl") for k in ("gateway", "worker")}
+    data = {k: read_complete_rows(directory/(batch["label"]+"-"+k)/"samples.jsonl") for k in ("gateway", *worker_ids)}
     phases = []
     for second in range(0, audio_seconds, 5):
         left, right = start+second*1_000_000_000, min(finish, start+(second+5)*1_000_000_000)
@@ -157,14 +159,29 @@ def summarize(directory):
         require(p.is_relative_to(directory.resolve()) and digest(p) == expected, f"artifact changed: {name}")
     formal = [b for b in m["batches"] if b["label"] != "warmup"]
     require([b["label"] for b in formal] == [f"r{r}-n{n}" for r in range(1, repetitions+1) for n in counts], "schedule incomplete")
+    comparison = profile["experiment"] == "worker_comparison"
+    if comparison:
+        from worker_comparison_contract import validate_manifest
+        validate_manifest(m)
+    workers = m["workers"] if comparison else [dict(id="worker", endpoint=m["worker_endpoint"])]
     batches = []
-    for b in formal:
+    # 新实验也重新检查预热，不只信任根清单中的通过标志。
+    for b in m["batches"] if comparison else formal:
         n = b["planned_sessions"]
-        load = check_pressure_report(directory/(b["label"]+".json"), n, audio_bytes, timeout_s)
+        load = check_pressure_report(directory/(b["label"]+".json"), n, 64000 if b["label"] == "warmup" else audio_bytes, timeout_s)
         gateway = check_pressure_gateway(directory/(b["label"]+"-gateway"), b["started_at"], b["finished_at"], n)
-        worker = check_worker_sampling(directory/(b["label"]+"-worker"), b["started_at"], b["finished_at"], n, m["worker_endpoint"])
-        require(b["exit_code"] == load["expected_exit_code"] and all(b["sampling"][k]["exit_code"] == 0 for k in ("gateway", "worker")) and gateway["checks_passed"] and worker["checks_passed"], "invalid acquisition: "+b["label"])
-        batches.append(dict(label=b["label"], planned_sessions=n, load=load, gateway=gateway, worker=worker, phases=phase_observations(directory, b, audio_bytes//32000)))
+        observed = {w["id"]: check_worker_sampling(directory/(b["label"]+"-"+w["id"]), b["started_at"], b["finished_at"], n, w["endpoint"]) for w in workers}
+        keys = ["gateway", *observed]
+        require(set(b["sampling"]) == set(keys), "missing/extra sampler")
+        require(b["exit_code"] == load["expected_exit_code"] and all(b["sampling"][k]["exit_code"] == 0 and not b["sampling"][k].get("forced_cleanup", False) for k in keys)
+                and gateway["checks_passed"] and all(w["checks_passed"] for w in observed.values()), "invalid acquisition: "+b["label"])
+        if b["label"] == "warmup":
+            require(load["criteria_met"], "warmup criteria failed")
+            continue
+        item = dict(label=b["label"], planned_sessions=n, load=load, gateway=gateway,
+                    phases=phase_observations(directory, b, audio_bytes//32000, tuple(observed)))
+        item.update(workers=observed) if comparison else item.update(worker=observed["worker"])
+        batches.append(item)
     groups = []
     for n in profile["counts"]:
         chosen = [b for b in batches if b["planned_sessions"] == n]
@@ -178,17 +195,30 @@ def summarize(directory):
                  tail_completed_only=distribution([s["tail_ns"] for s in rows if s["outcome"] == "completed"]),
                  audio_bytes_written=sum(s["audio_bytes_written"] for s in rows), planned_audio_bytes=len(rows)*audio_bytes,
                  failure_errors=dict(sorted(errors.items())), max_audio_schedule_lag_ns=max(lags) if lags else None,
-                 gateway_observed_peaks=[b["gateway"]["observed_peak_active"] for b in chosen],
-                 worker_waiting_peaks=[b["worker"]["observed_peak_waiting"] for b in chosen])
-        for kind in ("gateway", "worker"):
+                 gateway_observed_peaks=[b["gateway"]["observed_peak_active"] for b in chosen])
+        if not comparison:
+            g["worker_waiting_peaks"] = [b["worker"]["observed_peak_waiting"] for b in chosen]
+        for kind in (("gateway",) if comparison else ("gateway", "worker")):
             g[kind] = {key: sum(b[kind][key] for b in chosen) for key in ("samples", "failed_samples", "window_successful_samples")}
             g[kind]["max_success_gap_ns"] = max(b[kind]["max_bracketing_success_gap_ns"] for b in chosen)
+        if comparison:
+            g["workers"] = {}
+            for w in workers:
+                states = [b["workers"][w["id"]] for b in chosen]
+                totals = {k: sum(s[k] for s in states) for k in ("samples", "successful_samples", "failed_samples", "window_successful_samples", "window_busy_samples", "window_waiting_samples")}
+                totals.update(waiting_peaks=[s["observed_peak_waiting"] for s in states],
+                              in_use_peaks=[s["observed_peak_in_use"] for s in states],
+                              max_success_gap_ns=max(s["max_bracketing_success_gap_ns"] for s in states))
+                g["workers"][w["id"]] = totals
         groups.append(g)
     result = dict(groups=groups, batches=batches,
                   limits=[f"{audio_bytes//32000}s finite cohorts, not long-running stable capacity", "success-only tail percentiles must accompany failure counts",
                           "audio write success is not server processing acknowledgement", "discrete waiting counts not queue latency or utilization"])
+    if comparison:
+        result.update(worker_count=m["worker_count"], policy=m["policy"])
+        result["limits"].append("per-worker peaks are asynchronous and must not be summed as a simultaneous peak")
     save(directory/"groups.json", result)
-    scripts = ("summarize_pressure_sweep.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "run_boundary_study.py")
+    scripts = ("summarize_pressure_sweep.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "run_boundary_study.py", "worker_comparison_contract.py")
     save(directory/"analysis-manifest.json", dict(generated_at=now(), input_sha256={"manifest.json": digest(directory/"manifest.json"), **m["artifact_sha256"]},
          script_sha256={s: digest(Path(__file__).with_name(s)) for s in scripts}, groups_sha256=digest(directory/"groups.json")))
     print(json.dumps(groups, ensure_ascii=False, indent=2))

@@ -36,7 +36,7 @@ def wait_sampling_ready(process, directory, kind="gateway"):
     raise RuntimeError("sampler did not record an idle snapshot within 2s")
 
 
-def run(output, *, pressure=False, profile=None, selection=None):
+def run(output, *, pressure=False, profile=None, selection=None, worker_count=1):
     """每批先启动有限采样再运行负载；所有尝试独立保存，异常也回收自有进程。"""
     # 复用进程/采样/归档流程；不同实验的负载判据由各自分析器解释。
     from summarize_pressure_sweep import (AUDIO_BYTES, COUNTS, LAG_BUDGET_NS, SAMPLE_DURATION_S,
@@ -46,6 +46,9 @@ def run(output, *, pressure=False, profile=None, selection=None):
         if not pressure or profile != pressure_profile(profile["experiment"], (selection or {}).get("near_boundary")):
             raise ValueError("invalid experiment profile")
     spec = profile or pressure_profile()
+    comparison = pressure and spec["experiment"] == "worker_comparison"
+    if type(worker_count) is not int or worker_count not in (1, 2) or (worker_count != 1 and not comparison):
+        raise ValueError("multiple workers require worker_comparison profile")
     counts = spec["counts"] if pressure else (1, 2, 4)
     repetitions = spec["repetitions"] if pressure else 3
     audio_bytes = spec["audio_bytes"] if pressure else 160000
@@ -67,11 +70,13 @@ def run(output, *, pressure=False, profile=None, selection=None):
                     gateway=dict(max_sessions=64, max_message_bytes=1048576, max_pending_audio_bytes=32000,
                                  start_timeout_s=10, input_idle_timeout_s=30, worker_send_timeout_s=2, tail_timeout_s=15, result_write_timeout_s=2),
                     schedule=dict(session_counts=list(counts), repetitions=repetitions, audio_bytes=audio_bytes, chunk_bytes=3200,
-                                  realtime=True, session_timeout_s=timeout_s, warmup_sessions=1, warmup_audio_bytes=64000),
+                                  realtime=True, session_timeout_s=timeout_s, warmup_sessions=worker_count, warmup_audio_bytes=64000),
                     limits=["same-host independent processes, no isolation", "no waiting-duration, backlog, CPU or memory sampling", "sample fractions are not time utilization",
                             "client write success is not a server byte counter", "finite batches are not stable capacity",
                             "sampling overhead has no A/B measurement", "Mock emits only four partials then a final"])
     manifest["experiment"] = spec["experiment"] if pressure else "joint_baseline"
+    if comparison:
+        manifest.update(worker_count=worker_count, policy="round_robin")
     if selection is not None:
         manifest["selection"] = selection
     if pressure:
@@ -79,7 +84,7 @@ def run(output, *, pressure=False, profile=None, selection=None):
     sources = capture(["git", "ls-files", "cmd", "internal", "proto", "go.mod", "go.sum"])
     manifest["source_sha256"] = {p: digest(ROOT/p) for p in sources.splitlines() if p.endswith((".go", ".proto")) or p in ("go.mod", "go.sum")}
     manifest["sampling"] = dict(gateway_interval_ns=100_000_000, worker_interval_ns=20_000_000, request_timeout_ns=1_000_000_000, duration_ns=duration_s*1_000_000_000, readiness_timeout_s=2, max_bracketing_success_gap_ns=500_000_000)
-    manifest["script_sha256"] = {name: digest(Path(__file__).with_name(name)) for name in ("run_joint_observation_baseline.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "summarize_pressure_sweep.py", "run_pressure_sweep.py", "run_boundary_study.py")}
+    manifest["script_sha256"] = {name: digest(Path(__file__).with_name(name)) for name in ("run_joint_observation_baseline.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "summarize_pressure_sweep.py", "run_pressure_sweep.py", "run_boundary_study.py", "run_worker_comparison.py", "worker_comparison_contract.py")}
     processes, handles, results, samplers = [], [], [], []
     save(output/"manifest.json", manifest)
     try:
@@ -97,28 +102,38 @@ def run(output, *, pressure=False, profile=None, selection=None):
                 binaries[name] = target
             manifest["binary_sha256"] = {name: digest(Path(path)) for name, path in binaries.items()}
 
-            def start(name, args):
-                log = (output/(name+".log")).open("w")
+            def start(name, args, label=None):
+                label = label or name
+                log = (output/(label+".log")).open("w")
                 handles.append(log)
                 command = [binaries[name], *args]
                 manifest["commands"].append(command)
                 p = subprocess.Popen(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT)
-                processes.append((name, p))
+                processes.append((label, p))
                 return p
 
-            worker = start("asr-worker", ["-listen=127.0.0.1:0", "-debug-listen=127.0.0.1:0", "-processing-concurrency=1", "-processing-delay=10ms", "-response-delay=5ms"])
-            deadline = time.monotonic()+10
-            address = None
-            while time.monotonic() < deadline:
-                match = re.search(r"address=(127\.0\.0\.1:\d+)", (output/"asr-worker.log").read_text())
-                debug_match = re.search(r"debug_address=(127\.0\.0\.1:\d+)", (output/"asr-worker.log").read_text())
-                if match and debug_match:
-                    address, debug_address = match[1], debug_match[1]
-                    break
-                if worker.poll() is not None: raise RuntimeError("Worker exited before readiness")
-                time.sleep(0.05)
-            if not address: raise RuntimeError("Worker did not announce address")
-            gateway = start("gateway", ["-workers="+address, "-max-pending-audio-bytes=32000"])
+            workers = []
+            for index in range(worker_count):
+                label = "asr-worker" if not comparison else f"asr-worker-{index+1}"
+                worker = start("asr-worker", ["-listen=127.0.0.1:0", "-debug-listen=127.0.0.1:0", "-processing-concurrency=1", "-processing-delay=10ms", "-response-delay=5ms"], label)
+                deadline = time.monotonic()+10
+                address = None
+                while time.monotonic() < deadline:
+                    logs = (output/(label+".log")).read_text()
+                    match = re.search(r"address=(127\.0\.0\.1:\d+)", logs)
+                    debug_match = re.search(r"debug_address=(127\.0\.0\.1:\d+)", logs)
+                    if match and debug_match:
+                        address, debug_address = match[1], debug_match[1]
+                        break
+                    if worker.poll() is not None: raise RuntimeError("Worker exited before readiness")
+                    time.sleep(0.05)
+                if not address: raise RuntimeError("Worker did not announce address")
+                workers.append(dict(id=f"worker{index+1}" if comparison else "worker", address=address,
+                                    endpoint="http://"+debug_address+"/debug/worker"))
+            if comparison:
+                manifest["workers"] = workers
+            addresses = ",".join(w["address"] for w in workers)
+            gateway = start("gateway", ["-workers="+addresses, "-max-pending-audio-bytes=32000"])
             deadline = time.monotonic()+10
             while True:
                 if gateway.poll() is not None: raise RuntimeError("Gateway exited before readiness")
@@ -127,10 +142,10 @@ def run(output, *, pressure=False, profile=None, selection=None):
                         if response.status == 200: break
                 if time.monotonic() >= deadline: raise RuntimeError("Gateway readiness timeout")
                 time.sleep(0.05)
-            manifest["worker_address"] = address
-            endpoint = "http://"+debug_address+"/debug/worker"
-            manifest["worker_endpoint"] = endpoint
-            schedule = [("warmup", 1, 64000)] + [(f"r{rep}-n{n}", n, audio_bytes) for rep in range(1, repetitions+1) for n in counts]
+            if not comparison:
+                manifest["worker_address"] = workers[0]["address"]
+                manifest["worker_endpoint"] = workers[0]["endpoint"]
+            schedule = [("warmup", worker_count, 64000)] + [(f"r{rep}-n{n}", n, audio_bytes) for rep in range(1, repetitions+1) for n in counts]
             for label, n, size in schedule:
                 if any(p.poll() is not None for _, p in processes): raise RuntimeError("backend exited between batches")
                 path = output/(label+".json")
@@ -142,14 +157,16 @@ def run(output, *, pressure=False, profile=None, selection=None):
                 manifest["commands"].append(command)
                 active_samplers = []
                 try:
-                    # 同批两个采样窗口先启动，再分别等到落盘的空闲样本。
-                    for kind, url, interval in (("gateway", "http://127.0.0.1:8080/debug/gateway", "100ms"), ("worker", endpoint, "20ms")):
-                        sample_name = label + "-" + kind
+                    # 每个后端独立采样；全部观测到空闲后才放行同批负载。
+                    targets = [("gateway", "http://127.0.0.1:8080/debug/gateway", "100ms")] + [(w["id"], w["endpoint"], "20ms") for w in workers]
+                    for key, url, interval in targets:
+                        kind = "gateway" if key == "gateway" else "worker"
+                        sample_name = label + "-" + key
                         sample_dir = output/sample_name
                         sample_command = [binaries[kind+"-sampler"], "-url="+url, "-interval="+interval,
                                           "-request-timeout=1s", f"-duration={10 if label == 'warmup' else duration_s}s", "-output-dir="+str(sample_dir)]
                         item = dict(directory=sample_name, started_at=now(), command=sample_command)
-                        record["sampling"][kind] = item
+                        record["sampling"][key] = item
                         manifest["commands"].append(sample_command)
                         save(output/"manifest.json", manifest)
                         sample_log = (output/(sample_name+".log")).open("w")
@@ -181,15 +198,21 @@ def run(output, *, pressure=False, profile=None, selection=None):
                     save(output/"manifest.json", manifest)
                 checked = read_load(path, n, size)
                 gateway_observed = read_gateway(output/record["sampling"]["gateway"]["directory"], record["started_at"], record["finished_at"], n)
-                worker_observed = check_worker_sampling(output/record["sampling"]["worker"]["directory"], record["started_at"], record["finished_at"], n, endpoint)
+                worker_observed = {w["id"]: check_worker_sampling(output/record["sampling"][w["id"]]["directory"], record["started_at"], record["finished_at"], n, w["endpoint"]) for w in workers}
                 record["checks_passed"] = (checked["checks_passed"] and attempt.returncode == checked.get("expected_exit_code", 0)
-                    and all(item["exit_code"] == 0 for item in record["sampling"].values())
-                    and gateway_observed["checks_passed"] and worker_observed["checks_passed"])
-                record.update(gateway_checks=gateway_observed, worker_checks=worker_observed)
+                    and all(item["exit_code"] == 0 and not item.get("forced_cleanup", False) for item in record["sampling"].values())
+                    and gateway_observed["checks_passed"] and all(w["checks_passed"] for w in worker_observed.values()))
+                observed = dict(gateway=gateway_observed)
+                if comparison:
+                    record.update(gateway_checks=gateway_observed, workers_checks=worker_observed)
+                    observed["workers"] = worker_observed
+                else:
+                    record.update(gateway_checks=gateway_observed, worker_checks=worker_observed["worker"])
+                    observed["worker"] = worker_observed["worker"]
                 if pressure:
                     record["criteria_met"] = checked["criteria_met"]
                     record["criteria"] = checked["criteria"]
-                if label != "warmup": results.append(dict(label=label, planned_sessions=n, gateway=gateway_observed, worker=worker_observed, **checked))
+                if label != "warmup": results.append(dict(label=label, planned_sessions=n, **observed, **checked))
                 save(output/"summary.json", dict(batches=results))
                 save(output/"manifest.json", manifest)
                 print(label, "exit", attempt.returncode, "evidence", record["checks_passed"], "criteria", record.get("criteria_met", "baseline"), flush=True)
