@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-02T13:00:59.162468+00:00",
+  "status": "scoped_operating_points_established",
+  "worker_count": 2,
+  "policy": "round_robin",
+  "worker": {
+    "processing_concurrency": 1,
+    "processing_delay_ns": 10000000,
+    "response_delay_ns": 5000000,
+    "partial_every_ns": 500000000,
+    "partial_texts": [
+      "今",
+      "今天",
+      "今天天气",
+      "今天天气不错"
+    ],
+    "final_text": "今天天气不错"
+  },
+  "gateway": {
+    "max_sessions": 64,
+    "max_message_bytes": 1048576,
+    "max_pending_audio_bytes": 32000,
+    "start_timeout_s": 10,
+    "input_idle_timeout_s": 30,
+    "worker_send_timeout_s": 2,
+    "tail_timeout_s": 15,
+    "result_write_timeout_s": 2
+  },
+  "criteria": {
+    "all_completed": true,
+    "tail_p95_ns": 250000000,
+    "max_audio_schedule_lag_ns": 100000000
+  },
+  "input": {
+    "bytes_per_second": 32000,
+    "chunk_bytes": 3200,
+    "realtime": true
+  },
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83",
+    "cpu": "Apple M2 Pro",
+    "logical_cpus": "12",
+    "memory_bytes": "34359738368",
+    "environment": {
+      "GOMAXPROCS": null,
+      "GOGC": null,
+      "GOMEMLIMIT": null,
+      "GOFLAGS": null
+    },
+    "race": false
+  },
+  "sources": {
+    "sweep": {
+      "directory": "dual-worker-sweep-2026-10-02",
+      "source_commit": "69309ccde3cc80dd27cbb2b5127cc1bf6353a79f",
+      "manifest_sha256": "9efe9232a5986bc435b9f15c009e51f2e6709962890dbc0abaea84f5fe68c92a",
+      "groups_sha256": "f1a9f62c7a11f87d5d570f57e3e88bb490d6e591ab1a14d921e589953c3e42d4"
+    },
+    "refinement": {
+      "directory": "dual-worker-boundary-2026-10-02",
+      "source_commit": "30d13428d38cd9d98c4c19b2d1983727e1c12f3c",
+      "manifest_sha256": "de6b37b8468b7abba251a65ba3c4e22916741d7f3270982df6a15155898288a5",
+      "groups_sha256": "843251747a291e44da1b2d97b15051cad71b589e0b2b1f03406b9cdd82b9c4d4"
+    },
+    "extended": {
+      "directory": "dual-worker-extended-2026-10-02",
+      "source_commit": "ba021789af6bfcf36be256395e26ab89f8db609e",
+      "manifest_sha256": "639692c75f8d2af42f1d8ce72f80d2b8fdc18e6a462426fa5e7afe42768c4f9c",
+      "groups_sha256": "0e34c92b153444391e1ccdf3c6a193d113798f0e0e26f7cc2f79c4270ba3ad8d"
+    }
+  },
+  "points": [
+    {
+      "role": "normal_candidate",
+      "sessions": 16,
+      "evidence": [
+        {
+          "source": "sweep",
+          "audio_duration_s": 20,
+          "repetitions": 3,
+          "attempts": 48,
+          "outcomes": {
+            "completed": 48
+          },
+          "batches_meeting_criteria": 3,
+          "completed_only_tail": {
+            "samples": 48,
+            "min_ns": 17481667,
+            "p50_ns": 54088083,
+            "p95_ns": 93060292,
+            "max_ns": 95529250
+          },
+          "max_audio_schedule_lag_ns": 6690042
+        },
+        {
+          "source": "extended",
+          "audio_duration_s": 120,
+          "repetitions": 2,
+          "attempts": 32,
+          "outcomes": {
+            "completed": 32
+          },
+          "batches_meeting_criteria": 2,
+          "completed_only_tail": {
+            "samples": 32,
+            "min_ns": 16485542,
+            "p50_ns": 53742666,
+            "p95_ns": 94034667,
+            "max_ns": 95250583
+          },
+          "max_audio_schedule_lag_ns": 29917250
+        }
+      ]
+    },
+    {
+      "role": "near_boundary_candidate",
+      "sessions": 18,
+      "evidence": [
+        {
+          "source": "sweep",
+          "audio_duration_s": 20,
+          "repetitions": 3,
+          "attempts": 54,
+          "outcomes": {
+            "completed": 54
+          },
+          "batches_meeting_criteria": 3,
+          "completed_only_tail": {
+            "samples": 54,
+            "min_ns": 16748041,
+            "p50_ns": 70334375,
+            "p95_ns": 117492291,
+            "max_ns": 126722917
+          },
+          "max_audio_schedule_lag_ns": 53060541
+        },
+        {
+          "source": "extended",
+          "audio_duration_s": 120,
+          "repetitions": 2,
+          "attempts": 36,
+          "outcomes": {
+            "completed": 36
+          },
+          "batches_meeting_criteria": 2,
+          "completed_only_tail": {
+            "samples": 36,
+            "min_ns": 17763000,
+            "p50_ns": 59246084,
+            "p95_ns": 106344458,
+            "max_ns": 106842667
+          },
+          "max_audio_schedule_lag_ns": 17001500
+        }
+      ]
+    },
+    {
+      "role": "overload_candidate",
+      "sessions": 19,
+      "evidence": [
+        {
+          "source": "refinement",
+          "audio_duration_s": 20,
+          "repetitions": 3,
+          "attempts": 57,
+          "outcomes": {
+            "completed": 52,
+            "failed": 5
+          },
+          "batches_meeting_criteria": 0,
+          "completed_only_tail": {
+            "samples": 52,
+            "min_ns": 18387334,
+            "p50_ns": 70907167,
+            "p95_ns": 778615792,
+            "max_ns": 801081208
+          },
+          "max_audio_schedule_lag_ns": 5679042
+        }
+      ]
+    }
+  ],
+  "limits": [
+    "Same-host fixed Mock and finite cohorts; not real ASR or production stable capacity.",
+    "16/18 each passed three 20s and two 120s repetitions; longer sessions are not yet tested.",
+    "19 is a three-repetition 20s overload reference; no 120s evidence for 19.",
+    "Tail measures end-to-last-result, not per-chunk transcription latency.",
+    "Policy comparisons must keep worker count and processing slots equal."
+  ]
+}
