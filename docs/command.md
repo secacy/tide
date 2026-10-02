@@ -319,6 +319,21 @@ PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_dual_worker_bound
 
 源目录须为完整的双 Worker 16/18/20 采集，且达标次数为 3/3/0；读取时复核原始证据，记录来源哈希。新输出目录必须不存在。固定 19 场、20 秒、三批，预计约两分钟。条件和后续规则见 [EXP-005-09](experiments/dual-worker-boundary.md)。
 
+## 双 Worker 两分钟观察
+
+```bash
+/usr/bin/caffeinate -i env PYTHONDONTWRITEBYTECODE=1 \
+  python3 docs/experiments/scripts/run_dual_worker_extended.py \
+  --points docs/experiments/results/dual-worker-short-operating-points-2026-10-02.json \
+  --output /tmp/tide-dual-worker-extended-new
+
+# 对已完成证据复算：
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_dual_worker_extended.py \
+  --output /tmp/tide-dual-worker-extended-new --analyze-only
+```
+
+参考点及其原始来源须完整；读取时复核来源哈希和数字，新输出目录必须不存在。固定 16/18 场各两批、每场 120 秒，会话期限 140 秒、采样窗口 150 秒，总计约十分钟。两分钟通过属于筛查证据，方案和判据见 [EXP-005-10](experiments/dual-worker-extended.md)。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \

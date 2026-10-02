@@ -46,7 +46,7 @@ def run(output, *, pressure=False, profile=None, selection=None, worker_count=1)
         if not pressure or profile != pressure_profile(profile["experiment"], (selection or {}).get("near_boundary")):
             raise ValueError("invalid experiment profile")
     spec = profile or pressure_profile()
-    comparison = pressure and spec["experiment"] in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short")
+    comparison = pressure and spec["experiment"] in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended")
     if type(worker_count) is not int or worker_count not in (1, 2) or (worker_count != 1 and not comparison):
         raise ValueError("multiple workers require a multi-worker profile")
     if spec["experiment"].startswith("dual_worker_") and worker_count != 2:
@@ -86,11 +86,11 @@ def run(output, *, pressure=False, profile=None, selection=None, worker_count=1)
     sources = capture(["git", "ls-files", "cmd", "internal", "proto", "go.mod", "go.sum"])
     manifest["source_sha256"] = {p: digest(ROOT/p) for p in sources.splitlines() if p.endswith((".go", ".proto")) or p in ("go.mod", "go.sum")}
     manifest["sampling"] = dict(gateway_interval_ns=100_000_000, worker_interval_ns=20_000_000, request_timeout_ns=1_000_000_000, duration_ns=duration_s*1_000_000_000, readiness_timeout_s=2, max_bracketing_success_gap_ns=500_000_000)
-    manifest["script_sha256"] = {name: digest(Path(__file__).with_name(name)) for name in ("run_joint_observation_baseline.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "summarize_pressure_sweep.py", "run_pressure_sweep.py", "run_boundary_study.py", "run_worker_comparison.py", "worker_comparison_contract.py", "run_dual_worker_sweep.py", "run_dual_worker_boundary.py")}
+    manifest["script_sha256"] = {name: digest(Path(__file__).with_name(name)) for name in ("run_joint_observation_baseline.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "summarize_pressure_sweep.py", "run_pressure_sweep.py", "run_boundary_study.py", "run_worker_comparison.py", "worker_comparison_contract.py", "run_dual_worker_sweep.py", "run_dual_worker_boundary.py", "run_dual_worker_extended.py")}
     processes, handles, results, samplers = [], [], [], []
     save(output/"manifest.json", manifest)
     try:
-        if spec["experiment"] == "dual_worker_boundary_short" and manifest["source_sha256"] != (selection or {}).get("source_sha256"):
+        if spec["experiment"] in ("dual_worker_boundary_short", "dual_worker_extended") and manifest["source_sha256"] != (selection or {}).get("source_sha256"):
             raise ValueError("Go source differs from reference sweep")
         # 当前 Gateway 固定监听 8080；占用则中止，不使用或停止已有服务。
         with socket.socket() as probe:

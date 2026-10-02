@@ -15,7 +15,7 @@ SAMPLING = dict(gateway_interval_ns=100_000_000, worker_interval_ns=20_000_000,
 
 def validate_manifest(m):
     """拒绝缺 Worker、重复 endpoint、条件漂移和未正常收尾；不要求业务全部成功。"""
-    require(m.get("experiment") in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short") and m.get("status") == "passed", "not completed multi-worker experiment")
+    require(m.get("experiment") in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended") and m.get("status") == "passed", "not completed multi-worker experiment")
     from summarize_pressure_sweep import pressure_profile
     profile = pressure_profile(m["experiment"])
     count = m.get("worker_count")
@@ -23,9 +23,10 @@ def validate_manifest(m):
     require(not m["experiment"].startswith("dual_worker_") or count == 2, "dual-worker experiment requires two workers")
     require(m.get("policy") == "round_robin", "policy differs")
     require(m.get("worker") == WORKER and m.get("gateway") == GATEWAY and m.get("criteria") == CRITERIA, "fixture differs")
-    require(m.get("sampling") == SAMPLING, "sampling differs")
-    require(m.get("schedule") == dict(session_counts=list(profile["counts"]), repetitions=3, audio_bytes=640000,
-            chunk_bytes=3200, realtime=True, session_timeout_s=35, warmup_sessions=count, warmup_audio_bytes=64000), "schedule differs")
+    expected_sampling = dict(SAMPLING, duration_ns=profile["duration_s"]*1_000_000_000)
+    require(m.get("sampling") == expected_sampling, "sampling differs")
+    require(m.get("schedule") == dict(session_counts=list(profile["counts"]), repetitions=profile["repetitions"], audio_bytes=profile["audio_bytes"],
+            chunk_bytes=3200, realtime=True, session_timeout_s=profile["timeout_s"], warmup_sessions=count, warmup_audio_bytes=64000), "schedule differs")
     require(m.get("tracked_diff") == "" and m.get("race") is False and bool(m.get("source_sha256")), "source is not clean non-race fixture")
     workers = m.get("workers")
     require(isinstance(workers, list) and [w.get("id") for w in workers] == [f"worker{i+1}" for i in range(count)], "worker identity list")
@@ -37,7 +38,7 @@ def validate_manifest(m):
     require(len(gateway_commands) == 1 and gateway_commands[0][1:] == ["-workers="+",".join(w["address"] for w in workers), "-max-pending-audio-bytes=32000"], "gateway routing differs")
     worker_commands = [c for c in m["commands"] if c and c[0].endswith("/asr-worker")]
     require(len(worker_commands) == count and all(c[1:] == ["-listen=127.0.0.1:0", "-debug-listen=127.0.0.1:0", "-processing-concurrency=1", "-processing-delay=10ms", "-response-delay=5ms"] for c in worker_commands), "worker commands differ")
-    expected = [("warmup", count)] + [(f"r{r}-n{n}", n) for r in (1, 2, 3) for n in profile["counts"]]
+    expected = [("warmup", count)] + [(f"r{r}-n{n}", n) for r in range(1, profile["repetitions"]+1) for n in profile["counts"]]
     require([(b["label"], b["planned_sessions"]) for b in m["batches"]] == expected, "batch schedule differs")
     required_files = set()
     for b in m["batches"]:
@@ -50,7 +51,7 @@ def validate_manifest(m):
             directory = label+"-"+key
             kind = "gateway" if key == "gateway" else "worker"
             require(item["directory"] == directory and not item.get("forced_cleanup", False), "sampler directory/cleanup")
-            require(item["command"][0].endswith("/"+kind+"-sampler") and item["command"][1:-1] == ["-url="+endpoint, "-interval="+("100ms" if kind == "gateway" else "20ms"), "-request-timeout=1s", "-duration="+("10s" if label == "warmup" else "40s")], "sampler command differs")
+            require(item["command"][0].endswith("/"+kind+"-sampler") and item["command"][1:-1] == ["-url="+endpoint, "-interval="+("100ms" if kind == "gateway" else "20ms"), "-request-timeout=1s", "-duration="+("10s" if label == "warmup" else str(profile["duration_s"])+"s")], "sampler command differs")
             required_files.update((directory+"/samples.jsonl", directory+"/manifest.json", directory+".log"))
     require(required_files <= set(m["artifact_sha256"]), "unhashed evidence files")
     require(m.get("shutdown") == [dict(process="gateway", exit_code=0)] + [dict(process=f"asr-worker-{i}", exit_code=0) for i in range(count, 0, -1)], "backend shutdown differs")
