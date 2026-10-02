@@ -17,6 +17,16 @@ TAIL_BUDGET_NS = 250_000_000
 LAG_BUDGET_NS = 100_000_000
 
 
+def pressure_profile(experiment="pressure_sweep", near_boundary=None):
+    """仅允许预定义实验，避免分析时按结果放宽时长、档位或重复次数。"""
+    if experiment == "pressure_sweep":
+        return dict(experiment=experiment, counts=(4, 8, 12), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
+    if experiment == "boundary_short":
+        return dict(experiment=experiment, counts=(9, 10, 11), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
+    require(experiment == "boundary_extended" and type(near_boundary) is int and 9 <= near_boundary <= 11, "unknown pressure profile")
+    return dict(experiment=experiment, counts=(8, near_boundary), repetitions=2, audio_bytes=3840000, timeout_s=140, duration_s=150)
+
+
 def check_pressure_data(doc, sessions, audio_bytes, timeout_s=SESSION_TIMEOUT_S):
     """严格复算 v2 报告；合法 failed/canceled/timed_out 不视为证据损坏。"""
     require(type(doc.get("schema_version")) is int and doc["schema_version"] == 2, "pressure requires v2 report")
@@ -97,8 +107,8 @@ def check_pressure_data(doc, sessions, audio_bytes, timeout_s=SESSION_TIMEOUT_S)
                 expected_exit_code=0 if counts["completed"] == sessions and doc["batch_error"] is None else 1)
 
 
-def check_pressure_report(path, sessions, audio_bytes):
-    return check_pressure_data(json.loads(path.read_text()), sessions, audio_bytes)
+def check_pressure_report(path, sessions, audio_bytes, timeout_s=SESSION_TIMEOUT_S):
+    return check_pressure_data(json.loads(path.read_text()), sessions, audio_bytes, timeout_s)
 
 
 def check_pressure_gateway(directory, start, finish, n):
@@ -109,12 +119,12 @@ def check_pressure_gateway(directory, start, finish, n):
     return result
 
 
-def phase_observations(directory, batch):
+def phase_observations(directory, batch, audio_seconds=20):
     """按负载启动后五秒分段，保留活动会话变化，避免把失败后空闲视为持续承载。"""
     start, finish = timestamp_ns(batch["started_at"]), timestamp_ns(batch["finished_at"])
     data = {k: read_complete_rows(directory/(batch["label"]+"-"+k)/"samples.jsonl") for k in ("gateway", "worker")}
     phases = []
-    for second in range(0, 20, 5):
+    for second in range(0, audio_seconds, 5):
         left, right = start+second*1_000_000_000, min(finish, start+(second+5)*1_000_000_000)
         phase = dict(offset_s=second, covered_wall_ns=max(0, right-left))
         for kind, rows in data.items():
@@ -133,24 +143,30 @@ def phase_observations(directory, batch):
 def summarize(directory):
     """采集通过不等于负载达标；全失败批次仍进入分组与总体分母。"""
     m = json.loads((directory/"manifest.json").read_text())
-    require(m["status"] == "passed" and m.get("experiment") == "pressure_sweep", "invalid/incomplete acquisition")
+    require(m["status"] == "passed", "invalid/incomplete acquisition")
+    profile = pressure_profile(m.get("experiment"), m.get("selection", {}).get("near_boundary"))
+    counts, repetitions, audio_bytes, timeout_s = (profile[k] for k in ("counts", "repetitions", "audio_bytes", "timeout_s"))
+    if profile["experiment"] == "boundary_extended":
+        from run_boundary_study import choose_points
+        decision = choose_points(m["selection"]["source_groups"])
+        require(all(m["selection"][k] == v for k, v in decision.items()), "selection differs from predefined rule")
     require(m["criteria"] == dict(all_completed=True, tail_p95_ns=TAIL_BUDGET_NS, max_audio_schedule_lag_ns=LAG_BUDGET_NS), "criteria differ")
-    require(m["schedule"]["session_counts"] == list(COUNTS) and m["schedule"]["audio_bytes"] == AUDIO_BYTES and m["schedule"]["session_timeout_s"] == SESSION_TIMEOUT_S, "schedule differs")
+    require(m["schedule"]["session_counts"] == list(counts) and m["schedule"]["repetitions"] == repetitions and m["schedule"]["audio_bytes"] == audio_bytes and m["schedule"]["session_timeout_s"] == timeout_s, "schedule differs")
     for name, expected in m["artifact_sha256"].items():
         p = (directory/name).resolve()
         require(p.is_relative_to(directory.resolve()) and digest(p) == expected, f"artifact changed: {name}")
     formal = [b for b in m["batches"] if b["label"] != "warmup"]
-    require([b["label"] for b in formal] == [f"r{r}-n{n}" for r in (1, 2, 3) for n in COUNTS], "schedule incomplete")
+    require([b["label"] for b in formal] == [f"r{r}-n{n}" for r in range(1, repetitions+1) for n in counts], "schedule incomplete")
     batches = []
     for b in formal:
         n = b["planned_sessions"]
-        load = check_pressure_report(directory/(b["label"]+".json"), n, AUDIO_BYTES)
+        load = check_pressure_report(directory/(b["label"]+".json"), n, audio_bytes, timeout_s)
         gateway = check_pressure_gateway(directory/(b["label"]+"-gateway"), b["started_at"], b["finished_at"], n)
         worker = check_worker_sampling(directory/(b["label"]+"-worker"), b["started_at"], b["finished_at"], n, m["worker_endpoint"])
         require(b["exit_code"] == load["expected_exit_code"] and all(b["sampling"][k]["exit_code"] == 0 for k in ("gateway", "worker")) and gateway["checks_passed"] and worker["checks_passed"], "invalid acquisition: "+b["label"])
-        batches.append(dict(label=b["label"], planned_sessions=n, load=load, gateway=gateway, worker=worker, phases=phase_observations(directory, b)))
+        batches.append(dict(label=b["label"], planned_sessions=n, load=load, gateway=gateway, worker=worker, phases=phase_observations(directory, b, audio_bytes//32000)))
     groups = []
-    for n in COUNTS:
+    for n in profile["counts"]:
         chosen = [b for b in batches if b["planned_sessions"] == n]
         rows = [s for b in chosen for s in b["load"]["sessions"]]
         counts = Counter(s["outcome"] for s in rows)
@@ -160,7 +176,7 @@ def summarize(directory):
                  batches_meeting_criteria=sum(b["load"]["criteria_met"] for b in chosen),
                  all_repetitions_meet_criteria=all(b["load"]["criteria_met"] for b in chosen),
                  tail_completed_only=distribution([s["tail_ns"] for s in rows if s["outcome"] == "completed"]),
-                 audio_bytes_written=sum(s["audio_bytes_written"] for s in rows), planned_audio_bytes=len(rows)*AUDIO_BYTES,
+                 audio_bytes_written=sum(s["audio_bytes_written"] for s in rows), planned_audio_bytes=len(rows)*audio_bytes,
                  failure_errors=dict(sorted(errors.items())), max_audio_schedule_lag_ns=max(lags) if lags else None,
                  gateway_observed_peaks=[b["gateway"]["observed_peak_active"] for b in chosen],
                  worker_waiting_peaks=[b["worker"]["observed_peak_waiting"] for b in chosen])
@@ -169,10 +185,10 @@ def summarize(directory):
             g[kind]["max_success_gap_ns"] = max(b[kind]["max_bracketing_success_gap_ns"] for b in chosen)
         groups.append(g)
     result = dict(groups=groups, batches=batches,
-                  limits=["20s finite cohorts, not long-running stable capacity", "success-only tail percentiles must accompany failure counts",
+                  limits=[f"{audio_bytes//32000}s finite cohorts, not long-running stable capacity", "success-only tail percentiles must accompany failure counts",
                           "audio write success is not server processing acknowledgement", "discrete waiting counts not queue latency or utilization"])
     save(directory/"groups.json", result)
-    scripts = ("summarize_pressure_sweep.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py")
+    scripts = ("summarize_pressure_sweep.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "run_boundary_study.py")
     save(directory/"analysis-manifest.json", dict(generated_at=now(), input_sha256={"manifest.json": digest(directory/"manifest.json"), **m["artifact_sha256"]},
          script_sha256={s: digest(Path(__file__).with_name(s)) for s in scripts}, groups_sha256=digest(directory/"groups.json")))
     print(json.dumps(groups, ensure_ascii=False, indent=2))
