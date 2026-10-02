@@ -290,6 +290,20 @@ PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_worker_comparison
 
 输出目录必须新建。两组均为 8/9/10 场各三批、每场 20 秒，总计约 13 分钟；先单 Worker，再双 Worker。Linux 可省略 `caffeinate -i`，但当前环境采集脚本使用 macOS 命令，需先适配环境记录。`comparison.json` 保留双方完整分母和逐 Worker 观测；增加资源后的改善不等于调度策略收益。见 [EXP-005-07](experiments/worker-count-comparison.md)。
 
+## 双 Worker 逐级加压
+
+```bash
+/usr/bin/caffeinate -i env PYTHONDONTWRITEBYTECODE=1 \
+  python3 docs/experiments/scripts/run_dual_worker_sweep.py \
+  --output /tmp/tide-dual-worker-sweep-new
+
+# 对已完成证据复算：
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_dual_worker_sweep.py \
+  --output /tmp/tide-dual-worker-sweep-new --analyze-only
+```
+
+固定两个同配置 Worker，16/18/20 场各三批、每场 20 秒，整轮约六分钟。输出目录必须不存在；采集失败和业务失败均保留。`groups.json` 包含完成率、成功尾部、发送落后和逐 Worker 观测，根清单通过不代表所有档位达标。方案和后续选择规则见 [EXP-005-08](experiments/dual-worker-sweep.md)。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \

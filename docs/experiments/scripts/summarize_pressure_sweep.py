@@ -21,6 +21,8 @@ def pressure_profile(experiment="pressure_sweep", near_boundary=None):
     """仅允许预定义实验，避免分析时按结果放宽时长、档位或重复次数。"""
     if experiment == "pressure_sweep":
         return dict(experiment=experiment, counts=(4, 8, 12), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
+    if experiment == "dual_worker_sweep":
+        return dict(experiment=experiment, counts=(16, 18, 20), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
     if experiment == "worker_comparison":
         return dict(experiment=experiment, counts=(8, 9, 10), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
     if experiment == "boundary_short":
@@ -159,7 +161,7 @@ def summarize(directory):
         require(p.is_relative_to(directory.resolve()) and digest(p) == expected, f"artifact changed: {name}")
     formal = [b for b in m["batches"] if b["label"] != "warmup"]
     require([b["label"] for b in formal] == [f"r{r}-n{n}" for r in range(1, repetitions+1) for n in counts], "schedule incomplete")
-    comparison = profile["experiment"] == "worker_comparison"
+    comparison = profile["experiment"] in ("worker_comparison", "dual_worker_sweep")
     if comparison:
         from worker_comparison_contract import validate_manifest
         validate_manifest(m)
