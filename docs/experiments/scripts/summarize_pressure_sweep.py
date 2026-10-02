@@ -21,6 +21,8 @@ def pressure_profile(experiment="pressure_sweep", near_boundary=None):
     """仅允许预定义实验，避免分析时按结果放宽时长、档位或重复次数。"""
     if experiment == "pressure_sweep":
         return dict(experiment=experiment, counts=(4, 8, 12), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
+    if experiment == "dual_worker_heterogeneous":
+        return dict(experiment=experiment, counts=(8, 10, 12), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
     if experiment == "dual_worker_extended":
         return dict(experiment=experiment, counts=(16, 18), repetitions=2, audio_bytes=3840000, timeout_s=140, duration_s=150)
     if experiment == "dual_worker_boundary_short":
@@ -175,10 +177,13 @@ def summarize(directory):
         require(p.is_relative_to(directory.resolve()) and digest(p) == expected, f"artifact changed: {name}")
     formal = [b for b in m["batches"] if b["label"] != "warmup"]
     require([b["label"] for b in formal] == [f"r{r}-n{n}" for r in range(1, repetitions+1) for n in counts], "schedule incomplete")
-    comparison = profile["experiment"] in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended")
+    comparison = profile["experiment"] in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended", "dual_worker_heterogeneous")
     if comparison:
         from worker_comparison_contract import validate_manifest
         validate_manifest(m)
+        if profile["experiment"] == "dual_worker_heterogeneous":
+            from worker_comparison_contract import validate_startup_logs
+            validate_startup_logs(directory, m)
     workers = m["workers"] if comparison else [dict(id="worker", endpoint=m["worker_endpoint"])]
     batches = []
     # 新实验也重新检查预热，不只信任根清单中的通过标志。
@@ -233,6 +238,8 @@ def summarize(directory):
     if comparison:
         result.update(worker_count=m["worker_count"], policy=m["policy"])
         result["limits"].append("per-worker peaks are asynchronous and must not be summed as a simultaneous peak")
+    if profile["experiment"] == "dual_worker_heterogeneous":
+        result["worker_configs"] = m["worker_configs"]
     save(directory/"groups.json", result)
     scripts = ("summarize_pressure_sweep.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "run_boundary_study.py", "worker_comparison_contract.py", "run_dual_worker_boundary.py", "run_dual_worker_extended.py")
     save(directory/"analysis-manifest.json", dict(generated_at=now(), input_sha256={"manifest.json": digest(directory/"manifest.json"), **m["artifact_sha256"]},

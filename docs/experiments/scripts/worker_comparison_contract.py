@@ -1,4 +1,5 @@
 """双 Worker 对照的固定条件校验；身份、采样来源与资源预算分别验证。"""
+import copy
 import re
 
 from summarize_gateway_observations import require
@@ -13,16 +14,45 @@ SAMPLING = dict(gateway_interval_ns=100_000_000, worker_interval_ns=20_000_000,
                 readiness_timeout_s=2, max_bracketing_success_gap_ns=500_000_000)
 
 
+def worker_configs(experiment, count):
+    """生成每实例固定配置；异速实验仅改变第二实例的逐块模拟耗时。"""
+    require(type(count) is int and count in (1, 2), "worker count")
+    if experiment == "dual_worker_heterogeneous":
+        require(count == 2, "heterogeneous experiment requires two workers")
+        return [copy.deepcopy(WORKER), dict(copy.deepcopy(WORKER), processing_delay_ns=20_000_000)]
+    return [copy.deepcopy(WORKER) for _ in range(count)]
+
+
+def validate_startup_logs(directory, manifest):
+    """将真实进程启动日志与实例身份、监听地址和配置相互核对。"""
+    for i, w in enumerate(manifest["workers"], 1):
+        text = (directory/f"asr-worker-{i}.log").read_text()
+        rows = [line for line in text.splitlines() if ' INFO mock ASR worker started ' in line]
+        require(len(rows) == 1, "missing/duplicate Worker startup")
+        line = rows[0]
+        cfg = w["config"]
+        fields = {"address": w["address"], "debug_address": w["endpoint"].removeprefix("http://").removesuffix("/debug/worker"),
+                  "processing_concurrency": str(cfg["processing_concurrency"]),
+                  "processing_delay": str(cfg["processing_delay_ns"]//1_000_000)+"ms",
+                  "response_delay": "5ms"}
+        for key, value in fields.items():
+            require(re.search(r"(?:^|\s)"+key+r"="+re.escape(value)+r"(?:\s|$)", line) is not None, "startup field differs: "+key)
+
+
 def validate_manifest(m):
     """拒绝缺 Worker、重复 endpoint、条件漂移和未正常收尾；不要求业务全部成功。"""
-    require(m.get("experiment") in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended") and m.get("status") == "passed", "not completed multi-worker experiment")
+    require(m.get("experiment") in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended", "dual_worker_heterogeneous") and m.get("status") == "passed", "not completed multi-worker experiment")
     from summarize_pressure_sweep import pressure_profile
     profile = pressure_profile(m["experiment"])
     count = m.get("worker_count")
     require(type(count) is int and count in (1, 2), "worker count")
     require(not m["experiment"].startswith("dual_worker_") or count == 2, "dual-worker experiment requires two workers")
     require(m.get("policy") == "round_robin", "policy differs")
-    require(m.get("worker") == WORKER and m.get("gateway") == GATEWAY and m.get("criteria") == CRITERIA, "fixture differs")
+    configs = worker_configs(m["experiment"], count)
+    heterogeneous = m["experiment"] == "dual_worker_heterogeneous"
+    require(m.get("worker") == (None if heterogeneous else WORKER) and m.get("gateway") == GATEWAY and m.get("criteria") == CRITERIA, "fixture differs")
+    if heterogeneous:
+        require(m.get("worker_configs") == configs, "per-worker configs differ")
     expected_sampling = dict(SAMPLING, duration_ns=profile["duration_s"]*1_000_000_000)
     require(m.get("sampling") == expected_sampling, "sampling differs")
     require(m.get("schedule") == dict(session_counts=list(profile["counts"]), repetitions=profile["repetitions"], audio_bytes=profile["audio_bytes"],
@@ -30,14 +60,16 @@ def validate_manifest(m):
     require(m.get("tracked_diff") == "" and m.get("race") is False and bool(m.get("source_sha256")), "source is not clean non-race fixture")
     workers = m.get("workers")
     require(isinstance(workers, list) and [w.get("id") for w in workers] == [f"worker{i+1}" for i in range(count)], "worker identity list")
-    for w in workers:
+    for index, w in enumerate(workers):
+        if heterogeneous:
+            require(w.get("config") == configs[index], "worker identity/config differs")
         require(re.fullmatch(r"127\.0\.0\.1:\d+", w["address"]) is not None and
                 re.fullmatch(r"http://127\.0\.0\.1:\d+/debug/worker", w["endpoint"]) is not None, "worker address format")
     require(len({w["address"] for w in workers}) == count and len({w["endpoint"] for w in workers}) == count, "duplicate worker address/endpoint")
     gateway_commands = [c for c in m["commands"] if c and c[0].endswith("/gateway")]
     require(len(gateway_commands) == 1 and gateway_commands[0][1:] == ["-workers="+",".join(w["address"] for w in workers), "-max-pending-audio-bytes=32000"], "gateway routing differs")
     worker_commands = [c for c in m["commands"] if c and c[0].endswith("/asr-worker")]
-    require(len(worker_commands) == count and all(c[1:] == ["-listen=127.0.0.1:0", "-debug-listen=127.0.0.1:0", "-processing-concurrency=1", "-processing-delay=10ms", "-response-delay=5ms"] for c in worker_commands), "worker commands differ")
+    require(len(worker_commands) == count and all(c[1:] == ["-listen=127.0.0.1:0", "-debug-listen=127.0.0.1:0", "-processing-concurrency=1", "-processing-delay="+str(cfg["processing_delay_ns"]//1_000_000)+"ms", "-response-delay=5ms"] for c, cfg in zip(worker_commands, configs)), "worker commands differ")
     expected = [("warmup", count)] + [(f"r{r}-n{n}", n) for r in range(1, profile["repetitions"]+1) for n in profile["counts"]]
     require([(b["label"], b["planned_sessions"]) for b in m["batches"]] == expected, "batch schedule differs")
     required_files = set()
@@ -53,6 +85,8 @@ def validate_manifest(m):
             require(item["directory"] == directory and not item.get("forced_cleanup", False), "sampler directory/cleanup")
             require(item["command"][0].endswith("/"+kind+"-sampler") and item["command"][1:-1] == ["-url="+endpoint, "-interval="+("100ms" if kind == "gateway" else "20ms"), "-request-timeout=1s", "-duration="+("10s" if label == "warmup" else str(profile["duration_s"])+"s")], "sampler command differs")
             required_files.update((directory+"/samples.jsonl", directory+"/manifest.json", directory+".log"))
+    if heterogeneous:
+        required_files.update(f"asr-worker-{i}.log" for i in range(1, count+1))
     require(required_files <= set(m["artifact_sha256"]), "unhashed evidence files")
     require(m.get("shutdown") == [dict(process="gateway", exit_code=0)] + [dict(process=f"asr-worker-{i}", exit_code=0) for i in range(count, 0, -1)], "backend shutdown differs")
 

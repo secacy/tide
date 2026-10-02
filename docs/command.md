@@ -334,6 +334,16 @@ PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_dual_worker_exten
 
 参考点及其原始来源须完整；读取时复核来源哈希和数字，新输出目录必须不存在。固定 16/18 场各两批、每场 120 秒，会话期限 140 秒、采样窗口 150 秒，总计约十分钟。两分钟通过属于筛查证据，方案和判据见 [EXP-005-10](experiments/dual-worker-extended.md)。
 
+## 异速 Worker 轮询观察
+
+固定两个单名额实例：10ms / 20ms，8/10/12 并发各三批、每场 20 秒。完整条件与解释边界见 [EXP-005-11](experiments/heterogeneous-workers.md)。
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off python3 docs/experiments/scripts/run_heterogeneous_workers.py --output docs/experiments/results/heterogeneous-workers-2026-10-02
+```
+
+输出目录须为新目录；加 `--analyze-only` 只复核已完成证据。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \
