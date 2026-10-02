@@ -1,0 +1,42 @@
+test_fixed_profiles (test_boundary_study.BoundaryStudyTests.test_fixed_profiles) ... ok
+test_historical_pressure_reanalysis_unchanged (test_boundary_study.BoundaryStudyTests.test_historical_pressure_reanalysis_unchanged) ... ok
+test_phase_analysis_covers_full_extended_window (test_boundary_study.BoundaryStudyTests.test_phase_analysis_covers_full_extended_window) ... ok
+test_predefined_selection_preserves_variation (test_boundary_study.BoundaryStudyTests.test_predefined_selection_preserves_variation) ... ok
+test_selection_rejects_incomplete_or_inconsistent (test_boundary_study.BoundaryStudyTests.test_selection_rejects_incomplete_or_inconsistent) ... ok
+test_timeout_is_part_of_fixture (test_boundary_study.BoundaryStudyTests.test_timeout_is_part_of_fixture) ... ok
+test_coverage_gaps (test_gateway_observations.GatewayObservationTests.test_coverage_gaps) ... ok
+test_failed_query_is_unknown (test_gateway_observations.GatewayObservationTests.test_failed_query_is_unknown) ... ok
+test_final_failed_query_kept_outside_window (test_gateway_observations.GatewayObservationTests.test_final_failed_query_kept_outside_window) ... ok
+test_live_partial_line_and_final_rejection (test_gateway_observations.GatewayObservationTests.test_live_partial_line_and_final_rejection) ... ok
+test_readiness_requires_idle_record (test_gateway_observations.GatewayObservationTests.test_readiness_requires_idle_record) ... ok
+test_rejects_corrupt_evidence (test_gateway_observations.GatewayObservationTests.test_rejects_corrupt_evidence) ... ok
+test_utc_nanoseconds (test_gateway_observations.GatewayObservationTests.test_utc_nanoseconds) ... ok
+test_valid_window (test_gateway_observations.GatewayObservationTests.test_valid_window) ... ok
+test_absent_waiting_is_not_failure (test_joint_observations.JointObservationTests.test_absent_waiting_is_not_failure) ... ok
+test_corrupt_contract_rejected (test_joint_observations.JointObservationTests.test_corrupt_contract_rejected) ... ok
+test_coverage_and_fixture_failures (test_joint_observations.JointObservationTests.test_coverage_and_fixture_failures) ... ok
+test_crossing_query_not_used_in_window_histogram (test_joint_observations.JointObservationTests.test_crossing_query_not_used_in_window_histogram) ... ok
+test_disabled_is_not_zero (test_joint_observations.JointObservationTests.test_disabled_is_not_zero) ... ok
+test_failed_is_unknown_and_kept (test_joint_observations.JointObservationTests.test_failed_is_unknown_and_kept) ... ok
+test_valid_window_and_sample_denominator (test_joint_observations.JointObservationTests.test_valid_window_and_sample_denominator) ... ok
+test_worker_readiness_requires_enabled_idle (test_joint_observations.JointObservationTests.test_worker_readiness_requires_enabled_idle) ... ok
+test_historical_baseline_unchanged (test_loadgen_reports.LoadgenReportTests.test_historical_baseline_unchanged) ... ok
+test_legacy_is_unknown (test_loadgen_reports.LoadgenReportTests.test_legacy_is_unknown) ... ok
+test_rejects_missing_and_invalid_fields (test_loadgen_reports.LoadgenReportTests.test_rejects_missing_and_invalid_fields) ... ok
+test_rejects_unknown_version (test_loadgen_reports.LoadgenReportTests.test_rejects_unknown_version) ... ok
+test_synthetic_v2_and_mixed_versions (test_loadgen_reports.LoadgenReportTests.test_synthetic_v2_and_mixed_versions) ... ok
+test_v2_values (test_loadgen_reports.LoadgenReportTests.test_v2_values) ... ok
+test_all_failed_has_no_tail (test_pressure_sweep.PressureSweepTests.test_all_failed_has_no_tail) ... ok
+test_corrupt_report_rejected (test_pressure_sweep.PressureSweepTests.test_corrupt_report_rejected) ... ok
+test_empty_error_is_still_failure (test_pressure_sweep.PressureSweepTests.test_empty_error_is_still_failure) ... ok
+test_failed_session_lag_included (test_pressure_sweep.PressureSweepTests.test_failed_session_lag_included) ... ok
+test_gateway_unobserved_peak_does_not_hide_quality_failure (test_pressure_sweep.PressureSweepTests.test_gateway_unobserved_peak_does_not_hide_quality_failure) ... ok
+test_mixed_outcomes_keep_denominator_and_bytes (test_pressure_sweep.PressureSweepTests.test_mixed_outcomes_keep_denominator_and_bytes) ... ok
+test_phases_exclude_post_exit_idle (test_pressure_sweep.PressureSweepTests.test_phases_exclude_post_exit_idle) ... ok
+test_threshold_boundaries_and_batch_error (test_pressure_sweep.PressureSweepTests.test_threshold_boundaries_and_batch_error) ... ok
+test_zero_audio_is_unknown_schedule (test_pressure_sweep.PressureSweepTests.test_zero_audio_is_unknown_schedule) ... ok
+
+----------------------------------------------------------------------
+Ran 37 tests in 0.482s
+
+OK

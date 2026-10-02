@@ -257,6 +257,25 @@ PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_pressure_sweep.py
 
 目录必须不存在。固定 4/8/12 场、每场 20 秒、各三批，另有预热和每批 40 秒采样窗口，整轮约六分钟。输出包含客户端成功和失败报告、Gateway/Worker 样本、配置与退出记录以及分组分析。实验脚本成功退出表示证据完整通过校验；查看 `groups.json` 的 `all_repetitions_meet_criteria` 判断各档位是否达标，不能把根清单的 `status=passed` 当作全部会话成功。具体预算、口径和已测结果见 [EXP-005-05](experiments/pressure-sweep.md)。
 
+## 单 Worker 边界细化与两分钟观察
+
+先执行短时细化，再由原始结果按预定义规则选点。两个输出目录均须不存在：
+
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_boundary_study.py \
+  --phase short --output /tmp/tide-boundary-short-new
+
+# macOS：只在本次命令运行期间防止自动空闲休眠。
+/usr/bin/caffeinate -i env PYTHONDONTWRITEBYTECODE=1 \
+  python3 docs/experiments/scripts/run_boundary_study.py \
+  --phase extended --source /tmp/tide-boundary-short-new \
+  --output /tmp/tide-boundary-extended-new
+```
+
+短时 9/10/11 场各三批、每场 20 秒；延长观察为 8 场及规则选出的边界候选，各两批、每场 120 秒。完整两阶段约 16 分钟，需保持机器唤醒；空闲休眠保护不保证合盖、关机或进程中断时实验继续有效。出现采样覆盖不合格或文件未收尾时保留目录，不能把它当成容量结论，也不能拼接多个尝试中的好批次。
+
+见 [EXP-005-06 报告](experiments/boundary-study.md)及[运行点清单](experiments/results/boundary-study-operating-points-2026-10-02.json)。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \

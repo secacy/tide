@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-02T06:54:14.274782+00:00",
+  "status": "scoped_operating_points_established",
+  "worker": {
+    "processing_concurrency": 1,
+    "processing_delay_ns": 10000000,
+    "response_delay_ns": 5000000,
+    "partial_every_ns": 500000000,
+    "partial_texts": [
+      "今",
+      "今天",
+      "今天天气",
+      "今天天气不错"
+    ],
+    "final_text": "今天天气不错"
+  },
+  "gateway": {
+    "max_sessions": 64,
+    "max_message_bytes": 1048576,
+    "max_pending_audio_bytes": 32000,
+    "start_timeout_s": 10,
+    "input_idle_timeout_s": 30,
+    "worker_send_timeout_s": 2,
+    "tail_timeout_s": 15,
+    "result_write_timeout_s": 2
+  },
+  "input": {
+    "bytes_per_second": 32000,
+    "chunk_bytes": 3200,
+    "realtime": true
+  },
+  "criteria": {
+    "all_completed": true,
+    "tail_p95_ns": 250000000,
+    "max_audio_schedule_lag_ns": 100000000
+  },
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83",
+    "cpu": "Apple M2 Pro",
+    "logical_cpus": "12",
+    "memory_bytes": "34359738368",
+    "environment": {
+      "GOMAXPROCS": null,
+      "GOGC": null,
+      "GOMEMLIMIT": null,
+      "GOFLAGS": null
+    },
+    "race": false
+  },
+  "sources": {
+    "prior_short": {
+      "directory": "pressure-sweep-2026-10-02",
+      "source_commit": "5c1835a4019b93cc768dd9ada81a0e1e3913fa65",
+      "manifest_sha256": "5e795c170836bfa54b04eb0bbc1b3a0c884379146e4af6b2a1002d29ec92d019",
+      "groups_sha256": "93f5d34f70362d1be38ee821937beb87495083ada29b9ad1563b630959505c3c"
+    },
+    "boundary_short": {
+      "directory": "boundary-short-2026-10-02",
+      "source_commit": "e40d5999cf917fc59e49040d5233f7447d920e6f",
+      "manifest_sha256": "ab7691a971c0ef0174d96b969cd149c69cea8210b36de04d2713d9f162213916",
+      "groups_sha256": "5d871c3e9216548db6f0755bc5aab20c2b14bbb7d6e35cfe088e1aabbfb9e3fc"
+    },
+    "extended": {
+      "directory": "boundary-extended-2026-10-02-run3",
+      "source_commit": "4b0736ffd9b4928d60f96f1236336239f9f78426",
+      "manifest_sha256": "97102e58ebde57ba5705481fa1c44416a46ef03be225faa48183631bf970f871",
+      "groups_sha256": "0e2809803e76d49cea313a0d11e700d72fbef97b4e6a9de49c3b290f228415c8"
+    }
+  },
+  "points": [
+    {
+      "role": "normal_candidate",
+      "sessions": 8,
+      "evidence": [
+        {
+          "source": "prior_short",
+          "audio_duration_s": 20,
+          "attempts": 24,
+          "outcomes": {
+            "completed": 24
+          },
+          "batches_meeting_criteria": 3,
+          "repetitions": 3,
+          "completed_only_tail": {
+            "samples": 24,
+            "min_ns": 18411667,
+            "p50_ns": 51480375,
+            "p95_ns": 93888666,
+            "max_ns": 94263292
+          },
+          "max_audio_schedule_lag_ns": 4462750
+        },
+        {
+          "source": "extended",
+          "audio_duration_s": 120,
+          "attempts": 16,
+          "outcomes": {
+            "completed": 16
+          },
+          "batches_meeting_criteria": 2,
+          "repetitions": 2,
+          "completed_only_tail": {
+            "samples": 16,
+            "min_ns": 16811709,
+            "p50_ns": 49681375,
+            "p95_ns": 91996208,
+            "max_ns": 91996208
+          },
+          "max_audio_schedule_lag_ns": 23297500
+        }
+      ]
+    },
+    {
+      "role": "near_boundary_candidate",
+      "sessions": 9,
+      "evidence": [
+        {
+          "source": "boundary_short",
+          "audio_duration_s": 20,
+          "attempts": 27,
+          "outcomes": {
+            "completed": 27
+          },
+          "batches_meeting_criteria": 3,
+          "repetitions": 3,
+          "completed_only_tail": {
+            "samples": 27,
+            "min_ns": 17247375,
+            "p50_ns": 60236875,
+            "p95_ns": 102339708,
+            "max_ns": 102391125
+          },
+          "max_audio_schedule_lag_ns": 10040791
+        },
+        {
+          "source": "extended",
+          "audio_duration_s": 120,
+          "attempts": 18,
+          "outcomes": {
+            "completed": 18
+          },
+          "batches_meeting_criteria": 2,
+          "repetitions": 2,
+          "completed_only_tail": {
+            "samples": 18,
+            "min_ns": 16904541,
+            "p50_ns": 60038250,
+            "p95_ns": 102082041,
+            "max_ns": 102082041
+          },
+          "max_audio_schedule_lag_ns": 27940708
+        }
+      ]
+    },
+    {
+      "role": "overload_candidate",
+      "sessions": 10,
+      "evidence": [
+        {
+          "source": "boundary_short",
+          "audio_duration_s": 20,
+          "attempts": 30,
+          "outcomes": {
+            "completed": 26,
+            "failed": 4
+          },
+          "batches_meeting_criteria": 0,
+          "repetitions": 3,
+          "completed_only_tail": {
+            "samples": 26,
+            "min_ns": 16869083,
+            "p50_ns": 704790459,
+            "p95_ns": 767764125,
+            "max_ns": 773227250
+          },
+          "max_audio_schedule_lag_ns": 3791375
+        }
+      ]
+    }
+  ],
+  "excluded_attempts": [
+    {
+      "directory": "boundary-extended-2026-10-02",
+      "classification": "invalid_acquisition",
+      "reason": "sleep-associated gaps exceeded predeclared 500ms coverage limit"
+    },
+    {
+      "directory": "boundary-extended-2026-10-02-run2",
+      "classification": "incomplete_attempt",
+      "reason": "processes absent, report empty and finalization missing; preserved separately"
+    }
+  ],
+  "limits": [
+    "Fixed Mock processing and same-host finite input; not real ASR or production capacity.",
+    "8 and 9 passed two 120-second repetitions; this is screening, not long-duration stability proof.",
+    "10 is a repeated 20-second overload point; no 120-second evidence for 10.",
+    "Tail is measured after end input, not per-chunk transcription latency.",
+    "Comparison of policies must keep the resource budget and workload explicit."
+  ]
+}

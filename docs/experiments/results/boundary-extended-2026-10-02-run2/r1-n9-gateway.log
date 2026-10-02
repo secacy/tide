@@ -1,0 +1,1 @@
+time=2026-10-02T10:20:17.709+08:00 level=INFO msg="starting gateway sampling" url=http://127.0.0.1:8080/debug/gateway interval=100ms request_timeout=1s duration=2m30s output_dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-extended-2026-10-02-run2/r1-n9-gateway

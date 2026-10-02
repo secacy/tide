@@ -1,0 +1,146 @@
+{
+  "source_command": "pmset -g log",
+  "filter": "Sleep/Wake/DarkWake transition events only, local 2026-10-02 09:54:00 through 10:14:00",
+  "excluded": "Wake Requests, app scheduling details, battery identifiers and unrelated entries",
+  "events": [
+    {
+      "local_time": "2026-10-02 09:58:13 +0800",
+      "event": "Sleep",
+      "reason": "'Clamshell Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 09:58:43 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/"
+    },
+    {
+      "local_time": "2026-10-02 09:58:54 +0800",
+      "event": "Sleep",
+      "reason": "'Maintenance Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:03:04 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/"
+    },
+    {
+      "local_time": "2026-10-02 10:03:17 +0800",
+      "event": "Sleep",
+      "reason": "'Maintenance Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:07:46 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/"
+    },
+    {
+      "local_time": "2026-10-02 10:08:19 +0800",
+      "event": "Sleep",
+      "reason": "'Maintenance Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:08:21 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/"
+    },
+    {
+      "local_time": "2026-10-02 10:08:33 +0800",
+      "event": "Sleep",
+      "reason": "'Maintenance Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:08:35 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/"
+    },
+    {
+      "local_time": "2026-10-02 10:08:58 +0800",
+      "event": "Sleep",
+      "reason": "'Maintenance Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:09:00 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/"
+    },
+    {
+      "local_time": "2026-10-02 10:09:12 +0800",
+      "event": "Sleep",
+      "reason": "'Maintenance Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:09:14 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/"
+    },
+    {
+      "local_time": "2026-10-02 10:09:24 +0800",
+      "event": "Sleep",
+      "reason": "'Maintenance Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:09:26 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/"
+    },
+    {
+      "local_time": "2026-10-02 10:09:37 +0800",
+      "event": "Sleep",
+      "reason": "'Maintenance Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:09:39 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/"
+    },
+    {
+      "local_time": "2026-10-02 10:09:49 +0800",
+      "event": "Sleep",
+      "reason": "'Maintenance Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:09:51 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/"
+    },
+    {
+      "local_time": "2026-10-02 10:10:02 +0800",
+      "event": "Sleep",
+      "reason": "'Maintenance Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:10:04 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) wifibt SMC.OutboxNotEmpty bluetooth-pcie/"
+    },
+    {
+      "local_time": "2026-10-02 10:10:14 +0800",
+      "event": "Sleep",
+      "reason": "'Maintenance Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:13:01 +0800",
+      "event": "DarkWake",
+      "reason": "smc.sysState.Wake(0x70070000) USB-C_plug SMC.OutboxNotEmpty/"
+    },
+    {
+      "local_time": "2026-10-02 10:13:01 +0800",
+      "event": "Wake",
+      "reason": "Notification"
+    },
+    {
+      "local_time": "2026-10-02 10:13:11 +0800",
+      "event": "Sleep",
+      "reason": "'Clamshell Sleep'"
+    },
+    {
+      "local_time": "2026-10-02 10:13:17 +0800",
+      "event": "Wake",
+      "reason": "UserActivity Assertion"
+    }
+  ],
+  "interpretation": "Sleep transitions overlap invalid acquisition; not used to infer ASR capacity",
+  "invalid_directory": "boundary-extended-2026-10-02",
+  "repeat_directory": "boundary-extended-2026-10-02-run2",
+  "user_confirmation": "电脑已保持唤醒，继续完整复测"
+}

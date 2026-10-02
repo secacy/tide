@@ -1,0 +1,2054 @@
+{
+  "started_at": "2026-10-02T01:46:24.981972+00:00",
+  "status": "passed",
+  "source_commit": "e40d5999cf917fc59e49040d5233f7447d920e6f",
+  "tracked_diff": "",
+  "go": "go version go1.26.5 darwin/arm64",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83",
+  "cpu": "Apple M2 Pro",
+  "logical_cpus": "12",
+  "memory_bytes": "34359738368",
+  "environment": {
+    "GOMAXPROCS": null,
+    "GOGC": null,
+    "GOMEMLIMIT": null,
+    "GOFLAGS": null
+  },
+  "race": false,
+  "commands": [
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/asr-worker",
+      "./cmd/asr-worker"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway",
+      "./cmd/gateway"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+      "./cmd/loadgen"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+      "./cmd/gateway-sampler"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+      "./cmd/worker-sampler"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/asr-worker",
+      "-listen=127.0.0.1:0",
+      "-debug-listen=127.0.0.1:0",
+      "-processing-concurrency=1",
+      "-processing-delay=10ms",
+      "-response-delay=5ms"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway",
+      "-workers=127.0.0.1:56599",
+      "-max-pending-audio-bytes=32000"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=1",
+      "-audio-bytes=64000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/warmup.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=10s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/warmup-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+      "-url=http://127.0.0.1:56600/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=10s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/warmup-worker"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=9",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n9.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n9-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+      "-url=http://127.0.0.1:56600/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n9-worker"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=10",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n10.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n10-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+      "-url=http://127.0.0.1:56600/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n10-worker"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=11",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n11.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n11-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+      "-url=http://127.0.0.1:56600/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n11-worker"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=9",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n9.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n9-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+      "-url=http://127.0.0.1:56600/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n9-worker"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=10",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n10.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n10-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+      "-url=http://127.0.0.1:56600/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n10-worker"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=11",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n11.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n11-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+      "-url=http://127.0.0.1:56600/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n11-worker"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=9",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n9.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n9-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+      "-url=http://127.0.0.1:56600/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n9-worker"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=10",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n10.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n10-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+      "-url=http://127.0.0.1:56600/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n10-worker"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=11",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n11.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n11-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+      "-url=http://127.0.0.1:56600/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n11-worker"
+    ]
+  ],
+  "batches": [
+    {
+      "label": "warmup",
+      "planned_sessions": 1,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=1",
+        "-audio-bytes=64000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/warmup.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "warmup-gateway",
+          "started_at": "2026-10-02T01:46:28.971709+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=10s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/warmup-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:46:29.444452+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:46:39.481725+00:00"
+        },
+        "worker": {
+          "directory": "warmup-worker",
+          "started_at": "2026-10-02T01:46:28.975244+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+            "-url=http://127.0.0.1:56600/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=10s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/warmup-worker"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:46:29.878673+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:46:39.924356+00:00"
+        }
+      },
+      "started_at": "2026-10-02T01:46:29.878690+00:00",
+      "finished_at": "2026-10-02T01:46:32.270903+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 99,
+        "successful_samples": 99,
+        "failed_samples": 0,
+        "window_successful_samples": 23,
+        "window_failed_samples": 0,
+        "observed_peak_active": 1,
+        "max_bracketing_success_gap_ns": 102718000,
+        "first_post_exit_zero_sample_delay_ns": 23158000,
+        "query_duration": {
+          "samples": 99,
+          "min_ns": 252416,
+          "p50_ns": 676250,
+          "p95_ns": 1442791,
+          "max_ns": 2561583
+        },
+        "window_active_histogram": {
+          "0": 4,
+          "1": 19
+        },
+        "observed_planned_peak": true
+      },
+      "worker_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 463,
+        "successful_samples": 462,
+        "failed_samples": 1,
+        "disabled_samples": 0,
+        "window_successful_samples": 111,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 0,
+        "window_busy_samples": 10,
+        "window_waiting_samples": 0,
+        "busy_sample_fraction": 0.09009009009009009,
+        "waiting_sample_fraction": 0.0,
+        "window_state_histogram": {
+          "0,0": 101,
+          "1,0": 10
+        },
+        "max_bracketing_success_gap_ns": 22608000,
+        "first_post_exit_idle_sample_delay_ns": 17725000,
+        "query_duration": {
+          "samples": 462,
+          "min_ns": 185167,
+          "p50_ns": 528666,
+          "p95_ns": 1084000,
+          "max_ns": 4375916
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r1-n9",
+      "planned_sessions": 9,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=9",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n9.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r1-n9-gateway",
+          "started_at": "2026-10-02T01:46:39.942595+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n9-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:46:39.964941+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:47:19.995413+00:00"
+        },
+        "worker": {
+          "directory": "r1-n9-worker",
+          "started_at": "2026-10-02T01:46:39.947710+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+            "-url=http://127.0.0.1:56600/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n9-worker"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:46:39.965041+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:47:19.995763+00:00"
+        }
+      },
+      "started_at": "2026-10-02T01:46:39.965046+00:00",
+      "finished_at": "2026-10-02T01:47:00.004547+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 196,
+        "window_failed_samples": 0,
+        "observed_peak_active": 9,
+        "max_bracketing_success_gap_ns": 109214000,
+        "first_post_exit_zero_sample_delay_ns": 12821000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 207250,
+          "p50_ns": 729875,
+          "p95_ns": 1285250,
+          "max_ns": 3617083
+        },
+        "window_active_histogram": {
+          "7": 1,
+          "9": 195
+        },
+        "observed_planned_peak": true
+      },
+      "worker_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 1847,
+        "successful_samples": 1847,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 926,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 8,
+        "window_busy_samples": 893,
+        "window_waiting_samples": 789,
+        "busy_sample_fraction": 0.9643628509719222,
+        "waiting_sample_fraction": 0.8520518358531317,
+        "window_state_histogram": {
+          "0,0": 33,
+          "1,0": 104,
+          "1,1": 95,
+          "1,2": 97,
+          "1,3": 99,
+          "1,4": 103,
+          "1,5": 96,
+          "1,6": 107,
+          "1,7": 96,
+          "1,8": 96
+        },
+        "max_bracketing_success_gap_ns": 37838000,
+        "first_post_exit_idle_sample_delay_ns": 12106000,
+        "query_duration": {
+          "samples": 1847,
+          "min_ns": 154084,
+          "p50_ns": 548375,
+          "p95_ns": 1090375,
+          "max_ns": 3563416
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r1-n10",
+      "planned_sessions": 10,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=10",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n10.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r1-n10-gateway",
+          "started_at": "2026-10-02T01:47:20.038462+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n10-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:47:20.057929+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:48:00.098792+00:00"
+        },
+        "worker": {
+          "directory": "r1-n10-worker",
+          "started_at": "2026-10-02T01:47:20.042103+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+            "-url=http://127.0.0.1:56600/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n10-worker"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:47:20.058016+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:48:00.099220+00:00"
+        }
+      },
+      "started_at": "2026-10-02T01:47:20.058019+00:00",
+      "finished_at": "2026-10-02T01:47:40.774540+00:00",
+      "exit_code": 1,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 203,
+        "window_failed_samples": 0,
+        "observed_peak_active": 10,
+        "max_bracketing_success_gap_ns": 104352000,
+        "first_post_exit_zero_sample_delay_ns": 40535000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 199958,
+          "p50_ns": 733916,
+          "p95_ns": 1268541,
+          "max_ns": 2937209
+        },
+        "window_active_histogram": {
+          "3": 1,
+          "9": 80,
+          "10": 122
+        },
+        "observed_planned_peak": true
+      },
+      "worker_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 1849,
+        "successful_samples": 1849,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 959,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 10,
+        "window_busy_samples": 950,
+        "window_waiting_samples": 956,
+        "busy_sample_fraction": 0.9906152241918665,
+        "waiting_sample_fraction": 0.9968717413972888,
+        "window_state_histogram": {
+          "0,0": 2,
+          "0,8": 1,
+          "0,9": 5,
+          "0,10": 1,
+          "1,0": 1,
+          "1,1": 2,
+          "1,2": 1,
+          "1,3": 4,
+          "1,4": 1,
+          "1,5": 8,
+          "1,6": 1,
+          "1,7": 9,
+          "1,8": 395,
+          "1,9": 528
+        },
+        "max_bracketing_success_gap_ns": 30823000,
+        "first_post_exit_idle_sample_delay_ns": 16819000,
+        "query_duration": {
+          "samples": 1849,
+          "min_ns": 134625,
+          "p50_ns": 555250,
+          "p95_ns": 1082166,
+          "max_ns": 9541584
+        }
+      },
+      "criteria_met": false,
+      "criteria": {
+        "all_completed": false,
+        "tail_p95_within_budget": false,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r1-n11",
+      "planned_sessions": 11,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=11",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n11.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r1-n11-gateway",
+          "started_at": "2026-10-02T01:48:00.145152+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n11-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:48:00.164160+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:48:40.179270+00:00"
+        },
+        "worker": {
+          "directory": "r1-n11-worker",
+          "started_at": "2026-10-02T01:48:00.148395+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+            "-url=http://127.0.0.1:56600/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r1-n11-worker"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:48:00.164242+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:48:40.179722+00:00"
+        }
+      },
+      "started_at": "2026-10-02T01:48:00.164245+00:00",
+      "finished_at": "2026-10-02T01:48:20.690938+00:00",
+      "exit_code": 1,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 201,
+        "window_failed_samples": 0,
+        "observed_peak_active": 11,
+        "max_bracketing_success_gap_ns": 104406000,
+        "first_post_exit_zero_sample_delay_ns": 12532000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 226875,
+          "p50_ns": 728583,
+          "p95_ns": 1425750,
+          "max_ns": 3154667
+        },
+        "window_active_histogram": {
+          "4": 1,
+          "9": 142,
+          "10": 1,
+          "11": 57
+        },
+        "observed_planned_peak": true
+      },
+      "worker_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 1850,
+        "successful_samples": 1849,
+        "failed_samples": 1,
+        "disabled_samples": 0,
+        "window_successful_samples": 951,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 11,
+        "window_busy_samples": 921,
+        "window_waiting_samples": 948,
+        "busy_sample_fraction": 0.9684542586750788,
+        "waiting_sample_fraction": 0.9968454258675079,
+        "window_state_histogram": {
+          "0,0": 3,
+          "0,8": 12,
+          "0,9": 1,
+          "0,10": 12,
+          "0,11": 2,
+          "1,1": 1,
+          "1,2": 1,
+          "1,3": 2,
+          "1,4": 1,
+          "1,5": 2,
+          "1,6": 1,
+          "1,7": 4,
+          "1,8": 660,
+          "1,9": 29,
+          "1,10": 220
+        },
+        "max_bracketing_success_gap_ns": 26157000,
+        "first_post_exit_idle_sample_delay_ns": 5438000,
+        "query_duration": {
+          "samples": 1849,
+          "min_ns": 140250,
+          "p50_ns": 555000,
+          "p95_ns": 1074000,
+          "max_ns": 3656542
+        }
+      },
+      "criteria_met": false,
+      "criteria": {
+        "all_completed": false,
+        "tail_p95_within_budget": false,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r2-n9",
+      "planned_sessions": 9,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=9",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n9.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r2-n9-gateway",
+          "started_at": "2026-10-02T01:48:40.226165+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n9-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:48:40.244667+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:49:20.250154+00:00"
+        },
+        "worker": {
+          "directory": "r2-n9-worker",
+          "started_at": "2026-10-02T01:48:40.229206+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+            "-url=http://127.0.0.1:56600/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n9-worker"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:48:40.244751+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:49:20.250676+00:00"
+        }
+      },
+      "started_at": "2026-10-02T01:48:40.244755+00:00",
+      "finished_at": "2026-10-02T01:49:00.313450+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 197,
+        "window_failed_samples": 0,
+        "observed_peak_active": 9,
+        "max_bracketing_success_gap_ns": 105318000,
+        "first_post_exit_zero_sample_delay_ns": 80484000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 234125,
+          "p50_ns": 707875,
+          "p95_ns": 1438416,
+          "max_ns": 4408250
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "7": 1,
+          "9": 195
+        },
+        "observed_planned_peak": true
+      },
+      "worker_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 1849,
+        "successful_samples": 1849,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 928,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 8,
+        "window_busy_samples": 882,
+        "window_waiting_samples": 789,
+        "busy_sample_fraction": 0.9504310344827587,
+        "waiting_sample_fraction": 0.8502155172413793,
+        "window_state_histogram": {
+          "0,0": 43,
+          "0,5": 2,
+          "0,6": 1,
+          "1,0": 96,
+          "1,1": 103,
+          "1,2": 98,
+          "1,3": 104,
+          "1,4": 94,
+          "1,5": 105,
+          "1,6": 89,
+          "1,7": 104,
+          "1,8": 89
+        },
+        "max_bracketing_success_gap_ns": 25718000,
+        "first_post_exit_idle_sample_delay_ns": 8335000,
+        "query_duration": {
+          "samples": 1849,
+          "min_ns": 142667,
+          "p50_ns": 544125,
+          "p95_ns": 1100041,
+          "max_ns": 4432209
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r2-n10",
+      "planned_sessions": 10,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=10",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n10.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r2-n10-gateway",
+          "started_at": "2026-10-02T01:49:20.293814+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n10-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:49:20.312920+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:50:00.335560+00:00"
+        },
+        "worker": {
+          "directory": "r2-n10-worker",
+          "started_at": "2026-10-02T01:49:20.297236+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+            "-url=http://127.0.0.1:56600/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n10-worker"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:49:20.313008+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:50:00.336135+00:00"
+        }
+      },
+      "started_at": "2026-10-02T01:49:20.313011+00:00",
+      "finished_at": "2026-10-02T01:49:41.017123+00:00",
+      "exit_code": 1,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 394,
+        "successful_samples": 394,
+        "failed_samples": 0,
+        "window_successful_samples": 203,
+        "window_failed_samples": 0,
+        "observed_peak_active": 10,
+        "max_bracketing_success_gap_ns": 106372000,
+        "first_post_exit_zero_sample_delay_ns": 51498000,
+        "query_duration": {
+          "samples": 394,
+          "min_ns": 206167,
+          "p50_ns": 655084,
+          "p95_ns": 1381083,
+          "max_ns": 5096541
+        },
+        "window_active_histogram": {
+          "3": 1,
+          "9": 80,
+          "10": 122
+        },
+        "observed_planned_peak": true
+      },
+      "worker_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 1850,
+        "successful_samples": 1850,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 959,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 10,
+        "window_busy_samples": 939,
+        "window_waiting_samples": 956,
+        "busy_sample_fraction": 0.9791449426485923,
+        "waiting_sample_fraction": 0.9968717413972888,
+        "window_state_histogram": {
+          "0,0": 2,
+          "0,2": 1,
+          "0,4": 1,
+          "0,8": 11,
+          "0,9": 4,
+          "0,10": 1,
+          "1,0": 1,
+          "1,1": 1,
+          "1,2": 2,
+          "1,3": 3,
+          "1,4": 3,
+          "1,5": 6,
+          "1,6": 3,
+          "1,7": 9,
+          "1,8": 385,
+          "1,9": 526
+        },
+        "max_bracketing_success_gap_ns": 25806000,
+        "first_post_exit_idle_sample_delay_ns": 21290000,
+        "query_duration": {
+          "samples": 1850,
+          "min_ns": 137917,
+          "p50_ns": 515958,
+          "p95_ns": 1079667,
+          "max_ns": 21255000
+        }
+      },
+      "criteria_met": false,
+      "criteria": {
+        "all_completed": false,
+        "tail_p95_within_budget": false,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r2-n11",
+      "planned_sessions": 11,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=11",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n11.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r2-n11-gateway",
+          "started_at": "2026-10-02T01:50:00.383014+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n11-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:50:00.402565+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:50:40.420613+00:00"
+        },
+        "worker": {
+          "directory": "r2-n11-worker",
+          "started_at": "2026-10-02T01:50:00.386091+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+            "-url=http://127.0.0.1:56600/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r2-n11-worker"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:50:00.402644+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:50:40.421075+00:00"
+        }
+      },
+      "started_at": "2026-10-02T01:50:00.402649+00:00",
+      "finished_at": "2026-10-02T01:50:20.906216+00:00",
+      "exit_code": 1,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 201,
+        "window_failed_samples": 0,
+        "observed_peak_active": 11,
+        "max_bracketing_success_gap_ns": 108860000,
+        "first_post_exit_zero_sample_delay_ns": 19971000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 193458,
+          "p50_ns": 699750,
+          "p95_ns": 1237500,
+          "max_ns": 6069875
+        },
+        "window_active_histogram": {
+          "7": 1,
+          "9": 143,
+          "10": 1,
+          "11": 56
+        },
+        "observed_planned_peak": true
+      },
+      "worker_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 1848,
+        "successful_samples": 1848,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 948,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 11,
+        "window_busy_samples": 908,
+        "window_waiting_samples": 946,
+        "busy_sample_fraction": 0.9578059071729957,
+        "waiting_sample_fraction": 0.9978902953586498,
+        "window_state_histogram": {
+          "0,0": 1,
+          "0,8": 31,
+          "0,9": 5,
+          "0,10": 2,
+          "0,11": 1,
+          "1,0": 1,
+          "1,2": 2,
+          "1,3": 1,
+          "1,4": 2,
+          "1,5": 1,
+          "1,6": 3,
+          "1,7": 9,
+          "1,8": 634,
+          "1,9": 24,
+          "1,10": 231
+        },
+        "max_bracketing_success_gap_ns": 28937000,
+        "first_post_exit_idle_sample_delay_ns": 10036000,
+        "query_duration": {
+          "samples": 1848,
+          "min_ns": 110375,
+          "p50_ns": 556375,
+          "p95_ns": 1048500,
+          "max_ns": 6191542
+        }
+      },
+      "criteria_met": false,
+      "criteria": {
+        "all_completed": false,
+        "tail_p95_within_budget": false,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r3-n9",
+      "planned_sessions": 9,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=9",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n9.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r3-n9-gateway",
+          "started_at": "2026-10-02T01:50:40.469044+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n9-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:50:40.489325+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:51:20.531707+00:00"
+        },
+        "worker": {
+          "directory": "r3-n9-worker",
+          "started_at": "2026-10-02T01:50:40.472746+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+            "-url=http://127.0.0.1:56600/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n9-worker"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:50:40.489413+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:51:20.532136+00:00"
+        }
+      },
+      "started_at": "2026-10-02T01:50:40.489417+00:00",
+      "finished_at": "2026-10-02T01:51:00.529719+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 197,
+        "window_failed_samples": 0,
+        "observed_peak_active": 9,
+        "max_bracketing_success_gap_ns": 105434000,
+        "first_post_exit_zero_sample_delay_ns": 98155000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 215583,
+          "p50_ns": 704125,
+          "p95_ns": 1225458,
+          "max_ns": 2549875
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "8": 1,
+          "9": 195
+        },
+        "observed_planned_peak": true
+      },
+      "worker_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 1848,
+        "successful_samples": 1847,
+        "failed_samples": 1,
+        "disabled_samples": 0,
+        "window_successful_samples": 927,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 8,
+        "window_busy_samples": 889,
+        "window_waiting_samples": 787,
+        "busy_sample_fraction": 0.9590075512405609,
+        "waiting_sample_fraction": 0.8489751887810141,
+        "window_state_histogram": {
+          "0,0": 36,
+          "0,2": 1,
+          "0,5": 1,
+          "1,0": 104,
+          "1,1": 94,
+          "1,2": 102,
+          "1,3": 96,
+          "1,4": 99,
+          "1,5": 96,
+          "1,6": 100,
+          "1,7": 101,
+          "1,8": 97
+        },
+        "max_bracketing_success_gap_ns": 25738000,
+        "first_post_exit_idle_sample_delay_ns": 19747000,
+        "query_duration": {
+          "samples": 1847,
+          "min_ns": 159459,
+          "p50_ns": 554083,
+          "p95_ns": 1070583,
+          "max_ns": 3461542
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r3-n10",
+      "planned_sessions": 10,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=10",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n10.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r3-n10-gateway",
+          "started_at": "2026-10-02T01:51:20.579564+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n10-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:51:20.601598+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:52:00.625120+00:00"
+        },
+        "worker": {
+          "directory": "r3-n10-worker",
+          "started_at": "2026-10-02T01:51:20.584171+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+            "-url=http://127.0.0.1:56600/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n10-worker"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:51:20.601686+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:52:00.625554+00:00"
+        }
+      },
+      "started_at": "2026-10-02T01:51:20.601691+00:00",
+      "finished_at": "2026-10-02T01:51:40.638316+00:00",
+      "exit_code": 1,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 197,
+        "window_failed_samples": 0,
+        "observed_peak_active": 10,
+        "max_bracketing_success_gap_ns": 103768000,
+        "first_post_exit_zero_sample_delay_ns": 83556000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 210042,
+          "p50_ns": 693333,
+          "p95_ns": 1405416,
+          "max_ns": 2914625
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "8": 72,
+          "9": 1,
+          "10": 123
+        },
+        "observed_planned_peak": true
+      },
+      "worker_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 1850,
+        "successful_samples": 1850,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 929,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 10,
+        "window_busy_samples": 910,
+        "window_waiting_samples": 908,
+        "busy_sample_fraction": 0.9795479009687836,
+        "waiting_sample_fraction": 0.9773950484391819,
+        "window_state_histogram": {
+          "0,0": 11,
+          "0,7": 4,
+          "0,8": 1,
+          "0,9": 2,
+          "0,10": 1,
+          "1,0": 10,
+          "1,1": 13,
+          "1,2": 10,
+          "1,3": 14,
+          "1,4": 12,
+          "1,5": 15,
+          "1,6": 17,
+          "1,7": 258,
+          "1,8": 27,
+          "1,9": 534
+        },
+        "max_bracketing_success_gap_ns": 26634000,
+        "first_post_exit_idle_sample_delay_ns": 21697000,
+        "query_duration": {
+          "samples": 1850,
+          "min_ns": 148667,
+          "p50_ns": 538000,
+          "p95_ns": 1084334,
+          "max_ns": 4289625
+        }
+      },
+      "criteria_met": false,
+      "criteria": {
+        "all_completed": false,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r3-n11",
+      "planned_sessions": 11,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=11",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n11.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r3-n11-gateway",
+          "started_at": "2026-10-02T01:52:00.673336+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n11-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:52:00.693233+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:52:40.706093+00:00"
+        },
+        "worker": {
+          "directory": "r3-n11-worker",
+          "started_at": "2026-10-02T01:52:00.677140+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-ucpkgtwf/worker-sampler",
+            "-url=http://127.0.0.1:56600/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-short-2026-10-02/r3-n11-worker"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T01:52:00.693324+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T01:52:40.706524+00:00"
+        }
+      },
+      "started_at": "2026-10-02T01:52:00.693329+00:00",
+      "finished_at": "2026-10-02T01:52:21.259585+00:00",
+      "exit_code": 1,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 202,
+        "window_failed_samples": 0,
+        "observed_peak_active": 11,
+        "max_bracketing_success_gap_ns": 105471000,
+        "first_post_exit_zero_sample_delay_ns": 91836000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 216583,
+          "p50_ns": 717125,
+          "p95_ns": 1365250,
+          "max_ns": 4711917
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "8": 1,
+          "9": 142,
+          "10": 1,
+          "11": 57
+        },
+        "observed_planned_peak": true
+      },
+      "worker_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "enabled_throughout": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "window_has_observations": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 1846,
+        "successful_samples": 1846,
+        "failed_samples": 0,
+        "disabled_samples": 0,
+        "window_successful_samples": 949,
+        "window_failed_samples": 0,
+        "observed_peak_in_use": 1,
+        "observed_peak_waiting": 11,
+        "window_busy_samples": 934,
+        "window_waiting_samples": 947,
+        "busy_sample_fraction": 0.9841938883034773,
+        "waiting_sample_fraction": 0.9978925184404637,
+        "window_state_histogram": {
+          "0,0": 2,
+          "0,8": 8,
+          "0,9": 2,
+          "0,10": 1,
+          "0,11": 2,
+          "1,1": 1,
+          "1,2": 1,
+          "1,3": 2,
+          "1,4": 1,
+          "1,5": 2,
+          "1,6": 2,
+          "1,7": 6,
+          "1,8": 660,
+          "1,9": 25,
+          "1,10": 234
+        },
+        "max_bracketing_success_gap_ns": 28422000,
+        "first_post_exit_idle_sample_delay_ns": 7568000,
+        "query_duration": {
+          "samples": 1846,
+          "min_ns": 144875,
+          "p50_ns": 567125,
+          "p95_ns": 1137000,
+          "max_ns": 6715417
+        }
+      },
+      "criteria_met": false,
+      "criteria": {
+        "all_completed": false,
+        "tail_p95_within_budget": false,
+        "sending_within_budget": true
+      }
+    }
+  ],
+  "shutdown": [
+    {
+      "process": "gateway",
+      "exit_code": 0
+    },
+    {
+      "process": "asr-worker",
+      "exit_code": 0
+    }
+  ],
+  "worker": {
+    "processing_concurrency": 1,
+    "processing_delay_ns": 10000000,
+    "response_delay_ns": 5000000,
+    "partial_every_ns": 500000000,
+    "partial_texts": [
+      "今",
+      "今天",
+      "今天天气",
+      "今天天气不错"
+    ],
+    "final_text": "今天天气不错"
+  },
+  "gateway": {
+    "max_sessions": 64,
+    "max_message_bytes": 1048576,
+    "max_pending_audio_bytes": 32000,
+    "start_timeout_s": 10,
+    "input_idle_timeout_s": 30,
+    "worker_send_timeout_s": 2,
+    "tail_timeout_s": 15,
+    "result_write_timeout_s": 2
+  },
+  "schedule": {
+    "session_counts": [
+      9,
+      10,
+      11
+    ],
+    "repetitions": 3,
+    "audio_bytes": 640000,
+    "chunk_bytes": 3200,
+    "realtime": true,
+    "session_timeout_s": 35,
+    "warmup_sessions": 1,
+    "warmup_audio_bytes": 64000
+  },
+  "limits": [
+    "same-host independent processes, no isolation",
+    "no waiting-duration, backlog, CPU or memory sampling",
+    "sample fractions are not time utilization",
+    "client write success is not a server byte counter",
+    "finite batches are not stable capacity",
+    "sampling overhead has no A/B measurement",
+    "Mock emits only four partials then a final"
+  ],
+  "experiment": "boundary_short",
+  "criteria": {
+    "all_completed": true,
+    "tail_p95_ns": 250000000,
+    "max_audio_schedule_lag_ns": 100000000
+  },
+  "source_sha256": {
+    "cmd/asr-worker/config.go": "4ec1d297d42ded79febfe0709a199f035400921b45c9dd70ba8fd35f4238cebd",
+    "cmd/asr-worker/config_test.go": "b36b2b0e8c0fdad251aa88fabf7e8d87f441f5fe988247dff0c2425c1156243b",
+    "cmd/asr-worker/debug_config_test.go": "24ed3e9b756aa8653d144cc3ffdae5720aaca817ac1b40649ba1ca5f4b30d708",
+    "cmd/asr-worker/main.go": "a099e9225f005e2a1a2c4a48bc9bede5ecc41c074421caa3d8575b48ad472adb",
+    "cmd/asr-worker/main_test.go": "0a2b2612376174bb417d24bbacada9d0a87d956a6995dd8ae1a58feab92f87f3",
+    "cmd/asr-worker/sampler_integration_test.go": "f82b16be3d5e018805f92b01cf70d58c2524bb74da797c1f01c5441f7483abf7",
+    "cmd/asr-worker/serve.go": "7bdf2e7f33c79490e65837639f9f77b32e508c8907950d2ec7c00f2e35c34591",
+    "cmd/asr-worker/serve_test.go": "b57910ad8a8504c3ee557fff608b0bd0e0542e6bbdabf0478437d85bf85653a8",
+    "cmd/asr-worker/snapshot.go": "f4fafae3cfb1fce447f19d5e3a20445e55741a008d8f68728b408a05a1f5fce9",
+    "cmd/asr-worker/snapshot_test.go": "e80296b9ff4a9d24e9154b672b8603581b25d999c19137fdefcf29e9c2448cb1",
+    "cmd/gateway-sampler/config.go": "16e80c4e45459a99f7db1369d39ab8f2c14d35158e1a635c62e969657999d50b",
+    "cmd/gateway-sampler/config_test.go": "2eccc034fa35f12760cf45e4e27e879d64fdad186f74b0ac7c2dadc1d7e2f962",
+    "cmd/gateway-sampler/main.go": "27fe3383717c92edc9ceb0192ca6c943e6756e30f2b1112ff780a347cd0eeee6",
+    "cmd/gateway-sampler/process_test.go": "42f1739d83071d2b24ea90c48e8319d0f564b6793e579a92b9f3f1f9c4e26ac0",
+    "cmd/gateway-sampler/run.go": "4246b5747d3578b125e9ecd4f1043f0f8eaa9d5b549a21ddba20fb8a0d9a60a2",
+    "cmd/gateway-sampler/run_test.go": "279d9ec624a2f011b708c451a48f82453e4c9def895a65f74644de87c99f8b29",
+    "cmd/gateway/config.go": "6f47a5e9b50ddecaca4ae9b3bf5f26477517595b4f8da28c251de1d809b28de8",
+    "cmd/gateway/config_test.go": "69ae87d303b617885fa6b36ea9268e3cecddc8e884d39e9c9dfe4d0e3ec47a83",
+    "cmd/gateway/main.go": "7295b6a24d72f4911cb06de3cdd2c2010a090fba6c7d70f9427ffc57ff892b41",
+    "cmd/gateway/snapshot.go": "43b04b93e70c4fb0a30074b0d732f82edc5063f86c24a2ea919d29ef1a8eecbf",
+    "cmd/gateway/snapshot_test.go": "62dc4fc58aa4909952278ab200890446a83cf829d40728756f69e995c9ddb12b",
+    "cmd/gateway/startup_test.go": "4f6d499591fdf597c4d57ad9fdf37e5572d06d0e5eb9ea0b18b7e1281ce38b7b",
+    "cmd/gateway/worker_addresses.go": "1716fdd0bd46f39c97505516146906a677aebf7294f12053bbfc4a55e0516213",
+    "cmd/gateway/worker_addresses_test.go": "fde6f394ce1de353831727c4937d51ba7ea4902b8a329243501f03844308af19",
+    "cmd/loadgen/config.go": "ed92aa67be8eb9d4b508a5a8c70b4729fb0b47ebf00e1a028a872b73269e0ec4",
+    "cmd/loadgen/config_test.go": "ec997eb8e0047930dcef2e6b3db03669481f7cd6e9635c67418fa8538ebd6222",
+    "cmd/loadgen/main.go": "e9f98a467a31272a0760fb648c7fc0093ead14317f58b5de3d3b311686143665",
+    "cmd/loadgen/main_test.go": "323d8b14b0ccf23026d3d05ea9fec83b3ed0d9031736a0486a0fd9dbbdf872f0",
+    "cmd/loadgen/process_test.go": "8b80b41b44c5dfd38c1f6006ae5f0dd2fba80fbc93ac397596bf7be8d2e7fe75",
+    "cmd/worker-sampler/config.go": "2b126859c54f0c35655a3baad2c71ceadc08c5d252b143bbc84af6947905d271",
+    "cmd/worker-sampler/config_test.go": "eed02dc0fa3bd551272a48849734af9b1551bdbadb7c1aa6a81ad0462dc3257a",
+    "cmd/worker-sampler/main.go": "5943955b811214a8ccd4f5eb01d7cccfc6e7b35242c0422682e6c7b3291e9c1a",
+    "cmd/worker-sampler/process_test.go": "b9d240c0437eed4cb568eefdc0f2d1d760a297842eb1a235db8ae8a840d2fc30",
+    "cmd/worker-sampler/run.go": "30a3145c77317135075f9b5a4dc90c5df2b8b493fe21e026321881de9ba0f236",
+    "cmd/worker-sampler/run_test.go": "4bbf9ee831f84c359e01e84fab85bd544265ef461119e21d90d6e6907a4a6ae0",
+    "cmd/ws-client/main.go": "be4023437da090b59cf6e999d606d65e93d877cb52cf5473159f379f1b043dbe",
+    "go.mod": "c9c7012d18711cb2d954c57cc784a8c70327d34b03167b91a01aabded852db4e",
+    "go.sum": "829a64643f43bb0a0fea771fa2561e6a7fa26622fcb4bbcbf7dbbb101e88f5fd",
+    "internal/audio/format.go": "5f86af2fa59391da5c06853838940abfe7879f28d06c82e1e2411456e558ddda",
+    "internal/audio/pacer.go": "c83b872b3b3ac5c0f7be0898945984d18556f7cd89521d5a4c3bbaa0dc3434cd",
+    "internal/audio/pacer_test.go": "9ca87128617203895e6c333009bf1c66018e6504c9a00bfe8307dc4f56c7eaca",
+    "internal/gateway/admission_network_test.go": "4e210935259cf79072a52bf235090f8ebb5127a837f0a7411687b664ca65e6ee",
+    "internal/gateway/admission_test.go": "fdba441ed95c69f82f677ac73e36072dbfa0ddfaf79869f6bc4eecf2512758be",
+    "internal/gateway/audio_progress.go": "e1cf00d7ca2c25990c51350f637b77a3ce127f2c53d0f89f41448741ab665e26",
+    "internal/gateway/audio_progress_test.go": "3abfabd5cd205ed374d27c088103d04660eb2f934854281e834ca3cf952bdd96",
+    "internal/gateway/backlog.go": "3d2738f4fbefa2c9042f75a9f00435c48a5d3fcc99cdf5e12c1d78923bcf8baa",
+    "internal/gateway/backlog_experiment_test.go": "aca466ce096d9f7c94d8ad6dd3c22653c54a6184addcec64b4ef42e788ac6d7b",
+    "internal/gateway/backlog_integration_test.go": "4368397d1cf4ac2ad84841dc78a9693df8f8e9631c373f1c961604882f3d406d",
+    "internal/gateway/backlog_test.go": "ef026ac2c435120c6402e3644806774ef9ed33302447e95068cdab5edffb3ee7",
+    "internal/gateway/client_disconnect_test.go": "3b169c49748940bfcdec746290ea3d2b8f553adb259beff904de0cc5624a5b1a",
+    "internal/gateway/download.go": "ac7803f645210c47c9a67caca549de40d6055383cfe4fe4ea46c9f61e10563e2",
+    "internal/gateway/handler.go": "4a92cac6d3c89c9a6517588578d1aa54cbd73a094863e1872b750e57c9ff51e9",
+    "internal/gateway/handler_test.go": "8cc4493dbcbfdfd214fa09f10ef5cf5d7ee9d937336fb613092f3c3bb4709549",
+    "internal/gateway/input_idle_result_test.go": "c1f53731a87ce77eb4153f587aafa6036f1aaef2775d429fad32318384fb4b2a",
+    "internal/gateway/mock_worker_test.go": "4cc0511876d86dd41562a06a1081ca418d42c9c7a89d52de52882b7bd43b1cac",
+    "internal/gateway/normal_end_test.go": "c3d7f01c299c75e03d0f636cda315b2164540af0cbab5bd6aeb4f0be8ee054c4",
+    "internal/gateway/progress_baseline_experiment_test.go": "cd9e441fd48a52536576d99330d5d7df23740685f255f62369475f09b9647efd",
+    "internal/gateway/progress_integration_test.go": "9480584474ccb68b230a6775d99d58d81616c6e7894f6dde21692b04f6eb862c",
+    "internal/gateway/progress_routing_test.go": "dbd9012306ae1d3cb829222180be1d64b1556189d3230dc7a826af354cf54eef",
+    "internal/gateway/protection_cleanup_experiment_test.go": "e887afbb1ab6e85edd187c812c3197c4096e29ab19ced1ade8798b98a4ede9ac",
+    "internal/gateway/read_input_test.go": "a8174089e0df6006686ca60092137cadc9abd3b88aee5a4d7e576b86571d9eea",
+    "internal/gateway/resource_cleanup_test.go": "381dfcb634aad577ee6a76a2ceb0a79f741d530fdd67bce9aa32da4faf61d9fe",
+    "internal/gateway/result_write.go": "c4857e2586727457bcd38dd6fd8dcb0b4e214bcbca3484bd0427b3a71069437c",
+    "internal/gateway/result_write_experiment_test.go": "7ba5ae547468efe125494336e01e99597b1befc9772a01da0439d418093306cf",
+    "internal/gateway/result_write_integration_test.go": "3ff166cfa698ef2fcef6d8509a3a880ca489a400dbbfd2239c2c694f8d31de52",
+    "internal/gateway/result_write_test.go": "118618116884f84b87f13a43db2d76b153c22fd4b0df33d080aa11d586c5589e",
+    "internal/gateway/send.go": "dd499b61fb2fb7f5268b51c5f856d755d4a48b34300d35cc68bf6f9fed4c1163",
+    "internal/gateway/send_test.go": "99511f81c61943cd8ddc32f219587b1b6a087f892029cad644cb45e9c335e467",
+    "internal/gateway/session.go": "61d64b53a0b11875c4e746d48e7986a86d830a13c21e0d636d102b7d5e3e870e",
+    "internal/gateway/shutdown_stream_test.go": "16746cf845e38a6f72a4e71a33fed2bc5388d4d0ab99c53e37f83b2787c7e347",
+    "internal/gateway/slow_reader_experiment_test.go": "a6f02888da9f0a52bb10aab79e3748ce99650848c1e5121f6e7949912c775a67",
+    "internal/gateway/slow_worker_experiment_test.go": "1f64a1d05c5e7e1e7684af8d5dd7bcd6ea75434eb0ce8879780d2903e5493966",
+    "internal/gateway/snapshot.go": "2af18621f6fea505cb6e0299bfb5705665ef95a299cfde806cd02c6bc567d58d",
+    "internal/gateway/snapshot_test.go": "5cc150ee9927f115b36fdb86ca7557e24c9c3b5a41cbed3343e80d92d1b5f67a",
+    "internal/gateway/stalled_worker_experiment_test.go": "8d99c872c0e9a63f2b7d1052f409e4d8f4dd5886400bd9224a6b0214829e243b",
+    "internal/gateway/start_timeout_test.go": "e1bdd23b84e4f8092373fcbac57ea7b6411cd4821705edc3d9b93a97769c1eed",
+    "internal/gateway/tail.go": "28053ca665c70e6c0011d5a1d0ed5f899bb49ab51642bb26ad8cb354cd6d7554",
+    "internal/gateway/tail_config_test.go": "c4891e141157b6d6de8338a53528f0784aa1aed3a28545075cc5d8082e8a5554",
+    "internal/gateway/tail_integration_test.go": "1a7ec9abed768d50f907569a7d5f736e5944fe1635adfeb8cd0d73c68cb26381",
+    "internal/gateway/tail_stall_experiment_test.go": "81bf3e56ddebada2ff7a1ba4f0c3e561eabf25f011549a4cfbad15319ae9160a",
+    "internal/gateway/tail_test.go": "f0413c578bc08cdeacdcf850edfd96b97b342d6cdd38f510cf0066a27f6780d3",
+    "internal/gateway/tracker.go": "a066243161406545220f69e76019d02428673f51b73540c45386d2574fc144dc",
+    "internal/gateway/unresponsive_close_test.go": "1205d9658fdf85d8a4c73c87bc06bad26b8784493f0514c4c16b0f6724410553",
+    "internal/gateway/upload.go": "7565131b91a28ffcb47553fc72e7c6bdf57a1ebea3872af35f129f78e277b2a2",
+    "internal/gateway/worker_failure_test.go": "ecacbb660e75d7d494f1dc41b7faf749ace4b88135c06a37afa2504b19883c2a",
+    "internal/gateway/worker_pause_experiment_test.go": "61ea060f0394e0dc4e6059ff99ef94a7061afab82725346f7d1b7f692fde07f4",
+    "internal/gateway/worker_pool_test.go": "b011b163f70a1c49f3d058a364ad3be1bed3775f8ab6fac05564d73d12d2cde5",
+    "internal/gateway/worker_routing_test.go": "8a3f31e518199c98d38d71e64a54aa87c4d562edd3991d615d76defccefd43a1",
+    "internal/gateway/worker_send_timeout_test.go": "01493e99a3610f8cab283012e90944d11692e90c8483e84c3093d0b95ea42b92",
+    "internal/loadgen/batch.go": "2f8eea4fedd87f62d9ba888ffb4ada06af241b69c8981460a87da9aeeebfc95d",
+    "internal/loadgen/batch_config_test.go": "638f90dece23059fe3b6f22e0c85d0083a85d6223b1a1dff4176d8a505c60280",
+    "internal/loadgen/batch_test.go": "ee63633ffdb3ba2eb19d4dad0a56092971da4b7cf2b75977fb343e332a034af0",
+    "internal/loadgen/gateway_recording.go": "dc19ecf40ef22ef95a65c456b29377425a0ae8491c2d7e14e05104ae60a60848",
+    "internal/loadgen/gateway_recording_json.go": "e435b1ad0f2be46e1397dae0897f11681be97d6d2c36957b35043769770578c9",
+    "internal/loadgen/gateway_recording_json_test.go": "22c71fa385180367717f1d7bc1702921bd4ae8654545298247fc3130344960e3",
+    "internal/loadgen/gateway_recording_run_test.go": "cb7d5a39271c271f9730342b54520f36700c7447f27138818d7b18167e1ea56b",
+    "internal/loadgen/gateway_recording_test.go": "659a6d549df92b1e4d5d70bde68db5a0054eb8f08f05658bd33c4de0772c5288",
+    "internal/loadgen/gateway_sample_json.go": "f6ffa4220b794db981569e4b1e0e4b197d115c86e3ed7e69dee7289b5b05cb71",
+    "internal/loadgen/gateway_sample_json_test.go": "0bb1128e34a9e0559d69e25c42b386e25b0639f49abfe9d1b60cfa2222441947",
+    "internal/loadgen/gateway_sampling.go": "fa253d61540f35891ec27253fbf1604cb798358150242c57a9bd8f6ea448c34e",
+    "internal/loadgen/gateway_sampling_test.go": "1054fa7cc8fae496ee7d569e7c82760f75407d45dc3486ac92f09ee9ef43dfa7",
+    "internal/loadgen/gateway_snapshot.go": "1423e0f5538e1bb07da8032deda1eeb2e60ff80816f45e9652e4d5037aa5f621",
+    "internal/loadgen/gateway_snapshot_test.go": "cc3271b3fec0c915463368f9b7a6a4d590ffd8a70215194ae079373e154b7a06",
+    "internal/loadgen/json_output.go": "4186f0e10d9564725e17bd5c761a7ca655a407826c04dd651f7d536822827b1f",
+    "internal/loadgen/json_output_test.go": "3593883af4830e62d6da4077ff65060cc5e758eb8a150050abef87f660cba531",
+    "internal/loadgen/recorder.go": "06f5b940cfa5b994e48e6292bad1d5311ad8f58f541380954efb1ac199b0813c",
+    "internal/loadgen/recorder_test.go": "9812d4ffe30adcf697775b1a78da1606d150eb09dae03b2b89b3a0621bffb868",
+    "internal/loadgen/sampling_loop.go": "0308eee32f85d982c6a09c24752ef42d05c7d13a9819204ee7ea319dc6240e17",
+    "internal/loadgen/schedule_json_test.go": "5e75d9df750b6521351c1abfa2bf4c1d8594449cd084da135a861baad025d6a0",
+    "internal/loadgen/schedule_recorder_test.go": "2aa3e42aafa1b53483f75b13c6a487089ec76b879569854317ef005f8803fcfa",
+    "internal/loadgen/session.go": "f1abe8b309018d1db81e4b48727abeaa29d13e59de15e78f788a7862172a10db",
+    "internal/loadgen/session_test.go": "d74db0f50dd726ddd60a5e42c47df055bacd9742b038a8b266213a01cedd4150",
+    "internal/loadgen/snapshot_recording.go": "bc627d04fdf3676a79f51e0e3fc5d91c7e22eb1c3403019a2011a59392ffaaf9",
+    "internal/loadgen/snapshot_recording_json.go": "902c5aefbdc849ab735dd1b4da713dc236cce9ae1e0420c6d31a33c8562b9c5b",
+    "internal/loadgen/source.go": "745448a03b85d5ce785e898632838446ef81b5d21ac1e07cb789357ffd415710",
+    "internal/loadgen/source_test.go": "7ba0f6e54a1ee3c6f1d71f02cea3b258e0bb1e14f4d31010dfc1d720a23a6850",
+    "internal/loadgen/summary.go": "9a2653b522c4d2b6cd051639ffe8125b9ea5920651d26028c7aeee31951f2d17",
+    "internal/loadgen/summary_test.go": "391b6923decc8a2ca038300fc905438594f24fdefff0e457c2b31b3eee93aaa4",
+    "internal/loadgen/worker_recording.go": "8141b25d9c3a8781692f5652110f0a81d3e2f3353998a20a003aa7152122cf35",
+    "internal/loadgen/worker_recording_json.go": "4c7bcbf7b6e8450012bf274b35ac1d61ddcfb76c4eab018dcf27a13b1eb27a99",
+    "internal/loadgen/worker_recording_json_test.go": "e073c33c56fd0a3bb9396dce918889dc756e2ddc9df472c9a7260ff5fe332aed",
+    "internal/loadgen/worker_recording_run_test.go": "b439045122922170b3c3fe194717831809d900f8eda670d12f290f130580be97",
+    "internal/loadgen/worker_recording_test.go": "cc2256b84cfab15dab1cc2ca73acb5d39229c7a2fe98080a65a059778bb0b571",
+    "internal/loadgen/worker_sample_json.go": "7bb5394b0c96f95daba1d3d909f5bd6b2450a4883999ce0f512f857cbf9f5beb",
+    "internal/loadgen/worker_sample_json_test.go": "e86791074aae30817ed8accb8971388f8bf79851953df30e038ca0536b5296c7",
+    "internal/loadgen/worker_sampling.go": "b66e6f1ff530dfccc31ec04245404d95a99af406fe3fd3d6de68a749ca07b7df",
+    "internal/loadgen/worker_sampling_test.go": "742c168f6045564bdfd65ad2cc7e10c33a0a5c38798efaf06bb7520f9b5088f5",
+    "internal/loadgen/worker_snapshot.go": "2199e135b86f90acbaa496d77c6480155ecb30eac785e36363b2f2338b06fe58",
+    "internal/loadgen/worker_snapshot_test.go": "368d75bed98190dddc880d471915143fb53d58f36f5a66987b3e86eeaeb4ffda",
+    "internal/mockasr/constructor_test.go": "321e0fcb12806f3e9e19d8866da89f358bf3f36c25ff492832bf862143333c87",
+    "internal/mockasr/pause_test.go": "a34def39531a4ec061f61b9a5c2afe123a5997566a20ca150b3abf774f36617f",
+    "internal/mockasr/processing_capacity_test.go": "bb511c73e0a952e7d5a1336a0d48b61bd34de6f32bc9b977116b2543d2ec6540",
+    "internal/mockasr/processing_slots.go": "77c02ffaf45bd46fd91af9460c63d7aad9d733a4fe2d0542669ff1499b89437f",
+    "internal/mockasr/processing_slots_test.go": "9c54576cd7b6f8e06fdfaea054fbff1a9bcdaf55259d12e9dbe42ab77bea5463",
+    "internal/mockasr/processing_snapshot_test.go": "1aa433b2846f1f80b0e4d50f651ef463274f2360bdd5fb8acab35a9bdfb7b815",
+    "internal/mockasr/progress_test.go": "bff87321a4e6ce0f9fa909742a43d807e141b40b7657c6288deadd99e444f833",
+    "internal/mockasr/snapshot.go": "a09b4f2d9c2ce8a658867d8690b500f36a8b5b454edc3e7959a503073d6c7a96",
+    "internal/mockasr/snapshot_test.go": "29ed5c3999bd1bdfd09feb8269c9743a20a5505cede5925e6746b672dfec33cf",
+    "internal/mockasr/stall_test.go": "cd63802075ac51ec16dd8756a084905c5f63290c4a2881980f1d4603171e1b0e",
+    "internal/mockasr/worker.go": "4c1b37f3a5961f730d86b7df3c4166a18d58aca43316223f62d278d12050e1a1",
+    "internal/mockasr/worker_test.go": "8fec412437a0cf9612f64545c01def79ca4c064a39d3cdbd79b70aaf02b7a03f",
+    "internal/workerpool/round_robin.go": "b48aeb9fa48177b3e5c3f1c558bdf61a4cecf42d20ae09fb967a2d7a01fb6371",
+    "internal/workerpool/round_robin_test.go": "fcdfae2c97e1859444f75cd05eb030fd94a123c0207561186f865465ff367210",
+    "internal/wsclient/client.go": "4ed80ad8b6235527e9cc5ee78eb360790b826b72ea7ceae58278898419c51661",
+    "internal/wsclient/planned_write_test.go": "c723fd208b2767534bfc4251c8dae6eae544ad721aab40325f0faf2db5506145",
+    "internal/wsclient/receiver.go": "2c9beb9695a27974a011a993b61a0c9e172a3410c9b3833505da4465ddb49a41",
+    "internal/wsclient/receiver_test.go": "2711223f564f9c499b0662727873126d031223fdbb638f691d3de0a7f6c479ef",
+    "internal/wsclient/sender.go": "e5f66093523328099c95240cd06c2dab13363e2e2881436621fd4c8b1dd21a3d",
+    "internal/wsclient/sender_test.go": "b8869cfab223cde121699614ea55b944264fa7bf0ac6d85fdc47c9e64cc2e8f9",
+    "internal/wsclient/write_observer.go": "24ae84debcadba609bbf0afca2ca967ccb0ccc6cbea1094574fbf0d0a0a94ab1",
+    "internal/wsprotocol/protocol.go": "744893ed3b9cfd381ef456adb5e8e20b4c2906a0e0ad7ef2a2c107b30939316a",
+    "proto/tide/asr/v1/asr.pb.go": "3ca21427d90a92607411ca201b441bb51754c8db6d734f643aa8810b99bec911",
+    "proto/tide/asr/v1/asr.proto": "f849ea264fa53bd7c1a7f9240c5ba87500301e59b497e76d4ff735dfd9ef0797",
+    "proto/tide/asr/v1/asr_grpc.pb.go": "f3f4f45775d909c068a680574b158d4ecc0e431ba93c1521665c35dbd2eaf673"
+  },
+  "sampling": {
+    "gateway_interval_ns": 100000000,
+    "worker_interval_ns": 20000000,
+    "request_timeout_ns": 1000000000,
+    "duration_ns": 40000000000,
+    "readiness_timeout_s": 2,
+    "max_bracketing_success_gap_ns": 500000000
+  },
+  "script_sha256": {
+    "run_joint_observation_baseline.py": "80462d22e0df318e337920f7ffd7da8e32bc97f64e403ad9d3225caa9416808c",
+    "summarize_joint_observations.py": "25bb4ffd596192ed60167009c283b1afd41b96664a3a6b65591eda564c8036e5",
+    "summarize_gateway_observations.py": "1cc1e46f9baffd9a689ed13b1815e03f1235aef0f60f4d1a8b00b89a889f65cb",
+    "run_loadgen_baseline.py": "2e9aa062389c6229fdfcdf3c1d134c414fbd4d93af70e288489de7aadf3d2e97",
+    "summarize_pressure_sweep.py": "cbd889487329f71b449754da8f9422c05020f694c3731b5489a002be87b5bcce",
+    "run_pressure_sweep.py": "938627d4d544edaf08a76ab3fa49279c9baf958ca8fbd18a00e38df2f7efd89b",
+    "run_boundary_study.py": "6893ef2fdba7810ef22065c07fd742d68de5cac762aa28332be4c9655c40f8f3"
+  },
+  "binary_sha256": {
+    "asr-worker": "ae6190e1a600aba27d99815d8c888866776bcd7429578910890d84e3d7925913",
+    "gateway": "f0325dcc08ec26b81c3c5944fea52f83ebe161a94bd5c42e03e414ceafc0cfa3",
+    "loadgen": "625a08cd22400b846bf7ced5b9dbc08e3d2a884446ffd92e9b5583ec3dad5c8d",
+    "gateway-sampler": "02a31370c9a3951296115aa6f23157de7c8c6b80e7e5446271578bea485cb0b0",
+    "worker-sampler": "aaff1e173ab0270f05d56d2ac3f39a99913c51d85f079e6334923f54d9277e6b"
+  },
+  "worker_address": "127.0.0.1:56599",
+  "worker_endpoint": "http://127.0.0.1:56600/debug/worker",
+  "finished_at": "2026-10-02T01:52:40.762520+00:00",
+  "artifact_sha256": {
+    "gateway.log": "6cd954c9e47ce888873e4f3fe3fdfd825129b669149fafadde4c4f051df2119e",
+    "r3-n9.log": "09ff372fe19fb698e648c928b1fab4f0e564403674ea937803082985659b1d32",
+    "build-asr-worker.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r2-n11-worker.log": "898a083b6610b143d7bf626122381093e659062c49aa8538e9e0473c8fa5c3b4",
+    "summary.json": "c46c7db39d3af5eb94fae90d143f384f50c811859cfc1f2ba4d049156da99cc6",
+    "r2-n9.json": "d18e2d1217b81f5f4feb29d0bf4a9dc1987a443e16051b7161d7cedfcc5205db",
+    "asr-worker.log": "41690062f3f8b1da8601e8a9e4c6b4b1f583a617987b9a180d905a293ac8c283",
+    "r1-n11.log": "935031b88b786254628ad8bcf118cb7d6b54ccc8ef24ad97c6f3344d50b785df",
+    "r1-n10.log": "2499b2190c8986baa7100704f4ce1a882d7d422de6965a8fdea9d2cf2fea0848",
+    "warmup-worker.log": "fa590c2ea9aec48abae746065f314811a8d3e7aa31264be4c0e6cfd68cde4acd",
+    "r3-n11-worker.log": "551a6d04291d794a36d76d2ff5ea20ffe7de0bd3a067adb7530d6e41ce8295cb",
+    "r1-n9.log": "ff3a00b9e4cc3945ffd3fd72f5d64e13c9b2395492df7a12678d7881b80cd6f7",
+    "r3-n11-gateway.log": "efaeb74139483db9dcf37c4278d1e57d668467292cc867dcfc0b499999af87ce",
+    "r3-n9-worker.log": "b057632053bbb86c06d17b656d080249aef620674983b11fd7507638ffc51c4b",
+    "r3-n9.json": "c81045f63b043824e86f5d89b802ca4fce88af2741788ee1febb4bba97635446",
+    "r2-n11.log": "b73c4d94406963980b319c8a5abb0cd85c076faca7f9d58a90faa9714037effd",
+    "r1-n11-worker.log": "3c354ff365ba7331c944b2466a7e3c96dadfcee12efd0019b22e2bfc87b45b7d",
+    "warmup.log": "c04e86e152e03c3b4be5552ce711e91758e0ce15be81df296fb1062ee6316a81",
+    "r1-n10-gateway.log": "81d6a7d3506dee57d4f40878144646aa32ccd0b6693f65a7b767f84c275358d6",
+    "r2-n10.log": "5df73da16857eb517f57fc3e808074e8bc611fa9257bd6a1d3d628c437229d01",
+    "r1-n10.json": "799146228e03e7ccc1896274497933894a5ff0e0332b613786ebbbece34f2716",
+    "r1-n9.json": "06e62dba3784572468cef6340c5fa8fc450cc148020267aaeb1de24fe133a1e5",
+    "r2-n11-gateway.log": "56a0891865c7cf676ffdadcf63fb85d8f53ab24192dd4722b78d7b263977adf8",
+    "r1-n11.json": "d551de0191350a60533dd3e67445db15b9c5cb0343c24092973fc8838dbaf45d",
+    "r3-n11.log": "33cbb3be3b9f689b2e2846c05ff8eff159611869755387cb265c201f8d3af172",
+    "r3-n10.log": "7f5a9afb4785fa9fc76a8c918af1a4db7f2413e9b03eeccd7280970d60575771",
+    "r3-n10-gateway.log": "cb033e309f9f9694050f59d10703b0adf6f80d4ac59303750c696929113aba12",
+    "r3-n9-gateway.log": "2ceea78f8347f90cc0b9e525d691f1b42813b534634b03ea6abdf59ce27e8791",
+    "r3-n10-worker.log": "059e799e0f3702c3ea858d28866a9409e6567154035bce4132f388c24d05a628",
+    "r2-n9.log": "7982c3617094aaa3b8ebac2f951d397f1aefb8009fc0a0833dc36439aca0a9ed",
+    "build-worker-sampler.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "warmup.json": "aa44df4a6f67a8f23d6439a9d6056c4a1057939655e9778efaf18145b5013ab2",
+    "build-loadgen.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r2-n9-gateway.log": "432eeb5f9c100ccb2f8435710c38d9f23cf0476acb8459bdb934ecb6d0e66360",
+    "r2-n10-worker.log": "4d3be5ff0809c03bbb3b5d79f8a69caa077da25f98b1e8235fede32ce5293f6c",
+    "warmup-gateway.log": "031b05796730ce2af007943cac51065ef13846c4894245a3dc69b5ca5ebfba21",
+    "r2-n9-worker.log": "a2d053112abeda4d000a5fa500cfe81be79fe4b1bda140b71ef6746a55877755",
+    "build-gateway.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r2-n11.json": "a2b74722162ae15cab86feecfb790adaed8667442d72cb2bcc810b10bbdc9ceb",
+    "r3-n11.json": "8d315250e6d983624619cc49559a738303210b1737c94aa065245a7a34e6ee5c",
+    "r1-n9-worker.log": "3d076d4c3a5d5f9a924187039cf7e45dd6d72191b0ada03bc513e1802539c7fd",
+    "r1-n10-worker.log": "dc6ebfd4b332fad4ffb16ddb8d29aee09687f4cc5d8025980cf928a3136f6ca7",
+    "r2-n10.json": "75ae623b6b5b867416ac42564fa35710a6c4ed5f7a22ae9b3a7ebdea0b2a3525",
+    "r2-n10-gateway.log": "066b08e86d92fff284bdac83a4ffdb1a50008c7a26f5b5dae7bb6d99d9fe3839",
+    "r1-n9-gateway.log": "784f56a3523f57d52978a7ef5cfb447bf99a596d7916bbd8d49ec3de79e81bcd",
+    "r3-n10.json": "ba6cca61c1a5eff51998f2069dc11d0b4b55c3ec8cc957e22246159645c1b677",
+    "build-gateway-sampler.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r1-n11-gateway.log": "8a2acf3dd728ba772bbd503824e6c2b7051b2979e1aaeb2782ad7d911b3bc04f",
+    "r1-n11-worker/manifest.json": "c59d1889024588463a1a3a5991349f44da5c181afd77407c16be48fb1b635cfc",
+    "r1-n11-worker/samples.jsonl": "9f17822e16f08aaf934b22f08bc7044a9fcbbead525e9b63792da47ec4ce277f",
+    "r1-n9-gateway/manifest.json": "57418ffd2c5f1097b83c243a9699c9af7fe0a0f1da952bec32bc2b2532a9558b",
+    "r1-n9-gateway/samples.jsonl": "ba03fb242c1a729363611ce662950f8285a4590a8e6ab48bf5f6496eafd0755f",
+    "r1-n10-gateway/manifest.json": "160f03dcfe2d4190aacb83da389c57a91ed2c1bfdb1b6d999c3cb34256cd0b1a",
+    "r1-n10-gateway/samples.jsonl": "d90c14c7e4a2bfaf45e0758220e48a724f9f10903f45ca0ca9bba1f831d1fc73",
+    "r1-n11-gateway/manifest.json": "5ee9dfc8df0dc23d4122a5360aabfb7676f8744c6e1f293e1cf8591a4c21bc0c",
+    "r1-n11-gateway/samples.jsonl": "678318c9063db1c166caf03f1641de7c86d9f25163ba3cc47422d0241c98f820",
+    "warmup-gateway/manifest.json": "1b88c59c1e3f0d531dc8bc3ee8ffca1808d3be3b4c5712c0a6fe5762358d3aac",
+    "warmup-gateway/samples.jsonl": "5609315d541c39626dad75cd4eaad202d35746348da72d0221acc7fd0544f852",
+    "r3-n11-worker/manifest.json": "2a086bc043709cc87e4cae3d39d1b1be7c06fa93a16d168339531c2e50e9df5f",
+    "r3-n11-worker/samples.jsonl": "650d9e78744fedbe93e70b6e167361658b3ae53e06b68a7b2faadcb5437e34b4",
+    "r3-n9-gateway/manifest.json": "3ef35d93b6b11ad0ef23b305cd7494fe6e1471197ebe10e968a82598ac01f45f",
+    "r3-n9-gateway/samples.jsonl": "c003380e36e5882d989c3b863af6fdc128d9a0026df3a16beadea85195d374a5",
+    "warmup-worker/manifest.json": "5ce18af8d882f27e94454edd060bf860ef0423f28b611215fb684e42f6dfc835",
+    "warmup-worker/samples.jsonl": "ce3bf6376da8b5d3fa5cfe9ecad8236573ba6cf5ae9037203f981c6851c59e07",
+    "r2-n11-gateway/manifest.json": "f294837c89e32e5e33ab3b6d6d4a186da5ae3f5e330db7155e517e6a115558da",
+    "r2-n11-gateway/samples.jsonl": "dbd883df75845931f56a29004ae5a9d510d3be7a933613f195d8ba064659c3a5",
+    "r2-n10-gateway/manifest.json": "f475f52288940bdace752179f136441ef020f797c322b679d185adda2ec30332",
+    "r2-n10-gateway/samples.jsonl": "f2927fd9741eeaa8e9304ecff33b9bbd511b1cc8cb7f715809a449947e3f4031",
+    "r1-n9-worker/manifest.json": "8bc6d9b57e1bbcf7ad54b87807235e6372c4a70ab84702f4de66196282ccad3b",
+    "r1-n9-worker/samples.jsonl": "ea8cd67b114df5cbb1b5657a0eeb6bf2246c25fe0ce38ec1849a78be307df7e0",
+    "r2-n10-worker/manifest.json": "48cc1928d187d475ec0f7e0f731a1cd732037bc202dccbd7556364f4274baabb",
+    "r2-n10-worker/samples.jsonl": "6ea65fa50996ddaf2bb5c94f00d42dc319165136736e760862694106cc0f1e93",
+    "r1-n10-worker/manifest.json": "918b1a6ad12773518a8e46d12768b32eb4ad8f81fb8ef799125ab43e0502df59",
+    "r1-n10-worker/samples.jsonl": "2f87d6259ad72f32c05729bdd44fb3011017cf3aba9a1e901849a5138118debe",
+    "r2-n9-worker/manifest.json": "f9ec974e6db6c85ee74d97d17bbbfe63958578a9511213a22f45381e7d407a81",
+    "r2-n9-worker/samples.jsonl": "a22a442e9d4d42b31323b04b011eac9c431703c853917132a4dfa93623f17da2",
+    "r3-n10-gateway/manifest.json": "6e9ec630a6b0f3e752d25cd18d14e099b8986b88dd18faf8497d8632e4c66440",
+    "r3-n10-gateway/samples.jsonl": "eaa92e4369f4e86d0b1515af5f7c3114cb78328159d26e245fe61bbf93caf65d",
+    "r3-n10-worker/manifest.json": "b09387b9927396988ecdb2960ba2fffbd68849f99887be4fd1ef5edd22899aa1",
+    "r3-n10-worker/samples.jsonl": "7c99d9736c7316c1b2811eb390a365dbd2570f37a1624bdff165b854dfeaabdf",
+    "r2-n11-worker/manifest.json": "e62ed23c67714b1b6abf241931d4380b3c13556fc764d1ee8957cc5789f9b73e",
+    "r2-n11-worker/samples.jsonl": "545806d01e4ba225494708a01301ec93cb7bd37d8d59b7bf63ca785007179f01",
+    "r3-n11-gateway/manifest.json": "b11225898c3805319f367b692b832dc81953b0c366dd7f889241e5d72ecd721b",
+    "r3-n11-gateway/samples.jsonl": "e2b6fe25262d51bf80552e6708acb438e1a77210a8a3433758c0b13ab42a76e8",
+    "r3-n9-worker/manifest.json": "b8a31fe676719b539ec37395af82739c932211f1f3397ff2c39b94b35a8bc37f",
+    "r3-n9-worker/samples.jsonl": "b85818cd390cc36b950ebff08496e1396649d7a9131f5ccea6918d2bfcb2becc",
+    "r2-n9-gateway/manifest.json": "bf535e1fc9716bb0082797ac00621de63cb7ed4b8e6a895c1ff83fe1aab1c2d5",
+    "r2-n9-gateway/samples.jsonl": "a1606a607ddc95ac4b24e8dd9c675b1832651cc057babca1d39783e5df63fe89"
+  }
+}

@@ -1,0 +1,1 @@
+time=2026-10-02T10:20:17.711+08:00 level=INFO msg="starting worker sampling" url=http://127.0.0.1:58674/debug/worker interval=20ms request_timeout=1s duration=2m30s output_dir=/Users/can/src/golang/tide-personal/docs/experiments/results/boundary-extended-2026-10-02-run2/r1-n9-worker
