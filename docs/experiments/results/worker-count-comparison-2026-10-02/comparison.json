@@ -1,0 +1,403 @@
+{
+  "experiment": "worker_count_comparison",
+  "groups": [
+    {
+      "planned_sessions": 8,
+      "single": {
+        "planned_sessions": 8,
+        "attempts": 24,
+        "outcomes": {
+          "completed": 24
+        },
+        "completion_rate": 1.0,
+        "batches_meeting_criteria": 3,
+        "all_repetitions_meet_criteria": true,
+        "tail_completed_only": {
+          "samples": 24,
+          "min_ns": 17398333,
+          "p50_ns": 50534625,
+          "p95_ns": 91306916,
+          "max_ns": 92368167
+        },
+        "audio_bytes_written": 15360000,
+        "planned_audio_bytes": 15360000,
+        "failure_errors": {},
+        "max_audio_schedule_lag_ns": 19181875,
+        "gateway_observed_peaks": [
+          8,
+          8,
+          8
+        ],
+        "gateway": {
+          "samples": 1178,
+          "failed_samples": 0,
+          "window_successful_samples": 587,
+          "max_success_gap_ns": 125525000
+        },
+        "workers": {
+          "worker1": {
+            "samples": 5465,
+            "successful_samples": 5465,
+            "failed_samples": 0,
+            "window_successful_samples": 2745,
+            "window_busy_samples": 2334,
+            "window_waiting_samples": 2059,
+            "waiting_peaks": [
+              7,
+              7,
+              7
+            ],
+            "in_use_peaks": [
+              1,
+              1,
+              1
+            ],
+            "max_success_gap_ns": 39310000
+          }
+        }
+      },
+      "double": {
+        "planned_sessions": 8,
+        "attempts": 24,
+        "outcomes": {
+          "completed": 24
+        },
+        "completion_rate": 1.0,
+        "batches_meeting_criteria": 3,
+        "all_repetitions_meet_criteria": true,
+        "tail_completed_only": {
+          "samples": 24,
+          "min_ns": 16624792,
+          "p50_ns": 31416292,
+          "p95_ns": 52598958,
+          "max_ns": 52626750
+        },
+        "audio_bytes_written": 15360000,
+        "planned_audio_bytes": 15360000,
+        "failure_errors": {},
+        "max_audio_schedule_lag_ns": 14765000,
+        "gateway_observed_peaks": [
+          8,
+          8,
+          8
+        ],
+        "gateway": {
+          "samples": 1178,
+          "failed_samples": 0,
+          "window_successful_samples": 587,
+          "max_success_gap_ns": 114699000
+        },
+        "workers": {
+          "worker1": {
+            "samples": 5493,
+            "successful_samples": 5493,
+            "failed_samples": 0,
+            "window_successful_samples": 2750,
+            "window_busy_samples": 1197,
+            "window_waiting_samples": 892,
+            "waiting_peaks": [
+              3,
+              3,
+              3
+            ],
+            "in_use_peaks": [
+              1,
+              1,
+              1
+            ],
+            "max_success_gap_ns": 34010000
+          },
+          "worker2": {
+            "samples": 5494,
+            "successful_samples": 5494,
+            "failed_samples": 0,
+            "window_successful_samples": 2750,
+            "window_busy_samples": 1193,
+            "window_waiting_samples": 901,
+            "waiting_peaks": [
+              3,
+              3,
+              3
+            ],
+            "in_use_peaks": [
+              1,
+              1,
+              1
+            ],
+            "max_success_gap_ns": 34126000
+          }
+        }
+      },
+      "completion_rate_change_pp": 0.0
+    },
+    {
+      "planned_sessions": 9,
+      "single": {
+        "planned_sessions": 9,
+        "attempts": 27,
+        "outcomes": {
+          "completed": 27
+        },
+        "completion_rate": 1.0,
+        "batches_meeting_criteria": 3,
+        "all_repetitions_meet_criteria": true,
+        "tail_completed_only": {
+          "samples": 27,
+          "min_ns": 18424667,
+          "p50_ns": 94531167,
+          "p95_ns": 181279250,
+          "max_ns": 191941917
+        },
+        "audio_bytes_written": 17280000,
+        "planned_audio_bytes": 17280000,
+        "failure_errors": {},
+        "max_audio_schedule_lag_ns": 38160167,
+        "gateway_observed_peaks": [
+          9,
+          9,
+          9
+        ],
+        "gateway": {
+          "samples": 1178,
+          "failed_samples": 0,
+          "window_successful_samples": 590,
+          "max_success_gap_ns": 119655000
+        },
+        "workers": {
+          "worker1": {
+            "samples": 5463,
+            "successful_samples": 5462,
+            "failed_samples": 1,
+            "window_successful_samples": 2744,
+            "window_busy_samples": 2643,
+            "window_waiting_samples": 2474,
+            "waiting_peaks": [
+              8,
+              9,
+              8
+            ],
+            "in_use_peaks": [
+              1,
+              1,
+              1
+            ],
+            "max_success_gap_ns": 56559000
+          }
+        }
+      },
+      "double": {
+        "planned_sessions": 9,
+        "attempts": 27,
+        "outcomes": {
+          "completed": 27
+        },
+        "completion_rate": 1.0,
+        "batches_meeting_criteria": 3,
+        "all_repetitions_meet_criteria": true,
+        "tail_completed_only": {
+          "samples": 27,
+          "min_ns": 17705250,
+          "p50_ns": 39001958,
+          "p95_ns": 60678458,
+          "max_ns": 61107542
+        },
+        "audio_bytes_written": 17280000,
+        "planned_audio_bytes": 17280000,
+        "failure_errors": {},
+        "max_audio_schedule_lag_ns": 9711875,
+        "gateway_observed_peaks": [
+          9,
+          9,
+          9
+        ],
+        "gateway": {
+          "samples": 1179,
+          "failed_samples": 0,
+          "window_successful_samples": 588,
+          "max_success_gap_ns": 107171000
+        },
+        "workers": {
+          "worker1": {
+            "samples": 5512,
+            "successful_samples": 5512,
+            "failed_samples": 0,
+            "window_successful_samples": 2752,
+            "window_busy_samples": 1372,
+            "window_waiting_samples": 1081,
+            "waiting_peaks": [
+              4,
+              3,
+              4
+            ],
+            "in_use_peaks": [
+              1,
+              1,
+              1
+            ],
+            "max_success_gap_ns": 40710000
+          },
+          "worker2": {
+            "samples": 5514,
+            "successful_samples": 5514,
+            "failed_samples": 0,
+            "window_successful_samples": 2753,
+            "window_busy_samples": 1278,
+            "window_waiting_samples": 991,
+            "waiting_peaks": [
+              3,
+              4,
+              3
+            ],
+            "in_use_peaks": [
+              1,
+              1,
+              1
+            ],
+            "max_success_gap_ns": 40650000
+          }
+        }
+      },
+      "completion_rate_change_pp": 0.0
+    },
+    {
+      "planned_sessions": 10,
+      "single": {
+        "planned_sessions": 10,
+        "attempts": 30,
+        "outcomes": {
+          "completed": 26,
+          "failed": 4
+        },
+        "completion_rate": 0.8666666666666667,
+        "batches_meeting_criteria": 0,
+        "all_repetitions_meet_criteria": false,
+        "tail_completed_only": {
+          "samples": 26,
+          "min_ns": 17996833,
+          "p50_ns": 731584042,
+          "p95_ns": 818191125,
+          "max_ns": 827920209
+        },
+        "audio_bytes_written": 18006400,
+        "planned_audio_bytes": 19200000,
+        "failure_errors": {
+          "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"": 4
+        },
+        "max_audio_schedule_lag_ns": 5866708,
+        "gateway_observed_peaks": [
+          10,
+          10,
+          10
+        ],
+        "gateway": {
+          "samples": 1180,
+          "failed_samples": 0,
+          "window_successful_samples": 602,
+          "max_success_gap_ns": 108783000
+        },
+        "workers": {
+          "worker1": {
+            "samples": 5478,
+            "successful_samples": 5478,
+            "failed_samples": 0,
+            "window_successful_samples": 2811,
+            "window_busy_samples": 2712,
+            "window_waiting_samples": 2761,
+            "waiting_peaks": [
+              10,
+              10,
+              9
+            ],
+            "in_use_peaks": [
+              1,
+              1,
+              1
+            ],
+            "max_success_gap_ns": 60634000
+          }
+        }
+      },
+      "double": {
+        "planned_sessions": 10,
+        "attempts": 30,
+        "outcomes": {
+          "completed": 30
+        },
+        "completion_rate": 1.0,
+        "batches_meeting_criteria": 3,
+        "all_repetitions_meet_criteria": true,
+        "tail_completed_only": {
+          "samples": 30,
+          "min_ns": 16927167,
+          "p50_ns": 38164792,
+          "p95_ns": 59780792,
+          "max_ns": 59949292
+        },
+        "audio_bytes_written": 19200000,
+        "planned_audio_bytes": 19200000,
+        "failure_errors": {},
+        "max_audio_schedule_lag_ns": 23814750,
+        "gateway_observed_peaks": [
+          10,
+          10,
+          10
+        ],
+        "gateway": {
+          "samples": 1179,
+          "failed_samples": 0,
+          "window_successful_samples": 588,
+          "max_success_gap_ns": 113682000
+        },
+        "workers": {
+          "worker1": {
+            "samples": 5507,
+            "successful_samples": 5507,
+            "failed_samples": 0,
+            "window_successful_samples": 2761,
+            "window_busy_samples": 1481,
+            "window_waiting_samples": 1188,
+            "waiting_peaks": [
+              4,
+              4,
+              4
+            ],
+            "in_use_peaks": [
+              1,
+              1,
+              1
+            ],
+            "max_success_gap_ns": 62055000
+          },
+          "worker2": {
+            "samples": 5508,
+            "successful_samples": 5508,
+            "failed_samples": 0,
+            "window_successful_samples": 2761,
+            "window_busy_samples": 1476,
+            "window_waiting_samples": 1190,
+            "waiting_peaks": [
+              4,
+              4,
+              4
+            ],
+            "in_use_peaks": [
+              1,
+              1,
+              1
+            ],
+            "max_success_gap_ns": 62026000
+          }
+        }
+      },
+      "completion_rate_change_pp": 13.33333333333333
+    }
+  ],
+  "limits": [
+    "20s fixed Mock finite cohorts on one host, not production or stable capacity",
+    "one processing slot per worker; total resources and sampler count increase",
+    "single cohort precedes double cohort; time-order and sampling overhead are not isolated",
+    "completed-only tail uses different successful populations when failures occur",
+    "per-worker asynchronous counts are not simultaneous totals or assignment counters",
+    "8/9/10 are single-worker reference points, not double-worker boundary estimates"
+  ]
+}

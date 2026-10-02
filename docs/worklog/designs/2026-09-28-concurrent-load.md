@@ -2,7 +2,7 @@
 
 状态：有限静音 PCM 源、客户端收发观察、单会话记录器、RunSession、有限并发 RunBatch、批次摘要及 JSON 输出已实现并验收；命令参数、共享校验、运行入口与文件输出已验收。已有多 Worker 配置、会话轮询与连接回收验收；已完成小规模完整链路基线，尚无稳定容量结论。
 
-当前小步：已完成 [EXP-005-06 边界细化与延长观察](../../experiments/boundary-study.md)：9 场短时三批达标，10/11 三批未达标；8/9 场两分钟有效复测共 34/34 完成，已生成有来源哈希的正常/边界附近/短时过载运行点 8/9/10。一次休眠影响和一次中断尝试独立归档。下一步同条件多 Worker 对照，尚无生产或长时稳定容量结论。
+当前小步：已完成 [EXP-005-07 单 / 双 Worker 对照](../../experiments/worker-count-comparison.md)。固定 8/9/10 场、每场 20 秒、各三批；单 Worker 10 并发 26/30 完成，双 Worker 30/30 完成、三批达标，双 Worker 全部 81/81 完成。18 批的采样覆盖和前后空闲通过，原始记录、配置及源码/二进制哈希已归档。下一步测双 Worker 负载边界；尚无真实 ASR、生产容量或策略优劣结论。
 
 ## 为什么先准备负载与观测
 
@@ -1865,7 +1865,7 @@ ManifestSaved=true 不能取代 Recording.OutputErr/CloseErr：可能成功保�
 
 ### 实现与验收（2026-10-01）
 
-开发者实现 [RunGatewayRecording](../../../internal/loadgen/gateway_recording_run.go)，本轮审查未发现需要修改的生产逻辑。助手新增 [文件编排测试](../../../internal/loadgen/gateway_recording_run_test.go)，共 5 个顶层测试、23 项叶子检查：
+开发者实现 [RunGatewayRecording](../../../internal/loadgen/gateway_recording.go)，本轮审查未发现需要修改的生产逻辑。助手新增 [文件编排测试](../../../internal/loadgen/gateway_recording_run_test.go)，共 5 个顶层测试、23 项叶子检查：
 
 - 前置拒绝 10 项：nil context/client、无效 URL/间隔/查询期限、空目录/空白目录/标准输出占位、已取消/已到期。均返回零结果，不查询、不在测试输出父目录中创建产物。
 - 路径保护 6 项：已有空目录、含旧样本与清单的目录、普通文件、目录链接、悬空链接、缺少父目录。均不进入查询，旧内容与链接保持不变，不自动创建父目录。

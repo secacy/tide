@@ -1,0 +1,2700 @@
+{
+  "started_at": "2026-10-02T11:34:41.377455+00:00",
+  "status": "passed",
+  "source_commit": "e1959c2259403298e05b3e41738f7d9d84ab8a25",
+  "tracked_diff": "",
+  "go": "go version go1.26.5 darwin/arm64",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83",
+  "cpu": "Apple M2 Pro",
+  "logical_cpus": "12",
+  "memory_bytes": "34359738368",
+  "environment": {
+    "GOMAXPROCS": null,
+    "GOGC": null,
+    "GOMEMLIMIT": null,
+    "GOFLAGS": null
+  },
+  "race": false,
+  "commands": [
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/asr-worker",
+      "./cmd/asr-worker"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway",
+      "./cmd/gateway"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+      "./cmd/loadgen"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+      "./cmd/gateway-sampler"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "./cmd/worker-sampler"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/asr-worker",
+      "-listen=127.0.0.1:0",
+      "-debug-listen=127.0.0.1:0",
+      "-processing-concurrency=1",
+      "-processing-delay=10ms",
+      "-response-delay=5ms"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/asr-worker",
+      "-listen=127.0.0.1:0",
+      "-debug-listen=127.0.0.1:0",
+      "-processing-concurrency=1",
+      "-processing-delay=10ms",
+      "-response-delay=5ms"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway",
+      "-workers=127.0.0.1:61838,127.0.0.1:61840",
+      "-max-pending-audio-bytes=32000"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=2",
+      "-audio-bytes=64000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/warmup.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=10s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/warmup-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61839/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=10s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/warmup-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61841/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=10s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/warmup-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=8",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n8.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n8-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61839/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n8-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61841/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n8-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=9",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n9.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n9-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61839/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n9-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61841/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n9-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=10",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n10.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n10-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61839/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n10-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61841/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n10-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=8",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n8.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n8-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61839/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n8-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61841/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n8-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=9",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n9.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n9-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61839/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n9-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61841/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n9-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=10",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n10.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n10-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61839/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n10-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61841/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n10-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=8",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n8.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n8-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61839/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n8-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61841/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n8-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=9",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n9.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n9-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61839/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n9-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61841/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n9-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=10",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n10.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n10-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61839/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n10-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+      "-url=http://127.0.0.1:61841/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n10-worker2"
+    ]
+  ],
+  "batches": [
+    {
+      "label": "warmup",
+      "planned_sessions": 2,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=2",
+        "-audio-bytes=64000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/warmup.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "warmup-gateway",
+          "started_at": "2026-10-02T11:34:45.479083+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=10s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/warmup-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:34:45.924032+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:34:55.929946+00:00"
+        },
+        "worker1": {
+          "directory": "warmup-worker1",
+          "started_at": "2026-10-02T11:34:45.482903+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61839/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=10s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/warmup-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:34:46.348849+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:34:56.371368+00:00"
+        },
+        "worker2": {
+          "directory": "warmup-worker2",
+          "started_at": "2026-10-02T11:34:45.485344+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61841/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=10s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/warmup-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:34:46.348919+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:34:56.371664+00:00"
+        }
+      },
+      "started_at": "2026-10-02T11:34:46.348924+00:00",
+      "finished_at": "2026-10-02T11:34:48.780164+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 99,
+        "successful_samples": 99,
+        "failed_samples": 0,
+        "window_successful_samples": 24,
+        "window_failed_samples": 0,
+        "observed_peak_active": 2,
+        "max_bracketing_success_gap_ns": 103772000,
+        "first_post_exit_zero_sample_delay_ns": 94065000,
+        "query_duration": {
+          "samples": 99,
+          "min_ns": 269792,
+          "p50_ns": 640875,
+          "p95_ns": 2612500,
+          "max_ns": 4229459
+        },
+        "window_active_histogram": {
+          "0": 5,
+          "2": 19
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 456,
+          "successful_samples": 456,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 110,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 0,
+          "window_busy_samples": 9,
+          "window_waiting_samples": 0,
+          "busy_sample_fraction": 0.08181818181818182,
+          "waiting_sample_fraction": 0.0,
+          "window_state_histogram": {
+            "0,0": 101,
+            "1,0": 9
+          },
+          "max_bracketing_success_gap_ns": 26053000,
+          "first_post_exit_idle_sample_delay_ns": 9211000,
+          "query_duration": {
+            "samples": 456,
+            "min_ns": 144083,
+            "p50_ns": 563667,
+            "p95_ns": 2407583,
+            "max_ns": 5613000
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 456,
+          "successful_samples": 456,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 110,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 0,
+          "window_busy_samples": 9,
+          "window_waiting_samples": 0,
+          "busy_sample_fraction": 0.08181818181818182,
+          "waiting_sample_fraction": 0.0,
+          "window_state_histogram": {
+            "0,0": 101,
+            "1,0": 9
+          },
+          "max_bracketing_success_gap_ns": 26839000,
+          "first_post_exit_idle_sample_delay_ns": 9173000,
+          "query_duration": {
+            "samples": 456,
+            "min_ns": 178167,
+            "p50_ns": 562167,
+            "p95_ns": 2460250,
+            "max_ns": 4880834
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r1-n8",
+      "planned_sessions": 8,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=8",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n8.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r1-n8-gateway",
+          "started_at": "2026-10-02T11:34:56.396203+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n8-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:34:56.419977+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:35:36.444351+00:00"
+        },
+        "worker1": {
+          "directory": "r1-n8-worker1",
+          "started_at": "2026-10-02T11:34:56.400222+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61839/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n8-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:34:56.420087+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:35:36.444723+00:00"
+        },
+        "worker2": {
+          "directory": "r1-n8-worker2",
+          "started_at": "2026-10-02T11:34:56.404141+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61841/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n8-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:34:56.420154+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:35:36.444817+00:00"
+        }
+      },
+      "started_at": "2026-10-02T11:34:56.420159+00:00",
+      "finished_at": "2026-10-02T11:35:16.419007+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 392,
+        "successful_samples": 392,
+        "failed_samples": 0,
+        "window_successful_samples": 195,
+        "window_failed_samples": 0,
+        "observed_peak_active": 8,
+        "max_bracketing_success_gap_ns": 104993000,
+        "first_post_exit_zero_sample_delay_ns": 3838000,
+        "query_duration": {
+          "samples": 392,
+          "min_ns": 199709,
+          "p50_ns": 760292,
+          "p95_ns": 2355166,
+          "max_ns": 5172834
+        },
+        "window_active_histogram": {
+          "8": 195
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1806,
+          "successful_samples": 1806,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 904,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 3,
+          "window_busy_samples": 393,
+          "window_waiting_samples": 290,
+          "busy_sample_fraction": 0.43473451327433627,
+          "waiting_sample_fraction": 0.32079646017699115,
+          "window_state_histogram": {
+            "0,0": 510,
+            "0,1": 1,
+            "1,0": 104,
+            "1,1": 94,
+            "1,2": 110,
+            "1,3": 85
+          },
+          "max_bracketing_success_gap_ns": 33114000,
+          "first_post_exit_idle_sample_delay_ns": 13172000,
+          "query_duration": {
+            "samples": 1806,
+            "min_ns": 178042,
+            "p50_ns": 623250,
+            "p95_ns": 2710416,
+            "max_ns": 11284334
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1806,
+          "successful_samples": 1806,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 904,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 3,
+          "window_busy_samples": 397,
+          "window_waiting_samples": 296,
+          "busy_sample_fraction": 0.4391592920353982,
+          "waiting_sample_fraction": 0.3274336283185841,
+          "window_state_histogram": {
+            "0,0": 507,
+            "1,0": 101,
+            "1,1": 96,
+            "1,2": 111,
+            "1,3": 89
+          },
+          "max_bracketing_success_gap_ns": 33111000,
+          "first_post_exit_idle_sample_delay_ns": 13173000,
+          "query_duration": {
+            "samples": 1806,
+            "min_ns": 159250,
+            "p50_ns": 610875,
+            "p95_ns": 2772416,
+            "max_ns": 11580917
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r1-n9",
+      "planned_sessions": 9,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=9",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n9.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r1-n9-gateway",
+          "started_at": "2026-10-02T11:35:36.508246+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n9-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:35:36.516947+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:36:16.569531+00:00"
+        },
+        "worker1": {
+          "directory": "r1-n9-worker1",
+          "started_at": "2026-10-02T11:35:36.511192+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61839/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n9-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:35:36.529374+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:36:16.572625+00:00"
+        },
+        "worker2": {
+          "directory": "r1-n9-worker2",
+          "started_at": "2026-10-02T11:35:36.513798+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61841/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n9-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:35:36.529440+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:36:16.579946+00:00"
+        }
+      },
+      "started_at": "2026-10-02T11:35:36.529445+00:00",
+      "finished_at": "2026-10-02T11:35:56.550364+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 392,
+        "successful_samples": 392,
+        "failed_samples": 0,
+        "window_successful_samples": 196,
+        "window_failed_samples": 0,
+        "observed_peak_active": 9,
+        "max_bracketing_success_gap_ns": 107171000,
+        "first_post_exit_zero_sample_delay_ns": 83480000,
+        "query_duration": {
+          "samples": 392,
+          "min_ns": 222417,
+          "p50_ns": 670208,
+          "p95_ns": 2409209,
+          "max_ns": 5894375
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "9": 195
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1823,
+          "successful_samples": 1823,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 910,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 4,
+          "window_busy_samples": 491,
+          "window_waiting_samples": 401,
+          "busy_sample_fraction": 0.5395604395604395,
+          "waiting_sample_fraction": 0.44065934065934065,
+          "window_state_histogram": {
+            "0,0": 419,
+            "1,0": 90,
+            "1,1": 106,
+            "1,2": 102,
+            "1,3": 96,
+            "1,4": 97
+          },
+          "max_bracketing_success_gap_ns": 34958000,
+          "first_post_exit_idle_sample_delay_ns": 20559000,
+          "query_duration": {
+            "samples": 1823,
+            "min_ns": 142958,
+            "p50_ns": 555875,
+            "p95_ns": 2088416,
+            "max_ns": 6867083
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1823,
+          "successful_samples": 1823,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 910,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 3,
+          "window_busy_samples": 398,
+          "window_waiting_samples": 294,
+          "busy_sample_fraction": 0.43736263736263736,
+          "waiting_sample_fraction": 0.3230769230769231,
+          "window_state_histogram": {
+            "0,0": 512,
+            "1,0": 104,
+            "1,1": 97,
+            "1,2": 101,
+            "1,3": 96
+          },
+          "max_bracketing_success_gap_ns": 34030000,
+          "first_post_exit_idle_sample_delay_ns": 21135000,
+          "query_duration": {
+            "samples": 1823,
+            "min_ns": 146000,
+            "p50_ns": 557000,
+            "p95_ns": 2061625,
+            "max_ns": 7444333
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r1-n10",
+      "planned_sessions": 10,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=10",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n10.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r1-n10-gateway",
+          "started_at": "2026-10-02T11:36:16.629090+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n10-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:36:16.639835+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:36:56.670226+00:00"
+        },
+        "worker1": {
+          "directory": "r1-n10-worker1",
+          "started_at": "2026-10-02T11:36:16.632616+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61839/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n10-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:36:16.652499+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:36:56.670568+00:00"
+        },
+        "worker2": {
+          "directory": "r1-n10-worker2",
+          "started_at": "2026-10-02T11:36:16.635942+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61841/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r1-n10-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:36:16.652555+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:36:56.670656+00:00"
+        }
+      },
+      "started_at": "2026-10-02T11:36:16.652560+00:00",
+      "finished_at": "2026-10-02T11:36:36.662190+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 392,
+        "successful_samples": 392,
+        "failed_samples": 0,
+        "window_successful_samples": 196,
+        "window_failed_samples": 0,
+        "observed_peak_active": 10,
+        "max_bracketing_success_gap_ns": 113682000,
+        "first_post_exit_zero_sample_delay_ns": 60742000,
+        "query_duration": {
+          "samples": 392,
+          "min_ns": 212458,
+          "p50_ns": 622916,
+          "p95_ns": 2581875,
+          "max_ns": 6307583
+        },
+        "window_active_histogram": {
+          "2": 1,
+          "10": 195
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1816,
+          "successful_samples": 1816,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 914,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 4,
+          "window_busy_samples": 486,
+          "window_waiting_samples": 391,
+          "busy_sample_fraction": 0.5317286652078774,
+          "waiting_sample_fraction": 0.42778993435448576,
+          "window_state_histogram": {
+            "0,0": 426,
+            "0,1": 1,
+            "0,3": 1,
+            "1,0": 97,
+            "1,1": 98,
+            "1,2": 101,
+            "1,3": 96,
+            "1,4": 94
+          },
+          "max_bracketing_success_gap_ns": 62055000,
+          "first_post_exit_idle_sample_delay_ns": 21374000,
+          "query_duration": {
+            "samples": 1816,
+            "min_ns": 137084,
+            "p50_ns": 531334,
+            "p95_ns": 2877333,
+            "max_ns": 35042959
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1816,
+          "successful_samples": 1816,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 914,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 4,
+          "window_busy_samples": 488,
+          "window_waiting_samples": 393,
+          "busy_sample_fraction": 0.5339168490153173,
+          "waiting_sample_fraction": 0.4299781181619256,
+          "window_state_histogram": {
+            "0,0": 424,
+            "0,1": 1,
+            "0,4": 1,
+            "1,0": 97,
+            "1,1": 103,
+            "1,2": 93,
+            "1,3": 102,
+            "1,4": 93
+          },
+          "max_bracketing_success_gap_ns": 62026000,
+          "first_post_exit_idle_sample_delay_ns": 21374000,
+          "query_duration": {
+            "samples": 1816,
+            "min_ns": 130625,
+            "p50_ns": 529417,
+            "p95_ns": 2714792,
+            "max_ns": 35066833
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r2-n8",
+      "planned_sessions": 8,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=8",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n8.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r2-n8-gateway",
+          "started_at": "2026-10-02T11:36:56.743949+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n8-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:36:56.769345+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:37:36.809469+00:00"
+        },
+        "worker1": {
+          "directory": "r2-n8-worker1",
+          "started_at": "2026-10-02T11:36:56.748441+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61839/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n8-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:36:56.769429+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:37:36.809797+00:00"
+        },
+        "worker2": {
+          "directory": "r2-n8-worker2",
+          "started_at": "2026-10-02T11:36:56.752575+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61841/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n8-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:36:56.769476+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:37:36.809885+00:00"
+        }
+      },
+      "started_at": "2026-10-02T11:36:56.769478+00:00",
+      "finished_at": "2026-10-02T11:37:16.747846+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 196,
+        "window_failed_samples": 0,
+        "observed_peak_active": 8,
+        "max_bracketing_success_gap_ns": 114699000,
+        "first_post_exit_zero_sample_delay_ns": 90588000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 215250,
+          "p50_ns": 684792,
+          "p95_ns": 1956750,
+          "max_ns": 13792250
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "8": 195
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1835,
+          "successful_samples": 1835,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 915,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 3,
+          "window_busy_samples": 402,
+          "window_waiting_samples": 297,
+          "busy_sample_fraction": 0.43934426229508194,
+          "waiting_sample_fraction": 0.32459016393442625,
+          "window_state_histogram": {
+            "0,0": 513,
+            "1,0": 105,
+            "1,1": 97,
+            "1,2": 102,
+            "1,3": 98
+          },
+          "max_bracketing_success_gap_ns": 34010000,
+          "first_post_exit_idle_sample_delay_ns": 1540000,
+          "query_duration": {
+            "samples": 1835,
+            "min_ns": 150167,
+            "p50_ns": 602500,
+            "p95_ns": 1835333,
+            "max_ns": 9029834
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1835,
+          "successful_samples": 1835,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 915,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 3,
+          "window_busy_samples": 400,
+          "window_waiting_samples": 303,
+          "busy_sample_fraction": 0.4371584699453552,
+          "waiting_sample_fraction": 0.33114754098360655,
+          "window_state_histogram": {
+            "0,0": 514,
+            "0,2": 1,
+            "1,0": 98,
+            "1,1": 105,
+            "1,2": 98,
+            "1,3": 99
+          },
+          "max_bracketing_success_gap_ns": 34126000,
+          "first_post_exit_idle_sample_delay_ns": 1540000,
+          "query_duration": {
+            "samples": 1835,
+            "min_ns": 157083,
+            "p50_ns": 608625,
+            "p95_ns": 1722250,
+            "max_ns": 9533542
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r2-n9",
+      "planned_sessions": 9,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=9",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n9.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r2-n9-gateway",
+          "started_at": "2026-10-02T11:37:36.865345+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n9-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:37:36.889997+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:38:16.919003+00:00"
+        },
+        "worker1": {
+          "directory": "r2-n9-worker1",
+          "started_at": "2026-10-02T11:37:36.869683+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61839/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n9-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:37:36.890080+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:38:16.919422+00:00"
+        },
+        "worker2": {
+          "directory": "r2-n9-worker2",
+          "started_at": "2026-10-02T11:37:36.873438+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61841/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n9-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:37:36.890132+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:38:16.919537+00:00"
+        }
+      },
+      "started_at": "2026-10-02T11:37:36.890135+00:00",
+      "finished_at": "2026-10-02T11:37:56.869158+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 394,
+        "successful_samples": 394,
+        "failed_samples": 0,
+        "window_successful_samples": 196,
+        "window_failed_samples": 0,
+        "observed_peak_active": 9,
+        "max_bracketing_success_gap_ns": 105080000,
+        "first_post_exit_zero_sample_delay_ns": 63079000,
+        "query_duration": {
+          "samples": 394,
+          "min_ns": 240250,
+          "p50_ns": 552959,
+          "p95_ns": 1392291,
+          "max_ns": 3652583
+        },
+        "window_active_histogram": {
+          "7": 1,
+          "9": 195
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1847,
+          "successful_samples": 1847,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 921,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 3,
+          "window_busy_samples": 387,
+          "window_waiting_samples": 288,
+          "busy_sample_fraction": 0.4201954397394137,
+          "waiting_sample_fraction": 0.3127035830618892,
+          "window_state_histogram": {
+            "0,0": 529,
+            "0,1": 2,
+            "0,2": 2,
+            "0,3": 1,
+            "1,0": 104,
+            "1,1": 93,
+            "1,2": 105,
+            "1,3": 85
+          },
+          "max_bracketing_success_gap_ns": 40710000,
+          "first_post_exit_idle_sample_delay_ns": 3780000,
+          "query_duration": {
+            "samples": 1847,
+            "min_ns": 136792,
+            "p50_ns": 518583,
+            "p95_ns": 1495667,
+            "max_ns": 4588917
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1847,
+          "successful_samples": 1847,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 921,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 4,
+          "window_busy_samples": 484,
+          "window_waiting_samples": 397,
+          "busy_sample_fraction": 0.5255157437567861,
+          "waiting_sample_fraction": 0.43105320304017375,
+          "window_state_histogram": {
+            "0,0": 434,
+            "0,3": 1,
+            "0,4": 2,
+            "1,0": 90,
+            "1,1": 108,
+            "1,2": 87,
+            "1,3": 112,
+            "1,4": 87
+          },
+          "max_bracketing_success_gap_ns": 40650000,
+          "first_post_exit_idle_sample_delay_ns": 3780000,
+          "query_duration": {
+            "samples": 1847,
+            "min_ns": 148625,
+            "p50_ns": 519375,
+            "p95_ns": 1471667,
+            "max_ns": 5947334
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r2-n10",
+      "planned_sessions": 10,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=10",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n10.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r2-n10-gateway",
+          "started_at": "2026-10-02T11:38:16.991908+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n10-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:38:17.017662+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:38:57.050216+00:00"
+        },
+        "worker1": {
+          "directory": "r2-n10-worker1",
+          "started_at": "2026-10-02T11:38:16.997156+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61839/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n10-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:38:17.017810+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:38:57.050916+00:00"
+        },
+        "worker2": {
+          "directory": "r2-n10-worker2",
+          "started_at": "2026-10-02T11:38:17.002379+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61841/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r2-n10-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:38:17.017871+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:38:57.051411+00:00"
+        }
+      },
+      "started_at": "2026-10-02T11:38:17.017875+00:00",
+      "finished_at": "2026-10-02T11:38:37.019246+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 394,
+        "successful_samples": 394,
+        "failed_samples": 0,
+        "window_successful_samples": 196,
+        "window_failed_samples": 0,
+        "observed_peak_active": 10,
+        "max_bracketing_success_gap_ns": 106257000,
+        "first_post_exit_zero_sample_delay_ns": 23812000,
+        "query_duration": {
+          "samples": 394,
+          "min_ns": 196750,
+          "p50_ns": 476833,
+          "p95_ns": 1485458,
+          "max_ns": 3951458
+        },
+        "window_active_histogram": {
+          "10": 196
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1848,
+          "successful_samples": 1848,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 922,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 4,
+          "window_busy_samples": 501,
+          "window_waiting_samples": 402,
+          "busy_sample_fraction": 0.5433839479392625,
+          "waiting_sample_fraction": 0.4360086767895879,
+          "window_state_histogram": {
+            "0,0": 421,
+            "1,0": 99,
+            "1,1": 103,
+            "1,2": 99,
+            "1,3": 102,
+            "1,4": 98
+          },
+          "max_bracketing_success_gap_ns": 45285000,
+          "first_post_exit_idle_sample_delay_ns": 16310000,
+          "query_duration": {
+            "samples": 1848,
+            "min_ns": 124333,
+            "p50_ns": 447708,
+            "p95_ns": 1626833,
+            "max_ns": 23116375
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1849,
+          "successful_samples": 1849,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 922,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 4,
+          "window_busy_samples": 495,
+          "window_waiting_samples": 399,
+          "busy_sample_fraction": 0.5368763557483731,
+          "waiting_sample_fraction": 0.43275488069414314,
+          "window_state_histogram": {
+            "0,0": 425,
+            "0,1": 1,
+            "0,4": 1,
+            "1,0": 98,
+            "1,1": 102,
+            "1,2": 97,
+            "1,3": 98,
+            "1,4": 100
+          },
+          "max_bracketing_success_gap_ns": 45297000,
+          "first_post_exit_idle_sample_delay_ns": 16310000,
+          "query_duration": {
+            "samples": 1849,
+            "min_ns": 158625,
+            "p50_ns": 445000,
+            "p95_ns": 1665125,
+            "max_ns": 23931083
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r3-n8",
+      "planned_sessions": 8,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=8",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n8.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r3-n8-gateway",
+          "started_at": "2026-10-02T11:38:57.101903+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n8-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:38:57.112616+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:39:37.144044+00:00"
+        },
+        "worker1": {
+          "directory": "r3-n8-worker1",
+          "started_at": "2026-10-02T11:38:57.105590+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61839/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n8-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:38:57.125397+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:39:37.144316+00:00"
+        },
+        "worker2": {
+          "directory": "r3-n8-worker2",
+          "started_at": "2026-10-02T11:38:57.108989+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61841/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n8-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:38:57.125529+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:39:37.144378+00:00"
+        }
+      },
+      "started_at": "2026-10-02T11:38:57.125536+00:00",
+      "finished_at": "2026-10-02T11:39:17.107525+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 196,
+        "window_failed_samples": 0,
+        "observed_peak_active": 8,
+        "max_bracketing_success_gap_ns": 108271000,
+        "first_post_exit_zero_sample_delay_ns": 8088000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 200500,
+          "p50_ns": 388750,
+          "p95_ns": 1331333,
+          "max_ns": 15742792
+        },
+        "window_active_histogram": {
+          "8": 196
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1852,
+          "successful_samples": 1852,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 931,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 3,
+          "window_busy_samples": 402,
+          "window_waiting_samples": 305,
+          "busy_sample_fraction": 0.4317937701396348,
+          "waiting_sample_fraction": 0.3276047261009667,
+          "window_state_histogram": {
+            "0,0": 529,
+            "1,0": 97,
+            "1,1": 105,
+            "1,2": 101,
+            "1,3": 99
+          },
+          "max_bracketing_success_gap_ns": 24628000,
+          "first_post_exit_idle_sample_delay_ns": 18675000,
+          "query_duration": {
+            "samples": 1852,
+            "min_ns": 122708,
+            "p50_ns": 355541,
+            "p95_ns": 1283250,
+            "max_ns": 12291208
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1853,
+          "successful_samples": 1853,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 931,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 3,
+          "window_busy_samples": 396,
+          "window_waiting_samples": 302,
+          "busy_sample_fraction": 0.4253490870032223,
+          "waiting_sample_fraction": 0.32438238453276047,
+          "window_state_histogram": {
+            "0,0": 533,
+            "0,1": 1,
+            "0,3": 1,
+            "1,0": 96,
+            "1,1": 102,
+            "1,2": 101,
+            "1,3": 97
+          },
+          "max_bracketing_success_gap_ns": 24632000,
+          "first_post_exit_idle_sample_delay_ns": 18371000,
+          "query_duration": {
+            "samples": 1853,
+            "min_ns": 141417,
+            "p50_ns": 354791,
+            "p95_ns": 1264333,
+            "max_ns": 17712708
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r3-n9",
+      "planned_sessions": 9,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=9",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n9.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r3-n9-gateway",
+          "started_at": "2026-10-02T11:39:37.195426+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n9-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:39:37.206445+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:40:17.258238+00:00"
+        },
+        "worker1": {
+          "directory": "r3-n9-worker1",
+          "started_at": "2026-10-02T11:39:37.199375+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61839/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n9-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:39:37.219119+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:40:17.258862+00:00"
+        },
+        "worker2": {
+          "directory": "r3-n9-worker2",
+          "started_at": "2026-10-02T11:39:37.202683+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61841/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n9-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:39:37.219169+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:40:17.259051+00:00"
+        }
+      },
+      "started_at": "2026-10-02T11:39:37.219171+00:00",
+      "finished_at": "2026-10-02T11:39:57.214017+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 196,
+        "window_failed_samples": 0,
+        "observed_peak_active": 9,
+        "max_bracketing_success_gap_ns": 107142000,
+        "first_post_exit_zero_sample_delay_ns": 59313000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 182291,
+          "p50_ns": 635084,
+          "p95_ns": 1420042,
+          "max_ns": 4783833
+        },
+        "window_active_histogram": {
+          "3": 1,
+          "9": 195
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1842,
+          "successful_samples": 1842,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 921,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 4,
+          "window_busy_samples": 494,
+          "window_waiting_samples": 392,
+          "busy_sample_fraction": 0.5363735070575462,
+          "waiting_sample_fraction": 0.4256243213897937,
+          "window_state_histogram": {
+            "0,0": 425,
+            "0,1": 1,
+            "0,2": 1,
+            "1,0": 104,
+            "1,1": 94,
+            "1,2": 99,
+            "1,3": 104,
+            "1,4": 93
+          },
+          "max_bracketing_success_gap_ns": 35962000,
+          "first_post_exit_idle_sample_delay_ns": 17842000,
+          "query_duration": {
+            "samples": 1842,
+            "min_ns": 132333,
+            "p50_ns": 556125,
+            "p95_ns": 1426541,
+            "max_ns": 14860125
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1844,
+          "successful_samples": 1844,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 922,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 3,
+          "window_busy_samples": 396,
+          "window_waiting_samples": 300,
+          "busy_sample_fraction": 0.42950108459869846,
+          "waiting_sample_fraction": 0.32537960954446854,
+          "window_state_histogram": {
+            "0,0": 526,
+            "1,0": 96,
+            "1,1": 102,
+            "1,2": 101,
+            "1,3": 97
+          },
+          "max_bracketing_success_gap_ns": 35362000,
+          "first_post_exit_idle_sample_delay_ns": 17842000,
+          "query_duration": {
+            "samples": 1844,
+            "min_ns": 122500,
+            "p50_ns": 551958,
+            "p95_ns": 1402125,
+            "max_ns": 12152542
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r3-n10",
+      "planned_sessions": 10,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=10",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n10.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r3-n10-gateway",
+          "started_at": "2026-10-02T11:40:17.326249+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n10-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:40:17.337488+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:40:57.380385+00:00"
+        },
+        "worker1": {
+          "directory": "r3-n10-worker1",
+          "started_at": "2026-10-02T11:40:17.330149+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61839/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n10-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:40:17.349466+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:40:57.380844+00:00"
+        },
+        "worker2": {
+          "directory": "r3-n10-worker2",
+          "started_at": "2026-10-02T11:40:17.333972+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-j56jz12g/worker-sampler",
+            "-url=http://127.0.0.1:61841/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/worker-count-comparison-2026-10-02/workers-2/r3-n10-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-02T11:40:17.349527+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-02T11:40:57.380997+00:00"
+        }
+      },
+      "started_at": "2026-10-02T11:40:17.349534+00:00",
+      "finished_at": "2026-10-02T11:40:37.374101+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 196,
+        "window_failed_samples": 0,
+        "observed_peak_active": 10,
+        "max_bracketing_success_gap_ns": 106175000,
+        "first_post_exit_zero_sample_delay_ns": 12121000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 213792,
+          "p50_ns": 691167,
+          "p95_ns": 1578000,
+          "max_ns": 5633625
+        },
+        "window_active_histogram": {
+          "8": 1,
+          "10": 195
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1843,
+          "successful_samples": 1843,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 925,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 4,
+          "window_busy_samples": 494,
+          "window_waiting_samples": 395,
+          "busy_sample_fraction": 0.534054054054054,
+          "waiting_sample_fraction": 0.42702702702702705,
+          "window_state_histogram": {
+            "0,0": 431,
+            "1,0": 99,
+            "1,1": 100,
+            "1,2": 103,
+            "1,3": 102,
+            "1,4": 90
+          },
+          "max_bracketing_success_gap_ns": 25801000,
+          "first_post_exit_idle_sample_delay_ns": 21234000,
+          "query_duration": {
+            "samples": 1843,
+            "min_ns": 134042,
+            "p50_ns": 538791,
+            "p95_ns": 1565750,
+            "max_ns": 13151667
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1843,
+          "successful_samples": 1843,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 925,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 4,
+          "window_busy_samples": 493,
+          "window_waiting_samples": 398,
+          "busy_sample_fraction": 0.532972972972973,
+          "waiting_sample_fraction": 0.43027027027027026,
+          "window_state_histogram": {
+            "0,0": 431,
+            "0,3": 1,
+            "1,0": 96,
+            "1,1": 98,
+            "1,2": 102,
+            "1,3": 100,
+            "1,4": 97
+          },
+          "max_bracketing_success_gap_ns": 26021000,
+          "first_post_exit_idle_sample_delay_ns": 21022000,
+          "query_duration": {
+            "samples": 1843,
+            "min_ns": 155834,
+            "p50_ns": 531375,
+            "p95_ns": 1456500,
+            "max_ns": 13039750
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    }
+  ],
+  "shutdown": [
+    {
+      "process": "gateway",
+      "exit_code": 0
+    },
+    {
+      "process": "asr-worker-2",
+      "exit_code": 0
+    },
+    {
+      "process": "asr-worker-1",
+      "exit_code": 0
+    }
+  ],
+  "worker": {
+    "processing_concurrency": 1,
+    "processing_delay_ns": 10000000,
+    "response_delay_ns": 5000000,
+    "partial_every_ns": 500000000,
+    "partial_texts": [
+      "今",
+      "今天",
+      "今天天气",
+      "今天天气不错"
+    ],
+    "final_text": "今天天气不错"
+  },
+  "gateway": {
+    "max_sessions": 64,
+    "max_message_bytes": 1048576,
+    "max_pending_audio_bytes": 32000,
+    "start_timeout_s": 10,
+    "input_idle_timeout_s": 30,
+    "worker_send_timeout_s": 2,
+    "tail_timeout_s": 15,
+    "result_write_timeout_s": 2
+  },
+  "schedule": {
+    "session_counts": [
+      8,
+      9,
+      10
+    ],
+    "repetitions": 3,
+    "audio_bytes": 640000,
+    "chunk_bytes": 3200,
+    "realtime": true,
+    "session_timeout_s": 35,
+    "warmup_sessions": 2,
+    "warmup_audio_bytes": 64000
+  },
+  "limits": [
+    "same-host independent processes, no isolation",
+    "no waiting-duration, backlog, CPU or memory sampling",
+    "sample fractions are not time utilization",
+    "client write success is not a server byte counter",
+    "finite batches are not stable capacity",
+    "sampling overhead has no A/B measurement",
+    "Mock emits only four partials then a final"
+  ],
+  "experiment": "worker_comparison",
+  "worker_count": 2,
+  "policy": "round_robin",
+  "criteria": {
+    "all_completed": true,
+    "tail_p95_ns": 250000000,
+    "max_audio_schedule_lag_ns": 100000000
+  },
+  "source_sha256": {
+    "cmd/asr-worker/config.go": "4ec1d297d42ded79febfe0709a199f035400921b45c9dd70ba8fd35f4238cebd",
+    "cmd/asr-worker/config_test.go": "b36b2b0e8c0fdad251aa88fabf7e8d87f441f5fe988247dff0c2425c1156243b",
+    "cmd/asr-worker/debug_config_test.go": "24ed3e9b756aa8653d144cc3ffdae5720aaca817ac1b40649ba1ca5f4b30d708",
+    "cmd/asr-worker/main.go": "a099e9225f005e2a1a2c4a48bc9bede5ecc41c074421caa3d8575b48ad472adb",
+    "cmd/asr-worker/main_test.go": "0a2b2612376174bb417d24bbacada9d0a87d956a6995dd8ae1a58feab92f87f3",
+    "cmd/asr-worker/sampler_integration_test.go": "f82b16be3d5e018805f92b01cf70d58c2524bb74da797c1f01c5441f7483abf7",
+    "cmd/asr-worker/serve.go": "7bdf2e7f33c79490e65837639f9f77b32e508c8907950d2ec7c00f2e35c34591",
+    "cmd/asr-worker/serve_test.go": "b57910ad8a8504c3ee557fff608b0bd0e0542e6bbdabf0478437d85bf85653a8",
+    "cmd/asr-worker/snapshot.go": "f4fafae3cfb1fce447f19d5e3a20445e55741a008d8f68728b408a05a1f5fce9",
+    "cmd/asr-worker/snapshot_test.go": "e80296b9ff4a9d24e9154b672b8603581b25d999c19137fdefcf29e9c2448cb1",
+    "cmd/gateway-sampler/config.go": "16e80c4e45459a99f7db1369d39ab8f2c14d35158e1a635c62e969657999d50b",
+    "cmd/gateway-sampler/config_test.go": "2eccc034fa35f12760cf45e4e27e879d64fdad186f74b0ac7c2dadc1d7e2f962",
+    "cmd/gateway-sampler/main.go": "27fe3383717c92edc9ceb0192ca6c943e6756e30f2b1112ff780a347cd0eeee6",
+    "cmd/gateway-sampler/process_test.go": "42f1739d83071d2b24ea90c48e8319d0f564b6793e579a92b9f3f1f9c4e26ac0",
+    "cmd/gateway-sampler/run.go": "4246b5747d3578b125e9ecd4f1043f0f8eaa9d5b549a21ddba20fb8a0d9a60a2",
+    "cmd/gateway-sampler/run_test.go": "279d9ec624a2f011b708c451a48f82453e4c9def895a65f74644de87c99f8b29",
+    "cmd/gateway/config.go": "6f47a5e9b50ddecaca4ae9b3bf5f26477517595b4f8da28c251de1d809b28de8",
+    "cmd/gateway/config_test.go": "69ae87d303b617885fa6b36ea9268e3cecddc8e884d39e9c9dfe4d0e3ec47a83",
+    "cmd/gateway/main.go": "7295b6a24d72f4911cb06de3cdd2c2010a090fba6c7d70f9427ffc57ff892b41",
+    "cmd/gateway/snapshot.go": "43b04b93e70c4fb0a30074b0d732f82edc5063f86c24a2ea919d29ef1a8eecbf",
+    "cmd/gateway/snapshot_test.go": "62dc4fc58aa4909952278ab200890446a83cf829d40728756f69e995c9ddb12b",
+    "cmd/gateway/startup_test.go": "4f6d499591fdf597c4d57ad9fdf37e5572d06d0e5eb9ea0b18b7e1281ce38b7b",
+    "cmd/gateway/worker_addresses.go": "1716fdd0bd46f39c97505516146906a677aebf7294f12053bbfc4a55e0516213",
+    "cmd/gateway/worker_addresses_test.go": "fde6f394ce1de353831727c4937d51ba7ea4902b8a329243501f03844308af19",
+    "cmd/loadgen/config.go": "ed92aa67be8eb9d4b508a5a8c70b4729fb0b47ebf00e1a028a872b73269e0ec4",
+    "cmd/loadgen/config_test.go": "ec997eb8e0047930dcef2e6b3db03669481f7cd6e9635c67418fa8538ebd6222",
+    "cmd/loadgen/main.go": "e9f98a467a31272a0760fb648c7fc0093ead14317f58b5de3d3b311686143665",
+    "cmd/loadgen/main_test.go": "323d8b14b0ccf23026d3d05ea9fec83b3ed0d9031736a0486a0fd9dbbdf872f0",
+    "cmd/loadgen/process_test.go": "8b80b41b44c5dfd38c1f6006ae5f0dd2fba80fbc93ac397596bf7be8d2e7fe75",
+    "cmd/worker-sampler/config.go": "2b126859c54f0c35655a3baad2c71ceadc08c5d252b143bbc84af6947905d271",
+    "cmd/worker-sampler/config_test.go": "eed02dc0fa3bd551272a48849734af9b1551bdbadb7c1aa6a81ad0462dc3257a",
+    "cmd/worker-sampler/main.go": "5943955b811214a8ccd4f5eb01d7cccfc6e7b35242c0422682e6c7b3291e9c1a",
+    "cmd/worker-sampler/process_test.go": "b9d240c0437eed4cb568eefdc0f2d1d760a297842eb1a235db8ae8a840d2fc30",
+    "cmd/worker-sampler/run.go": "30a3145c77317135075f9b5a4dc90c5df2b8b493fe21e026321881de9ba0f236",
+    "cmd/worker-sampler/run_test.go": "4bbf9ee831f84c359e01e84fab85bd544265ef461119e21d90d6e6907a4a6ae0",
+    "cmd/ws-client/main.go": "be4023437da090b59cf6e999d606d65e93d877cb52cf5473159f379f1b043dbe",
+    "go.mod": "c9c7012d18711cb2d954c57cc784a8c70327d34b03167b91a01aabded852db4e",
+    "go.sum": "829a64643f43bb0a0fea771fa2561e6a7fa26622fcb4bbcbf7dbbb101e88f5fd",
+    "internal/audio/format.go": "5f86af2fa59391da5c06853838940abfe7879f28d06c82e1e2411456e558ddda",
+    "internal/audio/pacer.go": "c83b872b3b3ac5c0f7be0898945984d18556f7cd89521d5a4c3bbaa0dc3434cd",
+    "internal/audio/pacer_test.go": "9ca87128617203895e6c333009bf1c66018e6504c9a00bfe8307dc4f56c7eaca",
+    "internal/gateway/admission_network_test.go": "4e210935259cf79072a52bf235090f8ebb5127a837f0a7411687b664ca65e6ee",
+    "internal/gateway/admission_test.go": "fdba441ed95c69f82f677ac73e36072dbfa0ddfaf79869f6bc4eecf2512758be",
+    "internal/gateway/audio_progress.go": "e1cf00d7ca2c25990c51350f637b77a3ce127f2c53d0f89f41448741ab665e26",
+    "internal/gateway/audio_progress_test.go": "3abfabd5cd205ed374d27c088103d04660eb2f934854281e834ca3cf952bdd96",
+    "internal/gateway/backlog.go": "3d2738f4fbefa2c9042f75a9f00435c48a5d3fcc99cdf5e12c1d78923bcf8baa",
+    "internal/gateway/backlog_experiment_test.go": "aca466ce096d9f7c94d8ad6dd3c22653c54a6184addcec64b4ef42e788ac6d7b",
+    "internal/gateway/backlog_integration_test.go": "4368397d1cf4ac2ad84841dc78a9693df8f8e9631c373f1c961604882f3d406d",
+    "internal/gateway/backlog_test.go": "ef026ac2c435120c6402e3644806774ef9ed33302447e95068cdab5edffb3ee7",
+    "internal/gateway/client_disconnect_test.go": "3b169c49748940bfcdec746290ea3d2b8f553adb259beff904de0cc5624a5b1a",
+    "internal/gateway/download.go": "ac7803f645210c47c9a67caca549de40d6055383cfe4fe4ea46c9f61e10563e2",
+    "internal/gateway/handler.go": "4a92cac6d3c89c9a6517588578d1aa54cbd73a094863e1872b750e57c9ff51e9",
+    "internal/gateway/handler_test.go": "8cc4493dbcbfdfd214fa09f10ef5cf5d7ee9d937336fb613092f3c3bb4709549",
+    "internal/gateway/input_idle_result_test.go": "c1f53731a87ce77eb4153f587aafa6036f1aaef2775d429fad32318384fb4b2a",
+    "internal/gateway/mock_worker_test.go": "4cc0511876d86dd41562a06a1081ca418d42c9c7a89d52de52882b7bd43b1cac",
+    "internal/gateway/normal_end_test.go": "c3d7f01c299c75e03d0f636cda315b2164540af0cbab5bd6aeb4f0be8ee054c4",
+    "internal/gateway/progress_baseline_experiment_test.go": "cd9e441fd48a52536576d99330d5d7df23740685f255f62369475f09b9647efd",
+    "internal/gateway/progress_integration_test.go": "9480584474ccb68b230a6775d99d58d81616c6e7894f6dde21692b04f6eb862c",
+    "internal/gateway/progress_routing_test.go": "dbd9012306ae1d3cb829222180be1d64b1556189d3230dc7a826af354cf54eef",
+    "internal/gateway/protection_cleanup_experiment_test.go": "e887afbb1ab6e85edd187c812c3197c4096e29ab19ced1ade8798b98a4ede9ac",
+    "internal/gateway/read_input_test.go": "a8174089e0df6006686ca60092137cadc9abd3b88aee5a4d7e576b86571d9eea",
+    "internal/gateway/resource_cleanup_test.go": "381dfcb634aad577ee6a76a2ceb0a79f741d530fdd67bce9aa32da4faf61d9fe",
+    "internal/gateway/result_write.go": "c4857e2586727457bcd38dd6fd8dcb0b4e214bcbca3484bd0427b3a71069437c",
+    "internal/gateway/result_write_experiment_test.go": "7ba5ae547468efe125494336e01e99597b1befc9772a01da0439d418093306cf",
+    "internal/gateway/result_write_integration_test.go": "3ff166cfa698ef2fcef6d8509a3a880ca489a400dbbfd2239c2c694f8d31de52",
+    "internal/gateway/result_write_test.go": "118618116884f84b87f13a43db2d76b153c22fd4b0df33d080aa11d586c5589e",
+    "internal/gateway/send.go": "dd499b61fb2fb7f5268b51c5f856d755d4a48b34300d35cc68bf6f9fed4c1163",
+    "internal/gateway/send_test.go": "99511f81c61943cd8ddc32f219587b1b6a087f892029cad644cb45e9c335e467",
+    "internal/gateway/session.go": "61d64b53a0b11875c4e746d48e7986a86d830a13c21e0d636d102b7d5e3e870e",
+    "internal/gateway/shutdown_stream_test.go": "16746cf845e38a6f72a4e71a33fed2bc5388d4d0ab99c53e37f83b2787c7e347",
+    "internal/gateway/slow_reader_experiment_test.go": "a6f02888da9f0a52bb10aab79e3748ce99650848c1e5121f6e7949912c775a67",
+    "internal/gateway/slow_worker_experiment_test.go": "1f64a1d05c5e7e1e7684af8d5dd7bcd6ea75434eb0ce8879780d2903e5493966",
+    "internal/gateway/snapshot.go": "2af18621f6fea505cb6e0299bfb5705665ef95a299cfde806cd02c6bc567d58d",
+    "internal/gateway/snapshot_test.go": "5cc150ee9927f115b36fdb86ca7557e24c9c3b5a41cbed3343e80d92d1b5f67a",
+    "internal/gateway/stalled_worker_experiment_test.go": "8d99c872c0e9a63f2b7d1052f409e4d8f4dd5886400bd9224a6b0214829e243b",
+    "internal/gateway/start_timeout_test.go": "e1bdd23b84e4f8092373fcbac57ea7b6411cd4821705edc3d9b93a97769c1eed",
+    "internal/gateway/tail.go": "28053ca665c70e6c0011d5a1d0ed5f899bb49ab51642bb26ad8cb354cd6d7554",
+    "internal/gateway/tail_config_test.go": "c4891e141157b6d6de8338a53528f0784aa1aed3a28545075cc5d8082e8a5554",
+    "internal/gateway/tail_integration_test.go": "1a7ec9abed768d50f907569a7d5f736e5944fe1635adfeb8cd0d73c68cb26381",
+    "internal/gateway/tail_stall_experiment_test.go": "81bf3e56ddebada2ff7a1ba4f0c3e561eabf25f011549a4cfbad15319ae9160a",
+    "internal/gateway/tail_test.go": "f0413c578bc08cdeacdcf850edfd96b97b342d6cdd38f510cf0066a27f6780d3",
+    "internal/gateway/tracker.go": "a066243161406545220f69e76019d02428673f51b73540c45386d2574fc144dc",
+    "internal/gateway/unresponsive_close_test.go": "1205d9658fdf85d8a4c73c87bc06bad26b8784493f0514c4c16b0f6724410553",
+    "internal/gateway/upload.go": "7565131b91a28ffcb47553fc72e7c6bdf57a1ebea3872af35f129f78e277b2a2",
+    "internal/gateway/worker_failure_test.go": "ecacbb660e75d7d494f1dc41b7faf749ace4b88135c06a37afa2504b19883c2a",
+    "internal/gateway/worker_pause_experiment_test.go": "61ea060f0394e0dc4e6059ff99ef94a7061afab82725346f7d1b7f692fde07f4",
+    "internal/gateway/worker_pool_test.go": "b011b163f70a1c49f3d058a364ad3be1bed3775f8ab6fac05564d73d12d2cde5",
+    "internal/gateway/worker_routing_test.go": "8a3f31e518199c98d38d71e64a54aa87c4d562edd3991d615d76defccefd43a1",
+    "internal/gateway/worker_send_timeout_test.go": "01493e99a3610f8cab283012e90944d11692e90c8483e84c3093d0b95ea42b92",
+    "internal/loadgen/batch.go": "2f8eea4fedd87f62d9ba888ffb4ada06af241b69c8981460a87da9aeeebfc95d",
+    "internal/loadgen/batch_config_test.go": "638f90dece23059fe3b6f22e0c85d0083a85d6223b1a1dff4176d8a505c60280",
+    "internal/loadgen/batch_test.go": "ee63633ffdb3ba2eb19d4dad0a56092971da4b7cf2b75977fb343e332a034af0",
+    "internal/loadgen/gateway_recording.go": "dc19ecf40ef22ef95a65c456b29377425a0ae8491c2d7e14e05104ae60a60848",
+    "internal/loadgen/gateway_recording_json.go": "e435b1ad0f2be46e1397dae0897f11681be97d6d2c36957b35043769770578c9",
+    "internal/loadgen/gateway_recording_json_test.go": "22c71fa385180367717f1d7bc1702921bd4ae8654545298247fc3130344960e3",
+    "internal/loadgen/gateway_recording_run_test.go": "cb7d5a39271c271f9730342b54520f36700c7447f27138818d7b18167e1ea56b",
+    "internal/loadgen/gateway_recording_test.go": "659a6d549df92b1e4d5d70bde68db5a0054eb8f08f05658bd33c4de0772c5288",
+    "internal/loadgen/gateway_sample_json.go": "f6ffa4220b794db981569e4b1e0e4b197d115c86e3ed7e69dee7289b5b05cb71",
+    "internal/loadgen/gateway_sample_json_test.go": "0bb1128e34a9e0559d69e25c42b386e25b0639f49abfe9d1b60cfa2222441947",
+    "internal/loadgen/gateway_sampling.go": "fa253d61540f35891ec27253fbf1604cb798358150242c57a9bd8f6ea448c34e",
+    "internal/loadgen/gateway_sampling_test.go": "1054fa7cc8fae496ee7d569e7c82760f75407d45dc3486ac92f09ee9ef43dfa7",
+    "internal/loadgen/gateway_snapshot.go": "1423e0f5538e1bb07da8032deda1eeb2e60ff80816f45e9652e4d5037aa5f621",
+    "internal/loadgen/gateway_snapshot_test.go": "cc3271b3fec0c915463368f9b7a6a4d590ffd8a70215194ae079373e154b7a06",
+    "internal/loadgen/json_output.go": "4186f0e10d9564725e17bd5c761a7ca655a407826c04dd651f7d536822827b1f",
+    "internal/loadgen/json_output_test.go": "3593883af4830e62d6da4077ff65060cc5e758eb8a150050abef87f660cba531",
+    "internal/loadgen/recorder.go": "06f5b940cfa5b994e48e6292bad1d5311ad8f58f541380954efb1ac199b0813c",
+    "internal/loadgen/recorder_test.go": "9812d4ffe30adcf697775b1a78da1606d150eb09dae03b2b89b3a0621bffb868",
+    "internal/loadgen/sampling_loop.go": "0308eee32f85d982c6a09c24752ef42d05c7d13a9819204ee7ea319dc6240e17",
+    "internal/loadgen/schedule_json_test.go": "5e75d9df750b6521351c1abfa2bf4c1d8594449cd084da135a861baad025d6a0",
+    "internal/loadgen/schedule_recorder_test.go": "2aa3e42aafa1b53483f75b13c6a487089ec76b879569854317ef005f8803fcfa",
+    "internal/loadgen/session.go": "f1abe8b309018d1db81e4b48727abeaa29d13e59de15e78f788a7862172a10db",
+    "internal/loadgen/session_test.go": "d74db0f50dd726ddd60a5e42c47df055bacd9742b038a8b266213a01cedd4150",
+    "internal/loadgen/snapshot_recording.go": "bc627d04fdf3676a79f51e0e3fc5d91c7e22eb1c3403019a2011a59392ffaaf9",
+    "internal/loadgen/snapshot_recording_json.go": "902c5aefbdc849ab735dd1b4da713dc236cce9ae1e0420c6d31a33c8562b9c5b",
+    "internal/loadgen/source.go": "745448a03b85d5ce785e898632838446ef81b5d21ac1e07cb789357ffd415710",
+    "internal/loadgen/source_test.go": "7ba0f6e54a1ee3c6f1d71f02cea3b258e0bb1e14f4d31010dfc1d720a23a6850",
+    "internal/loadgen/summary.go": "9a2653b522c4d2b6cd051639ffe8125b9ea5920651d26028c7aeee31951f2d17",
+    "internal/loadgen/summary_test.go": "391b6923decc8a2ca038300fc905438594f24fdefff0e457c2b31b3eee93aaa4",
+    "internal/loadgen/worker_recording.go": "8141b25d9c3a8781692f5652110f0a81d3e2f3353998a20a003aa7152122cf35",
+    "internal/loadgen/worker_recording_json.go": "4c7bcbf7b6e8450012bf274b35ac1d61ddcfb76c4eab018dcf27a13b1eb27a99",
+    "internal/loadgen/worker_recording_json_test.go": "e073c33c56fd0a3bb9396dce918889dc756e2ddc9df472c9a7260ff5fe332aed",
+    "internal/loadgen/worker_recording_run_test.go": "b439045122922170b3c3fe194717831809d900f8eda670d12f290f130580be97",
+    "internal/loadgen/worker_recording_test.go": "cc2256b84cfab15dab1cc2ca73acb5d39229c7a2fe98080a65a059778bb0b571",
+    "internal/loadgen/worker_sample_json.go": "7bb5394b0c96f95daba1d3d909f5bd6b2450a4883999ce0f512f857cbf9f5beb",
+    "internal/loadgen/worker_sample_json_test.go": "e86791074aae30817ed8accb8971388f8bf79851953df30e038ca0536b5296c7",
+    "internal/loadgen/worker_sampling.go": "b66e6f1ff530dfccc31ec04245404d95a99af406fe3fd3d6de68a749ca07b7df",
+    "internal/loadgen/worker_sampling_test.go": "742c168f6045564bdfd65ad2cc7e10c33a0a5c38798efaf06bb7520f9b5088f5",
+    "internal/loadgen/worker_snapshot.go": "2199e135b86f90acbaa496d77c6480155ecb30eac785e36363b2f2338b06fe58",
+    "internal/loadgen/worker_snapshot_test.go": "368d75bed98190dddc880d471915143fb53d58f36f5a66987b3e86eeaeb4ffda",
+    "internal/mockasr/constructor_test.go": "321e0fcb12806f3e9e19d8866da89f358bf3f36c25ff492832bf862143333c87",
+    "internal/mockasr/pause_test.go": "a34def39531a4ec061f61b9a5c2afe123a5997566a20ca150b3abf774f36617f",
+    "internal/mockasr/processing_capacity_test.go": "bb511c73e0a952e7d5a1336a0d48b61bd34de6f32bc9b977116b2543d2ec6540",
+    "internal/mockasr/processing_slots.go": "77c02ffaf45bd46fd91af9460c63d7aad9d733a4fe2d0542669ff1499b89437f",
+    "internal/mockasr/processing_slots_test.go": "9c54576cd7b6f8e06fdfaea054fbff1a9bcdaf55259d12e9dbe42ab77bea5463",
+    "internal/mockasr/processing_snapshot_test.go": "1aa433b2846f1f80b0e4d50f651ef463274f2360bdd5fb8acab35a9bdfb7b815",
+    "internal/mockasr/progress_test.go": "bff87321a4e6ce0f9fa909742a43d807e141b40b7657c6288deadd99e444f833",
+    "internal/mockasr/snapshot.go": "a09b4f2d9c2ce8a658867d8690b500f36a8b5b454edc3e7959a503073d6c7a96",
+    "internal/mockasr/snapshot_test.go": "29ed5c3999bd1bdfd09feb8269c9743a20a5505cede5925e6746b672dfec33cf",
+    "internal/mockasr/stall_test.go": "cd63802075ac51ec16dd8756a084905c5f63290c4a2881980f1d4603171e1b0e",
+    "internal/mockasr/worker.go": "4c1b37f3a5961f730d86b7df3c4166a18d58aca43316223f62d278d12050e1a1",
+    "internal/mockasr/worker_test.go": "8fec412437a0cf9612f64545c01def79ca4c064a39d3cdbd79b70aaf02b7a03f",
+    "internal/workerpool/round_robin.go": "b48aeb9fa48177b3e5c3f1c558bdf61a4cecf42d20ae09fb967a2d7a01fb6371",
+    "internal/workerpool/round_robin_test.go": "fcdfae2c97e1859444f75cd05eb030fd94a123c0207561186f865465ff367210",
+    "internal/wsclient/client.go": "4ed80ad8b6235527e9cc5ee78eb360790b826b72ea7ceae58278898419c51661",
+    "internal/wsclient/planned_write_test.go": "c723fd208b2767534bfc4251c8dae6eae544ad721aab40325f0faf2db5506145",
+    "internal/wsclient/receiver.go": "2c9beb9695a27974a011a993b61a0c9e172a3410c9b3833505da4465ddb49a41",
+    "internal/wsclient/receiver_test.go": "2711223f564f9c499b0662727873126d031223fdbb638f691d3de0a7f6c479ef",
+    "internal/wsclient/sender.go": "e5f66093523328099c95240cd06c2dab13363e2e2881436621fd4c8b1dd21a3d",
+    "internal/wsclient/sender_test.go": "b8869cfab223cde121699614ea55b944264fa7bf0ac6d85fdc47c9e64cc2e8f9",
+    "internal/wsclient/write_observer.go": "24ae84debcadba609bbf0afca2ca967ccb0ccc6cbea1094574fbf0d0a0a94ab1",
+    "internal/wsprotocol/protocol.go": "744893ed3b9cfd381ef456adb5e8e20b4c2906a0e0ad7ef2a2c107b30939316a",
+    "proto/tide/asr/v1/asr.pb.go": "3ca21427d90a92607411ca201b441bb51754c8db6d734f643aa8810b99bec911",
+    "proto/tide/asr/v1/asr.proto": "f849ea264fa53bd7c1a7f9240c5ba87500301e59b497e76d4ff735dfd9ef0797",
+    "proto/tide/asr/v1/asr_grpc.pb.go": "f3f4f45775d909c068a680574b158d4ecc0e431ba93c1521665c35dbd2eaf673"
+  },
+  "sampling": {
+    "gateway_interval_ns": 100000000,
+    "worker_interval_ns": 20000000,
+    "request_timeout_ns": 1000000000,
+    "duration_ns": 40000000000,
+    "readiness_timeout_s": 2,
+    "max_bracketing_success_gap_ns": 500000000
+  },
+  "script_sha256": {
+    "run_joint_observation_baseline.py": "757dd114d18220c992b02f892ebb7502041b7656813cef72a21e1d34559d5aba",
+    "summarize_joint_observations.py": "25bb4ffd596192ed60167009c283b1afd41b96664a3a6b65591eda564c8036e5",
+    "summarize_gateway_observations.py": "1cc1e46f9baffd9a689ed13b1815e03f1235aef0f60f4d1a8b00b89a889f65cb",
+    "run_loadgen_baseline.py": "2e9aa062389c6229fdfcdf3c1d134c414fbd4d93af70e288489de7aadf3d2e97",
+    "summarize_pressure_sweep.py": "1680cbecb22c0dcdad73180fff181b0dbb7eff8b6798011cbe2983e0e46cce8c",
+    "run_pressure_sweep.py": "938627d4d544edaf08a76ab3fa49279c9baf958ca8fbd18a00e38df2f7efd89b",
+    "run_boundary_study.py": "6893ef2fdba7810ef22065c07fd742d68de5cac762aa28332be4c9655c40f8f3",
+    "run_worker_comparison.py": "5d54fcc9e0c7b71cb76e9ee7a0da541f65381ee1e8f001f47de2e876571f33be",
+    "worker_comparison_contract.py": "032457440a8569539d8b6f987dc3b56f60b572aef2c6c75c17f58b552b7a97e3"
+  },
+  "binary_sha256": {
+    "asr-worker": "b96c026a7bbff8358f4bdfca3f05c5bae6469452e5706ec114eaa6da2d81b041",
+    "gateway": "82cfe0bfd5a6cf4f79b5db108d5ed53cbe7e4a1dc9f0ad9f10289c636b76d4d6",
+    "loadgen": "62910ef5009b722ce0281ae650ab37d53a69191871333d1b406aa612e3006eea",
+    "gateway-sampler": "fc450ffc0a68502558dd30c082963f33154fb6967c5b985b1a414ce9faab8097",
+    "worker-sampler": "4fcebc6b194ea288159bffd3a651411f126f481101832441dcc411a78a8b1669"
+  },
+  "workers": [
+    {
+      "id": "worker1",
+      "address": "127.0.0.1:61838",
+      "endpoint": "http://127.0.0.1:61839/debug/worker"
+    },
+    {
+      "id": "worker2",
+      "address": "127.0.0.1:61840",
+      "endpoint": "http://127.0.0.1:61841/debug/worker"
+    }
+  ],
+  "finished_at": "2026-10-02T11:40:57.457122+00:00",
+  "artifact_sha256": {
+    "r3-n8.json": "87f59a10b36db4f2c9a82b176b0801dcaa5afbc6335e0b050b7ac1adc79476e5",
+    "gateway.log": "4f198eba77214f01f19ff30bc740fcabc734e3e2e3dcd13c62a151dfd17732bb",
+    "r2-n9-worker2.log": "a0a72d93b2b6da2a6104116da322d733f255418dff6642b45e6258ccc5ce4e2c",
+    "r3-n9.log": "3f7a2750aab0f5a6246dbcf1766a31961483bfcb0a33a46ee763885966f571ff",
+    "warmup-worker1.log": "72bbf2b94f34355365c030b34f3925bda731f19f167a7695aabd51be416e04ba",
+    "build-asr-worker.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r3-n8.log": "9f99a53bd30b07689649b57196ba4a335354f275a0a6f2ae00703a63b16f4387",
+    "summary.json": "7389b8d541331cb95e8ac838106857ea4feb3cc09ad2f9d4ee153153c4528bbe",
+    "r2-n9.json": "a6965911f2d1f48f81dbf352286c87bfc804c1e9ff0248877dc65498327afa96",
+    "r2-n8-gateway.log": "135394abdb9d7e45b8de17d0f8d2ac38cfd52f31d3054006ed9326c707824c5b",
+    "r2-n9-worker1.log": "0eb81533afdaeb1b660b22a674fbbd3ab7f083635bfaba00f799d923c6853bff",
+    "warmup-worker2.log": "dfec61b645d5d0a27a7b6632cc0e61257e48261c09387c7e3b998d254bb7fe75",
+    "r1-n10.log": "61ad77f3726fe39d1a74136477f5102ebbef794aeec78cac28a7a21fdd11cf83",
+    "r3-n9-worker1.log": "e7bc0fcd0b9e5f18d94796c2651cff9af68c3a8671f8e1faf62ce001ea5b0101",
+    "r3-n8-gateway.log": "a2def6f4df983a8b0582e8bcea862c2e7ecd8891534b1e0dcb440269c43c3271",
+    "r3-n10-worker2.log": "27b8b4f1009e6ec2e2f23267e72cda31a1b7895ea93d4e8a50e6b9123021ea03",
+    "r2-n8.json": "d5a0540235716cf6dcadd89699432548c32c9309b8d13489f79a98e017a444d6",
+    "r1-n9.log": "c175da8c919f110dc354d7abde5048612559da2ebbd9570458c9faab263d6892",
+    "r3-n9-worker2.log": "0078394e2c4ca0ce06c6eb39b3c63d8bc97f476c12eef690652b8fbeaac4eae1",
+    "r3-n10-worker1.log": "372816c9832555c34aa6c3866e5fc8a4b5146fbc02f8b10bcd6698a8c7589bd0",
+    "r1-n8.log": "f823b577429a38089a143d61cee5828356ec0b7465e7bbae94afdfe6ad10fbfc",
+    "r3-n9.json": "725b8a898ae3dd30a1cec15aaf80f8c0515b823773509fac755846f4fe73923f",
+    "warmup.log": "728959279af43abfa361c4ac8381b5fc9aeffec4db1d497d46edaf1651088fc0",
+    "r1-n10-gateway.log": "d0a4237ba25846f8594e84f293ab648b0aaad59de3e0eca907c6ac84f14b2455",
+    "r2-n10.log": "5cf200adb769b398ecc76b3c7c2420fab4c667216ddfba1d1fcc03fd03727e13",
+    "r2-n10-worker2.log": "dc722ccc1f2bc406d182fe39482dc251c8e1a7bdc7208aada6eb76c80cb92ff0",
+    "r1-n9-worker2.log": "70ac08e6725f306a88ed5edf4c6c66dd58c7955022b3cc826c9c8034708101ee",
+    "r1-n10.json": "0b6f441bba95232d0cf775d2345b3fdf8c87bf8fac3b8f4cd37265a59ab02ec3",
+    "r1-n9.json": "617a10db6da984b2e0555ed2f43639f5b8ca59d382925b4b7916264f77fe7328",
+    "r1-n8-gateway.log": "7c629587cf56173fa8944bf5aa29642491bcfea3b8e3459016e203e2be3678fa",
+    "r1-n9-worker1.log": "648d3b787d90b3a685b16bb1e6723f2ce3f6ec1cc41c2c70614c2214e61091ba",
+    "r2-n10-worker1.log": "d404ba55ed2ff1bfaf7d613623131abf808d1ae1fefc4c502306189d8719d162",
+    "r1-n8.json": "fac1e461e4e38fa7bb83417754abc4d6c6543106d6345367471b57ba4c5615c3",
+    "r3-n10.log": "bd85607818a7918bbac1585b115bb6ec659428bd5948de22773ea824c65a6576",
+    "r3-n10-gateway.log": "269f411cc7fcd8fdff68c9707179e7d1df7ecd297d68acc88194e96bcb3359a5",
+    "r3-n8-worker2.log": "1832a634b82cd18c99289c4f7d79d0c3dba207fed5d7e4e308762d4802008f2d",
+    "r2-n8.log": "f8a15b1a0fab5cb55aeb9cecdc9dcfcf1a3709691fdbf709413d900191f41d1e",
+    "r3-n9-gateway.log": "7c089d0cc7f0c64c59f621a279d51ebe38f6270cd71f5a6ceea35b8f895153dc",
+    "r3-n8-worker1.log": "8cf5dbfb57b6b6c9dab2d37e75a354568b88b87d1fec6901be5b19d860e8ca6a",
+    "r2-n9.log": "7334a9c3041045e07b61d845b872b79ea20bbedc39d37937c0e7ff705d67203d",
+    "build-worker-sampler.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "warmup.json": "a5c506b73a3224d049cc536d3416c40841defc623822a158eb9ff26cf8063b53",
+    "build-loadgen.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r2-n8-worker1.log": "18c2f8e18cc4b6262fa681b4585d3c08099c6a5b72c6b82ed22b38f27e95464b",
+    "r2-n9-gateway.log": "dbac79445a6a2f06384c3ee62ffbdfb849cbfd72d72ed9bb7ab2483fcfe71dcb",
+    "warmup-gateway.log": "b67bd9df8427e8af334cd20a859b2bdbe859b258fd6bba68b5ac99c0dae6b21b",
+    "r2-n8-worker2.log": "32b2b87d74e75a2326a6867f1be1a8e92316cc2c2bab68fdbc83615a676dfe5e",
+    "asr-worker-2.log": "38babc05ce77b587f835af617c9fbf74d8624b3c9e6164cb92c963bc107b0407",
+    "build-gateway.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "asr-worker-1.log": "6247dbbbcc1d22b7187766ccf714d7af719132c9b3e539070877728311f0865c",
+    "r1-n10-worker2.log": "374cae71df3a7af593f933c67fb9724073601110798505ded26d1415a185cc7f",
+    "r1-n8-worker1.log": "5ff1aef76c768d314161dd07f225d5f27a648572d5f267e009e7d14565818566",
+    "r2-n10.json": "a8a8e4c3b55ffd1d3744e65e2c5b61ad91452b5a43d407ddc9d1dbf40ef5d997",
+    "r2-n10-gateway.log": "b809180674fdbdbc44f80af79fcf6b83844fadc669df61c71f495ab967f7b892",
+    "r1-n9-gateway.log": "edf77930d0f9ffd70c9d28a2d90934e773aa6b63866a10713592c10f4b47acdc",
+    "r3-n10.json": "a0912584271a2bf4a6df3bffce29b3e627110c8f4150f00fa25cfc9884571e93",
+    "build-gateway-sampler.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r1-n10-worker1.log": "8e46bf25909edb626f81803c94cd0e7561db5e2e742051871ddf5aaa949641b3",
+    "r1-n8-worker2.log": "6b98fdfab092f586a0468d96131ad614397b20800037e266119e0c51f5a38147",
+    "r2-n8-worker2/manifest.json": "22a0f86102ebaf369fe30a4fa27c4ac89d522a60d46ad3c5df7513f49b9909a8",
+    "r2-n8-worker2/samples.jsonl": "d5a34e726fb022148663b39d1815e3b99b3d1a04de43cf8356741223f2e076fe",
+    "r3-n10-worker2/manifest.json": "9f22433d1596a8c86200e03ba81083618ef8ce3c56240a5dd46d98c2890da433",
+    "r3-n10-worker2/samples.jsonl": "32e7959351d2be78425d812d96a0be168eb0433c6241dcd1ea48f808576a2500",
+    "r1-n9-gateway/manifest.json": "8711f64bf4a7a50165d290c01f50a6acb62df15abf134652488632886ff7d104",
+    "r1-n9-gateway/samples.jsonl": "00da5d8a0fbbda3ad91d674531eae045b81c88afb43ed56dd653f4fb60ac5abd",
+    "r1-n10-gateway/manifest.json": "9f8c5be15ed57b841004e2cfecbc4daeb23f684504cd9122659f8d814b58a4c8",
+    "r1-n10-gateway/samples.jsonl": "ff22e295ab2d4d653af08ee5153ebeec983a7e7eba068357183afea9827734e7",
+    "r3-n9-worker1/manifest.json": "e205024beefa1e61806862ceab5d77e230842dfeca121f50fd050483e8283bcc",
+    "r3-n9-worker1/samples.jsonl": "54f5cc279238964cd7740c15c2454c9aff167461f8fdaba7e41fa00382d657ac",
+    "r2-n10-worker1/manifest.json": "5ce4c923b58f3753d5cb5a423647fb0e0389159ce381bbd2e3c9ea26f90379de",
+    "r2-n10-worker1/samples.jsonl": "8a6afd6df0913ab1e83feb1ac687d74416b3712f4ee78e72dd0a5a9b05065a24",
+    "r1-n8-gateway/manifest.json": "2fc56aee4d514a2f6aee65476ac78ad051149d833abdb62b551c8cb96e7fc4e5",
+    "r1-n8-gateway/samples.jsonl": "8031f9991b60cb58278b320afc5ff24d04cd7ae6d0cd1f6b3ab1f4f77bce8435",
+    "r3-n8-worker1/manifest.json": "4157ac9d5daa73fd02e46d90b1ecc4007b52c68dd153d9d7917aacca63043cae",
+    "r3-n8-worker1/samples.jsonl": "37c32fbd10eb802e1753e10d6dfba9076e315a8594d6712ee5b6aa18154796fd",
+    "r2-n9-worker2/manifest.json": "dc566d6300b0316c5400953a589e2ea236ee6a7680ec6f278d6d741f51ca5c84",
+    "r2-n9-worker2/samples.jsonl": "6a3e2a7fa94ee6f27f83314b06afaa9249505ec33bd4980a91f902394e6a4dba",
+    "warmup-gateway/manifest.json": "dc189a2697efb6243350078ffdc2f6dee2ebe14215151e83d20bea776fb102a6",
+    "warmup-gateway/samples.jsonl": "fb52e756f9ffbd440c137dabc77a277f71c7f280cbac9253552a2991db88b1e8",
+    "r3-n9-gateway/manifest.json": "00d41372502a883667c96548dcc705108320ad2883403bd875541b99c449e964",
+    "r3-n9-gateway/samples.jsonl": "487398f27fd3f23f914110c9255f2b2bf2c0824391ea8bad5bee948213c8d844",
+    "r1-n10-worker1/manifest.json": "b345fc4fce814bb7c154a33728a4b97b88f6e723a0a3aaaa1f3acde29c58eebd",
+    "r1-n10-worker1/samples.jsonl": "13642cd04e73e2197fcc13fe336847f8aa8b4892ff3f3e4cf0d5963dbd5369ce",
+    "r1-n9-worker1/manifest.json": "1a33f2f3b38ecc543361cb2237cc2b7ff086e7ebb5fab867191bea39bd6d2ca0",
+    "r1-n9-worker1/samples.jsonl": "e2ae8dd3d5ce5430cc498fd422bfec7fefa9eb6d173c71b91c17a8b5d364e9ed",
+    "r3-n8-gateway/manifest.json": "11af1aa348ff9ed76e6835e25bb2a453d6872fdd0fcbed9934a236030f1dda81",
+    "r3-n8-gateway/samples.jsonl": "89f5ef77f27d28d2a617d54a4b25767899fd404338b267836fe8f56eed979bd6",
+    "r2-n10-gateway/manifest.json": "a70c0aa48a0cf0728e93e7981eb799c2b72f0193f56fb3dcdbb9f4049e3f8658",
+    "r2-n10-gateway/samples.jsonl": "534140f32bff6f4aaf8f4410f2c243be334694ce702748498e798cff619180ed",
+    "r1-n8-worker1/manifest.json": "c6cd1f5c107ea1e5bb575fe8a1c63c4e958c4279ca8e7ff5ab75afa649a536dc",
+    "r1-n8-worker1/samples.jsonl": "357471bc964ab1b5750c2b96760f7fe876231f1fa88bde55c0dea67103b90560",
+    "warmup-worker1/manifest.json": "ca0b52e962e354d628d3dba553f20367aaf907bc9fd95dad1e1511900ecd0fb6",
+    "warmup-worker1/samples.jsonl": "86c54ac5d3837d5eb88fda8272965acb71f08711e9a8c375cb5f2274bbae8906",
+    "r2-n8-worker1/manifest.json": "c1b6446066666da9c6f8bbcc13aa0dd23f28f4d03632a25669809bba8ade822f",
+    "r2-n8-worker1/samples.jsonl": "61780da0a399c709f20d75b6882bddc90716e6c73f26855c04b6d1924f9b957c",
+    "r3-n10-worker1/manifest.json": "7a4dfb7c215eee1a69424998c5e3c13caf8acfd7f89c05b01352731434b90acf",
+    "r3-n10-worker1/samples.jsonl": "6785d519fd96fb512db791be72ce80f1e909dcb64b83497e78e2e64a6d45d1e8",
+    "r3-n9-worker2/manifest.json": "4e1104fa692dfaf2810b13b252828be862997db3f118be034c3a498d57f61194",
+    "r3-n9-worker2/samples.jsonl": "ab70867e2be54530ea24cc699bec0153189519e457ee0469978630263692a617",
+    "r2-n10-worker2/manifest.json": "9650b4bc74ad4f98d165156d2cb8e75c1d748f54ae9271c232909ff71daad666",
+    "r2-n10-worker2/samples.jsonl": "866505eef974a6e965592f2742a5500e0a8f870defeb82e27c81700ea15a2463",
+    "r3-n8-worker2/manifest.json": "60bae146ea5ad34709b4bb87c54ede40ade9c84069af1988692c054c826b1351",
+    "r3-n8-worker2/samples.jsonl": "14963fed0b97cbfe5c9807a81ade55809c1c41028388ee26b8e54b3cde957608",
+    "r2-n9-worker1/manifest.json": "7d938e22f78accb8c68edba4c258d13ccc3354176a772e53cd2fb27ff661a413",
+    "r2-n9-worker1/samples.jsonl": "2b41cc52478015b323d454425209edae4b5cdda0036d6ccd35ce5529f4e60678",
+    "r2-n8-gateway/manifest.json": "00b87e8599ee1458cc2692804601508efee9daab5da9d8b97be7cfea8f66dc04",
+    "r2-n8-gateway/samples.jsonl": "da6086f76537639544d0a59a6c56482c3032057d48fb58c40770d9a0382f7d28",
+    "r1-n10-worker2/manifest.json": "5606cfe0e497f747496b9e96a237f9c43d6e6dc0b89507aa59f86389a3e70d96",
+    "r1-n10-worker2/samples.jsonl": "dae6bb28b6ead623de71e85fbc47d9d7d64892756942837e29fb99fda88d37c1",
+    "r1-n9-worker2/manifest.json": "494e3f768c7dceaa99ae5395789c10da3cd98e30a70df2195aa5b252608799c2",
+    "r1-n9-worker2/samples.jsonl": "60445debe07a59a4d188a08762608f276e157cc00d92a8d42c426c26a5f2d5be",
+    "r3-n10-gateway/manifest.json": "d59636afc407841e6fa0c4f726c3c7b290d63be0c57336891e5445a7560ee977",
+    "r3-n10-gateway/samples.jsonl": "bc0a46d56d4d1c37ed6832fa58bc2b09b491ce10cdcceb88eb128fc6dfa0a28d",
+    "r1-n8-worker2/manifest.json": "ed2e28ff7cee8fa1d9d8e1ce554350817d4731a8dd7524152a0dd49fe166c180",
+    "r1-n8-worker2/samples.jsonl": "8f24e2f02f0602ac7ae7bb6bdb0adf16f27361661673b1854e4dcdc489937738",
+    "warmup-worker2/manifest.json": "91594893dae7d93badbb94778d2e539cc5f0f1f988dcf58af2296a1db07ef37c",
+    "warmup-worker2/samples.jsonl": "e65bea2a1fcfe0a9673ebe33f21f5ebade51c01ef3db650dff54afafb562f7c4",
+    "r2-n9-gateway/manifest.json": "fad388693cacafb0235137a7141873c3c440ed0c5954fbcb58cedc94f7cf86f0",
+    "r2-n9-gateway/samples.jsonl": "04f39aefe6dca091ac55b84a92aa9d0c26aa99a64b35587e5993e616e6a9312c"
+  }
+}
