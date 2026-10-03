@@ -1,0 +1,634 @@
+Command: GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race -json ./cmd/gateway ./internal/workerpool
+Output rendering: tabs expanded to spaces for repository whitespace checks.
+Scope: configuration and correctness; counts include parent tests and subtests, not performance measurements.
+Before the full run, the network-free targeted config/selector checks passed (228 checks).
+Passed new checks: 71; all checks: 251; failed: 0; skipped: 0
+github.com/secacy/tide-artisan/cmd/gateway: 204 passed checks
+github.com/secacy/tide-artisan/internal/workerpool: 47 passed checks
+SHA256 cmd/gateway/config.go 26538d043fcc2a52ce846f507d663287c0517c3f184453e64afa5be6dc5e8e69
+SHA256 cmd/gateway/worker_weights.go 2cc8042637858a3abb5df9dbb9712ff6f8da2d96708c43adfbb0b273cc38790e
+SHA256 cmd/gateway/worker_weights_test.go 3caa63dfa72bd7c3e9ba4cc5fae5a0e977a12cafa3321dedb5942b107132ba8f
+SHA256 cmd/gateway/config_test.go 338a756eac39cc97e4e28c28b702a6554f4c2a7e1c4be3df9a17e96ad68ee746
+SHA256 cmd/gateway/worker_addresses_test.go 2af1ed4a76d921fc314305a1d68028abb83738e2e4083f0b612759030363a5fd
+SHA256 internal/workerpool/weighted_round_robin.go d7aa2757ed7a922ec0cc88a17e212f525aa96f89264a64ac6e9f2e339ca3659c
+
+=== RUN   TestParseGatewayConfigValues
+=== RUN   TestParseGatewayConfigValues/enabled_equals
+--- PASS: TestParseGatewayConfigValues/enabled_equals (0.00s)
+=== RUN   TestParseGatewayConfigValues/default_after_enabled
+--- PASS: TestParseGatewayConfigValues/default_after_enabled (0.00s)
+=== RUN   TestParseGatewayConfigValues/explicit_disabled
+--- PASS: TestParseGatewayConfigValues/explicit_disabled (0.00s)
+=== RUN   TestParseGatewayConfigValues/enabled_separate
+--- PASS: TestParseGatewayConfigValues/enabled_separate (0.00s)
+=== RUN   TestParseGatewayConfigValues/small_positive
+--- PASS: TestParseGatewayConfigValues/small_positive (0.00s)
+=== RUN   TestParseGatewayConfigValues/maximum_int64
+--- PASS: TestParseGatewayConfigValues/maximum_int64 (0.00s)
+=== RUN   TestParseGatewayConfigValues/negative_deferred_to_gateway
+--- PASS: TestParseGatewayConfigValues/negative_deferred_to_gateway (0.00s)
+=== RUN   TestParseGatewayConfigValues/minimum_int64
+--- PASS: TestParseGatewayConfigValues/minimum_int64 (0.00s)
+--- PASS: TestParseGatewayConfigValues (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments
+=== RUN   TestParseGatewayConfigInvalidArguments/not_integer
+invalid value "one" for flag -max-pending-audio-bytes: parse error
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -worker-strategy string
+        worker selection strategy: round_robin or weighted_round_robin (default "round_robin")
+  -worker-weights string
+        comma-separated positive worker weights; required for weighted_round_robin
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/not_integer (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/empty_value
+invalid value "" for flag -max-pending-audio-bytes: parse error
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -worker-strategy string
+        worker selection strategy: round_robin or weighted_round_robin (default "round_robin")
+  -worker-weights string
+        comma-separated positive worker weights; required for weighted_round_robin
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/empty_value (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/missing_value
+flag needs an argument: -max-pending-audio-bytes
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -worker-strategy string
+        worker selection strategy: round_robin or weighted_round_robin (default "round_robin")
+  -worker-weights string
+        comma-separated positive worker weights; required for weighted_round_robin
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/missing_value (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/positive_overflow
+invalid value "9223372036854775808" for flag -max-pending-audio-bytes: value out of range
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -worker-strategy string
+        worker selection strategy: round_robin or weighted_round_robin (default "round_robin")
+  -worker-weights string
+        comma-separated positive worker weights; required for weighted_round_robin
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/positive_overflow (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/negative_overflow
+invalid value "-9223372036854775809" for flag -max-pending-audio-bytes: value out of range
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -worker-strategy string
+        worker selection strategy: round_robin or weighted_round_robin (default "round_robin")
+  -worker-weights string
+        comma-separated positive worker weights; required for weighted_round_robin
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/negative_overflow (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/unknown_flag
+flag provided but not defined: -max-pending-audio-byte
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -worker-strategy string
+        worker selection strategy: round_robin or weighted_round_robin (default "round_robin")
+  -worker-weights string
+        comma-separated positive worker weights; required for weighted_round_robin
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/unknown_flag (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/positional
+--- PASS: TestParseGatewayConfigInvalidArguments/positional (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/positional_after_option
+--- PASS: TestParseGatewayConfigInvalidArguments/positional_after_option (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/positional_before_option
+--- PASS: TestParseGatewayConfigInvalidArguments/positional_before_option (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/positional_after_terminator
+--- PASS: TestParseGatewayConfigInvalidArguments/positional_after_terminator (0.00s)
+--- PASS: TestParseGatewayConfigInvalidArguments (0.00s)
+=== RUN   TestParseGatewayConfigHelp
+=== RUN   TestParseGatewayConfigHelp/-h
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -worker-strategy string
+        worker selection strategy: round_robin or weighted_round_robin (default "round_robin")
+  -worker-weights string
+        comma-separated positive worker weights; required for weighted_round_robin
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigHelp/-h (0.00s)
+=== RUN   TestParseGatewayConfigHelp/-help
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -worker-strategy string
+        worker selection strategy: round_robin or weighted_round_robin (default "round_robin")
+  -worker-weights string
+        comma-separated positive worker weights; required for weighted_round_robin
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigHelp/-help (0.00s)
+--- PASS: TestParseGatewayConfigHelp (0.00s)
+=== RUN   TestSnapshotHTTPContract
+=== RUN   TestSnapshotHTTPContract/default
+--- PASS: TestSnapshotHTTPContract/default (0.00s)
+=== RUN   TestSnapshotHTTPContract/explicit
+--- PASS: TestSnapshotHTTPContract/explicit (0.00s)
+=== RUN   TestSnapshotHTTPContract/stopped
+--- PASS: TestSnapshotHTTPContract/stopped (0.00s)
+--- PASS: TestSnapshotHTTPContract (0.00s)
+=== RUN   TestSnapshotHTTPRoutes
+=== RUN   TestSnapshotHTTPRoutes/head
+--- PASS: TestSnapshotHTTPRoutes/head (0.00s)
+=== RUN   TestSnapshotHTTPRoutes/post
+--- PASS: TestSnapshotHTTPRoutes/post (0.00s)
+=== RUN   TestSnapshotHTTPRoutes/delete
+--- PASS: TestSnapshotHTTPRoutes/delete (0.00s)
+=== RUN   TestSnapshotHTTPRoutes/child
+--- PASS: TestSnapshotHTTPRoutes/child (0.00s)
+=== RUN   TestSnapshotHTTPRoutes/health
+--- PASS: TestSnapshotHTTPRoutes/health (0.00s)
+--- PASS: TestSnapshotHTTPRoutes (0.00s)
+=== RUN   TestSnapshotHTTPActiveSession
+--- PASS: TestSnapshotHTTPActiveSession (0.02s)
+=== RUN   TestSnapshotHTTPWriteError
+2026/10/03 13:45:11 ERROR write gateway snapshot response error="io: read/write on closed pipe"
+--- PASS: TestSnapshotHTTPWriteError (0.00s)
+=== RUN   TestSnapshotHTTPSlowWriter
+--- PASS: TestSnapshotHTTPSlowWriter (0.00s)
+=== RUN   TestGatewayMultiWorkerStartup
+2026/10/03 13:45:11 websocket gateway listening on :8080
+2026/10/03 13:45:11 shutting down websocket gateway
+    startup_test.go:247: routing=B,A,B,A,B,A; normal=4 canceled=2; connections per Worker opened=1 closed=1 before backend shutdown
+--- PASS: TestGatewayMultiWorkerStartup (0.01s)
+=== RUN   TestGatewayStartupCLI
+=== RUN   TestNewRoundRobinInvalidWorkers
+=== RUN   TestNewRoundRobinInvalidWorkers/nil_list
+--- PASS: TestNewRoundRobinInvalidWorkers/nil_list (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/empty_list
+--- PASS: TestNewRoundRobinInvalidWorkers/empty_list (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/empty_id
+--- PASS: TestNewRoundRobinInvalidWorkers/empty_id (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/blank_id
+--- PASS: TestNewRoundRobinInvalidWorkers/blank_id (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/duplicate_adjacent
+--- PASS: TestNewRoundRobinInvalidWorkers/duplicate_adjacent (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/duplicate_nonadjacent
+--- PASS: TestNewRoundRobinInvalidWorkers/duplicate_nonadjacent (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/nil_client
+--- PASS: TestNewRoundRobinInvalidWorkers/nil_client (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/nil_client_later
+--- PASS: TestNewRoundRobinInvalidWorkers/nil_client_later (0.00s)
+--- PASS: TestNewRoundRobinInvalidWorkers (0.00s)
+=== RUN   TestRoundRobinSequence
+=== RUN   TestRoundRobinSequence/single
+--- PASS: TestRoundRobinSequence/single (0.00s)
+=== RUN   TestRoundRobinSequence/three_workers
+--- PASS: TestRoundRobinSequence/three_workers (0.00s)
+--- PASS: TestRoundRobinSequence (0.00s)
+=== RUN   TestRoundRobinPreservesIDs
+--- PASS: TestRoundRobinPreservesIDs (0.00s)
+=== RUN   TestRoundRobinListIsolation
+--- PASS: TestRoundRobinListIsolation (0.00s)
+=== RUN   TestRoundRobinConcurrentSelections
+    round_robin_test.go:167: callers=32 selections=3200 counts=[1067 1067 1066]
+--- PASS: TestRoundRobinConcurrentSelections (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/nil_list
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/nil_list (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/empty_list
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/empty_list (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/empty_id
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/empty_id (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/blank_id
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/blank_id (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/duplicate_adjacent
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/duplicate_adjacent (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/duplicate_nonadjacent
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/duplicate_nonadjacent (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/nil_client_first
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/nil_client_first (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/nil_client_later
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/nil_client_later (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/zero_weight
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/zero_weight (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/negative_weight
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/negative_weight (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/min_int_weight
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/min_int_weight (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/single_over_limit
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/single_over_limit (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/sum_over_limit
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/sum_over_limit (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/max_int_first
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/max_int_first (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/max_int_later
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/max_int_later (0.00s)
+--- PASS: TestNewWeightedRoundRobinInvalidConfig (0.00s)
+=== RUN   TestWeightedRoundRobinSequence
+=== RUN   TestWeightedRoundRobinSequence/single
+--- PASS: TestWeightedRoundRobinSequence/single (0.00s)
+=== RUN   TestWeightedRoundRobinSequence/two_to_one
+--- PASS: TestWeightedRoundRobinSequence/two_to_one (0.00s)
+=== RUN   TestWeightedRoundRobinSequence/one_to_two
+--- PASS: TestWeightedRoundRobinSequence/one_to_two (0.00s)
+=== RUN   TestWeightedRoundRobinSequence/five_one_one
+--- PASS: TestWeightedRoundRobinSequence/five_one_one (0.00s)
+=== RUN   TestWeightedRoundRobinSequence/equal
+--- PASS: TestWeightedRoundRobinSequence/equal (0.00s)
+--- PASS: TestWeightedRoundRobinSequence (0.00s)
+=== RUN   TestWeightedRoundRobinEqualWeightsMatchRoundRobin
+--- PASS: TestWeightedRoundRobinEqualWeightsMatchRoundRobin (0.00s)
+=== RUN   TestWeightedRoundRobinFullCycleShares
+=== RUN   TestWeightedRoundRobinFullCycleShares/coprime
+--- PASS: TestWeightedRoundRobinFullCycleShares/coprime (0.00s)
+=== RUN   TestWeightedRoundRobinFullCycleShares/common_factor
+--- PASS: TestWeightedRoundRobinFullCycleShares/common_factor (0.00s)
+=== RUN   TestWeightedRoundRobinFullCycleShares/single_at_limit
+--- PASS: TestWeightedRoundRobinFullCycleShares/single_at_limit (0.41s)
+=== RUN   TestWeightedRoundRobinFullCycleShares/skew_at_limit
+--- PASS: TestWeightedRoundRobinFullCycleShares/skew_at_limit (0.47s)
+--- PASS: TestWeightedRoundRobinFullCycleShares (0.88s)
+=== RUN   TestWeightedRoundRobinScaleInvariance
+--- PASS: TestWeightedRoundRobinScaleInvariance (0.00s)
+=== RUN   TestWeightedRoundRobinIsolation
+--- PASS: TestWeightedRoundRobinIsolation (0.00s)
+=== RUN   TestWeightedRoundRobinPreservesIdentity
+--- PASS: TestWeightedRoundRobinPreservesIdentity (0.00s)
+=== RUN   TestWeightedRoundRobinConcurrentSelections
+    weighted_round_robin_test.go:256: callers=32 selections=22400 counts=[16000 3200 3200]
+--- PASS: TestWeightedRoundRobinConcurrentSelections (0.02s)
+PASS
+=== RUN   TestGatewayStartupCLI/help
+--- PASS: TestGatewayStartupCLI/help (0.64s)
+=== RUN   TestGatewayStartupCLI/long_help
+--- PASS: TestGatewayStartupCLI/long_help (0.01s)
+=== RUN   TestGatewayStartupCLI/empty
+--- PASS: TestGatewayStartupCLI/empty (0.01s)
+=== RUN   TestGatewayStartupCLI/duplicate
+--- PASS: TestGatewayStartupCLI/duplicate (0.01s)
+=== RUN   TestGatewayStartupCLI/signed_port
+--- PASS: TestGatewayStartupCLI/signed_port (0.01s)
+=== RUN   TestGatewayStartupCLI/trailing_empty
+--- PASS: TestGatewayStartupCLI/trailing_empty (0.01s)
+=== RUN   TestGatewayStartupCLI/unknown
+--- PASS: TestGatewayStartupCLI/unknown (0.01s)
+=== RUN   TestGatewayStartupCLI/budget_rejected_after_parse
+--- PASS: TestGatewayStartupCLI/budget_rejected_after_parse (0.01s)
+--- PASS: TestGatewayStartupCLI (1.97s)
+=== RUN   TestWorkerAddressesValues
+=== RUN   TestWorkerAddressesValues/single
+=== RUN   TestWorkerAddressesValues/single/helper
+--- PASS: TestWorkerAddressesValues/single/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/single/cli
+--- PASS: TestWorkerAddressesValues/single/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/single (0.00s)
+=== RUN   TestWorkerAddressesValues/ordered
+=== RUN   TestWorkerAddressesValues/ordered/helper
+--- PASS: TestWorkerAddressesValues/ordered/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/ordered/cli
+--- PASS: TestWorkerAddressesValues/ordered/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/ordered (0.00s)
+=== RUN   TestWorkerAddressesValues/trimmed
+=== RUN   TestWorkerAddressesValues/trimmed/helper
+--- PASS: TestWorkerAddressesValues/trimmed/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/trimmed/cli
+--- PASS: TestWorkerAddressesValues/trimmed/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/trimmed (0.00s)
+=== RUN   TestWorkerAddressesValues/ipv6
+=== RUN   TestWorkerAddressesValues/ipv6/helper
+--- PASS: TestWorkerAddressesValues/ipv6/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/ipv6/cli
+--- PASS: TestWorkerAddressesValues/ipv6/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/ipv6 (0.00s)
+=== RUN   TestWorkerAddressesValues/port_bounds
+=== RUN   TestWorkerAddressesValues/port_bounds/helper
+--- PASS: TestWorkerAddressesValues/port_bounds/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/port_bounds/cli
+--- PASS: TestWorkerAddressesValues/port_bounds/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/port_bounds (0.00s)
+=== RUN   TestWorkerAddressesValues/no_alias_normalization
+=== RUN   TestWorkerAddressesValues/no_alias_normalization/helper
+--- PASS: TestWorkerAddressesValues/no_alias_normalization/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/no_alias_normalization/cli
+--- PASS: TestWorkerAddressesValues/no_alias_normalization/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/no_alias_normalization (0.00s)
+--- PASS: TestWorkerAddressesValues (0.00s)
+=== RUN   TestWorkerAddressesRejected
+=== RUN   TestWorkerAddressesRejected/empty
+=== RUN   TestWorkerAddressesRejected/empty/helper
+--- PASS: TestWorkerAddressesRejected/empty/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/empty/cli
+--- PASS: TestWorkerAddressesRejected/empty/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/empty (0.00s)
+=== RUN   TestWorkerAddressesRejected/blank
+=== RUN   TestWorkerAddressesRejected/blank/helper
+--- PASS: TestWorkerAddressesRejected/blank/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/blank/cli
+--- PASS: TestWorkerAddressesRejected/blank/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/blank (0.00s)
+=== RUN   TestWorkerAddressesRejected/leading_empty
+=== RUN   TestWorkerAddressesRejected/leading_empty/helper
+--- PASS: TestWorkerAddressesRejected/leading_empty/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/leading_empty/cli
+--- PASS: TestWorkerAddressesRejected/leading_empty/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/leading_empty (0.00s)
+=== RUN   TestWorkerAddressesRejected/middle_empty
+=== RUN   TestWorkerAddressesRejected/middle_empty/helper
+--- PASS: TestWorkerAddressesRejected/middle_empty/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/middle_empty/cli
+--- PASS: TestWorkerAddressesRejected/middle_empty/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/middle_empty (0.00s)
+=== RUN   TestWorkerAddressesRejected/trailing_empty
+=== RUN   TestWorkerAddressesRejected/trailing_empty/helper
+--- PASS: TestWorkerAddressesRejected/trailing_empty/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/trailing_empty/cli
+--- PASS: TestWorkerAddressesRejected/trailing_empty/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/trailing_empty (0.00s)
+=== RUN   TestWorkerAddressesRejected/duplicate
+=== RUN   TestWorkerAddressesRejected/duplicate/helper
+--- PASS: TestWorkerAddressesRejected/duplicate/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/duplicate/cli
+--- PASS: TestWorkerAddressesRejected/duplicate/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/duplicate (0.00s)
+=== RUN   TestWorkerAddressesRejected/duplicate_after_trim
+=== RUN   TestWorkerAddressesRejected/duplicate_after_trim/helper
+--- PASS: TestWorkerAddressesRejected/duplicate_after_trim/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/duplicate_after_trim/cli
+--- PASS: TestWorkerAddressesRejected/duplicate_after_trim/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/duplicate_after_trim (0.00s)
+=== RUN   TestWorkerAddressesRejected/missing_port
+=== RUN   TestWorkerAddressesRejected/missing_port/helper
+--- PASS: TestWorkerAddressesRejected/missing_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/missing_port/cli
+--- PASS: TestWorkerAddressesRejected/missing_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/missing_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/empty_host
+=== RUN   TestWorkerAddressesRejected/empty_host/helper
+--- PASS: TestWorkerAddressesRejected/empty_host/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/empty_host/cli
+--- PASS: TestWorkerAddressesRejected/empty_host/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/empty_host (0.00s)
+=== RUN   TestWorkerAddressesRejected/empty_port
+=== RUN   TestWorkerAddressesRejected/empty_port/helper
+--- PASS: TestWorkerAddressesRejected/empty_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/empty_port/cli
+--- PASS: TestWorkerAddressesRejected/empty_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/empty_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/named_port
+=== RUN   TestWorkerAddressesRejected/named_port/helper
+--- PASS: TestWorkerAddressesRejected/named_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/named_port/cli
+--- PASS: TestWorkerAddressesRejected/named_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/named_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/zero_port
+=== RUN   TestWorkerAddressesRejected/zero_port/helper
+--- PASS: TestWorkerAddressesRejected/zero_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/zero_port/cli
+--- PASS: TestWorkerAddressesRejected/zero_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/zero_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/port_too_large
+=== RUN   TestWorkerAddressesRejected/port_too_large/helper
+--- PASS: TestWorkerAddressesRejected/port_too_large/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/port_too_large/cli
+--- PASS: TestWorkerAddressesRejected/port_too_large/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/port_too_large (0.00s)
+=== RUN   TestWorkerAddressesRejected/negative_port
+=== RUN   TestWorkerAddressesRejected/negative_port/helper
+--- PASS: TestWorkerAddressesRejected/negative_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/negative_port/cli
+--- PASS: TestWorkerAddressesRejected/negative_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/negative_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/signed_port
+=== RUN   TestWorkerAddressesRejected/signed_port/helper
+--- PASS: TestWorkerAddressesRejected/signed_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/signed_port/cli
+--- PASS: TestWorkerAddressesRejected/signed_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/signed_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/port_overflow
+=== RUN   TestWorkerAddressesRejected/port_overflow/helper
+--- PASS: TestWorkerAddressesRejected/port_overflow/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/port_overflow/cli
+--- PASS: TestWorkerAddressesRejected/port_overflow/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/port_overflow (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_whitespace
+=== RUN   TestWorkerAddressesRejected/host_whitespace/helper
+--- PASS: TestWorkerAddressesRejected/host_whitespace/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_whitespace/cli
+--- PASS: TestWorkerAddressesRejected/host_whitespace/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/host_whitespace (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_slash
+=== RUN   TestWorkerAddressesRejected/host_slash/helper
+--- PASS: TestWorkerAddressesRejected/host_slash/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_slash/cli
+--- PASS: TestWorkerAddressesRejected/host_slash/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/host_slash (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_backslash
+=== RUN   TestWorkerAddressesRejected/host_backslash/helper
+--- PASS: TestWorkerAddressesRejected/host_backslash/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_backslash/cli
+--- PASS: TestWorkerAddressesRejected/host_backslash/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/host_backslash (0.00s)
+=== RUN   TestWorkerAddressesRejected/resolver_uri
+=== RUN   TestWorkerAddressesRejected/resolver_uri/helper
+--- PASS: TestWorkerAddressesRejected/resolver_uri/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/resolver_uri/cli
+--- PASS: TestWorkerAddressesRejected/resolver_uri/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/resolver_uri (0.00s)
+=== RUN   TestWorkerAddressesRejected/unbracketed_ipv6
+=== RUN   TestWorkerAddressesRejected/unbracketed_ipv6/helper
+--- PASS: TestWorkerAddressesRejected/unbracketed_ipv6/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/unbracketed_ipv6/cli
+--- PASS: TestWorkerAddressesRejected/unbracketed_ipv6/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/unbracketed_ipv6 (0.00s)
+--- PASS: TestWorkerAddressesRejected (0.00s)
+=== RUN   TestGatewayWorkerFlags
+=== RUN   TestGatewayWorkerFlags/last_value_wins
+--- PASS: TestGatewayWorkerFlags/last_value_wins (0.00s)
+=== RUN   TestGatewayWorkerFlags/missing_value
+flag needs an argument: -workers
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -worker-strategy string
+        worker selection strategy: round_robin or weighted_round_robin (default "round_robin")
+  -worker-weights string
+        comma-separated positive worker weights; required for weighted_round_robin
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestGatewayWorkerFlags/missing_value (0.00s)
+=== RUN   TestGatewayWorkerFlags/independent_calls
+--- PASS: TestGatewayWorkerFlags/independent_calls (0.00s)
+--- PASS: TestGatewayWorkerFlags (0.00s)
+=== RUN   TestWorkerWeightsValues
+=== RUN   TestWorkerWeightsValues/single
+--- PASS: TestWorkerWeightsValues/single (0.00s)
+=== RUN   TestWorkerWeightsValues/ordered
+--- PASS: TestWorkerWeightsValues/ordered (0.00s)
+=== RUN   TestWorkerWeightsValues/trimmed
+--- PASS: TestWorkerWeightsValues/trimmed (0.00s)
+=== RUN   TestWorkerWeightsValues/decimal_leading_zero
+--- PASS: TestWorkerWeightsValues/decimal_leading_zero (0.00s)
+=== RUN   TestWorkerWeightsValues/positive_sign
+--- PASS: TestWorkerWeightsValues/positive_sign (0.00s)
+=== RUN   TestWorkerWeightsValues/single_at_limit
+--- PASS: TestWorkerWeightsValues/single_at_limit (0.00s)
+=== RUN   TestWorkerWeightsValues/sum_at_limit
+--- PASS: TestWorkerWeightsValues/sum_at_limit (0.00s)
+--- PASS: TestWorkerWeightsValues (0.00s)
+=== RUN   TestWorkerWeightsRejected
+=== RUN   TestWorkerWeightsRejected/empty
+--- PASS: TestWorkerWeightsRejected/empty (0.00s)
+=== RUN   TestWorkerWeightsRejected/blank
+--- PASS: TestWorkerWeightsRejected/blank (0.00s)
+=== RUN   TestWorkerWeightsRejected/leading_empty
+--- PASS: TestWorkerWeightsRejected/leading_empty (0.00s)
+=== RUN   TestWorkerWeightsRejected/middle_empty
+--- PASS: TestWorkerWeightsRejected/middle_empty (0.00s)
+=== RUN   TestWorkerWeightsRejected/trailing_empty
+--- PASS: TestWorkerWeightsRejected/trailing_empty (0.00s)
+=== RUN   TestWorkerWeightsRejected/too_few
+--- PASS: TestWorkerWeightsRejected/too_few (0.00s)
+=== RUN   TestWorkerWeightsRejected/too_many
+--- PASS: TestWorkerWeightsRejected/too_many (0.00s)
+=== RUN   TestWorkerWeightsRejected/zero_workers
+--- PASS: TestWorkerWeightsRejected/zero_workers (0.00s)
+=== RUN   TestWorkerWeightsRejected/negative_workers
+--- PASS: TestWorkerWeightsRejected/negative_workers (0.00s)
+=== RUN   TestWorkerWeightsRejected/zero
+--- PASS: TestWorkerWeightsRejected/zero (0.00s)
+=== RUN   TestWorkerWeightsRejected/negative
+--- PASS: TestWorkerWeightsRejected/negative (0.00s)
+=== RUN   TestWorkerWeightsRejected/word
+--- PASS: TestWorkerWeightsRejected/word (0.00s)
+=== RUN   TestWorkerWeightsRejected/fraction
+--- PASS: TestWorkerWeightsRejected/fraction (0.00s)
+=== RUN   TestWorkerWeightsRejected/exponent
+--- PASS: TestWorkerWeightsRejected/exponent (0.00s)
+=== RUN   TestWorkerWeightsRejected/hexadecimal
+--- PASS: TestWorkerWeightsRejected/hexadecimal (0.00s)
+=== RUN   TestWorkerWeightsRejected/underscore
+--- PASS: TestWorkerWeightsRejected/underscore (0.00s)
+=== RUN   TestWorkerWeightsRejected/internal_space
+--- PASS: TestWorkerWeightsRejected/internal_space (0.00s)
+=== RUN   TestWorkerWeightsRejected/positive_overflow
+--- PASS: TestWorkerWeightsRejected/positive_overflow (0.00s)
+=== RUN   TestWorkerWeightsRejected/negative_overflow
+--- PASS: TestWorkerWeightsRejected/negative_overflow (0.00s)
+=== RUN   TestWorkerWeightsRejected/max_int_first
+--- PASS: TestWorkerWeightsRejected/max_int_first (0.00s)
+=== RUN   TestWorkerWeightsRejected/max_int_later
+--- PASS: TestWorkerWeightsRejected/max_int_later (0.00s)
+=== RUN   TestWorkerWeightsRejected/min_int
+--- PASS: TestWorkerWeightsRejected/min_int (0.00s)
+=== RUN   TestWorkerWeightsRejected/single_over_limit
+--- PASS: TestWorkerWeightsRejected/single_over_limit (0.00s)
+=== RUN   TestWorkerWeightsRejected/sum_over_limit
+--- PASS: TestWorkerWeightsRejected/sum_over_limit (0.00s)
+--- PASS: TestWorkerWeightsRejected (0.00s)
+=== RUN   TestGatewayWorkerStrategyValues
+=== RUN   TestGatewayWorkerStrategyValues/default
+--- PASS: TestGatewayWorkerStrategyValues/default (0.00s)
+=== RUN   TestGatewayWorkerStrategyValues/explicit_round_robin
+--- PASS: TestGatewayWorkerStrategyValues/explicit_round_robin (0.00s)
+=== RUN   TestGatewayWorkerStrategyValues/weighted_default_address
+--- PASS: TestGatewayWorkerStrategyValues/weighted_default_address (0.00s)
+=== RUN   TestGatewayWorkerStrategyValues/weighted_equals
+--- PASS: TestGatewayWorkerStrategyValues/weighted_equals (0.00s)
+=== RUN   TestGatewayWorkerStrategyValues/weighted_separate
+--- PASS: TestGatewayWorkerStrategyValues/weighted_separate (0.00s)
+=== RUN   TestGatewayWorkerStrategyValues/weighted_at_limit
+--- PASS: TestGatewayWorkerStrategyValues/weighted_at_limit (0.00s)
+=== RUN   TestGatewayWorkerStrategyValues/last_strategy_wins
+--- PASS: TestGatewayWorkerStrategyValues/last_strategy_wins (0.00s)
+=== RUN   TestGatewayWorkerStrategyValues/last_weights_win
+--- PASS: TestGatewayWorkerStrategyValues/last_weights_win (0.00s)
+=== RUN   TestGatewayWorkerStrategyValues/last_addresses_match_weights
+--- PASS: TestGatewayWorkerStrategyValues/last_addresses_match_weights (0.00s)
+--- PASS: TestGatewayWorkerStrategyValues (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected
+=== RUN   TestGatewayWorkerStrategyRejected/unknown_strategy
+--- PASS: TestGatewayWorkerStrategyRejected/unknown_strategy (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/empty_strategy
+--- PASS: TestGatewayWorkerStrategyRejected/empty_strategy (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/case_changed
+--- PASS: TestGatewayWorkerStrategyRejected/case_changed (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/strategy_whitespace
+--- PASS: TestGatewayWorkerStrategyRejected/strategy_whitespace (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/round_robin_weights
+--- PASS: TestGatewayWorkerStrategyRejected/round_robin_weights (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/round_robin_explicit_empty
+--- PASS: TestGatewayWorkerStrategyRejected/round_robin_explicit_empty (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/round_robin_explicit_blank
+--- PASS: TestGatewayWorkerStrategyRejected/round_robin_explicit_blank (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/round_robin_after_weighted
+--- PASS: TestGatewayWorkerStrategyRejected/round_robin_after_weighted (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_missing_weights
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_missing_weights (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_empty
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_empty (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_blank
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_blank (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_zero
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_zero (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_negative
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_negative (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_empty_element
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_empty_element (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_too_few
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_too_few (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_too_many
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_too_many (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_overflow
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_overflow (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_sum_over_limit
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_sum_over_limit (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_hexadecimal
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_hexadecimal (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_duplicate_addresses
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_duplicate_addresses (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/weighted_invalid_address
+--- PASS: TestGatewayWorkerStrategyRejected/weighted_invalid_address (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/missing_strategy_value
+flag needs an argument: -worker-strategy
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -worker-strategy string
+        worker selection strategy: round_robin or weighted_round_robin (default "round_robin")
+  -worker-weights string
+        comma-separated positive worker weights; required for weighted_round_robin
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestGatewayWorkerStrategyRejected/missing_strategy_value (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/missing_weights_value
+flag needs an argument: -worker-weights
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -worker-strategy string
+        worker selection strategy: round_robin or weighted_round_robin (default "round_robin")
+  -worker-weights string
+        comma-separated positive worker weights; required for weighted_round_robin
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestGatewayWorkerStrategyRejected/missing_weights_value (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/last_weights_empty
+--- PASS: TestGatewayWorkerStrategyRejected/last_weights_empty (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/last_strategy_invalid
+--- PASS: TestGatewayWorkerStrategyRejected/last_strategy_invalid (0.00s)
+=== RUN   TestGatewayWorkerStrategyRejected/positional
+--- PASS: TestGatewayWorkerStrategyRejected/positional (0.00s)
+--- PASS: TestGatewayWorkerStrategyRejected (0.00s)
+=== RUN   TestGatewayWorkerStrategyIsolation
+--- PASS: TestGatewayWorkerStrategyIsolation (0.00s)
+PASS
+ok      github.com/secacy/tide-artisan/internal/workerpool      2.744s
+ok      github.com/secacy/tide-artisan/cmd/gateway      3.606s

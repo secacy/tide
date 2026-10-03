@@ -40,7 +40,7 @@ func TestParseGatewayConfigValues(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			want := gatewayConfig{WorkerAddrs: []string{"localhost:50051"}, Gateway: gateway.Config{MaxMessageBytes: 1024 * 1024, MaxPendingAudioBytes: tc.budget}}
+			want := gatewayConfig{WorkerAddrs: []string{"localhost:50051"}, WorkerStrategy: workerStrategyRoundRobin, Gateway: gateway.Config{MaxMessageBytes: 1024 * 1024, MaxPendingAudioBytes: tc.budget}}
 			if !reflect.DeepEqual(cfg, want) {
 				t.Fatalf("config=%+v, want %+v", cfg, want)
 			}

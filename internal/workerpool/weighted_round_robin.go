@@ -6,7 +6,9 @@ import (
 	"sync"
 )
 
-const maxTotalWeight int64 = 1_000_000
+// MaxTotalWeight 是固定权重总和的配置上限。
+// 用于约束权重及选择分数的算术范围，不表示会话容量。
+const MaxTotalWeight int64 = 1_000_000
 
 // WeightedWorker 将后端身份与固定分配权重关联。
 // Weight 表示选择比例，不表示并发上限或处理名额。
@@ -55,7 +57,7 @@ func NewWeightedRoundRobin(workers []WeightedWorker) (*WeightedRoundRobin, error
 		if ww.Weight <= 0 {
 			return nil, errors.New("worker weight must be positive")
 		}
-		if ww.Weight > maxTotalWeight-totalWeight {
+		if ww.Weight > MaxTotalWeight-totalWeight {
 			return nil, errors.New("total worker weight exceeds limit")
 		}
 

@@ -33,7 +33,7 @@ func TestWorkerAddressesValues(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				want := gatewayConfig{WorkerAddrs: tc.want, Gateway: gateway.Config{MaxMessageBytes: 1024 * 1024, MaxPendingAudioBytes: 32000}}
+				want := gatewayConfig{WorkerAddrs: tc.want, WorkerStrategy: workerStrategyRoundRobin, Gateway: gateway.Config{MaxMessageBytes: 1024 * 1024, MaxPendingAudioBytes: 32000}}
 				if !reflect.DeepEqual(cfg, want) {
 					t.Fatalf("config=%+v, want %+v", cfg, want)
 				}
