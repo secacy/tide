@@ -1,0 +1,84 @@
+warmup exit 0 evidence True criteria True
+r1-n16 exit 1 evidence True criteria False
+recovery-r1 exit 0 evidence True criteria True
+r2-n16 exit 1 evidence True criteria False
+recovery-r2 exit 0 evidence True criteria True
+r3-n16 exit 1 evidence True criteria False
+recovery-r3 exit 0 evidence True criteria True
+[
+  {
+    "planned_sessions": 16,
+    "attempts": 48,
+    "outcomes": {
+      "completed": 41,
+      "failed": 7
+    },
+    "completion_rate": 0.8541666666666666,
+    "batches_meeting_criteria": 0,
+    "all_repetitions_meet_criteria": false,
+    "tail_completed_only": {
+      "samples": 41,
+      "min_ns": 17738208,
+      "p50_ns": 673560667,
+      "p95_ns": 1027214416,
+      "max_ns": 1047870000
+    },
+    "audio_bytes_written": 27542400,
+    "planned_audio_bytes": 30720000,
+    "failure_errors": {
+      "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"": 7
+    },
+    "max_audio_schedule_lag_ns": 4877917,
+    "gateway_observed_peaks": [
+      16,
+      16,
+      16
+    ],
+    "gateway": {
+      "samples": 1178,
+      "failed_samples": 1,
+      "window_successful_samples": 615,
+      "max_success_gap_ns": 106050000
+    },
+    "workers": {
+      "worker1": {
+        "samples": 5498,
+        "successful_samples": 5498,
+        "failed_samples": 0,
+        "window_successful_samples": 2886,
+        "window_busy_samples": 2726,
+        "window_waiting_samples": 2713,
+        "waiting_peaks": [
+          10,
+          11,
+          10
+        ],
+        "in_use_peaks": [
+          1,
+          1,
+          1
+        ],
+        "max_success_gap_ns": 27738000
+      },
+      "worker2": {
+        "samples": 5499,
+        "successful_samples": 5498,
+        "failed_samples": 1,
+        "window_successful_samples": 2886,
+        "window_busy_samples": 2876,
+        "window_waiting_samples": 2871,
+        "waiting_peaks": [
+          4,
+          5,
+          4
+        ],
+        "in_use_peaks": [
+          1,
+          1,
+          1
+        ],
+        "max_success_gap_ns": 29102000
+      }
+    }
+  }
+]

@@ -1,0 +1,338 @@
+{
+  "generated_at": "2026-10-03T08:31:20.786625+00:00",
+  "input_sha256": {
+    "manifest.json": "aea942a93f6f9855905d3cea4274f5ce1cf212717ece4350603fe3d1fa4a4af4",
+    "groups.json": "ef05f9e514cc927e3ef6809ec7ae0bd35d34f71745855cbbebfaff11ef3767b5"
+  },
+  "source_commit": "8a8c2bcbcffdd79384f32ef481aff3f55210ff67",
+  "started_at": "2026-10-03T08:26:49.472823+00:00",
+  "finished_at": "2026-10-03T08:29:35.764702+00:00",
+  "files": 89,
+  "bytes": 4684874,
+  "raw_hashed_artifacts": 86,
+  "analysis_hashed_inputs": 87,
+  "source_files": 163,
+  "runtime_scripts": 16,
+  "extended_source_hashed_artifacts": 45,
+  "short_source_hashed_artifacts": 339,
+  "all_raw_hashes_verified": true,
+  "copy_reanalysis_equal": true,
+  "source_reanalysis_equal": true,
+  "source_chain_hashes_verified": true,
+  "all_formal_and_probe_pre_post_idle": true,
+  "sampling": {
+    "formal": {
+      "gateway": {
+        "samples": 1178,
+        "successful_samples": 1177,
+        "failed_samples": 1,
+        "window_successful_samples": 615,
+        "window_failed_samples": 0,
+        "max_bracketing_success_gap_ns": 106050000
+      },
+      "worker1": {
+        "samples": 5498,
+        "successful_samples": 5498,
+        "failed_samples": 0,
+        "window_successful_samples": 2886,
+        "window_failed_samples": 0,
+        "max_bracketing_success_gap_ns": 27738000
+      },
+      "worker2": {
+        "samples": 5499,
+        "successful_samples": 5498,
+        "failed_samples": 1,
+        "window_successful_samples": 2886,
+        "window_failed_samples": 0,
+        "max_bracketing_success_gap_ns": 29102000
+      }
+    },
+    "probes": {
+      "gateway": {
+        "samples": 297,
+        "successful_samples": 297,
+        "failed_samples": 0,
+        "window_successful_samples": 57,
+        "window_failed_samples": 0,
+        "max_bracketing_success_gap_ns": 103997000
+      },
+      "worker1": {
+        "samples": 1377,
+        "successful_samples": 1377,
+        "failed_samples": 0,
+        "window_successful_samples": 272,
+        "window_failed_samples": 0,
+        "max_bracketing_success_gap_ns": 26482000
+      },
+      "worker2": {
+        "samples": 1378,
+        "successful_samples": 1377,
+        "failed_samples": 1,
+        "window_successful_samples": 272,
+        "window_failed_samples": 0,
+        "max_bracketing_success_gap_ns": 26599000
+      }
+    }
+  },
+  "batches": [
+    {
+      "role": "formal",
+      "label": "r1-n16",
+      "summary": {
+        "planned_sessions": 16,
+        "completed": 14,
+        "failed": 2,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 0.875,
+        "planned_audio_bytes": 10240000,
+        "audio_bytes_written": 9324800,
+        "elapsed_ns": 20951332417,
+        "tail": {
+          "samples": 14,
+          "min_ns": 607645958,
+          "p50_ns": 670465625,
+          "p95_ns": 1047870000,
+          "max_ns": 1047870000
+        }
+      },
+      "criteria_met": false,
+      "max_audio_schedule_lag_ns": 3903125,
+      "failures": [
+        {
+          "index": 11,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 5603838000,
+          "audio_bytes_written": 182400
+        },
+        {
+          "index": 12,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 5603750000,
+          "audio_bytes_written": 182400
+        }
+      ],
+      "peak_active": 16,
+      "post_exit_idle_observation_delay_ns": {
+        "gateway": 22450000,
+        "worker1": 6267000,
+        "worker2": 6288000
+      }
+    },
+    {
+      "role": "formal",
+      "label": "r2-n16",
+      "summary": {
+        "planned_sessions": 16,
+        "completed": 14,
+        "failed": 2,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 0.875,
+        "planned_audio_bytes": 10240000,
+        "audio_bytes_written": 9334400,
+        "elapsed_ns": 20909575250,
+        "tail": {
+          "samples": 14,
+          "min_ns": 621032416,
+          "p50_ns": 683655958,
+          "p95_ns": 1006872917,
+          "max_ns": 1006872917
+        }
+      },
+      "criteria_met": false,
+      "max_audio_schedule_lag_ns": 4326583,
+      "failures": [
+        {
+          "index": 3,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 5703667000,
+          "audio_bytes_written": 185600
+        },
+        {
+          "index": 4,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 5802775000,
+          "audio_bytes_written": 188800
+        }
+      ],
+      "peak_active": 16,
+      "post_exit_idle_observation_delay_ns": {
+        "gateway": 53526000,
+        "worker1": 6035000,
+        "worker2": 6035000
+      }
+    },
+    {
+      "role": "formal",
+      "label": "r3-n16",
+      "summary": {
+        "planned_sessions": 16,
+        "completed": 13,
+        "failed": 3,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 0.8125,
+        "planned_audio_bytes": 10240000,
+        "audio_bytes_written": 8883200,
+        "elapsed_ns": 20929260750,
+        "tail": {
+          "samples": 13,
+          "min_ns": 17738208,
+          "p50_ns": 82157833,
+          "p95_ns": 1027214416,
+          "max_ns": 1027214416
+        }
+      },
+      "criteria_met": false,
+      "max_audio_schedule_lag_ns": 4877917,
+      "failures": [
+        {
+          "index": 1,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 5803421000,
+          "audio_bytes_written": 188800
+        },
+        {
+          "index": 6,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 5803539000,
+          "audio_bytes_written": 188800
+        },
+        {
+          "index": 15,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 5703325000,
+          "audio_bytes_written": 185600
+        }
+      ],
+      "peak_active": 16,
+      "post_exit_idle_observation_delay_ns": {
+        "gateway": 15240000,
+        "worker1": 1139000,
+        "worker2": 1140000
+      }
+    },
+    {
+      "role": "probes",
+      "label": "recovery-r1",
+      "summary": {
+        "planned_sessions": 2,
+        "completed": 2,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 128000,
+        "audio_bytes_written": 128000,
+        "elapsed_ns": 1935441333,
+        "tail": {
+          "samples": 2,
+          "min_ns": 22833750,
+          "p50_ns": 22833750,
+          "p95_ns": 32752958,
+          "max_ns": 32752958
+        }
+      },
+      "criteria_met": true,
+      "max_audio_schedule_lag_ns": 1322875,
+      "failures": [],
+      "peak_active": 2,
+      "post_exit_idle_observation_delay_ns": {
+        "gateway": 35016000,
+        "worker1": 17923000,
+        "worker2": 17923000
+      }
+    },
+    {
+      "role": "probes",
+      "label": "recovery-r2",
+      "summary": {
+        "planned_sessions": 2,
+        "completed": 2,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 128000,
+        "audio_bytes_written": 128000,
+        "elapsed_ns": 1935536750,
+        "tail": {
+          "samples": 2,
+          "min_ns": 22647791,
+          "p50_ns": 22647791,
+          "p95_ns": 32844375,
+          "max_ns": 32844375
+        }
+      },
+      "criteria_met": true,
+      "max_audio_schedule_lag_ns": 1653000,
+      "failures": [],
+      "peak_active": 2,
+      "post_exit_idle_observation_delay_ns": {
+        "gateway": 66377000,
+        "worker1": 6377000,
+        "worker2": 6064000
+      }
+    },
+    {
+      "role": "probes",
+      "label": "recovery-r3",
+      "summary": {
+        "planned_sessions": 2,
+        "completed": 2,
+        "failed": 0,
+        "canceled": 0,
+        "timed_out": 0,
+        "completion_rate": 1,
+        "planned_audio_bytes": 128000,
+        "audio_bytes_written": 128000,
+        "elapsed_ns": 1935543750,
+        "tail": {
+          "samples": 2,
+          "min_ns": 24119209,
+          "p50_ns": 24119209,
+          "p95_ns": 33199750,
+          "max_ns": 33199750
+        }
+      },
+      "criteria_met": true,
+      "max_audio_schedule_lag_ns": 1411708,
+      "failures": [],
+      "peak_active": 2,
+      "post_exit_idle_observation_delay_ns": {
+        "gateway": 70246000,
+        "worker1": 13466000,
+        "worker2": 13466000
+      }
+    }
+  ],
+  "shutdown": [
+    {
+      "process": "gateway",
+      "exit_code": 0
+    },
+    {
+      "process": "asr-worker-2",
+      "exit_code": 0
+    },
+    {
+      "process": "asr-worker-1",
+      "exit_code": 0
+    }
+  ],
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83",
+    "cpu": "Apple M2 Pro",
+    "logical_cpus": "12",
+    "memory_bytes": "34359738368",
+    "environment": {
+      "GOMAXPROCS": null,
+      "GOGC": null,
+      "GOMEMLIMIT": null,
+      "GOFLAGS": null
+    },
+    "race": false
+  }
+}
