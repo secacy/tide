@@ -381,6 +381,20 @@ GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off python3 docs/ex
 
 输出目录须为新目录；加 `--analyze-only`只复核已有结果，推荐先复制归档再分析。
 
+## 加权16并发过载候选与新会话探测
+
+固定16场三批20秒，每批后两场两秒短探测，正式与探测结果分开，预计约三分钟。条件与判据见 [EXP-005-14](experiments/weighted-overload.md)。
+
+```sh
+/usr/bin/caffeinate -i env PYTHONDONTWRITEBYTECODE=1 \
+  GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  python3 docs/experiments/scripts/run_weighted_overload.py \
+  --source docs/experiments/results/weighted-extended-2026-10-03 \
+  --output /tmp/tide-weighted-overload-new
+```
+
+输出目录须为新目录；`--analyze-only`只复核已有产物，建议先复制归档再分析。探测用于新会话可用性，不涉及重放或恢复原失败音频。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \

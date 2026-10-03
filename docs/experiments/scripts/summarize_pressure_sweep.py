@@ -21,6 +21,8 @@ def pressure_profile(experiment="pressure_sweep", near_boundary=None):
     """仅允许预定义实验，避免分析时按结果放宽时长、档位或重复次数。"""
     if experiment == "pressure_sweep":
         return dict(experiment=experiment, counts=(4, 8, 12), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
+    if experiment == "dual_worker_weighted_overload":
+        return dict(experiment=experiment, counts=(16,), repetitions=3, audio_bytes=640000, timeout_s=35, duration_s=40)
     if experiment == "dual_worker_weighted_extended":
         return dict(experiment=experiment, counts=(12,), repetitions=2, audio_bytes=3840000, timeout_s=140, duration_s=150)
     if experiment == "dual_worker_strategy":
@@ -177,26 +179,31 @@ def summarize(directory):
     if profile["experiment"] == "dual_worker_weighted_extended":
         from run_weighted_extended import validate_extended_conditions
         validate_extended_conditions(m)
+    if profile["experiment"] == "dual_worker_weighted_overload":
+        from run_weighted_overload import validate_overload_conditions
+        validate_overload_conditions(m)
     require(m["criteria"] == dict(all_completed=True, tail_p95_ns=TAIL_BUDGET_NS, max_audio_schedule_lag_ns=LAG_BUDGET_NS), "criteria differ")
     require(m["schedule"]["session_counts"] == list(counts) and m["schedule"]["repetitions"] == repetitions and m["schedule"]["audio_bytes"] == audio_bytes and m["schedule"]["session_timeout_s"] == timeout_s, "schedule differs")
     for name, expected in m["artifact_sha256"].items():
         p = (directory/name).resolve()
         require(p.is_relative_to(directory.resolve()) and digest(p) == expected, f"artifact changed: {name}")
-    formal = [b for b in m["batches"] if b["label"] != "warmup"]
+    formal = [b for b in m["batches"] if b["label"] != "warmup" and not b["label"].startswith("recovery-")]
     require([b["label"] for b in formal] == [f"r{r}-n{n}" for r in range(1, repetitions+1) for n in counts], "schedule incomplete")
-    comparison = profile["experiment"] in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended", "dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended")
+    comparison = profile["experiment"] in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended", "dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended", "dual_worker_weighted_overload")
     if comparison:
         from worker_comparison_contract import validate_manifest
         validate_manifest(m)
-        if profile["experiment"] in ("dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended"):
+        if profile["experiment"] in ("dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended", "dual_worker_weighted_overload"):
             from worker_comparison_contract import validate_startup_logs
             validate_startup_logs(directory, m)
     workers = m["workers"] if comparison else [dict(id="worker", endpoint=m["worker_endpoint"])]
-    batches = []
+    batches, recovery_checks = [], []
     # 新实验也重新检查预热，不只信任根清单中的通过标志。
     for b in m["batches"] if comparison else formal:
         n = b["planned_sessions"]
-        load = check_pressure_report(directory/(b["label"]+".json"), n, 64000 if b["label"] == "warmup" else audio_bytes, timeout_s)
+        recovery = b["label"].startswith("recovery-")
+        size = 64000 if b["label"] == "warmup" or recovery else audio_bytes
+        load = check_pressure_report(directory/(b["label"]+".json"), n, size, 5 if recovery else timeout_s)
         gateway = check_pressure_gateway(directory/(b["label"]+"-gateway"), b["started_at"], b["finished_at"], n)
         observed = {w["id"]: check_worker_sampling(directory/(b["label"]+"-"+w["id"]), b["started_at"], b["finished_at"], n, w["endpoint"]) for w in workers}
         keys = ["gateway", *observed]
@@ -207,9 +214,9 @@ def summarize(directory):
             require(load["criteria_met"], "warmup criteria failed")
             continue
         item = dict(label=b["label"], planned_sessions=n, load=load, gateway=gateway,
-                    phases=phase_observations(directory, b, audio_bytes//32000, tuple(observed)))
+                    phases=phase_observations(directory, b, size//32000, tuple(observed)))
         item.update(workers=observed) if comparison else item.update(worker=observed["worker"])
-        batches.append(item)
+        (recovery_checks if recovery else batches).append(item)
     groups = []
     for n in profile["counts"]:
         chosen = [b for b in batches if b["planned_sessions"] == n]
@@ -245,12 +252,16 @@ def summarize(directory):
     if comparison:
         result.update(worker_count=m["worker_count"], policy=m["policy"])
         result["limits"].append("per-worker peaks are asynchronous and must not be summed as a simultaneous peak")
-    if profile["experiment"] in ("dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended"):
+    if profile["experiment"] in ("dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended", "dual_worker_weighted_overload"):
         result["worker_configs"] = m["worker_configs"]
-    if profile["experiment"] in ("dual_worker_strategy", "dual_worker_weighted_extended"):
+    if profile["experiment"] in ("dual_worker_strategy", "dual_worker_weighted_extended", "dual_worker_weighted_overload"):
         result["weights"] = m["weights"]
+    if profile["experiment"] == "dual_worker_weighted_overload":
+        result.update(recovery_checks=recovery_checks,
+                      all_recovery_meet_criteria=all(b["load"]["criteria_met"] for b in recovery_checks))
+        result["limits"].append("two-session probes check new-session availability, not reconnect or failed-audio recovery")
     save(directory/"groups.json", result)
-    scripts = ("summarize_pressure_sweep.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "run_boundary_study.py", "worker_comparison_contract.py", "run_dual_worker_boundary.py", "run_dual_worker_extended.py", "run_weighted_extended.py")
+    scripts = ("summarize_pressure_sweep.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "run_boundary_study.py", "worker_comparison_contract.py", "run_dual_worker_boundary.py", "run_dual_worker_extended.py", "run_weighted_extended.py", "run_weighted_overload.py")
     save(directory/"analysis-manifest.json", dict(generated_at=now(), input_sha256={"manifest.json": digest(directory/"manifest.json"), **m["artifact_sha256"]},
          script_sha256={s: digest(Path(__file__).with_name(s)) for s in scripts}, groups_sha256=digest(directory/"groups.json")))
     print(json.dumps(groups, ensure_ascii=False, indent=2))

@@ -53,19 +53,19 @@ def run(output, *, pressure=False, profile=None, selection=None, worker_count=1,
         if not pressure or profile != pressure_profile(profile["experiment"], (selection or {}).get("near_boundary")):
             raise ValueError("invalid experiment profile")
     spec = profile or pressure_profile()
-    comparison = pressure and spec["experiment"] in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended", "dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended")
+    comparison = pressure and spec["experiment"] in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended", "dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended", "dual_worker_weighted_overload")
     if type(worker_count) is not int or worker_count not in (1, 2) or (worker_count != 1 and not comparison):
         raise ValueError("multiple workers require a multi-worker profile")
     if spec["experiment"].startswith("dual_worker_") and worker_count != 2:
         raise ValueError("dual-worker experiments require exactly two workers")
-    strategy = pressure and spec["experiment"] in ("dual_worker_strategy", "dual_worker_weighted_extended")
+    strategy = pressure and spec["experiment"] in ("dual_worker_strategy", "dual_worker_weighted_extended", "dual_worker_weighted_overload")
     if policy not in ("round_robin", "weighted_round_robin") or (policy != "round_robin" and not strategy):
         raise ValueError("policy requires a strategy-comparison profile")
-    if spec["experiment"] == "dual_worker_weighted_extended" and policy != "weighted_round_robin":
+    if spec["experiment"] in ("dual_worker_weighted_extended", "dual_worker_weighted_overload") and policy != "weighted_round_robin":
         raise ValueError("weighted extended observation requires weighted policy")
-    from worker_comparison_contract import worker_configs
+    from worker_comparison_contract import experiment_schedule, worker_configs
     configs = worker_configs(spec["experiment"], worker_count)
-    heterogeneous = pressure and spec["experiment"] in ("dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended")
+    heterogeneous = pressure and spec["experiment"] in ("dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended", "dual_worker_weighted_overload")
     counts = spec["counts"] if pressure else (1, 2, 4)
     repetitions = spec["repetitions"] if pressure else 3
     audio_bytes = spec["audio_bytes"] if pressure else 160000
@@ -98,6 +98,8 @@ def run(output, *, pressure=False, profile=None, selection=None, worker_count=1,
         manifest["weights"] = [2, 1] if policy == "weighted_round_robin" else None
     if heterogeneous:
         manifest.update(worker=None, worker_configs=configs)
+    if spec["experiment"] == "dual_worker_weighted_overload":
+        manifest["recovery_probe"] = dict(sessions=2, audio_bytes=64000, session_timeout_s=5, sampling_duration_s=10)
     if selection is not None:
         manifest["selection"] = selection
     if pressure:
@@ -105,13 +107,16 @@ def run(output, *, pressure=False, profile=None, selection=None, worker_count=1,
     sources = capture(["git", "ls-files", "cmd", "internal", "proto", "go.mod", "go.sum"])
     manifest["source_sha256"] = {p: digest(ROOT/p) for p in sources.splitlines() if p.endswith((".go", ".proto")) or p in ("go.mod", "go.sum")}
     manifest["sampling"] = dict(gateway_interval_ns=100_000_000, worker_interval_ns=20_000_000, request_timeout_ns=1_000_000_000, duration_ns=duration_s*1_000_000_000, readiness_timeout_s=2, max_bracketing_success_gap_ns=500_000_000)
-    manifest["script_sha256"] = {name: digest(Path(__file__).with_name(name)) for name in ("run_joint_observation_baseline.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "summarize_pressure_sweep.py", "run_pressure_sweep.py", "run_boundary_study.py", "run_worker_comparison.py", "worker_comparison_contract.py", "run_dual_worker_sweep.py", "run_dual_worker_boundary.py", "run_dual_worker_extended.py", "run_heterogeneous_workers.py", "run_strategy_comparison.py", "run_weighted_extended.py")}
+    manifest["script_sha256"] = {name: digest(Path(__file__).with_name(name)) for name in ("run_joint_observation_baseline.py", "summarize_joint_observations.py", "summarize_gateway_observations.py", "run_loadgen_baseline.py", "summarize_pressure_sweep.py", "run_pressure_sweep.py", "run_boundary_study.py", "run_worker_comparison.py", "worker_comparison_contract.py", "run_dual_worker_sweep.py", "run_dual_worker_boundary.py", "run_dual_worker_extended.py", "run_heterogeneous_workers.py", "run_strategy_comparison.py", "run_weighted_extended.py", "run_weighted_overload.py")}
     processes, handles, results, samplers = [], [], [], []
     save(output/"manifest.json", manifest)
     try:
         if spec["experiment"] == "dual_worker_weighted_extended":
             from run_weighted_extended import validate_extended_conditions
             validate_extended_conditions(manifest)
+        if spec["experiment"] == "dual_worker_weighted_overload":
+            from run_weighted_overload import validate_overload_conditions
+            validate_overload_conditions(manifest)
         if spec["experiment"] in ("dual_worker_boundary_short", "dual_worker_extended") and manifest["source_sha256"] != (selection or {}).get("source_sha256"):
             raise ValueError("Go source differs from reference sweep")
         # 当前 Gateway 固定监听 8080；占用则中止，不使用或停止已有服务。
@@ -179,11 +184,16 @@ def run(output, *, pressure=False, profile=None, selection=None, worker_count=1,
                 manifest["worker_address"] = workers[0]["address"]
                 manifest["worker_endpoint"] = workers[0]["endpoint"]
             schedule = [("warmup", worker_count, 64000)] + [(f"r{rep}-n{n}", n, audio_bytes) for rep in range(1, repetitions+1) for n in counts]
+            if pressure and spec["experiment"] == "dual_worker_weighted_overload":
+                schedule = experiment_schedule(spec["experiment"], worker_count)
             for label, n, size in schedule:
+                recovery = label.startswith("recovery-")
+                brief = label == "warmup" or recovery
+                batch_timeout_s = 5 if recovery else timeout_s
                 if any(p.poll() is not None for _, p in processes): raise RuntimeError("backend exited between batches")
                 path = output/(label+".json")
                 command = [binaries["loadgen"], "-url=ws://127.0.0.1:8080/v1/asr", f"-sessions={n}",
-                           f"-audio-bytes={size}", "-chunk-bytes=3200", "-realtime=true", f"-session-timeout={timeout_s}s",
+                           f"-audio-bytes={size}", "-chunk-bytes=3200", "-realtime=true", f"-session-timeout={batch_timeout_s}s",
                            "-expected-final-text=今天天气不错", "-output="+str(path)]
                 record = dict(label=label, planned_sessions=n, command=command, sampling={})
                 manifest["batches"].append(record)
@@ -197,7 +207,7 @@ def run(output, *, pressure=False, profile=None, selection=None, worker_count=1,
                         sample_name = label + "-" + key
                         sample_dir = output/sample_name
                         sample_command = [binaries[kind+"-sampler"], "-url="+url, "-interval="+interval,
-                                          "-request-timeout=1s", f"-duration={10 if label == 'warmup' else duration_s}s", "-output-dir="+str(sample_dir)]
+                                          "-request-timeout=1s", f"-duration={10 if brief else duration_s}s", "-output-dir="+str(sample_dir)]
                         item = dict(directory=sample_name, started_at=now(), command=sample_command)
                         record["sampling"][key] = item
                         manifest["commands"].append(sample_command)
@@ -213,7 +223,7 @@ def run(output, *, pressure=False, profile=None, selection=None, worker_count=1,
                     record["started_at"] = now()
                     save(output/"manifest.json", manifest)
                     with (output/(label+".log")).open("w") as log:
-                        attempt = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, timeout=timeout_s+10)
+                        attempt = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT, timeout=batch_timeout_s+10)
                     record.update(finished_at=now(), exit_code=attempt.returncode)
                     # 正常运行等待预算结束，不用 SIGTERM 伪装完成。
                     for _, sampler, sample_log, _, item in active_samplers:
@@ -229,7 +239,7 @@ def run(output, *, pressure=False, profile=None, selection=None, worker_count=1,
                         item.setdefault("exit_code", sampler.returncode)
                         item.setdefault("finished_at", now())
                     save(output/"manifest.json", manifest)
-                checked = read_load(path, n, size)
+                checked = check_pressure_report(path, n, size, batch_timeout_s) if recovery else read_load(path, n, size)
                 gateway_observed = read_gateway(output/record["sampling"]["gateway"]["directory"], record["started_at"], record["finished_at"], n)
                 worker_observed = {w["id"]: check_worker_sampling(output/record["sampling"][w["id"]]["directory"], record["started_at"], record["finished_at"], n, w["endpoint"]) for w in workers}
                 record["checks_passed"] = (checked["checks_passed"] and attempt.returncode == checked.get("expected_exit_code", 0)
