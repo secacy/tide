@@ -18,7 +18,7 @@ SAMPLING = dict(gateway_interval_ns=100_000_000, worker_interval_ns=20_000_000,
 def worker_configs(experiment, count):
     """生成每实例固定配置；异速实验仅改变第二实例的逐块模拟耗时。"""
     require(type(count) is int and count in (1, 2), "worker count")
-    if experiment in ("dual_worker_heterogeneous", "dual_worker_strategy"):
+    if experiment in ("dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended"):
         require(count == 2, "heterogeneous experiment requires two workers")
         return [copy.deepcopy(WORKER), dict(copy.deepcopy(WORKER), processing_delay_ns=20_000_000)]
     return [copy.deepcopy(WORKER) for _ in range(count)]
@@ -39,7 +39,7 @@ def validate_startup_logs(directory, manifest):
         for key, value in fields.items():
             require(re.search(r"(?:^|\s)"+key+r"="+re.escape(value)+r"(?:\s|$)", line) is not None, "startup field differs: "+key)
 
-    if manifest["experiment"] == "dual_worker_strategy":
+    if manifest["experiment"] in ("dual_worker_strategy", "dual_worker_weighted_extended"):
         rows = [line for line in (directory/"gateway.log").read_text().splitlines()
                 if ' INFO gateway backend configuration ' in line]
         require(len(rows) == 1, "missing/duplicate Gateway strategy startup")
@@ -56,18 +56,20 @@ def validate_startup_logs(directory, manifest):
 
 def validate_manifest(m):
     """拒绝缺 Worker、重复 endpoint、条件漂移和未正常收尾；不要求业务全部成功。"""
-    require(m.get("experiment") in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended", "dual_worker_heterogeneous", "dual_worker_strategy") and m.get("status") == "passed", "not completed multi-worker experiment")
+    require(m.get("experiment") in ("worker_comparison", "dual_worker_sweep", "dual_worker_boundary_short", "dual_worker_extended", "dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended") and m.get("status") == "passed", "not completed multi-worker experiment")
     from summarize_pressure_sweep import pressure_profile
     profile = pressure_profile(m["experiment"])
     count = m.get("worker_count")
     require(type(count) is int and count in (1, 2), "worker count")
     require(not m["experiment"].startswith("dual_worker_") or count == 2, "dual-worker experiment requires two workers")
-    strategy = m["experiment"] == "dual_worker_strategy"
+    strategy = m["experiment"] in ("dual_worker_strategy", "dual_worker_weighted_extended")
     require(m.get("policy") in (("round_robin", "weighted_round_robin") if strategy else ("round_robin",)), "policy differs")
+    if m["experiment"] == "dual_worker_weighted_extended":
+        require(m["policy"] == "weighted_round_robin", "extended observation requires weighted policy")
     if strategy:
         require("weights" in m and m["weights"] == ([2, 1] if m["policy"] == "weighted_round_robin" else None), "weights differ")
     configs = worker_configs(m["experiment"], count)
-    heterogeneous = m["experiment"] in ("dual_worker_heterogeneous", "dual_worker_strategy")
+    heterogeneous = m["experiment"] in ("dual_worker_heterogeneous", "dual_worker_strategy", "dual_worker_weighted_extended")
     require(m.get("worker") == (None if heterogeneous else WORKER) and m.get("gateway") == GATEWAY and m.get("criteria") == CRITERIA, "fixture differs")
     if heterogeneous:
         require(m.get("worker_configs") == configs, "per-worker configs differ")

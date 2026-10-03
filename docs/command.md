@@ -367,6 +367,20 @@ GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off python3 docs/ex
 
 输出目录必须不存在；同一命令加 `--analyze-only` 只复核已有证据，建议先复制归档到临时目录再分析。
 
+## 加权12并发两分钟观察
+
+从完整短时策略对照复核来源，固定12场、两批120秒，会话/采样预算140/150秒，预计约五分钟。条件见 [EXP-005-13](experiments/weighted-extended.md)。
+
+```sh
+/usr/bin/caffeinate -i env PYTHONDONTWRITEBYTECODE=1 \
+  GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  python3 docs/experiments/scripts/run_weighted_extended.py \
+  --source docs/experiments/results/strategy-comparison-2026-10-03-retest-1 \
+  --output /tmp/tide-weighted-extended-new
+```
+
+输出目录须为新目录；加 `--analyze-only`只复核已有结果，推荐先复制归档再分析。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \
