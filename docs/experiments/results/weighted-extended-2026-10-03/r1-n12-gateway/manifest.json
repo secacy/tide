@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "config": {
+    "endpoint": "http://127.0.0.1:8080/debug/gateway",
+    "interval_ns": 100000000,
+    "request_timeout_ns": 1000000000
+  },
+  "output_path": "samples.jsonl",
+  "started_at": "2026-10-03T08:04:43.93401Z",
+  "finished_at": "2026-10-03T08:07:13.938151Z",
+  "samples_written": 1471,
+  "successful_samples": 1470,
+  "failed_samples": 1,
+  "stop_reason": "deadline_exceeded",
+  "sampling_error": "run gateway sampling: context ended after sample 1470: context deadline exceeded",
+  "output_error": null,
+  "close_error": null
+}

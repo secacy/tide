@@ -1,0 +1,72 @@
+warmup exit 0 evidence True criteria True
+r1-n12 exit 0 evidence True criteria True
+r2-n12 exit 0 evidence True criteria True
+[
+  {
+    "planned_sessions": 12,
+    "attempts": 24,
+    "outcomes": {
+      "completed": 24
+    },
+    "completion_rate": 1.0,
+    "batches_meeting_criteria": 2,
+    "all_repetitions_meet_criteria": true,
+    "tail_completed_only": {
+      "samples": 24,
+      "min_ns": 18539375,
+      "p50_ns": 50188917,
+      "p95_ns": 92117750,
+      "max_ns": 93516333
+    },
+    "audio_bytes_written": 92160000,
+    "planned_audio_bytes": 92160000,
+    "failure_errors": {},
+    "max_audio_schedule_lag_ns": 43810875,
+    "gateway_observed_peaks": [
+      12,
+      12
+    ],
+    "gateway": {
+      "samples": 2943,
+      "failed_samples": 1,
+      "window_successful_samples": 2353,
+      "max_success_gap_ns": 118186000
+    },
+    "workers": {
+      "worker1": {
+        "samples": 13737,
+        "successful_samples": 13737,
+        "failed_samples": 0,
+        "window_successful_samples": 10998,
+        "window_busy_samples": 9565,
+        "window_waiting_samples": 8319,
+        "waiting_peaks": [
+          7,
+          7
+        ],
+        "in_use_peaks": [
+          1,
+          1
+        ],
+        "max_success_gap_ns": 79218000
+      },
+      "worker2": {
+        "samples": 13736,
+        "successful_samples": 13735,
+        "failed_samples": 1,
+        "window_successful_samples": 10995,
+        "window_busy_samples": 9004,
+        "window_waiting_samples": 6761,
+        "waiting_peaks": [
+          3,
+          3
+        ],
+        "in_use_peaks": [
+          1,
+          1
+        ],
+        "max_success_gap_ns": 97854000
+      }
+    }
+  }
+]

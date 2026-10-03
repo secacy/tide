@@ -1,0 +1,3 @@
+2026/10/03 16:04:32 INFO gateway backend configuration strategy=weighted_round_robin workers="[127.0.0.1:64106 127.0.0.1:64108]" weights="[2 1]"
+2026/10/03 16:04:32 websocket gateway listening on :8080
+2026/10/03 16:09:44 shutting down websocket gateway
