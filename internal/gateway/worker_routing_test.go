@@ -57,7 +57,7 @@ func (w *routingBackend) StreamingRecognize(stream grpc.BidiStreamingServer[asrv
 // 所有业务断言发生在服务取消/测试兜底清理之前。
 type routingFixture struct {
 	g        *Gateway
-	pool     *workerpool.RoundRobin
+	pool     WorkerSelector
 	url      string
 	handlers chan string
 	cancel   context.CancelFunc
@@ -69,6 +69,12 @@ func newRoutingFixture(t *testing.T, workers []workerpool.Worker, cfg Config) *r
 	if err != nil {
 		t.Fatal(err)
 	}
+	return newSelectorRoutingFixture(t, pool, cfg)
+}
+
+// newSelectorRoutingFixture 复用真实路由夹具，让不同选择器接受相同的生命周期检查。
+func newSelectorRoutingFixture(t *testing.T, pool WorkerSelector, cfg Config) *routingFixture {
+	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	g, err := New(ctx, pool, cfg)
 	if err != nil {

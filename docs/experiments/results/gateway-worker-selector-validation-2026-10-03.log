@@ -1,0 +1,2284 @@
+Command: GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race -json ./internal/gateway ./internal/workerpool ./cmd/gateway ./internal/loadgen
+First sandboxed invocation could not bind localhost ports; the authorized rerun below completed successfully.
+Output rendering: tabs expanded to spaces for repository whitespace checks.
+Scope: correctness; counts include parent tests and subtests, not performance measurements.
+Passed new checks: 39; related-package checks: 1048; default explicit-experiment skips: 12
+github.com/secacy/tide-artisan/cmd/gateway: 133 passed checks
+github.com/secacy/tide-artisan/internal/gateway: 259 passed checks
+github.com/secacy/tide-artisan/internal/loadgen: 609 passed checks
+github.com/secacy/tide-artisan/internal/workerpool: 47 passed checks
+SHA256 internal/gateway/handler.go a3e11466e0eed588c2b42e16e9e679970dbee11550f051bc3ebe1225c0d1dbb7
+SHA256 internal/gateway/session.go 728e5922757716bcef3accb81d8d00cbe0662e666c3fc370b2deffea67b89de8
+SHA256 internal/gateway/worker_selector.go 27e1b791dc9e900616580a776ac34552b330ced79ca68174280710c25741eeaa
+SHA256 internal/gateway/worker_selector_test.go dab219722edb73458b7f6ed53a5e59571134d3dd832e568568c737442242a992
+SHA256 internal/gateway/worker_routing_test.go 99e12c1289e0405544007d29beb24911770af7f84da8d367a982e626fd48ac63
+
+=== RUN   TestNewRoundRobinInvalidWorkers
+=== RUN   TestNewRoundRobinInvalidWorkers/nil_list
+--- PASS: TestNewRoundRobinInvalidWorkers/nil_list (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/empty_list
+--- PASS: TestNewRoundRobinInvalidWorkers/empty_list (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/empty_id
+--- PASS: TestNewRoundRobinInvalidWorkers/empty_id (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/blank_id
+--- PASS: TestNewRoundRobinInvalidWorkers/blank_id (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/duplicate_adjacent
+--- PASS: TestNewRoundRobinInvalidWorkers/duplicate_adjacent (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/duplicate_nonadjacent
+--- PASS: TestNewRoundRobinInvalidWorkers/duplicate_nonadjacent (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/nil_client
+--- PASS: TestNewRoundRobinInvalidWorkers/nil_client (0.00s)
+=== RUN   TestNewRoundRobinInvalidWorkers/nil_client_later
+--- PASS: TestNewRoundRobinInvalidWorkers/nil_client_later (0.00s)
+--- PASS: TestNewRoundRobinInvalidWorkers (0.00s)
+=== RUN   TestRoundRobinSequence
+=== RUN   TestRoundRobinSequence/single
+--- PASS: TestRoundRobinSequence/single (0.00s)
+=== RUN   TestRoundRobinSequence/three_workers
+--- PASS: TestRoundRobinSequence/three_workers (0.00s)
+--- PASS: TestRoundRobinSequence (0.00s)
+=== RUN   TestRoundRobinPreservesIDs
+--- PASS: TestRoundRobinPreservesIDs (0.00s)
+=== RUN   TestRoundRobinListIsolation
+--- PASS: TestRoundRobinListIsolation (0.00s)
+=== RUN   TestRoundRobinConcurrentSelections
+    round_robin_test.go:167: callers=32 selections=3200 counts=[1067 1067 1066]
+--- PASS: TestRoundRobinConcurrentSelections (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/nil_list
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/nil_list (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/empty_list
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/empty_list (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/empty_id
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/empty_id (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/blank_id
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/blank_id (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/duplicate_adjacent
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/duplicate_adjacent (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/duplicate_nonadjacent
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/duplicate_nonadjacent (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/nil_client_first
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/nil_client_first (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/nil_client_later
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/nil_client_later (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/zero_weight
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/zero_weight (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/negative_weight
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/negative_weight (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/min_int_weight
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/min_int_weight (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/single_over_limit
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/single_over_limit (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/sum_over_limit
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/sum_over_limit (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/max_int_first
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/max_int_first (0.00s)
+=== RUN   TestNewWeightedRoundRobinInvalidConfig/max_int_later
+--- PASS: TestNewWeightedRoundRobinInvalidConfig/max_int_later (0.00s)
+--- PASS: TestNewWeightedRoundRobinInvalidConfig (0.00s)
+=== RUN   TestWeightedRoundRobinSequence
+=== RUN   TestWeightedRoundRobinSequence/single
+--- PASS: TestWeightedRoundRobinSequence/single (0.00s)
+=== RUN   TestWeightedRoundRobinSequence/two_to_one
+--- PASS: TestWeightedRoundRobinSequence/two_to_one (0.00s)
+=== RUN   TestWeightedRoundRobinSequence/one_to_two
+--- PASS: TestWeightedRoundRobinSequence/one_to_two (0.00s)
+=== RUN   TestWeightedRoundRobinSequence/five_one_one
+--- PASS: TestWeightedRoundRobinSequence/five_one_one (0.00s)
+=== RUN   TestWeightedRoundRobinSequence/equal
+--- PASS: TestWeightedRoundRobinSequence/equal (0.00s)
+--- PASS: TestWeightedRoundRobinSequence (0.00s)
+=== RUN   TestWeightedRoundRobinEqualWeightsMatchRoundRobin
+--- PASS: TestWeightedRoundRobinEqualWeightsMatchRoundRobin (0.00s)
+=== RUN   TestWeightedRoundRobinFullCycleShares
+=== RUN   TestWeightedRoundRobinFullCycleShares/coprime
+--- PASS: TestWeightedRoundRobinFullCycleShares/coprime (0.00s)
+=== RUN   TestWeightedRoundRobinFullCycleShares/common_factor
+--- PASS: TestWeightedRoundRobinFullCycleShares/common_factor (0.00s)
+=== RUN   TestWeightedRoundRobinFullCycleShares/single_at_limit
+--- PASS: TestWeightedRoundRobinFullCycleShares/single_at_limit (0.39s)
+=== RUN   TestWeightedRoundRobinFullCycleShares/skew_at_limit
+--- PASS: TestWeightedRoundRobinFullCycleShares/skew_at_limit (0.49s)
+--- PASS: TestWeightedRoundRobinFullCycleShares (0.87s)
+=== RUN   TestWeightedRoundRobinScaleInvariance
+--- PASS: TestWeightedRoundRobinScaleInvariance (0.00s)
+=== RUN   TestWeightedRoundRobinIsolation
+--- PASS: TestWeightedRoundRobinIsolation (0.00s)
+=== RUN   TestWeightedRoundRobinPreservesIdentity
+--- PASS: TestWeightedRoundRobinPreservesIdentity (0.00s)
+=== RUN   TestWeightedRoundRobinConcurrentSelections
+    weighted_round_robin_test.go:256: callers=32 selections=22400 counts=[16000 3200 3200]
+--- PASS: TestWeightedRoundRobinConcurrentSelections (0.02s)
+PASS
+ok      github.com/secacy/tide-artisan/internal/workerpool      (cached)
+=== RUN   TestAdmissionRealConnections
+    admission_network_test.go:196: ADMISSION_JSON {"round":1,"outcome":"completed","attempts":[{"index":13,"outcome":"accepted","status":101,"elapsed_ms":2.702583},{"index":19,"outcome":"capacity_rejected","status":503,"elapsed_ms":2.928958,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":0,"outcome":"capacity_rejected","status":503,"elapsed_ms":2.935667,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":1,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.015917,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":6,"outcome":"capacity_rejected","status":503,"elapsed_ms":2.888917,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":9,"outcome":"capacity_rejected","status":503,"elapsed_ms":2.831125,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":15,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.352208,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":8,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.048291,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":12,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.124833,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":10,"outcome":"capacity_rejected","status":503,"elapsed_ms":2.903958,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":7,"outcome":"accepted","status":101,"elapsed_ms":3.522833},{"index":11,"outcome":"accepted","status":101,"elapsed_ms":3.287292},{"index":2,"outcome":"accepted","status":101,"elapsed_ms":2.909459},{"index":17,"outcome":"capacity_rejected","status":503,"elapsed_ms":2.920916,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":14,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.92975,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":4,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.918541,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":3,"outcome":"capacity_rejected","status":503,"elapsed_ms":3.946584,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":5,"outcome":"capacity_rejected","status":503,"elapsed_ms":4.051666,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":18,"outcome":"capacity_rejected","status":503,"elapsed_ms":4.023333,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"},{"index":16,"outcome":"capacity_rejected","status":503,"elapsed_ms":4.171958,"error":"failed to WebSocket dial: expected handshake response status code 101 but got 503","body":"session limit exceeded\n"}],"accepted":4,"rejected":16,"other_errors":0,"max_observed_active":4,"held_active":4,"worker_starts_before_start":0,"completed":4,"active_after_cleanup":0,"reentry":{"index":20,"outcome":"accepted","status":101,"elapsed_ms":0.69825},"reentry_completed":true,"final_active":0}
+--- PASS: TestAdmissionRealConnections (0.02s)
+=== RUN   TestSessionAdmissionExperiment
+    admission_network_test.go:126: set TIDE_RUN_SESSION_ADMISSION_EXPERIMENT=1
+--- SKIP: TestSessionAdmissionExperiment (0.00s)
+=== RUN   TestAdmissionTailKeepsSlot
+--- PASS: TestAdmissionTailKeepsSlot (0.00s)
+=== RUN   TestAdmissionConfig
+=== RUN   TestAdmissionConfig/default
+--- PASS: TestAdmissionConfig/default (0.00s)
+=== RUN   TestAdmissionConfig/explicit
+--- PASS: TestAdmissionConfig/explicit (0.00s)
+=== RUN   TestAdmissionConfig/negative
+--- PASS: TestAdmissionConfig/negative (0.00s)
+--- PASS: TestAdmissionConfig (0.00s)
+=== RUN   TestAdmissionConcurrentReservations
+--- PASS: TestAdmissionConcurrentReservations (0.00s)
+=== RUN   TestAdmissionStopWithOutstandingReservation
+--- PASS: TestAdmissionStopWithOutstandingReservation (0.00s)
+=== RUN   TestAdmissionRejectedRequestPreservesReservations
+=== RUN   TestAdmissionRejectedRequestPreservesReservations/full
+--- PASS: TestAdmissionRejectedRequestPreservesReservations/full (0.00s)
+=== RUN   TestAdmissionRejectedRequestPreservesReservations/stopping
+--- PASS: TestAdmissionRejectedRequestPreservesReservations/stopping (0.00s)
+--- PASS: TestAdmissionRejectedRequestPreservesReservations (0.00s)
+=== RUN   TestAdmissionUpgradeFailureReturnsSlot
+--- PASS: TestAdmissionUpgradeFailureReturnsSlot (0.00s)
+=== RUN   TestAudioProgressAccounting
+--- PASS: TestAudioProgressAccounting (0.00s)
+=== RUN   TestAudioProgressOverflow
+--- PASS: TestAudioProgressOverflow (0.00s)
+=== RUN   TestAudioProgressSnapshotsAreIndependent
+--- PASS: TestAudioProgressSnapshotsAreIndependent (0.00s)
+=== RUN   TestAudioProgressConcurrent
+--- PASS: TestAudioProgressConcurrent (0.00s)
+=== RUN   TestAudioBacklogExperimentProbe
+=== RUN   TestAudioBacklogExperimentProbe/completed
+=== RUN   TestParseGatewayConfigValues
+=== RUN   TestParseGatewayConfigValues/enabled_equals
+--- PASS: TestParseGatewayConfigValues/enabled_equals (0.00s)
+=== RUN   TestParseGatewayConfigValues/default_after_enabled
+--- PASS: TestParseGatewayConfigValues/default_after_enabled (0.00s)
+=== RUN   TestParseGatewayConfigValues/explicit_disabled
+--- PASS: TestParseGatewayConfigValues/explicit_disabled (0.00s)
+=== RUN   TestParseGatewayConfigValues/enabled_separate
+--- PASS: TestParseGatewayConfigValues/enabled_separate (0.00s)
+=== RUN   TestParseGatewayConfigValues/small_positive
+--- PASS: TestParseGatewayConfigValues/small_positive (0.00s)
+=== RUN   TestParseGatewayConfigValues/maximum_int64
+--- PASS: TestParseGatewayConfigValues/maximum_int64 (0.00s)
+=== RUN   TestParseGatewayConfigValues/negative_deferred_to_gateway
+--- PASS: TestParseGatewayConfigValues/negative_deferred_to_gateway (0.00s)
+=== RUN   TestParseGatewayConfigValues/minimum_int64
+--- PASS: TestParseGatewayConfigValues/minimum_int64 (0.00s)
+--- PASS: TestParseGatewayConfigValues (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments
+=== RUN   TestParseGatewayConfigInvalidArguments/not_integer
+invalid value "one" for flag -max-pending-audio-bytes: parse error
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/not_integer (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/empty_value
+invalid value "" for flag -max-pending-audio-bytes: parse error
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/empty_value (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/missing_value
+flag needs an argument: -max-pending-audio-bytes
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/missing_value (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/positive_overflow
+invalid value "9223372036854775808" for flag -max-pending-audio-bytes: value out of range
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/positive_overflow (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/negative_overflow
+invalid value "-9223372036854775809" for flag -max-pending-audio-bytes: value out of range
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/negative_overflow (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/unknown_flag
+flag provided but not defined: -max-pending-audio-byte
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigInvalidArguments/unknown_flag (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/positional
+--- PASS: TestParseGatewayConfigInvalidArguments/positional (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/positional_after_option
+--- PASS: TestParseGatewayConfigInvalidArguments/positional_after_option (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/positional_before_option
+--- PASS: TestParseGatewayConfigInvalidArguments/positional_before_option (0.00s)
+=== RUN   TestParseGatewayConfigInvalidArguments/positional_after_terminator
+--- PASS: TestParseGatewayConfigInvalidArguments/positional_after_terminator (0.00s)
+--- PASS: TestParseGatewayConfigInvalidArguments (0.00s)
+=== RUN   TestParseGatewayConfigHelp
+=== RUN   TestParseGatewayConfigHelp/-h
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigHelp/-h (0.00s)
+=== RUN   TestParseGatewayConfigHelp/-help
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestParseGatewayConfigHelp/-help (0.00s)
+--- PASS: TestParseGatewayConfigHelp (0.00s)
+=== RUN   TestSnapshotHTTPContract
+=== RUN   TestSnapshotHTTPContract/default
+--- PASS: TestSnapshotHTTPContract/default (0.00s)
+=== RUN   TestSnapshotHTTPContract/explicit
+--- PASS: TestSnapshotHTTPContract/explicit (0.00s)
+=== RUN   TestSnapshotHTTPContract/stopped
+--- PASS: TestSnapshotHTTPContract/stopped (0.00s)
+--- PASS: TestSnapshotHTTPContract (0.00s)
+=== RUN   TestSnapshotHTTPRoutes
+=== RUN   TestSnapshotHTTPRoutes/head
+--- PASS: TestSnapshotHTTPRoutes/head (0.00s)
+=== RUN   TestSnapshotHTTPRoutes/post
+--- PASS: TestSnapshotHTTPRoutes/post (0.00s)
+=== RUN   TestSnapshotHTTPRoutes/delete
+--- PASS: TestSnapshotHTTPRoutes/delete (0.00s)
+=== RUN   TestSnapshotHTTPRoutes/child
+--- PASS: TestSnapshotHTTPRoutes/child (0.00s)
+=== RUN   TestSnapshotHTTPRoutes/health
+--- PASS: TestSnapshotHTTPRoutes/health (0.00s)
+--- PASS: TestSnapshotHTTPRoutes (0.00s)
+=== RUN   TestSnapshotHTTPActiveSession
+--- PASS: TestSnapshotHTTPActiveSession (0.02s)
+=== RUN   TestSnapshotHTTPWriteError
+2026/10/03 13:24:33 ERROR write gateway snapshot response error="io: read/write on closed pipe"
+--- PASS: TestSnapshotHTTPWriteError (0.00s)
+=== RUN   TestSnapshotHTTPSlowWriter
+--- PASS: TestSnapshotHTTPSlowWriter (0.00s)
+=== RUN   TestGatewayMultiWorkerStartup
+2026/10/03 13:24:33 websocket gateway listening on :8080
+2026/10/03 13:24:33 shutting down websocket gateway
+    startup_test.go:247: routing=B,A,B,A,B,A; normal=4 canceled=2; connections per Worker opened=1 closed=1 before backend shutdown
+--- PASS: TestGatewayMultiWorkerStartup (0.01s)
+=== RUN   TestGatewayStartupCLI
+    backlog_experiment_test.go:134: BACKLOG_COMPARISON_JSON {"case":"probe_completed","budget_bytes":0,"validated":true,"outcome":"completed","processing_ms":1,"pause_ms":0,"planned_chunks":6,"client_written_bytes":19200,"send_succeeded_bytes":19200,"worker_received_bytes":19200,"worker_progress_sent_bytes":19200,"final_progress":{"begin_ms":502.761416,"at_ms":502.762,"received_bytes":19200,"processed_bytes":19200,"pending_bytes":0},"observed_peak_pending_bytes":0,"max_sample_gap_ms":6.070749999999975,"max_snapshot_call_ms":0.04320799999999281,"end_ms":500.720166,"final_ms":502.561666,"tail_ms":1.8414999999999964,"close_ms":502.670666,"close_code":1000,"close_reason":"","run_returned_ms":502.740416,"handler_returned_ms":502.747791,"worker_returned_ms":502.350166,"active_after_cleanup":0,"reused":true,"writes":[{"index":0,"planned_ms":0,"started_ms":0.019833,"returned_ms":0.120166},{"index":1,"planned_ms":100,"started_ms":100.603958,"returned_ms":100.744083},{"index":2,"planned_ms":200,"started_ms":200.567125,"returned_ms":200.698833},{"index":3,"planned_ms":300,"started_ms":300.16925,"returned_ms":300.301125},{"index":4,"planned_ms":400,"started_ms":400.211875,"returned_ms":400.358833},{"index":5,"planned_ms":500,"started_ms":500.586,"returned_ms":500.719291}],"sends":[{"index":0,"planned_ms":0,"started_ms":1.04475,"returned_ms":1.074541},{"index":1,"planned_ms":100,"started_ms":100.934208,"returned_ms":100.970791},{"index":2,"planned_ms":200,"started_ms":200.884,"returned_ms":200.917875},{"index":3,"planned_ms":300,"started_ms":300.611708,"returned_ms":300.656},{"index":4,"planned_ms":400,"started_ms":400.617541,"returned_ms":400.655541},{"index":5,"planned_ms":500,"started_ms":500.946125,"returned_ms":500.9825}],"partials":[{"index":1,"planned_ms":400,"received_ms":402.1685,"wait_ms":2.1684999999999945}],"samples":[{"begin_ms":0.065875,"at_ms":0.066916,"received_bytes":0,"processed_bytes":0,"pending_bytes":0},{"begin_ms":5.410875,"at_ms":5.416041,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":10.680208,"at_ms":10.68175,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":15.518,"at_ms":15.519291,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":20.668666,"at_ms":20.670333,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":25.642125,"at_ms":25.644041,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":30.6405,"at_ms":30.641833,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":35.651791,"at_ms":35.652875,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":40.533041,"at_ms":40.534958,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":45.674458,"at_ms":45.676958,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":50.649458,"at_ms":50.651333,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":55.641791,"at_ms":55.643791,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":60.437333,"at_ms":60.439208,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":65.558166,"at_ms":65.559958,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":70.66775,"at_ms":70.669958,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":75.641166,"at_ms":75.643166,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":80.602291,"at_ms":80.6035,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":85.654708,"at_ms":85.656166,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":90.664083,"at_ms":90.669041,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":95.6505,"at_ms":95.652,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":100.574875,"at_ms":100.576375,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":105.406291,"at_ms":105.407375,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":110.433333,"at_ms":110.43425,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":115.680541,"at_ms":115.681541,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":120.633625,"at_ms":120.634291,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":125.63625,"at_ms":125.637416,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":130.64025,"at_ms":130.641083,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":135.132625,"at_ms":135.133791,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":140.698875,"at_ms":140.699875,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":145.259541,"at_ms":145.261083,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":150.691666,"at_ms":150.693416,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":155.608083,"at_ms":155.609708,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":160.437541,"at_ms":160.438583,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":165.5535,"at_ms":165.556416,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":170.661708,"at_ms":170.662916,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":175.637875,"at_ms":175.638583,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":180.642,"at_ms":180.642583,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":185.637916,"at_ms":185.6385,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":190.649,"at_ms":190.650708,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":195.639625,"at_ms":195.641666,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":200.589208,"at_ms":200.59,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":205.432166,"at_ms":205.434041,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":210.695375,"at_ms":210.707333,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":215.479166,"at_ms":215.483666,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":220.189625,"at_ms":220.190791,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":225.696666,"at_ms":225.697375,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":230.168166,"at_ms":230.173875,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":235.662416,"at_ms":235.667,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":240.763166,"at_ms":240.7675,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":245.664333,"at_ms":245.707541,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":250.651916,"at_ms":250.656375,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":255.652875,"at_ms":255.657833,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":260.647041,"at_ms":260.65025,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":265.665916,"at_ms":265.670625,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":270.466208,"at_ms":270.469625,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":275.199666,"at_ms":275.202708,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":280.278125,"at_ms":280.281,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":285.563291,"at_ms":285.564958,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":290.34925,"at_ms":290.351,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":295.110958,"at_ms":295.113625,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":300.139875,"at_ms":300.142833,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":305.261375,"at_ms":305.263083,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":310.436916,"at_ms":310.438833,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":315.475458,"at_ms":315.511291,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":320.776416,"at_ms":320.778083,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":325.256791,"at_ms":325.259791,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":331.328583,"at_ms":331.330541,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":335.172125,"at_ms":335.174583,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":340.18475,"at_ms":340.186583,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":345.571125,"at_ms":345.573625,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":350.649625,"at_ms":350.652,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":355.646291,"at_ms":355.647583,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":360.643916,"at_ms":360.645291,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":365.636833,"at_ms":365.638,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":370.636,"at_ms":370.637083,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":375.647291,"at_ms":375.6485,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":380.635291,"at_ms":380.636416,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":385.6395,"at_ms":385.640416,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":390.506791,"at_ms":390.507791,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":395.648083,"at_ms":395.64925,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":400.18275,"at_ms":400.184041,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":405.449541,"at_ms":405.450541,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":410.430458,"at_ms":410.432333,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":415.611166,"at_ms":415.612875,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":420.636541,"at_ms":420.637791,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":425.706125,"at_ms":425.7075,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":430.681791,"at_ms":430.685541,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":435.634916,"at_ms":435.6365,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":440.241291,"at_ms":440.244,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":445.342125,"at_ms":445.344625,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":450.69775,"at_ms":450.7,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":455.777166,"at_ms":455.779333,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":461.055208,"at_ms":461.057916,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":465.698125,"at_ms":465.700541,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":471.180333,"at_ms":471.183083,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":475.597791,"at_ms":475.602708,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":480.777958,"at_ms":480.783541,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":485.59525,"at_ms":485.597916,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":490.583541,"at_ms":490.596333,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":495.6415,"at_ms":495.644,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":500.569,"at_ms":500.570791,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":502.756083,"at_ms":502.756791,"received_bytes":19200,"processed_bytes":19200,"pending_bytes":0}]}
+--- PASS: TestAudioBacklogExperimentProbe/completed (0.51s)
+=== RUN   TestAudioBacklogExperimentProbe/exceeded
+    backlog_experiment_test.go:134: BACKLOG_COMPARISON_JSON {"case":"probe_exceeded","budget_bytes":3199,"validated":true,"outcome":"audio_backlog_exceeded","run_error":"audio backlog exceeded (3200 \u003e 3199)","processing_ms":1,"pause_ms":0,"planned_chunks":6,"client_written_bytes":3200,"send_succeeded_bytes":0,"worker_received_bytes":0,"worker_progress_sent_bytes":0,"worker_error":"rpc error: code = Canceled desc = context canceled","final_progress":{"begin_ms":1.00725,"at_ms":1.007667,"received_bytes":3200,"processed_bytes":0,"pending_bytes":3200},"observed_peak_pending_bytes":3200,"max_sample_gap_ms":0.962708,"max_snapshot_call_ms":0.0015420000000000017,"end_ms":null,"final_ms":null,"tail_ms":null,"close_ms":0.945959,"close_code":1011,"close_reason":"audio backlog exceeded","run_returned_ms":0.9865,"handler_returned_ms":0.993834,"worker_returned_ms":0.889542,"active_after_cleanup":0,"reused":true,"writes":[{"index":0,"planned_ms":0,"started_ms":0.016542,"returned_ms":0.100875}],"sends":null,"partials":null,"samples":[{"begin_ms":0.037167,"at_ms":0.038709,"received_bytes":0,"processed_bytes":0,"pending_bytes":0},{"begin_ms":1.00075,"at_ms":1.001417,"received_bytes":3200,"processed_bytes":0,"pending_bytes":3200}]}
+--- PASS: TestAudioBacklogExperimentProbe/exceeded (0.00s)
+--- PASS: TestAudioBacklogExperimentProbe (0.51s)
+=== RUN   TestAudioBacklogComparisonExperiment
+    backlog_experiment_test.go:107: set TIDE_RUN_BACKLOG_COMPARISON=1
+--- SKIP: TestAudioBacklogComparisonExperiment (0.00s)
+=== RUN   TestAudioBacklogConfig
+=== RUN   TestAudioBacklogConfig/disabled
+--- PASS: TestAudioBacklogConfig/disabled (0.00s)
+=== RUN   TestAudioBacklogConfig/enabled
+--- PASS: TestAudioBacklogConfig/enabled (0.00s)
+=== RUN   TestAudioBacklogConfig/negative
+--- PASS: TestAudioBacklogConfig/negative (0.00s)
+=== RUN   TestAudioBacklogConfig/minimum_int64
+--- PASS: TestAudioBacklogConfig/minimum_int64 (0.00s)
+--- PASS: TestAudioBacklogConfig (0.00s)
+=== RUN   TestSessionAudioBacklogFailure
+--- PASS: TestSessionAudioBacklogFailure (0.00s)
+=== RUN   TestGatewayAudioBacklog
+=== RUN   TestGatewayAudioBacklog/no_progress_exceeds_and_reuses_slot
+--- PASS: TestGatewayAudioBacklog/no_progress_exceeds_and_reuses_slot (0.00s)
+=== RUN   TestGatewayAudioBacklog/progress_releases_budget
+--- PASS: TestGatewayAudioBacklog/progress_releases_budget (0.00s)
+=== RUN   TestGatewayAudioBacklog/disabled_without_progress
+--- PASS: TestGatewayAudioBacklog/disabled_without_progress (0.01s)
+--- PASS: TestGatewayAudioBacklog (0.01s)
+=== RUN   TestPendingAudioLimitBoundaries
+=== RUN   TestPendingAudioLimitBoundaries/disabled_with_large_pending
+--- PASS: TestPendingAudioLimitBoundaries/disabled_with_large_pending (0.00s)
+=== RUN   TestPendingAudioLimitBoundaries/empty
+--- PASS: TestPendingAudioLimitBoundaries/empty (0.00s)
+=== RUN   TestPendingAudioLimitBoundaries/below
+--- PASS: TestPendingAudioLimitBoundaries/below (0.00s)
+=== RUN   TestPendingAudioLimitBoundaries/equal
+--- PASS: TestPendingAudioLimitBoundaries/equal (0.00s)
+=== RUN   TestPendingAudioLimitBoundaries/one_byte_above
+--- PASS: TestPendingAudioLimitBoundaries/one_byte_above (0.00s)
+=== RUN   TestPendingAudioLimitBoundaries/large_received_but_equal_pending
+--- PASS: TestPendingAudioLimitBoundaries/large_received_but_equal_pending (0.00s)
+=== RUN   TestPendingAudioLimitBoundaries/all_processed
+--- PASS: TestPendingAudioLimitBoundaries/all_processed (0.00s)
+=== RUN   TestPendingAudioLimitBoundaries/maximum_equal
+--- PASS: TestPendingAudioLimitBoundaries/maximum_equal (0.00s)
+=== RUN   TestPendingAudioLimitBoundaries/maximum_above
+--- PASS: TestPendingAudioLimitBoundaries/maximum_above (0.00s)
+--- PASS: TestPendingAudioLimitBoundaries (0.00s)
+=== RUN   TestPendingAudioLimitDoesNotRollBackAccounting
+--- PASS: TestPendingAudioLimitDoesNotRollBackAccounting (0.00s)
+=== RUN   TestGatewayClientDisconnectIsolated
+--- PASS: TestGatewayClientDisconnectIsolated (0.00s)
+=== RUN   TestGatewayShutdownBeforeStart
+--- PASS: TestGatewayShutdownBeforeStart (0.00s)
+=== RUN   TestUploadReportsInputIdleTimeout
+=== RUN   TestBatchConfigValidateTotalBoundary
+=== RUN   TestBatchConfigValidateTotalBoundary/one_max_aligned
+--- PASS: TestBatchConfigValidateTotalBoundary/one_max_aligned (0.00s)
+=== RUN   TestBatchConfigValidateTotalBoundary/two_below_limit
+--- PASS: TestBatchConfigValidateTotalBoundary/two_below_limit (0.00s)
+=== RUN   TestBatchConfigValidateTotalBoundary/two_above_limit
+--- PASS: TestBatchConfigValidateTotalBoundary/two_above_limit (0.00s)
+=== RUN   TestBatchConfigValidateTotalBoundary/zero_bytes_before_division
+--- PASS: TestBatchConfigValidateTotalBoundary/zero_bytes_before_division (0.00s)
+=== RUN   TestBatchConfigValidateTotalBoundary/negative_bytes_before_division
+--- PASS: TestBatchConfigValidateTotalBoundary/negative_bytes_before_division (0.00s)
+--- PASS: TestBatchConfigValidateTotalBoundary (0.00s)
+=== RUN   TestRunBatchPreflight
+=== RUN   TestRunBatchPreflight/zero_sessions
+--- PASS: TestRunBatchPreflight/zero_sessions (0.00s)
+=== RUN   TestRunBatchPreflight/negative_sessions
+--- PASS: TestRunBatchPreflight/negative_sessions (0.00s)
+=== RUN   TestRunBatchPreflight/zero_timeout
+--- PASS: TestRunBatchPreflight/zero_timeout (0.00s)
+=== RUN   TestRunBatchPreflight/negative_timeout
+--- PASS: TestRunBatchPreflight/negative_timeout (0.00s)
+=== RUN   TestRunBatchPreflight/zero_chunk
+--- PASS: TestRunBatchPreflight/zero_chunk (0.00s)
+=== RUN   TestRunBatchPreflight/negative_chunk
+--- PASS: TestRunBatchPreflight/negative_chunk (0.00s)
+=== RUN   TestRunBatchPreflight/unaligned_chunk
+--- PASS: TestRunBatchPreflight/unaligned_chunk (0.00s)
+=== RUN   TestRunBatchPreflight/zero_audio
+--- PASS: TestRunBatchPreflight/zero_audio (0.00s)
+=== RUN   TestRunBatchPreflight/negative_audio
+--- PASS: TestRunBatchPreflight/negative_audio (0.00s)
+=== RUN   TestRunBatchPreflight/unaligned_audio
+--- PASS: TestRunBatchPreflight/unaligned_audio (0.00s)
+=== RUN   TestRunBatchPreflight/empty_tail
+--- PASS: TestRunBatchPreflight/empty_tail (0.00s)
+=== RUN   TestRunBatchPreflight/empty_url
+--- PASS: TestRunBatchPreflight/empty_url (0.00s)
+=== RUN   TestRunBatchPreflight/planned_total_overflow
+--- PASS: TestRunBatchPreflight/planned_total_overflow (0.00s)
+=== RUN   TestRunBatchPreflight/pre_canceled
+--- PASS: TestRunBatchPreflight/pre_canceled (0.00s)
+=== RUN   TestRunBatchPreflight/pre_deadline
+--- PASS: TestRunBatchPreflight/pre_deadline (0.00s)
+--- PASS: TestRunBatchPreflight (0.00s)
+=== RUN   TestRunBatchOverlappingSessions
+--- PASS: TestRunBatchOverlappingSessions (0.00s)
+=== RUN   TestRunBatchMixedOutcomes
+=== RUN   TestRunBatchMixedOutcomes/bad_tail
+--- PASS: TestRunBatchMixedOutcomes/bad_tail (0.00s)
+=== RUN   TestRunBatchMixedOutcomes/session_timeout
+--- PASS: TestUploadReportsInputIdleTimeout (0.05s)
+=== RUN   TestWaitSessionResultInputIdlePriority
+=== RUN   TestWaitSessionResultInputIdlePriority/write_failure_first
+--- PASS: TestWaitSessionResultInputIdlePriority/write_failure_first (0.00s)
+=== RUN   TestWaitSessionResultInputIdlePriority/service_stop_has_priority
+--- PASS: TestWaitSessionResultInputIdlePriority/service_stop_has_priority (0.00s)
+=== RUN   TestWaitSessionResultInputIdlePriority/successful_read_cleanup_is_not_timeout
+--- PASS: TestWaitSessionResultInputIdlePriority/successful_read_cleanup_is_not_timeout (0.00s)
+=== RUN   TestWaitSessionResultInputIdlePriority/no_read_is_not_timeout
+--- PASS: TestWaitSessionResultInputIdlePriority/no_read_is_not_timeout (0.00s)
+--- PASS: TestWaitSessionResultInputIdlePriority (0.00s)
+=== RUN   TestSessionInputIdleTimeoutCancelsRPC
+=== RUN   TestSessionInputIdleTimeoutCancelsRPC/before_first_audio
+--- PASS: TestSessionInputIdleTimeoutCancelsRPC/before_first_audio (0.10s)
+=== RUN   TestSessionInputIdleTimeoutCancelsRPC/after_audio
+--- PASS: TestSessionInputIdleTimeoutCancelsRPC/after_audio (0.10s)
+--- PASS: TestSessionInputIdleTimeoutCancelsRPC (0.20s)
+=== RUN   TestGatewayNormalEndPreservesTail
+=== RUN   TestGatewayNormalEndPreservesTail/immediate_tail
+--- PASS: TestGatewayNormalEndPreservesTail/immediate_tail (0.00s)
+=== RUN   TestGatewayNormalEndPreservesTail/tail_after_input_idle_deadline
+--- PASS: TestRunBatchMixedOutcomes/session_timeout (0.50s)
+--- PASS: TestRunBatchMixedOutcomes (0.50s)
+=== RUN   TestRunBatchParentStopRetainsAllResults
+=== RUN   TestRunBatchParentStopRetainsAllResults/cancel
+--- PASS: TestRunBatchParentStopRetainsAllResults/cancel (0.00s)
+=== RUN   TestRunBatchParentStopRetainsAllResults/deadline
+--- PASS: TestGatewayNormalEndPreservesTail/tail_after_input_idle_deadline (0.50s)
+--- PASS: TestGatewayNormalEndPreservesTail (0.51s)
+=== RUN   TestProgressBacklogProbe
+=== RUN   TestGatewayStartupCLI/help
+--- PASS: TestRunBatchParentStopRetainsAllResults/deadline (0.50s)
+--- PASS: TestRunBatchParentStopRetainsAllResults (0.50s)
+=== RUN   TestRunBatchAllRejectedStillCollects
+--- PASS: TestRunBatchAllRejectedStillCollects (0.00s)
+=== RUN   TestGatewayRecordingJSONContract
+--- PASS: TestGatewayRecordingJSONContract (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons
+=== RUN   TestGatewayRecordingJSONReasons/returned
+--- PASS: TestGatewayRecordingJSONReasons/returned (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons/wrapped_cancel
+--- PASS: TestGatewayRecordingJSONReasons/wrapped_cancel (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons/wrapped_deadline
+--- PASS: TestGatewayRecordingJSONReasons/wrapped_deadline (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons/text_is_not_type
+--- PASS: TestGatewayRecordingJSONReasons/text_is_not_type (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons/empty_sampling
+--- PASS: TestGatewayRecordingJSONReasons/empty_sampling (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons/deadline_before_cancel
+--- PASS: TestGatewayRecordingJSONReasons/deadline_before_cancel (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons/output_before_cancel
+--- PASS: TestGatewayRecordingJSONReasons/output_before_cancel (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons/all_errors
+--- PASS: TestGatewayRecordingJSONReasons/all_errors (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons/cancel_and_close
+--- PASS: TestGatewayRecordingJSONReasons/cancel_and_close (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons/close_only
+--- PASS: TestGatewayRecordingJSONReasons/close_only (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons/empty_output
+--- PASS: TestGatewayRecordingJSONReasons/empty_output (0.00s)
+=== RUN   TestGatewayRecordingJSONReasons/empty_close
+--- PASS: TestGatewayRecordingJSONReasons/empty_close (0.00s)
+--- PASS: TestGatewayRecordingJSONReasons (0.00s)
+=== RUN   TestGatewayRecordingJSONBounds
+=== RUN   TestGatewayRecordingJSONBounds/empty
+--- PASS: TestGatewayRecordingJSONBounds/empty (0.00s)
+=== RUN   TestGatewayRecordingJSONBounds/max_success
+--- PASS: TestGatewayRecordingJSONBounds/max_success (0.00s)
+=== RUN   TestGatewayRecordingJSONBounds/max_failure
+--- PASS: TestGatewayRecordingJSONBounds/max_failure (0.00s)
+=== RUN   TestGatewayRecordingJSONBounds/max_mixed
+--- PASS: TestGatewayRecordingJSONBounds/max_mixed (0.00s)
+=== RUN   TestGatewayRecordingJSONBounds/wall_clock_backwards
+--- PASS: TestGatewayRecordingJSONBounds/wall_clock_backwards (0.00s)
+--- PASS: TestGatewayRecordingJSONBounds (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid
+=== RUN   TestGatewayRecordingJSONInvalid/nil_writer
+--- PASS: TestGatewayRecordingJSONInvalid/nil_writer (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/config
+--- PASS: TestGatewayRecordingJSONInvalid/config (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/empty_path
+--- PASS: TestGatewayRecordingJSONInvalid/empty_path (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/blank_path
+--- PASS: TestGatewayRecordingJSONInvalid/blank_path (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/stdout
+--- PASS: TestGatewayRecordingJSONInvalid/stdout (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/no_start
+--- PASS: TestGatewayRecordingJSONInvalid/no_start (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/no_finish
+--- PASS: TestGatewayRecordingJSONInvalid/no_finish (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/negative_total
+--- PASS: TestGatewayRecordingJSONInvalid/negative_total (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/negative_success
+--- PASS: TestGatewayRecordingJSONInvalid/negative_success (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/negative_failure
+--- PASS: TestGatewayRecordingJSONInvalid/negative_failure (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/success_above_total
+--- PASS: TestGatewayRecordingJSONInvalid/success_above_total (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/wrong_sum
+--- PASS: TestGatewayRecordingJSONInvalid/wrong_sum (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/sum_overflow
+--- PASS: TestGatewayRecordingJSONInvalid/sum_overflow (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/output_without_sampling_error
+--- PASS: TestGatewayRecordingJSONInvalid/output_without_sampling_error (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/start_encoding
+--- PASS: TestGatewayRecordingJSONInvalid/start_encoding (0.00s)
+=== RUN   TestGatewayRecordingJSONInvalid/finish_encoding
+--- PASS: TestGatewayRecordingJSONInvalid/finish_encoding (0.00s)
+--- PASS: TestGatewayRecordingJSONInvalid (0.00s)
+=== RUN   TestGatewayRecordingJSONWriter
+=== RUN   TestGatewayRecordingJSONWriter/success
+--- PASS: TestGatewayRecordingJSONWriter/success (0.00s)
+=== RUN   TestGatewayRecordingJSONWriter/error
+--- PASS: TestGatewayRecordingJSONWriter/error (0.00s)
+=== RUN   TestGatewayRecordingJSONWriter/partial_error
+--- PASS: TestGatewayRecordingJSONWriter/partial_error (0.00s)
+=== RUN   TestGatewayRecordingJSONWriter/short_write
+--- PASS: TestGatewayRecordingJSONWriter/short_write (0.00s)
+--- PASS: TestGatewayRecordingJSONWriter (0.00s)
+=== RUN   TestGatewayRecordingJSONDoesNotAccessSamples
+--- PASS: TestGatewayRecordingJSONDoesNotAccessSamples (0.00s)
+=== RUN   TestGatewayRecordingJSONFromRun
+--- PASS: TestGatewayRecordingJSONFromRun (0.00s)
+=== RUN   TestGatewayRecordingRunPreflight
+=== RUN   TestGatewayRecordingRunPreflight/nil_context
+--- PASS: TestGatewayRecordingRunPreflight/nil_context (0.00s)
+=== RUN   TestGatewayRecordingRunPreflight/nil_client
+--- PASS: TestGatewayRecordingRunPreflight/nil_client (0.00s)
+=== RUN   TestGatewayRecordingRunPreflight/invalid_url
+--- PASS: TestGatewayRecordingRunPreflight/invalid_url (0.00s)
+=== RUN   TestGatewayRecordingRunPreflight/invalid_interval
+--- PASS: TestGatewayRecordingRunPreflight/invalid_interval (0.00s)
+=== RUN   TestGatewayRecordingRunPreflight/invalid_timeout
+--- PASS: TestGatewayRecordingRunPreflight/invalid_timeout (0.00s)
+=== RUN   TestGatewayRecordingRunPreflight/empty
+--- PASS: TestGatewayRecordingRunPreflight/empty (0.00s)
+=== RUN   TestGatewayRecordingRunPreflight/blank
+--- PASS: TestGatewayRecordingRunPreflight/blank (0.00s)
+=== RUN   TestGatewayRecordingRunPreflight/stdout
+--- PASS: TestGatewayRecordingRunPreflight/stdout (0.00s)
+=== RUN   TestGatewayRecordingRunPreflight/canceled
+--- PASS: TestGatewayRecordingRunPreflight/canceled (0.00s)
+=== RUN   TestGatewayRecordingRunPreflight/expired
+--- PASS: TestGatewayRecordingRunPreflight/expired (0.00s)
+--- PASS: TestGatewayRecordingRunPreflight (0.00s)
+=== RUN   TestGatewayRecordingRunPaths
+=== RUN   TestGatewayRecordingRunPaths/empty_directory
+--- PASS: TestGatewayRecordingRunPaths/empty_directory (0.00s)
+=== RUN   TestGatewayRecordingRunPaths/old_recording
+--- PASS: TestGatewayRecordingRunPaths/old_recording (0.00s)
+=== RUN   TestGatewayRecordingRunPaths/file
+--- PASS: TestGatewayRecordingRunPaths/file (0.00s)
+=== RUN   TestGatewayRecordingRunPaths/symlink
+--- PASS: TestGatewayRecordingRunPaths/symlink (0.00s)
+=== RUN   TestGatewayRecordingRunPaths/dangling_symlink
+--- PASS: TestGatewayRecordingRunPaths/dangling_symlink (0.00s)
+=== RUN   TestGatewayRecordingRunPaths/missing_parent
+--- PASS: TestGatewayRecordingRunPaths/missing_parent (0.00s)
+--- PASS: TestGatewayRecordingRunPaths (0.00s)
+=== RUN   TestGatewayRecordingRunPortable
+=== RUN   TestGatewayRecordingRunPortable/absolute
+--- PASS: TestGatewayRecordingRunPortable/absolute (0.00s)
+=== RUN   TestGatewayRecordingRunPortable/relative
+--- PASS: TestGatewayRecordingRunPortable/relative (0.00s)
+=== RUN   TestGatewayRecordingRunPortable/spaces
+--- PASS: TestGatewayRecordingRunPortable/spaces (0.00s)
+--- PASS: TestGatewayRecordingRunPortable (0.00s)
+=== RUN   TestGatewayRecordingRunHTTP
+=== RUN   TestGatewayRecordingRunHTTP/mixed
+--- PASS: TestGatewayRecordingRunHTTP/mixed (0.00s)
+=== RUN   TestGatewayRecordingRunHTTP/all_failed
+--- PASS: TestGatewayRecordingRunHTTP/all_failed (0.00s)
+=== RUN   TestGatewayRecordingRunHTTP/deadline
+    progress_baseline_experiment_test.go:114: PROGRESS_BASELINE_JSON {"case":"probe_only","outcome":"completed","chunks":6,"processing_ms":1,"pause_ms":0,"sample_period_ms":5,"observed_peak_pending_bytes":0,"observed_peak_audio_ms":0,"peak_at_ms":0,"max_sample_gap_ms":5.589249999999993,"max_snapshot_call_ms":0.024749999999983174,"end_started_ms":502.520375,"end_returned_ms":502.575208,"at_end_write_return":{"begin_ms":502.577041,"at_ms":502.578708,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},"final_ms":505.180375,"tail_ms":2.660000000000025,"close_ms":505.543625,"session_returned_ms":505.657625,"pause_boundary_ms":null,"resume_ms":null,"first_low_after_resume_ms":null,"first_low_delay_ms":null,"max_send_ms":0.08683400000001029,"max_write_ms":1.904875000000004,"max_input_schedule_lag_ms":0.6134579999999801,"close_code":1000,"worker_chunks":6,"worker_bytes":19200,"final_progress":{"begin_ms":505.721333,"at_ms":505.722333,"received_bytes":19200,"processed_bytes":19200,"pending_bytes":0},"active_after_cleanup":0,"writes":[{"index":0,"planned_ms":0,"started_ms":0.008583,"returned_ms":0.177416},{"index":1,"planned_ms":100,"started_ms":100.5965,"returned_ms":100.735375},{"index":2,"planned_ms":200,"started_ms":200.569458,"returned_ms":200.712208},{"index":3,"planned_ms":300,"started_ms":300.171791,"returned_ms":300.306375},{"index":4,"planned_ms":400,"started_ms":400.5955,"returned_ms":400.876583},{"index":5,"planned_ms":500,"started_ms":500.613458,"returned_ms":502.518333}],"sends":[{"index":0,"planned_ms":0,"started_ms":0.854166,"returned_ms":0.892083},{"index":1,"planned_ms":100,"started_ms":101.004541,"returned_ms":101.045208},{"index":2,"planned_ms":200,"started_ms":200.940416,"returned_ms":200.973958},{"index":3,"planned_ms":300,"started_ms":300.5195,"returned_ms":300.548625},{"index":4,"planned_ms":400,"started_ms":401.280375,"returned_ms":401.335333},{"index":5,"planned_ms":500,"started_ms":503.047666,"returned_ms":503.1345}],"partials":[{"index":1,"planned_ms":400,"received_ms":403.152041,"wait_ms":3.152040999999997}],"samples":[{"begin_ms":0.054166,"at_ms":0.055208,"received_bytes":0,"processed_bytes":0,"pending_bytes":0},{"begin_ms":5.362833,"at_ms":5.36375,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":10.075833,"at_ms":10.076416,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":15.650791,"at_ms":15.653125,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":20.590625,"at_ms":20.592416,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":25.594875,"at_ms":25.596541,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":30.590083,"at_ms":30.591708,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":35.580958,"at_ms":35.582666,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":40.59825,"at_ms":40.599541,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":45.593041,"at_ms":45.595208,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":50.592,"at_ms":50.592916,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":55.587,"at_ms":55.588125,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":60.222833,"at_ms":60.226666,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":65.636708,"at_ms":65.637958,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":70.547083,"at_ms":70.549166,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":75.363833,"at_ms":75.365,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":80.641791,"at_ms":80.643666,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":85.58525,"at_ms":85.586458,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":90.588875,"at_ms":90.590291,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":95.593,"at_ms":95.594041,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":100.574833,"at_ms":100.575708,"received_bytes":3200,"processed_bytes":3200,"pending_bytes":0},{"begin_ms":105.331416,"at_ms":105.332208,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":110.552958,"at_ms":110.553625,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":115.606583,"at_ms":115.607958,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":120.596541,"at_ms":120.597583,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":125.602375,"at_ms":125.604,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":130.610041,"at_ms":130.611541,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":135.619291,"at_ms":135.621625,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":140.596583,"at_ms":140.597958,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":145.600625,"at_ms":145.602083,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":150.606583,"at_ms":150.607583,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":155.585875,"at_ms":155.586791,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":160.599833,"at_ms":160.601083,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":165.595916,"at_ms":165.596708,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":170.59825,"at_ms":170.599083,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":175.587375,"at_ms":175.58875,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":180.416625,"at_ms":180.417625,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":185.62125,"at_ms":185.622416,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":190.103541,"at_ms":190.104958,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":195.678208,"at_ms":195.680208,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":200.587166,"at_ms":200.588291,"received_bytes":6400,"processed_bytes":6400,"pending_bytes":0},{"begin_ms":205.341041,"at_ms":205.341916,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":210.073791,"at_ms":210.078208,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":215.658833,"at_ms":215.659875,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":220.089458,"at_ms":220.0905,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":225.650375,"at_ms":225.6515,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":230.586041,"at_ms":230.587375,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":235.141666,"at_ms":235.142791,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":240.6525,"at_ms":240.653791,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":245.579083,"at_ms":245.579916,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":250.581666,"at_ms":250.582416,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":255.483541,"at_ms":255.484916,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":260.600208,"at_ms":260.602458,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":265.407,"at_ms":265.407958,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":270.093791,"at_ms":270.094958,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":275.299083,"at_ms":275.299708,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":280.627666,"at_ms":280.629958,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":285.588333,"at_ms":285.589875,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":290.586125,"at_ms":290.587458,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":295.575458,"at_ms":295.576375,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":300.16325,"at_ms":300.163916,"received_bytes":9600,"processed_bytes":9600,"pending_bytes":0},{"begin_ms":305.431541,"at_ms":305.432583,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":310.079458,"at_ms":310.080708,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":315.667708,"at_ms":315.669958,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":320.588083,"at_ms":320.589208,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":325.596708,"at_ms":325.598208,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":330.593541,"at_ms":330.594875,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":335.133166,"at_ms":335.134875,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":340.649791,"at_ms":340.651458,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":345.583541,"at_ms":345.585166,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":350.598875,"at_ms":350.600291,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":355.59275,"at_ms":355.595375,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":360.166916,"at_ms":360.168541,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":365.649333,"at_ms":365.652541,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":370.581666,"at_ms":370.588291,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":375.592666,"at_ms":375.593666,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":380.595375,"at_ms":380.596666,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":385.59925,"at_ms":385.600291,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":390.595708,"at_ms":390.597958,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":395.601291,"at_ms":395.602875,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":400.5825,"at_ms":400.583958,"received_bytes":12800,"processed_bytes":12800,"pending_bytes":0},{"begin_ms":405.281208,"at_ms":405.2825,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":410.266333,"at_ms":410.267375,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":415.634875,"at_ms":415.635958,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":420.595166,"at_ms":420.5975,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":425.597833,"at_ms":425.599541,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":430.603375,"at_ms":430.605333,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":435.103583,"at_ms":435.109,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":440.668333,"at_ms":440.670083,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":445.604625,"at_ms":445.607333,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":450.614708,"at_ms":450.616125,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":455.597333,"at_ms":455.598833,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":460.601583,"at_ms":460.603666,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":465.591666,"at_ms":465.5935,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":470.601708,"at_ms":470.603375,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":475.6015,"at_ms":475.603708,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":480.595,"at_ms":480.596791,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":485.606333,"at_ms":485.607791,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":490.654041,"at_ms":490.678791,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":495.622625,"at_ms":495.631541,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":500.646458,"at_ms":500.651833,"received_bytes":16000,"processed_bytes":16000,"pending_bytes":0},{"begin_ms":505.051958,"at_ms":505.053625,"received_bytes":19200,"processed_bytes":19200,"pending_bytes":0},{"begin_ms":505.690791,"at_ms":505.692333,"received_bytes":19200,"processed_bytes":19200,"pending_bytes":0}]}
+--- PASS: TestProgressBacklogProbe (0.51s)
+=== RUN   TestProgressBacklogBaselineExperiment
+    progress_baseline_experiment_test.go:86: set TIDE_RUN_PROGRESS_BACKLOG_EXPERIMENT=1
+--- SKIP: TestProgressBacklogBaselineExperiment (0.00s)
+=== RUN   TestDownloadRejectsInvalidProgress
+=== RUN   TestDownloadRejectsInvalidProgress/beyond_received
+--- PASS: TestDownloadRejectsInvalidProgress/beyond_received (0.00s)
+=== RUN   TestDownloadRejectsInvalidProgress/backward
+--- PASS: TestDownloadRejectsInvalidProgress/backward (0.00s)
+--- PASS: TestDownloadRejectsInvalidProgress (0.00s)
+=== RUN   TestUploadProgressSendFailure
+--- PASS: TestUploadProgressSendFailure (0.00s)
+=== RUN   TestSessionProgressIntegration
+=== RUN   TestSessionProgressIntegration/ack_before_send_returns
+--- PASS: TestSessionProgressIntegration/ack_before_send_returns (0.00s)
+=== RUN   TestSessionProgressIntegration/overflow_before_send
+--- PASS: TestSessionProgressIntegration/overflow_before_send (0.00s)
+--- PASS: TestSessionProgressIntegration (0.00s)
+=== RUN   TestDownloadProgressContinuesReceiving
+--- PASS: TestDownloadProgressContinuesReceiving (0.00s)
+=== RUN   TestDownloadProgressRejectsMixedFields
+=== RUN   TestDownloadProgressRejectsMixedFields/segment_id
+--- PASS: TestDownloadProgressRejectsMixedFields/segment_id (0.00s)
+=== RUN   TestDownloadProgressRejectsMixedFields/text
+--- PASS: TestDownloadProgressRejectsMixedFields/text (0.00s)
+=== RUN   TestDownloadProgressRejectsMixedFields/is_final
+--- PASS: TestDownloadProgressRejectsMixedFields/is_final (0.00s)
+=== RUN   TestDownloadProgressRejectsMixedFields/all_fields
+--- PASS: TestDownloadProgressRejectsMixedFields/all_fields (0.00s)
+--- PASS: TestDownloadProgressRejectsMixedFields (0.00s)
+=== RUN   TestGatewayProgressRouting
+=== RUN   TestGatewayProgressRouting/normal
+--- PASS: TestGatewayProgressRouting/normal (0.01s)
+=== RUN   TestGatewayProgressRouting/mixed_fields
+--- PASS: TestGatewayProgressRouting/mixed_fields (0.00s)
+=== RUN   TestGatewayProgressRouting/eof_before_end
+--- PASS: TestGatewayProgressRouting/eof_before_end (0.00s)
+=== RUN   TestGatewayProgressRouting/future_progress
+--- PASS: TestGatewayProgressRouting/future_progress (0.00s)
+=== RUN   TestGatewayProgressRouting/backward_progress
+--- PASS: TestGatewayProgressRouting/backward_progress (0.00s)
+--- PASS: TestGatewayProgressRouting (0.02s)
+=== RUN   TestProtectionCleanupProbe
+--- PASS: TestGatewayRecordingRunHTTP/deadline (0.30s)
+--- PASS: TestGatewayRecordingRunHTTP (0.31s)
+=== RUN   TestGatewayRecordingRunExclusiveRace
+--- PASS: TestGatewayRecordingRunExclusiveRace (0.00s)
+=== RUN   TestGatewayRecordingPreflight
+=== RUN   TestGatewayRecordingPreflight/nil_context
+--- PASS: TestGatewayRecordingPreflight/nil_context (0.00s)
+=== RUN   TestGatewayRecordingPreflight/nil_client
+--- PASS: TestGatewayRecordingPreflight/nil_client (0.00s)
+=== RUN   TestGatewayRecordingPreflight/invalid_interval
+--- PASS: TestGatewayRecordingPreflight/invalid_interval (0.00s)
+=== RUN   TestGatewayRecordingPreflight/invalid_url
+--- PASS: TestGatewayRecordingPreflight/invalid_url (0.00s)
+=== RUN   TestGatewayRecordingPreflight/empty_path
+--- PASS: TestGatewayRecordingPreflight/empty_path (0.00s)
+=== RUN   TestGatewayRecordingPreflight/blank_path
+--- PASS: TestGatewayRecordingPreflight/blank_path (0.00s)
+=== RUN   TestGatewayRecordingPreflight/stdout_path
+--- PASS: TestGatewayRecordingPreflight/stdout_path (0.00s)
+=== RUN   TestGatewayRecordingPreflight/canceled
+--- PASS: TestGatewayRecordingPreflight/canceled (0.00s)
+=== RUN   TestGatewayRecordingPreflight/expired
+--- PASS: TestGatewayRecordingPreflight/expired (0.00s)
+--- PASS: TestGatewayRecordingPreflight (0.00s)
+=== RUN   TestGatewayRecordingPaths
+=== RUN   TestGatewayRecordingPaths/file
+--- PASS: TestGatewayRecordingPaths/file (0.00s)
+=== RUN   TestGatewayRecordingPaths/directory
+--- PASS: TestGatewayRecordingPaths/directory (0.00s)
+=== RUN   TestGatewayRecordingPaths/symlink
+--- PASS: TestGatewayRecordingPaths/symlink (0.00s)
+=== RUN   TestGatewayRecordingPaths/dangling_symlink
+--- PASS: TestGatewayRecordingPaths/dangling_symlink (0.00s)
+=== RUN   TestGatewayRecordingPaths/missing_parent
+--- PASS: TestGatewayRecordingPaths/missing_parent (0.00s)
+--- PASS: TestGatewayRecordingPaths (0.00s)
+=== RUN   TestGatewayRecordingHTTP
+=== RUN   TestGatewayRecordingHTTP/mixed
+--- PASS: TestGatewayRecordingHTTP/mixed (0.01s)
+=== RUN   TestGatewayRecordingHTTP/all_failed
+--- PASS: TestGatewayRecordingHTTP/all_failed (0.00s)
+=== RUN   TestGatewayRecordingHTTP/deadline
+    protection_cleanup_experiment_test.go:249: PROTECTION_CLEANUP_JSON {"group":"normal_control","rounds":2,"warmup_rounds":2,"sessions_per_round":5,"validated":true,"outcomes":{"normal":10},"samples":[{"round":0,"settled":false,"goroutines":12,"heap_alloc":15741408,"heap_objects":3657,"heap_inuse":17776640,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":1,"settled":false,"goroutines":12,"heap_alloc":15668664,"heap_objects":3679,"heap_inuse":17670144,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":2,"settled":false,"goroutines":12,"heap_alloc":15747728,"heap_objects":3619,"heap_inuse":17743872,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":2,"settled":true,"goroutines":12,"heap_alloc":15506136,"heap_objects":3441,"heap_inuse":17424384,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0}]}
+--- PASS: TestGatewayRecordingHTTP/deadline (0.30s)
+--- PASS: TestGatewayRecordingHTTP (0.32s)
+=== RUN   TestGatewayRecordingSuccessAtCancellation
+--- PASS: TestGatewayRecordingSuccessAtCancellation (0.00s)
+=== RUN   TestGatewayRecordingExclusiveRace
+--- PASS: TestGatewayRecordingExclusiveRace (0.00s)
+=== RUN   TestGatewaySampleJSONContract
+=== RUN   TestGatewaySampleJSONContract/false
+--- PASS: TestGatewaySampleJSONContract/false (0.00s)
+=== RUN   TestGatewaySampleJSONContract/true
+--- PASS: TestGatewaySampleJSONContract/true (0.00s)
+--- PASS: TestGatewaySampleJSONContract (0.00s)
+=== RUN   TestGatewaySampleJSONFailures
+=== RUN   TestGatewaySampleJSONFailures/empty
+--- PASS: TestGatewaySampleJSONFailures/empty (0.00s)
+=== RUN   TestGatewaySampleJSONFailures/canceled
+--- PASS: TestGatewaySampleJSONFailures/canceled (0.00s)
+=== RUN   TestGatewaySampleJSONFailures/deadline
+--- PASS: TestGatewaySampleJSONFailures/deadline (0.00s)
+=== RUN   TestGatewaySampleJSONFailures/multiline
+--- PASS: TestGatewaySampleJSONFailures/multiline (0.00s)
+--- PASS: TestGatewaySampleJSONFailures (0.00s)
+=== RUN   TestGatewaySampleJSONDuration
+=== RUN   TestGatewaySampleJSONDuration/zero
+--- PASS: TestGatewaySampleJSONDuration/zero (0.00s)
+=== RUN   TestGatewaySampleJSONDuration/nanoseconds
+--- PASS: TestGatewaySampleJSONDuration/nanoseconds (0.00s)
+=== RUN   TestGatewaySampleJSONDuration/max_int64
+--- PASS: TestGatewaySampleJSONDuration/max_int64 (0.00s)
+=== RUN   TestGatewaySampleJSONDuration/wall_clock_backwards
+--- PASS: TestGatewaySampleJSONDuration/wall_clock_backwards (0.00s)
+--- PASS: TestGatewaySampleJSONDuration (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/nil_writer
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/nil_writer (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/negative_index
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/negative_index (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/missing_start
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/missing_start (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/missing_finish
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/missing_finish (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/negative_duration
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/negative_duration (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/no_state_or_error
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/no_state_or_error (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/state_and_error
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/state_and_error (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/zero_limit
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/zero_limit (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/negative_limit
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/negative_limit (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/negative_active
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/negative_active (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/above_limit
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/above_limit (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/unencodable_start
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/unencodable_start (0.00s)
+=== RUN   TestGatewaySampleJSONRejectsBeforeWrite/unencodable_finish
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite/unencodable_finish (0.00s)
+--- PASS: TestGatewaySampleJSONRejectsBeforeWrite (0.00s)
+=== RUN   TestGatewaySampleJSONWriter
+=== RUN   TestGatewaySampleJSONWriter/success
+--- PASS: TestGatewaySampleJSONWriter/success (0.00s)
+=== RUN   TestGatewaySampleJSONWriter/error
+--- PASS: TestGatewaySampleJSONWriter/error (0.00s)
+=== RUN   TestGatewaySampleJSONWriter/partial_error
+--- PASS: TestGatewaySampleJSONWriter/partial_error (0.00s)
+=== RUN   TestGatewaySampleJSONWriter/short_write
+--- PASS: TestGatewaySampleJSONWriter/short_write (0.00s)
+--- PASS: TestGatewaySampleJSONWriter (0.00s)
+=== RUN   TestGatewaySampleJSONSampling
+--- PASS: TestGatewaySampleJSONSampling (0.00s)
+=== RUN   TestGatewaySampleJSONWriteFailureStopsSampling
+--- PASS: TestGatewaySampleJSONWriteFailureStopsSampling (0.00s)
+=== RUN   TestGatewaySamplingConfig
+=== RUN   TestGatewaySamplingConfig/http://localhost/debug/gateway
+--- PASS: TestGatewaySamplingConfig/http://localhost/debug/gateway (0.00s)
+=== RUN   TestGatewaySamplingConfig/https://example.test/path?q=1
+--- PASS: TestGatewaySamplingConfig/https://example.test/path?q=1 (0.00s)
+=== RUN   TestGatewaySamplingConfig/http://[::1]:8080/debug/gateway
+--- PASS: TestGatewaySamplingConfig/http://[::1]:8080/debug/gateway (0.00s)
+=== RUN   TestGatewaySamplingConfig/empty
+--- PASS: TestGatewaySamplingConfig/empty (0.00s)
+=== RUN   TestGatewaySamplingConfig/relative
+--- PASS: TestGatewaySamplingConfig/relative (0.00s)
+=== RUN   TestGatewaySamplingConfig/scheme
+--- PASS: TestGatewaySamplingConfig/scheme (0.00s)
+=== RUN   TestGatewaySamplingConfig/host
+--- PASS: TestGatewaySamplingConfig/host (0.00s)
+=== RUN   TestGatewaySamplingConfig/syntax
+--- PASS: TestGatewaySamplingConfig/syntax (0.00s)
+=== RUN   TestGatewaySamplingConfig/zero_interval
+--- PASS: TestGatewaySamplingConfig/zero_interval (0.00s)
+=== RUN   TestGatewaySamplingConfig/negative_interval
+--- PASS: TestGatewaySamplingConfig/negative_interval (0.00s)
+=== RUN   TestGatewaySamplingConfig/zero_timeout
+--- PASS: TestGatewaySamplingConfig/zero_timeout (0.00s)
+=== RUN   TestGatewaySamplingConfig/negative_timeout
+--- PASS: TestGatewaySamplingConfig/negative_timeout (0.00s)
+--- PASS: TestGatewaySamplingConfig (0.00s)
+=== RUN   TestGatewaySamplingPreflight
+=== RUN   TestGatewaySamplingPreflight/nil_context
+--- PASS: TestGatewaySamplingPreflight/nil_context (0.00s)
+=== RUN   TestGatewaySamplingPreflight/nil_client
+--- PASS: TestGatewaySamplingPreflight/nil_client (0.00s)
+=== RUN   TestGatewaySamplingPreflight/nil_emit
+--- PASS: TestGatewaySamplingPreflight/nil_emit (0.00s)
+=== RUN   TestGatewaySamplingPreflight/canceled
+--- PASS: TestGatewaySamplingPreflight/canceled (0.00s)
+=== RUN   TestGatewaySamplingPreflight/expired
+--- PASS: TestGatewaySamplingPreflight/expired (0.00s)
+--- PASS: TestGatewaySamplingPreflight (0.00s)
+=== RUN   TestGatewaySamplingTimeline
+--- PASS: TestGatewaySamplingTimeline (0.00s)
+=== RUN   TestGatewaySamplingParentStop
+=== RUN   TestGatewaySamplingParentStop/inflight_cancel
+--- PASS: TestGatewaySamplingParentStop/inflight_cancel (0.00s)
+=== RUN   TestGatewaySamplingParentStop/inflight_deadline
+--- PASS: TestGatewaySamplingParentStop/inflight_deadline (0.00s)
+=== RUN   TestGatewaySamplingParentStop/wait_cancel
+--- PASS: TestGatewaySamplingParentStop/wait_cancel (0.00s)
+--- PASS: TestGatewaySamplingParentStop (0.00s)
+=== RUN   TestGatewaySamplingSuccessBeforeStop
+--- PASS: TestGatewaySamplingSuccessBeforeStop (0.00s)
+=== RUN   TestGatewaySamplingEmitError
+=== RUN   TestGatewaySamplingEmitError/success
+--- PASS: TestGatewaySamplingEmitError/success (0.00s)
+=== RUN   TestGatewaySamplingEmitError/query_failure
+--- PASS: TestGatewaySamplingEmitError/query_failure (0.00s)
+=== RUN   TestGatewaySamplingEmitError/parent_cancel
+--- PASS: TestGatewaySamplingEmitError/parent_cancel (0.00s)
+--- PASS: TestGatewaySamplingEmitError (0.00s)
+=== RUN   TestGatewaySamplingObservedStop
+--- PASS: TestGatewaySamplingObservedStop (0.00s)
+=== RUN   TestGatewaySamplingHTTP
+--- PASS: TestGatewaySamplingHTTP (0.00s)
+=== RUN   TestFetchGatewaySnapshotValues
+=== RUN   TestFetchGatewaySnapshotValues/idle
+--- PASS: TestFetchGatewaySnapshotValues/idle (0.00s)
+=== RUN   TestFetchGatewaySnapshotValues/busy
+--- PASS: TestFetchGatewaySnapshotValues/busy (0.00s)
+=== RUN   TestFetchGatewaySnapshotValues/full_stopping
+--- PASS: TestFetchGatewaySnapshotValues/full_stopping (0.00s)
+=== RUN   TestFetchGatewaySnapshotValues/empty_stopping
+--- PASS: TestFetchGatewaySnapshotValues/empty_stopping (0.00s)
+=== RUN   TestFetchGatewaySnapshotValues/extra_and_charset
+--- PASS: TestFetchGatewaySnapshotValues/extra_and_charset (0.00s)
+--- PASS: TestFetchGatewaySnapshotValues (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/empty
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/empty (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/syntax
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/syntax (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/null
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/null (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/array
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/array (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/trailing_json
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/trailing_json (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/missing_schema_version
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/missing_schema_version (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/null_schema_version
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/null_schema_version (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/missing_active_sessions
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/missing_active_sessions (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/null_active_sessions
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/null_active_sessions (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/missing_max_sessions
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/missing_max_sessions (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/null_max_sessions
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/null_max_sessions (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/missing_stopping
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/missing_stopping (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/null_stopping
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/null_stopping (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/unknown_version
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/unknown_version (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/zero_version
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/zero_version (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/version_bool
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/version_bool (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/version_string
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/version_string (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/active_negative
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/active_negative (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/above_limit
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/above_limit (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/active_float
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/active_float (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/active_bool
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/active_bool (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/active_overflow
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/active_overflow (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/limit_zero
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/limit_zero (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/limit_negative
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/limit_negative (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/limit_float
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/limit_float (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/limit_string
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/limit_string (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/stopping_number
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/stopping_number (0.00s)
+=== RUN   TestFetchGatewaySnapshotInvalidJSON/stopping_string
+--- PASS: TestFetchGatewaySnapshotInvalidJSON/stopping_string (0.00s)
+--- PASS: TestFetchGatewaySnapshotInvalidJSON (0.00s)
+=== RUN   TestFetchGatewaySnapshotHTTPBounds
+=== RUN   TestFetchGatewaySnapshotHTTPBounds/unavailable
+--- PASS: TestFetchGatewaySnapshotHTTPBounds/unavailable (0.00s)
+=== RUN   TestFetchGatewaySnapshotHTTPBounds/redirect
+--- PASS: TestFetchGatewaySnapshotHTTPBounds/redirect (0.00s)
+=== RUN   TestFetchGatewaySnapshotHTTPBounds/no_content
+--- PASS: TestFetchGatewaySnapshotHTTPBounds/no_content (0.00s)
+=== RUN   TestFetchGatewaySnapshotHTTPBounds/missing_type
+--- PASS: TestFetchGatewaySnapshotHTTPBounds/missing_type (0.00s)
+=== RUN   TestFetchGatewaySnapshotHTTPBounds/wrong_type
+--- PASS: TestFetchGatewaySnapshotHTTPBounds/wrong_type (0.00s)
+=== RUN   TestFetchGatewaySnapshotHTTPBounds/invalid_type
+--- PASS: TestFetchGatewaySnapshotHTTPBounds/invalid_type (0.00s)
+=== RUN   TestFetchGatewaySnapshotHTTPBounds/4096
+--- PASS: TestFetchGatewaySnapshotHTTPBounds/4096 (0.00s)
+=== RUN   TestFetchGatewaySnapshotHTTPBounds/4097
+--- PASS: TestFetchGatewaySnapshotHTTPBounds/4097 (0.00s)
+=== RUN   TestFetchGatewaySnapshotHTTPBounds/100000
+--- PASS: TestFetchGatewaySnapshotHTTPBounds/100000 (0.00s)
+--- PASS: TestFetchGatewaySnapshotHTTPBounds (0.00s)
+=== RUN   TestFetchGatewaySnapshotErrors
+=== RUN   TestFetchGatewaySnapshotErrors/nil_context
+--- PASS: TestFetchGatewaySnapshotErrors/nil_context (0.00s)
+=== RUN   TestFetchGatewaySnapshotErrors/nil_client
+--- PASS: TestFetchGatewaySnapshotErrors/nil_client (0.00s)
+=== RUN   TestFetchGatewaySnapshotErrors/invalid_url
+--- PASS: TestFetchGatewaySnapshotErrors/invalid_url (0.00s)
+=== RUN   TestFetchGatewaySnapshotErrors/transport
+--- PASS: TestFetchGatewaySnapshotErrors/transport (0.00s)
+=== RUN   TestFetchGatewaySnapshotErrors/body_read
+--- PASS: TestFetchGatewaySnapshotErrors/body_read (0.00s)
+--- PASS: TestFetchGatewaySnapshotErrors (0.00s)
+=== RUN   TestFetchGatewaySnapshotRedirect
+--- PASS: TestFetchGatewaySnapshotRedirect (0.00s)
+=== RUN   TestFetchGatewaySnapshotConnectionReuse
+--- PASS: TestFetchGatewaySnapshotConnectionReuse (0.00s)
+=== RUN   TestFetchGatewaySnapshotCancellation
+=== RUN   TestFetchGatewaySnapshotCancellation/headers_cancel
+--- PASS: TestFetchGatewaySnapshotCancellation/headers_cancel (0.00s)
+=== RUN   TestFetchGatewaySnapshotCancellation/headers_deadline
+--- PASS: TestGatewayStartupCLI/help (0.84s)
+=== RUN   TestGatewayStartupCLI/long_help
+--- PASS: TestGatewayStartupCLI/long_help (0.01s)
+=== RUN   TestGatewayStartupCLI/empty
+--- PASS: TestGatewayStartupCLI/empty (0.01s)
+=== RUN   TestGatewayStartupCLI/duplicate
+--- PASS: TestGatewayStartupCLI/duplicate (0.01s)
+=== RUN   TestGatewayStartupCLI/signed_port
+--- PASS: TestFetchGatewaySnapshotCancellation/headers_deadline (0.20s)
+=== RUN   TestFetchGatewaySnapshotCancellation/body_cancel
+--- PASS: TestFetchGatewaySnapshotCancellation/body_cancel (0.00s)
+=== RUN   TestFetchGatewaySnapshotCancellation/body_deadline
+--- PASS: TestGatewayStartupCLI/signed_port (0.01s)
+=== RUN   TestGatewayStartupCLI/trailing_empty
+--- PASS: TestGatewayStartupCLI/trailing_empty (0.01s)
+=== RUN   TestGatewayStartupCLI/unknown
+--- PASS: TestGatewayStartupCLI/unknown (0.01s)
+=== RUN   TestGatewayStartupCLI/budget_rejected_after_parse
+--- PASS: TestGatewayStartupCLI/budget_rejected_after_parse (0.01s)
+--- PASS: TestGatewayStartupCLI (2.16s)
+=== RUN   TestWorkerAddressesValues
+=== RUN   TestWorkerAddressesValues/single
+=== RUN   TestWorkerAddressesValues/single/helper
+--- PASS: TestWorkerAddressesValues/single/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/single/cli
+--- PASS: TestWorkerAddressesValues/single/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/single (0.00s)
+=== RUN   TestWorkerAddressesValues/ordered
+=== RUN   TestWorkerAddressesValues/ordered/helper
+--- PASS: TestWorkerAddressesValues/ordered/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/ordered/cli
+--- PASS: TestWorkerAddressesValues/ordered/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/ordered (0.00s)
+=== RUN   TestWorkerAddressesValues/trimmed
+=== RUN   TestWorkerAddressesValues/trimmed/helper
+--- PASS: TestWorkerAddressesValues/trimmed/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/trimmed/cli
+--- PASS: TestWorkerAddressesValues/trimmed/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/trimmed (0.00s)
+=== RUN   TestWorkerAddressesValues/ipv6
+=== RUN   TestWorkerAddressesValues/ipv6/helper
+--- PASS: TestWorkerAddressesValues/ipv6/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/ipv6/cli
+--- PASS: TestWorkerAddressesValues/ipv6/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/ipv6 (0.00s)
+=== RUN   TestWorkerAddressesValues/port_bounds
+=== RUN   TestWorkerAddressesValues/port_bounds/helper
+--- PASS: TestWorkerAddressesValues/port_bounds/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/port_bounds/cli
+--- PASS: TestWorkerAddressesValues/port_bounds/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/port_bounds (0.00s)
+=== RUN   TestWorkerAddressesValues/no_alias_normalization
+=== RUN   TestWorkerAddressesValues/no_alias_normalization/helper
+--- PASS: TestWorkerAddressesValues/no_alias_normalization/helper (0.00s)
+=== RUN   TestWorkerAddressesValues/no_alias_normalization/cli
+--- PASS: TestWorkerAddressesValues/no_alias_normalization/cli (0.00s)
+--- PASS: TestWorkerAddressesValues/no_alias_normalization (0.00s)
+--- PASS: TestWorkerAddressesValues (0.00s)
+=== RUN   TestWorkerAddressesRejected
+=== RUN   TestWorkerAddressesRejected/empty
+=== RUN   TestWorkerAddressesRejected/empty/helper
+--- PASS: TestWorkerAddressesRejected/empty/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/empty/cli
+--- PASS: TestWorkerAddressesRejected/empty/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/empty (0.00s)
+=== RUN   TestWorkerAddressesRejected/blank
+=== RUN   TestWorkerAddressesRejected/blank/helper
+--- PASS: TestWorkerAddressesRejected/blank/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/blank/cli
+--- PASS: TestWorkerAddressesRejected/blank/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/blank (0.00s)
+=== RUN   TestWorkerAddressesRejected/leading_empty
+=== RUN   TestWorkerAddressesRejected/leading_empty/helper
+--- PASS: TestWorkerAddressesRejected/leading_empty/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/leading_empty/cli
+--- PASS: TestWorkerAddressesRejected/leading_empty/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/leading_empty (0.00s)
+=== RUN   TestWorkerAddressesRejected/middle_empty
+=== RUN   TestWorkerAddressesRejected/middle_empty/helper
+--- PASS: TestWorkerAddressesRejected/middle_empty/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/middle_empty/cli
+--- PASS: TestWorkerAddressesRejected/middle_empty/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/middle_empty (0.00s)
+=== RUN   TestWorkerAddressesRejected/trailing_empty
+=== RUN   TestWorkerAddressesRejected/trailing_empty/helper
+--- PASS: TestWorkerAddressesRejected/trailing_empty/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/trailing_empty/cli
+--- PASS: TestWorkerAddressesRejected/trailing_empty/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/trailing_empty (0.00s)
+=== RUN   TestWorkerAddressesRejected/duplicate
+=== RUN   TestWorkerAddressesRejected/duplicate/helper
+--- PASS: TestWorkerAddressesRejected/duplicate/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/duplicate/cli
+--- PASS: TestWorkerAddressesRejected/duplicate/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/duplicate (0.00s)
+=== RUN   TestWorkerAddressesRejected/duplicate_after_trim
+=== RUN   TestWorkerAddressesRejected/duplicate_after_trim/helper
+--- PASS: TestWorkerAddressesRejected/duplicate_after_trim/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/duplicate_after_trim/cli
+--- PASS: TestWorkerAddressesRejected/duplicate_after_trim/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/duplicate_after_trim (0.00s)
+=== RUN   TestWorkerAddressesRejected/missing_port
+=== RUN   TestWorkerAddressesRejected/missing_port/helper
+--- PASS: TestWorkerAddressesRejected/missing_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/missing_port/cli
+--- PASS: TestWorkerAddressesRejected/missing_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/missing_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/empty_host
+=== RUN   TestWorkerAddressesRejected/empty_host/helper
+--- PASS: TestWorkerAddressesRejected/empty_host/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/empty_host/cli
+--- PASS: TestWorkerAddressesRejected/empty_host/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/empty_host (0.00s)
+=== RUN   TestWorkerAddressesRejected/empty_port
+=== RUN   TestWorkerAddressesRejected/empty_port/helper
+--- PASS: TestWorkerAddressesRejected/empty_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/empty_port/cli
+--- PASS: TestWorkerAddressesRejected/empty_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/empty_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/named_port
+=== RUN   TestWorkerAddressesRejected/named_port/helper
+--- PASS: TestWorkerAddressesRejected/named_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/named_port/cli
+--- PASS: TestWorkerAddressesRejected/named_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/named_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/zero_port
+=== RUN   TestWorkerAddressesRejected/zero_port/helper
+--- PASS: TestWorkerAddressesRejected/zero_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/zero_port/cli
+--- PASS: TestWorkerAddressesRejected/zero_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/zero_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/port_too_large
+=== RUN   TestWorkerAddressesRejected/port_too_large/helper
+--- PASS: TestWorkerAddressesRejected/port_too_large/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/port_too_large/cli
+--- PASS: TestWorkerAddressesRejected/port_too_large/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/port_too_large (0.00s)
+=== RUN   TestWorkerAddressesRejected/negative_port
+=== RUN   TestWorkerAddressesRejected/negative_port/helper
+--- PASS: TestWorkerAddressesRejected/negative_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/negative_port/cli
+--- PASS: TestWorkerAddressesRejected/negative_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/negative_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/signed_port
+=== RUN   TestWorkerAddressesRejected/signed_port/helper
+--- PASS: TestWorkerAddressesRejected/signed_port/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/signed_port/cli
+--- PASS: TestWorkerAddressesRejected/signed_port/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/signed_port (0.00s)
+=== RUN   TestWorkerAddressesRejected/port_overflow
+=== RUN   TestWorkerAddressesRejected/port_overflow/helper
+--- PASS: TestWorkerAddressesRejected/port_overflow/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/port_overflow/cli
+--- PASS: TestWorkerAddressesRejected/port_overflow/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/port_overflow (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_whitespace
+=== RUN   TestWorkerAddressesRejected/host_whitespace/helper
+--- PASS: TestWorkerAddressesRejected/host_whitespace/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_whitespace/cli
+--- PASS: TestWorkerAddressesRejected/host_whitespace/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/host_whitespace (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_slash
+=== RUN   TestWorkerAddressesRejected/host_slash/helper
+--- PASS: TestWorkerAddressesRejected/host_slash/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_slash/cli
+--- PASS: TestWorkerAddressesRejected/host_slash/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/host_slash (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_backslash
+=== RUN   TestWorkerAddressesRejected/host_backslash/helper
+--- PASS: TestWorkerAddressesRejected/host_backslash/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/host_backslash/cli
+--- PASS: TestWorkerAddressesRejected/host_backslash/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/host_backslash (0.00s)
+=== RUN   TestWorkerAddressesRejected/resolver_uri
+=== RUN   TestWorkerAddressesRejected/resolver_uri/helper
+--- PASS: TestWorkerAddressesRejected/resolver_uri/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/resolver_uri/cli
+--- PASS: TestWorkerAddressesRejected/resolver_uri/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/resolver_uri (0.00s)
+=== RUN   TestWorkerAddressesRejected/unbracketed_ipv6
+=== RUN   TestWorkerAddressesRejected/unbracketed_ipv6/helper
+--- PASS: TestWorkerAddressesRejected/unbracketed_ipv6/helper (0.00s)
+=== RUN   TestWorkerAddressesRejected/unbracketed_ipv6/cli
+--- PASS: TestWorkerAddressesRejected/unbracketed_ipv6/cli (0.00s)
+--- PASS: TestWorkerAddressesRejected/unbracketed_ipv6 (0.00s)
+--- PASS: TestWorkerAddressesRejected (0.00s)
+=== RUN   TestGatewayWorkerFlags
+=== RUN   TestGatewayWorkerFlags/last_value_wins
+--- PASS: TestGatewayWorkerFlags/last_value_wins (0.00s)
+=== RUN   TestGatewayWorkerFlags/missing_value
+flag needs an argument: -workers
+Usage of gateway:
+  -max-pending-audio-bytes int
+        maximum pending raw audio bytes; 0 disables the limit, positive values enable it, negative values are invalid
+  -workers string
+        comma-separated list of gRPC worker addresses; order matters for round-robin selection (default "localhost:50051")
+--- PASS: TestGatewayWorkerFlags/missing_value (0.00s)
+=== RUN   TestGatewayWorkerFlags/independent_calls
+--- PASS: TestGatewayWorkerFlags/independent_calls (0.00s)
+--- PASS: TestGatewayWorkerFlags (0.00s)
+PASS
+--- PASS: TestFetchGatewaySnapshotCancellation/body_deadline (0.20s)
+--- PASS: TestFetchGatewaySnapshotCancellation (0.40s)
+=== RUN   TestBatchJSONContract
+--- PASS: TestBatchJSONContract (0.00s)
+=== RUN   TestBatchJSONFailureFacts
+--- PASS: TestBatchJSONFailureFacts (0.00s)
+=== RUN   TestBatchJSONDurationPrecision
+=== RUN   TestBatchJSONDurationPrecision/zero
+--- PASS: TestBatchJSONDurationPrecision/zero (0.00s)
+=== RUN   TestBatchJSONDurationPrecision/nanoseconds
+--- PASS: TestBatchJSONDurationPrecision/nanoseconds (0.00s)
+=== RUN   TestBatchJSONDurationPrecision/max_int64
+--- PASS: TestBatchJSONDurationPrecision/max_int64 (0.00s)
+--- PASS: TestBatchJSONDurationPrecision (0.00s)
+=== RUN   TestBatchJSONPrewriteFailures
+=== RUN   TestBatchJSONPrewriteFailures/nil_writer
+--- PASS: TestBatchJSONPrewriteFailures/nil_writer (0.00s)
+=== RUN   TestBatchJSONPrewriteFailures/invalid_report
+--- PASS: TestBatchJSONPrewriteFailures/invalid_report (0.00s)
+=== RUN   TestBatchJSONPrewriteFailures/unencodable_timestamp
+--- PASS: TestBatchJSONPrewriteFailures/unencodable_timestamp (0.00s)
+--- PASS: TestBatchJSONPrewriteFailures (0.00s)
+=== RUN   TestBatchJSONWriterOutcomes
+=== RUN   TestBatchJSONWriterOutcomes/error
+--- PASS: TestBatchJSONWriterOutcomes/error (0.00s)
+=== RUN   TestBatchJSONWriterOutcomes/partial_with_error
+--- PASS: TestBatchJSONWriterOutcomes/partial_with_error (0.00s)
+=== RUN   TestBatchJSONWriterOutcomes/short_without_error
+--- PASS: TestBatchJSONWriterOutcomes/short_without_error (0.00s)
+=== RUN   TestBatchJSONWriterOutcomes/success_without_close
+--- PASS: TestBatchJSONWriterOutcomes/success_without_close (0.00s)
+--- PASS: TestBatchJSONWriterOutcomes (0.00s)
+=== RUN   TestBatchJSONFromNetworkBatch
+--- PASS: TestBatchJSONFromNetworkBatch (0.00s)
+=== RUN   TestRecorderZeroValue
+--- PASS: TestRecorderZeroValue (0.00s)
+=== RUN   TestRecorderAudioAccounting
+=== RUN   TestRecorderAudioAccounting/success_with_short_tail
+--- PASS: TestRecorderAudioAccounting/success_with_short_tail (0.00s)
+=== RUN   TestRecorderAudioAccounting/failure_after_success
+--- PASS: TestRecorderAudioAccounting/failure_after_success (0.00s)
+=== RUN   TestRecorderAudioAccounting/first_write_failed
+--- PASS: TestRecorderAudioAccounting/first_write_failed (0.00s)
+--- PASS: TestRecorderAudioAccounting (0.00s)
+=== RUN   TestRecorderControlWrites
+=== RUN   TestRecorderControlWrites/start/success
+--- PASS: TestRecorderControlWrites/start/success (0.00s)
+=== RUN   TestRecorderControlWrites/start/failed
+--- PASS: TestRecorderControlWrites/start/failed (0.00s)
+=== RUN   TestRecorderControlWrites/end/success
+--- PASS: TestRecorderControlWrites/end/success (0.00s)
+=== RUN   TestRecorderControlWrites/end/failed
+--- PASS: TestRecorderControlWrites/end/failed (0.00s)
+--- PASS: TestRecorderControlWrites (0.00s)
+=== RUN   TestRecorderResultsContinueAfterFinal
+--- PASS: TestRecorderResultsContinueAfterFinal (0.00s)
+=== RUN   TestRecorderSnapshotsAndSessionsAreIndependent
+--- PASS: TestRecorderSnapshotsAndSessionsAreIndependent (0.00s)
+=== RUN   TestRecorderConcurrentSnapshots
+--- PASS: TestRecorderConcurrentSnapshots (0.01s)
+=== RUN   TestBatchJSONScheduleValues
+=== RUN   TestBatchJSONScheduleValues/no_samples
+--- PASS: TestBatchJSONScheduleValues/no_samples (0.00s)
+=== RUN   TestBatchJSONScheduleValues/observed_zero
+--- PASS: TestBatchJSONScheduleValues/observed_zero (0.00s)
+=== RUN   TestBatchJSONScheduleValues/nanoseconds
+--- PASS: TestBatchJSONScheduleValues/nanoseconds (0.00s)
+=== RUN   TestBatchJSONScheduleValues/int64_precision
+--- PASS: TestBatchJSONScheduleValues/int64_precision (0.00s)
+=== RUN   TestBatchJSONScheduleValues/failed
+--- PASS: TestBatchJSONScheduleValues/failed (0.00s)
+=== RUN   TestBatchJSONScheduleValues/canceled
+--- PASS: TestBatchJSONScheduleValues/canceled (0.00s)
+=== RUN   TestBatchJSONScheduleValues/timed_out
+--- PASS: TestBatchJSONScheduleValues/timed_out (0.00s)
+--- PASS: TestBatchJSONScheduleValues (0.00s)
+=== RUN   TestInvalidScheduleRejectsBeforeOutput
+=== RUN   TestInvalidScheduleRejectsBeforeOutput/negative_samples
+--- PASS: TestInvalidScheduleRejectsBeforeOutput/negative_samples (0.00s)
+=== RUN   TestInvalidScheduleRejectsBeforeOutput/negative_lag
+--- PASS: TestInvalidScheduleRejectsBeforeOutput/negative_lag (0.00s)
+=== RUN   TestInvalidScheduleRejectsBeforeOutput/zero_samples_nonzero_lag
+--- PASS: TestInvalidScheduleRejectsBeforeOutput/zero_samples_nonzero_lag (0.00s)
+--- PASS: TestInvalidScheduleRejectsBeforeOutput (0.00s)
+=== RUN   TestBatchJSONScheduleFromNetwork
+=== RUN   TestBatchJSONScheduleFromNetwork/unpaced
+--- PASS: TestBatchJSONScheduleFromNetwork/unpaced (0.00s)
+=== RUN   TestBatchJSONScheduleFromNetwork/realtime
+--- PASS: TestBatchJSONScheduleFromNetwork/realtime (0.00s)
+--- PASS: TestBatchJSONScheduleFromNetwork (0.01s)
+=== RUN   TestRecorderScheduleEligibility
+=== RUN   TestRecorderScheduleEligibility/missing_plan
+--- PASS: TestRecorderScheduleEligibility/missing_plan (0.00s)
+=== RUN   TestRecorderScheduleEligibility/missing_start
+--- PASS: TestRecorderScheduleEligibility/missing_start (0.00s)
+=== RUN   TestRecorderScheduleEligibility/zero_lag
+--- PASS: TestRecorderScheduleEligibility/zero_lag (0.00s)
+=== RUN   TestRecorderScheduleEligibility/early_is_zero
+--- PASS: TestRecorderScheduleEligibility/early_is_zero (0.00s)
+=== RUN   TestRecorderScheduleEligibility/nanosecond_lag
+--- PASS: TestRecorderScheduleEligibility/nanosecond_lag (0.00s)
+=== RUN   TestRecorderScheduleEligibility/failed_audio
+--- PASS: TestRecorderScheduleEligibility/failed_audio (0.00s)
+=== RUN   TestRecorderScheduleEligibility/start_with_plan
+--- PASS: TestRecorderScheduleEligibility/start_with_plan (0.00s)
+=== RUN   TestRecorderScheduleEligibility/failed_end_with_plan
+--- PASS: TestRecorderScheduleEligibility/failed_end_with_plan (0.00s)
+--- PASS: TestRecorderScheduleEligibility (0.00s)
+=== RUN   TestRecorderScheduleMaximumIncludesFailure
+--- PASS: TestRecorderScheduleMaximumIncludesFailure (0.00s)
+=== RUN   TestRecorderScheduleSnapshotIsolation
+--- PASS: TestRecorderScheduleSnapshotIsolation (0.00s)
+=== RUN   TestRunSessionScheduleObservation
+=== RUN   TestRunSessionScheduleObservation/unpaced
+--- PASS: TestRunSessionScheduleObservation/unpaced (0.00s)
+=== RUN   TestRunSessionScheduleObservation/realtime
+--- PASS: TestRunSessionScheduleObservation/realtime (0.02s)
+--- PASS: TestRunSessionScheduleObservation (0.02s)
+=== RUN   TestRunSessionInvalidConfig
+=== RUN   TestRunSessionInvalidConfig/zero_timeout
+--- PASS: TestRunSessionInvalidConfig/zero_timeout (0.00s)
+=== RUN   TestRunSessionInvalidConfig/negative_timeout
+--- PASS: TestRunSessionInvalidConfig/negative_timeout (0.00s)
+=== RUN   TestRunSessionInvalidConfig/zero_chunk
+--- PASS: TestRunSessionInvalidConfig/zero_chunk (0.00s)
+=== RUN   TestRunSessionInvalidConfig/negative_chunk
+--- PASS: TestRunSessionInvalidConfig/negative_chunk (0.00s)
+=== RUN   TestRunSessionInvalidConfig/unaligned_chunk
+--- PASS: TestRunSessionInvalidConfig/unaligned_chunk (0.00s)
+=== RUN   TestRunSessionInvalidConfig/empty_expected_tail
+--- PASS: TestRunSessionInvalidConfig/empty_expected_tail (0.00s)
+=== RUN   TestRunSessionInvalidConfig/zero_audio
+--- PASS: TestRunSessionInvalidConfig/zero_audio (0.00s)
+=== RUN   TestRunSessionInvalidConfig/negative_audio
+--- PASS: TestRunSessionInvalidConfig/negative_audio (0.00s)
+=== RUN   TestRunSessionInvalidConfig/unaligned_audio
+--- PASS: TestRunSessionInvalidConfig/unaligned_audio (0.00s)
+=== RUN   TestRunSessionInvalidConfig/empty_url
+--- PASS: TestRunSessionInvalidConfig/empty_url (0.00s)
+--- PASS: TestRunSessionInvalidConfig (0.00s)
+=== RUN   TestRunSessionCompletionChecks
+=== RUN   TestRunSessionCompletionChecks/complete_with_tail_chunk
+--- PASS: TestRunSessionCompletionChecks/complete_with_tail_chunk (0.00s)
+=== RUN   TestRunSessionCompletionChecks/no_result
+--- PASS: TestRunSessionCompletionChecks/no_result (0.00s)
+=== RUN   TestRunSessionCompletionChecks/partial_only
+--- PASS: TestRunSessionCompletionChecks/partial_only (0.00s)
+=== RUN   TestRunSessionCompletionChecks/wrong_tail
+--- PASS: TestRunSessionCompletionChecks/wrong_tail (0.00s)
+=== RUN   TestRunSessionCompletionChecks/partial_after_final
+--- PASS: TestRunSessionCompletionChecks/partial_after_final (0.00s)
+=== RUN   TestRunSessionCompletionChecks/abnormal_close_after_final
+--- PASS: TestRunSessionCompletionChecks/abnormal_close_after_final (0.00s)
+=== RUN   TestRunSessionCompletionChecks/gateway_error_after_partial
+--- PASS: TestRunSessionCompletionChecks/gateway_error_after_partial (0.00s)
+--- PASS: TestRunSessionCompletionChecks (0.01s)
+=== RUN   TestRunSessionEarlyFinal
+    protection_cleanup_experiment_test.go:249: PROTECTION_CLEANUP_JSON {"group":"mixed_faults","rounds":2,"warmup_rounds":2,"sessions_per_round":5,"validated":true,"outcomes":{"backlog":2,"normal":2,"send_timeout":2,"tail_timeout":2,"write_timeout":2},"samples":[{"round":0,"settled":false,"goroutines":12,"heap_alloc":14677984,"heap_objects":3793,"heap_inuse":16613376,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":1,"settled":false,"goroutines":12,"heap_alloc":9420056,"heap_objects":3677,"heap_inuse":11304960,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":2,"settled":false,"goroutines":12,"heap_alloc":9387984,"heap_objects":3744,"heap_inuse":11296768,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0},{"round":2,"settled":true,"goroutines":12,"heap_alloc":9226784,"heap_objects":3555,"heap_inuse":11100160,"active_sessions":0,"open_ws":0,"open_grpc":1,"active_workers":0,"active_sends":0}]}
+--- PASS: TestProtectionCleanupProbe (1.53s)
+=== RUN   TestProtectionCleanupExperiment
+    protection_cleanup_experiment_test.go:173: set TIDE_RUN_PROTECTION_CLEANUP=1
+--- SKIP: TestProtectionCleanupExperiment (0.00s)
+=== RUN   TestReadInput
+=== RUN   TestReadInput/idle_timeout
+--- PASS: TestReadInput/idle_timeout (0.05s)
+=== RUN   TestReadInput/parent_canceled
+--- PASS: TestReadInput/parent_canceled (0.00s)
+=== RUN   TestReadInput/parent_deadline
+--- PASS: TestReadInput/parent_deadline (0.05s)
+=== RUN   TestReadInput/audio
+--- PASS: TestReadInput/audio (0.00s)
+=== RUN   TestReadInput/end
+--- PASS: TestReadInput/end (0.00s)
+--- PASS: TestReadInput (0.11s)
+=== RUN   TestReadInputDeadlineOnlyAppliesWhileReading
+ok      github.com/secacy/tide-artisan/cmd/gateway      4.036s
+--- PASS: TestReadInputDeadlineOnlyAppliesWhileReading (0.20s)
+=== RUN   TestGatewayInputIdleTimeoutConfig
+=== RUN   TestGatewayInputIdleTimeoutConfig/0s
+--- PASS: TestGatewayInputIdleTimeoutConfig/0s (0.00s)
+=== RUN   TestGatewayInputIdleTimeoutConfig/2s
+--- PASS: TestGatewayInputIdleTimeoutConfig/2s (0.00s)
+=== RUN   TestGatewayInputIdleTimeoutConfig/-1s
+--- PASS: TestGatewayInputIdleTimeoutConfig/-1s (0.00s)
+--- PASS: TestGatewayInputIdleTimeoutConfig (0.00s)
+=== RUN   TestGatewayRepeatedSessionCleanup
+    resource_cleanup_test.go:122: after warmup: goroutines=12 heap_alloc=11330 KiB heap_objects=4597
+--- PASS: TestRunSessionEarlyFinal (1.00s)
+=== RUN   TestRunSessionCancellation
+=== RUN   TestRunSessionCancellation/parent_cancel
+--- PASS: TestRunSessionCancellation/parent_cancel (0.00s)
+=== RUN   TestRunSessionCancellation/session_deadline
+    resource_cleanup_test.go:130: after round 5: goroutines=12 heap_alloc=11382 KiB heap_objects=4603
+    resource_cleanup_test.go:130: after round 10: goroutines=12 heap_alloc=11441 KiB heap_objects=4664
+    resource_cleanup_test.go:130: after round 15: goroutines=12 heap_alloc=11500 KiB heap_objects=4691
+    resource_cleanup_test.go:130: after round 20: goroutines=12 heap_alloc=11453 KiB heap_objects=4782
+    resource_cleanup_test.go:149: completed 120 measured sessions plus 6 warmup sessions; goroutines baseline=12 final=12
+--- PASS: TestGatewayRepeatedSessionCleanup (0.16s)
+=== RUN   TestResultWriteSlowReader
+    result_write_experiment_test.go:58: RESULT_WRITE_JSON {"outcome":"autonomous_cleanup","budget_ms":200,"at_detection":{"started":16,"returned":15,"succeeded":15,"pending_ms":54.546958,"pending_since_ms":31.079625,"last_return_ms":31.07875},"after_cleanup":{"started":16,"returned":16,"succeeded":15,"pending_ms":0,"pending_since_ms":0,"last_return_ms":232.262416,"error":"write tcp 127.0.0.1:58657-\u003e127.0.0.1:58658: use of closed network connection"},"worker_sends":{"started":11,"returned":11,"succeeded":10,"pending_ms":0,"pending_since_ms":0,"last_return_ms":232.83575,"error":"rpc error: code = Canceled desc = context canceled"},"pending_write_to_worker_ms":201.806833,"pending_write_to_handler_ms":201.384375,"origin_to_handler_ms":232.464,"worker_error":"rpc error: code = Canceled desc = context canceled","fallback_cancel":false,"active_after_cleanup":0,"reentry_accepted":true,"final_active":0}
+--- PASS: TestResultWriteSlowReader (0.24s)
+=== RUN   TestResultWriteTimeoutExperiment
+    result_write_experiment_test.go:43: set TIDE_RUN_RESULT_WRITE_TIMEOUT_EXPERIMENT=1
+--- SKIP: TestResultWriteTimeoutExperiment (0.00s)
+=== RUN   TestResultWriteTimeoutConfig
+=== RUN   TestResultWriteTimeoutConfig/default
+--- PASS: TestResultWriteTimeoutConfig/default (0.00s)
+=== RUN   TestResultWriteTimeoutConfig/custom
+--- PASS: TestResultWriteTimeoutConfig/custom (0.00s)
+=== RUN   TestResultWriteTimeoutConfig/negative
+--- PASS: TestResultWriteTimeoutConfig/negative (0.00s)
+--- PASS: TestResultWriteTimeoutConfig (0.00s)
+=== RUN   TestResultWriteSessionTimeout
+--- PASS: TestResultWriteSessionTimeout (0.09s)
+=== RUN   TestResultWriteTimeoutPriority
+=== RUN   TestResultWriteTimeoutPriority/upload_error_first
+--- PASS: TestResultWriteTimeoutPriority/upload_error_first (0.00s)
+=== RUN   TestResultWriteTimeoutPriority/service_stop_first
+--- PASS: TestResultWriteTimeoutPriority/service_stop_first (0.00s)
+=== RUN   TestResultWriteTimeoutPriority/send_timeout_first
+--- PASS: TestResultWriteTimeoutPriority/send_timeout_first (0.00s)
+=== RUN   TestResultWriteTimeoutPriority/input_timeout_first
+--- PASS: TestResultWriteTimeoutPriority/input_timeout_first (0.00s)
+=== RUN   TestResultWriteTimeoutPriority/successful_write_canceled_context
+--- PASS: TestResultWriteTimeoutPriority/successful_write_canceled_context (0.00s)
+=== RUN   TestResultWriteTimeoutPriority/no_write_yet
+--- PASS: TestResultWriteTimeoutPriority/no_write_yet (0.00s)
+--- PASS: TestResultWriteTimeoutPriority (0.00s)
+=== RUN   TestResultWriteInvalidTimeout
+=== RUN   TestResultWriteInvalidTimeout/0s
+--- PASS: TestResultWriteInvalidTimeout/0s (0.00s)
+=== RUN   TestResultWriteInvalidTimeout/-1s
+--- PASS: TestResultWriteInvalidTimeout/-1s (0.00s)
+--- PASS: TestResultWriteInvalidTimeout (0.00s)
+=== RUN   TestResultWriteParentAlreadyDone
+=== RUN   TestResultWriteParentAlreadyDone/canceled
+--- PASS: TestResultWriteParentAlreadyDone/canceled (0.00s)
+=== RUN   TestResultWriteParentAlreadyDone/deadline
+--- PASS: TestResultWriteParentAlreadyDone/deadline (0.00s)
+--- PASS: TestResultWriteParentAlreadyDone (0.00s)
+=== RUN   TestResultWriteSuccessAndFreshDeadline
+--- PASS: TestRunSessionCancellation/session_deadline (0.50s)
+=== RUN   TestRunSessionCancellation/parent_deadline
+--- PASS: TestResultWriteSuccessAndFreshDeadline (0.25s)
+=== RUN   TestResultWriteBlockedCancellation
+=== RUN   TestResultWriteBlockedCancellation/own_deadline
+--- PASS: TestResultWriteBlockedCancellation/own_deadline (0.08s)
+=== RUN   TestResultWriteBlockedCancellation/parent_cancel
+--- PASS: TestResultWriteBlockedCancellation/parent_cancel (0.00s)
+--- PASS: TestResultWriteBlockedCancellation (0.08s)
+=== RUN   TestResultWriteClosedConnection
+--- PASS: TestResultWriteClosedConnection (0.00s)
+=== RUN   TestSendWithTimeoutPreservesResult
+=== RUN   TestSendWithTimeoutPreservesResult/success
+--- PASS: TestSendWithTimeoutPreservesResult/success (0.00s)
+=== RUN   TestSendWithTimeoutPreservesResult/eof
+--- PASS: TestSendWithTimeoutPreservesResult/eof (0.00s)
+=== RUN   TestSendWithTimeoutPreservesResult/worker_error
+--- PASS: TestSendWithTimeoutPreservesResult/worker_error (0.00s)
+--- PASS: TestSendWithTimeoutPreservesResult (0.00s)
+=== RUN   TestSendWithTimeoutDoesNotCancelNextSend
+--- PASS: TestSendWithTimeoutDoesNotCancelNextSend (0.00s)
+=== RUN   TestSendWithTimeoutCancelsAndWaits
+=== RUN   TestSendWithTimeoutCancelsAndWaits/eof
+--- PASS: TestSendWithTimeoutCancelsAndWaits/eof (0.00s)
+=== RUN   TestSendWithTimeoutCancelsAndWaits/nil
+--- PASS: TestSendWithTimeoutCancelsAndWaits/nil (0.00s)
+--- PASS: TestSendWithTimeoutCancelsAndWaits (0.00s)
+=== RUN   TestSendWithTimeoutWaitsForCallback
+--- PASS: TestSendWithTimeoutWaitsForCallback (0.00s)
+=== RUN   TestSendWithTimeoutExternalCancellation
+=== RUN   TestSendWithTimeoutExternalCancellation/before_send
+--- PASS: TestSendWithTimeoutExternalCancellation/before_send (0.00s)
+=== RUN   TestSendWithTimeoutExternalCancellation/during_send
+--- PASS: TestSendWithTimeoutExternalCancellation/during_send (0.00s)
+--- PASS: TestSendWithTimeoutExternalCancellation (0.00s)
+=== RUN   TestSendWithTimeoutInvalidDuration
+=== RUN   TestSendWithTimeoutInvalidDuration/0s
+--- PASS: TestSendWithTimeoutInvalidDuration/0s (0.00s)
+=== RUN   TestSendWithTimeoutInvalidDuration/-1s
+--- PASS: TestSendWithTimeoutInvalidDuration/-1s (0.00s)
+--- PASS: TestSendWithTimeoutInvalidDuration (0.00s)
+=== RUN   TestGatewayShutdownDuringStreaming
+--- PASS: TestGatewayShutdownDuringStreaming (0.00s)
+=== RUN   TestGatewayShutdownAfterEnd
+--- PASS: TestGatewayShutdownAfterEnd (0.01s)
+=== RUN   TestSlowReaderBaselineExperiment
+    slow_reader_experiment_test.go:98: set TIDE_RUN_SLOW_READER_BASELINE=1
+--- SKIP: TestSlowReaderBaselineExperiment (0.00s)
+=== RUN   TestSlowWorkerBaselineExperiment
+    slow_worker_experiment_test.go:105: set TIDE_RUN_SLOW_WORKER_EXPERIMENT=1 to run the real-time baseline
+--- SKIP: TestSlowWorkerBaselineExperiment (0.00s)
+=== RUN   TestGatewaySnapshotLifecycle
+=== RUN   TestGatewaySnapshotLifecycle/default
+--- PASS: TestGatewaySnapshotLifecycle/default (0.00s)
+=== RUN   TestGatewaySnapshotLifecycle/explicit
+--- PASS: TestGatewaySnapshotLifecycle/explicit (0.00s)
+--- PASS: TestGatewaySnapshotLifecycle (0.00s)
+=== RUN   TestGatewaySnapshotIsolation
+--- PASS: TestGatewaySnapshotIsolation (0.00s)
+=== RUN   TestGatewaySnapshotConcurrent
+--- PASS: TestGatewaySnapshotConcurrent (0.01s)
+=== RUN   TestGatewaySnapshotUpgradeFailure
+--- PASS: TestGatewaySnapshotUpgradeFailure (0.00s)
+=== RUN   TestGatewaySnapshotConnections
+=== RUN   TestGatewaySnapshotConnections/complete_after_stop
+--- PASS: TestGatewaySnapshotConnections/complete_after_stop (0.01s)
+=== RUN   TestGatewaySnapshotConnections/disconnect_before_start
+--- PASS: TestGatewaySnapshotConnections/disconnect_before_start (0.00s)
+--- PASS: TestGatewaySnapshotConnections (0.01s)
+=== RUN   TestStalledWorkerExperiment
+    stalled_worker_experiment_test.go:166: set TIDE_RUN_STALLED_WORKER_EXPERIMENT=1 for the bounded stall experiment
+--- SKIP: TestStalledWorkerExperiment (0.00s)
+=== RUN   TestWorkerSendTimeoutExperiment
+    stalled_worker_experiment_test.go:178: set TIDE_RUN_WORKER_SEND_TIMEOUT_EXPERIMENT=1 to verify automatic timeout cleanup
+--- SKIP: TestWorkerSendTimeoutExperiment (0.00s)
+=== RUN   TestGatewayStartTimeoutConfig
+=== RUN   TestGatewayStartTimeoutConfig/default
+--- PASS: TestGatewayStartTimeoutConfig/default (0.00s)
+=== RUN   TestGatewayStartTimeoutConfig/custom
+--- PASS: TestGatewayStartTimeoutConfig/custom (0.00s)
+=== RUN   TestGatewayStartTimeoutConfig/negative
+--- PASS: TestGatewayStartTimeoutConfig/negative (0.00s)
+--- PASS: TestGatewayStartTimeoutConfig (0.00s)
+=== RUN   TestGatewayStartTimeoutReleasesSession
+--- PASS: TestGatewayStartTimeoutReleasesSession (0.05s)
+=== RUN   TestSessionStartTimeoutCause
+=== RUN   TestSessionStartTimeoutCause/start_timeout
+--- PASS: TestSessionStartTimeoutCause/start_timeout (0.05s)
+=== RUN   TestSessionStartTimeoutCause/parent_canceled
+--- PASS: TestSessionStartTimeoutCause/parent_canceled (0.00s)
+=== RUN   TestSessionStartTimeoutCause/parent_deadline
+--- PASS: TestSessionStartTimeoutCause/parent_deadline (0.05s)
+--- PASS: TestSessionStartTimeoutCause (0.11s)
+=== RUN   TestSessionStartTimeoutDoesNotLimitStreaming
+--- PASS: TestRunSessionCancellation/parent_deadline (0.50s)
+--- PASS: TestRunSessionCancellation (1.01s)
+=== RUN   TestRunSessionUpgradeRejected
+--- PASS: TestRunSessionUpgradeRejected (0.00s)
+=== RUN   TestRunSessionThroughGatewayMock
+--- PASS: TestRunSessionThroughGatewayMock (0.01s)
+=== RUN   TestSilenceSourceRejectsInvalidLength
+=== RUN   TestSilenceSourceRejectsInvalidLength/zero
+--- PASS: TestSilenceSourceRejectsInvalidLength/zero (0.00s)
+=== RUN   TestSilenceSourceRejectsInvalidLength/negative
+--- PASS: TestSilenceSourceRejectsInvalidLength/negative (0.00s)
+=== RUN   TestSilenceSourceRejectsInvalidLength/minimum_integer
+--- PASS: TestSilenceSourceRejectsInvalidLength/minimum_integer (0.00s)
+=== RUN   TestSilenceSourceRejectsInvalidLength/partial_sample
+--- PASS: TestSilenceSourceRejectsInvalidLength/partial_sample (0.00s)
+=== RUN   TestSilenceSourceRejectsInvalidLength/maximum_unaligned
+--- PASS: TestSilenceSourceRejectsInvalidLength/maximum_unaligned (0.00s)
+--- PASS: TestSilenceSourceRejectsInvalidLength (0.00s)
+=== RUN   TestSilenceSourceReadFullMatchesClient
+=== RUN   TestSilenceSourceReadFullMatchesClient/one_sample
+--- PASS: TestSilenceSourceReadFullMatchesClient/one_sample (0.00s)
+=== RUN   TestSilenceSourceReadFullMatchesClient/exact_chunks
+--- PASS: TestSilenceSourceReadFullMatchesClient/exact_chunks (0.00s)
+=== RUN   TestSilenceSourceReadFullMatchesClient/partial_last_chunk
+--- PASS: TestSilenceSourceReadFullMatchesClient/partial_last_chunk (0.00s)
+=== RUN   TestSilenceSourceReadFullMatchesClient/sixty_seconds
+--- PASS: TestSilenceSourceReadFullMatchesClient/sixty_seconds (0.03s)
+--- PASS: TestSilenceSourceReadFullMatchesClient (0.03s)
+=== RUN   TestSilenceSourceAllowsOddReads
+--- PASS: TestSilenceSourceAllowsOddReads (0.00s)
+=== RUN   TestSilenceSourcesHaveIndependentCursors
+--- PASS: TestSilenceSourcesHaveIndependentCursors (0.00s)
+=== RUN   TestSilenceSourceLargeLengthSmallRead
+--- PASS: TestSilenceSourceLargeLengthSmallRead (0.00s)
+=== RUN   TestSummarizeMixedBatch
+--- PASS: TestSummarizeMixedBatch (0.00s)
+=== RUN   TestSummarizeNoCompletedSamples
+--- PASS: TestSummarizeNoCompletedSamples (0.00s)
+=== RUN   TestSummarizePercentiles
+=== RUN   TestSummarizePercentiles/single_zero
+--- PASS: TestSummarizePercentiles/single_zero (0.00s)
+=== RUN   TestSummarizePercentiles/single_nanosecond
+--- PASS: TestSummarizePercentiles/single_nanosecond (0.00s)
+=== RUN   TestSummarizePercentiles/single_max_duration
+--- PASS: TestSummarizePercentiles/single_max_duration (0.00s)
+=== RUN   TestSummarizePercentiles/two_unsorted
+--- PASS: TestSummarizePercentiles/two_unsorted (0.00s)
+=== RUN   TestSummarizePercentiles/duplicates
+--- PASS: TestSummarizePercentiles/duplicates (0.00s)
+=== RUN   TestSummarizePercentiles/twenty
+--- PASS: TestSummarizePercentiles/twenty (0.00s)
+=== RUN   TestSummarizePercentiles/one_hundred_one
+--- PASS: TestSummarizePercentiles/one_hundred_one (0.00s)
+--- PASS: TestSummarizePercentiles (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports
+=== RUN   TestSummarizeRejectsInconsistentReports/zero_report
+--- PASS: TestSummarizeRejectsInconsistentReports/zero_report (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/negative_sessions
+--- PASS: TestSummarizeRejectsInconsistentReports/negative_sessions (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/invalid_session_config
+--- PASS: TestSummarizeRejectsInconsistentReports/invalid_session_config (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/unaligned_audio_config
+--- PASS: TestSummarizeRejectsInconsistentReports/unaligned_audio_config (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/missing_result
+--- PASS: TestSummarizeRejectsInconsistentReports/missing_result (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/extra_result
+--- PASS: TestSummarizeRejectsInconsistentReports/extra_result (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/zero_start
+--- PASS: TestSummarizeRejectsInconsistentReports/zero_start (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/zero_finish
+--- PASS: TestSummarizeRejectsInconsistentReports/zero_finish (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/reversed_time
+--- PASS: TestSummarizeRejectsInconsistentReports/reversed_time (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/planned_bytes_overflow
+--- PASS: TestSummarizeRejectsInconsistentReports/planned_bytes_overflow (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/negative_index
+--- PASS: TestSummarizeRejectsInconsistentReports/negative_index (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/duplicate_index
+--- PASS: TestSummarizeRejectsInconsistentReports/duplicate_index (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/out_of_range_index
+--- PASS: TestSummarizeRejectsInconsistentReports/out_of_range_index (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/swapped_slots
+--- PASS: TestSummarizeRejectsInconsistentReports/swapped_slots (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/mismatched_config
+--- PASS: TestSummarizeRejectsInconsistentReports/mismatched_config (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/negative_written
+--- PASS: TestSummarizeRejectsInconsistentReports/negative_written (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/written_above_plan
+--- PASS: TestSummarizeRejectsInconsistentReports/written_above_plan (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/completed_with_error
+--- PASS: TestSummarizeRejectsInconsistentReports/completed_with_error (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/completed_missing_tail
+--- PASS: TestSummarizeRejectsInconsistentReports/completed_missing_tail (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/completed_negative_tail
+--- PASS: TestSummarizeRejectsInconsistentReports/completed_negative_tail (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/completed_partial_audio
+--- PASS: TestSummarizeRejectsInconsistentReports/completed_partial_audio (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/empty_outcome
+--- PASS: TestSummarizeRejectsInconsistentReports/empty_outcome (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/unknown_outcome
+--- PASS: TestSummarizeRejectsInconsistentReports/unknown_outcome (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/failed_missing_error
+--- PASS: TestSummarizeRejectsInconsistentReports/failed_missing_error (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/failed_unexpected_tail
+--- PASS: TestSummarizeRejectsInconsistentReports/failed_unexpected_tail (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/canceled_missing_error
+--- PASS: TestSummarizeRejectsInconsistentReports/canceled_missing_error (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/canceled_unexpected_tail
+--- PASS: TestSummarizeRejectsInconsistentReports/canceled_unexpected_tail (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/timed_out_missing_error
+--- PASS: TestSummarizeRejectsInconsistentReports/timed_out_missing_error (0.00s)
+=== RUN   TestSummarizeRejectsInconsistentReports/timed_out_unexpected_tail
+--- PASS: TestSummarizeRejectsInconsistentReports/timed_out_unexpected_tail (0.00s)
+--- PASS: TestSummarizeRejectsInconsistentReports (0.00s)
+=== RUN   TestSummarizePreservesInput
+--- PASS: TestSummarizePreservesInput (0.00s)
+=== RUN   TestSummarizeLargeByteCountsAndZeroElapsed
+=== RUN   TestSummarizeLargeByteCountsAndZeroElapsed/one_session
+--- PASS: TestSummarizeLargeByteCountsAndZeroElapsed/one_session (0.00s)
+=== RUN   TestSummarizeLargeByteCountsAndZeroElapsed/two_sessions
+--- PASS: TestSummarizeLargeByteCountsAndZeroElapsed/two_sessions (0.00s)
+--- PASS: TestSummarizeLargeByteCountsAndZeroElapsed (0.00s)
+=== RUN   TestWorkerRecordingJSONContract
+--- PASS: TestWorkerRecordingJSONContract (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons
+=== RUN   TestWorkerRecordingJSONReasons/returned
+--- PASS: TestWorkerRecordingJSONReasons/returned (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons/wrapped_cancel
+--- PASS: TestWorkerRecordingJSONReasons/wrapped_cancel (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons/wrapped_deadline
+--- PASS: TestWorkerRecordingJSONReasons/wrapped_deadline (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons/text_is_not_type
+--- PASS: TestWorkerRecordingJSONReasons/text_is_not_type (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons/empty_sampling
+--- PASS: TestWorkerRecordingJSONReasons/empty_sampling (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons/deadline_before_cancel
+--- PASS: TestWorkerRecordingJSONReasons/deadline_before_cancel (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons/output_before_cancel
+--- PASS: TestWorkerRecordingJSONReasons/output_before_cancel (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons/all_errors
+--- PASS: TestWorkerRecordingJSONReasons/all_errors (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons/cancel_and_close
+--- PASS: TestWorkerRecordingJSONReasons/cancel_and_close (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons/close_only
+--- PASS: TestWorkerRecordingJSONReasons/close_only (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons/empty_output
+--- PASS: TestWorkerRecordingJSONReasons/empty_output (0.00s)
+=== RUN   TestWorkerRecordingJSONReasons/empty_close
+--- PASS: TestWorkerRecordingJSONReasons/empty_close (0.00s)
+--- PASS: TestWorkerRecordingJSONReasons (0.00s)
+=== RUN   TestWorkerRecordingJSONBounds
+=== RUN   TestWorkerRecordingJSONBounds/empty
+--- PASS: TestWorkerRecordingJSONBounds/empty (0.00s)
+=== RUN   TestWorkerRecordingJSONBounds/max_success
+--- PASS: TestWorkerRecordingJSONBounds/max_success (0.00s)
+=== RUN   TestWorkerRecordingJSONBounds/max_failure
+--- PASS: TestWorkerRecordingJSONBounds/max_failure (0.00s)
+=== RUN   TestWorkerRecordingJSONBounds/max_mixed
+--- PASS: TestWorkerRecordingJSONBounds/max_mixed (0.00s)
+=== RUN   TestWorkerRecordingJSONBounds/wall_clock_backwards
+--- PASS: TestWorkerRecordingJSONBounds/wall_clock_backwards (0.00s)
+--- PASS: TestWorkerRecordingJSONBounds (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid
+=== RUN   TestWorkerRecordingJSONInvalid/nil_writer
+--- PASS: TestWorkerRecordingJSONInvalid/nil_writer (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/config
+--- PASS: TestWorkerRecordingJSONInvalid/config (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/empty_path
+--- PASS: TestWorkerRecordingJSONInvalid/empty_path (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/blank_path
+--- PASS: TestWorkerRecordingJSONInvalid/blank_path (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/stdout
+--- PASS: TestWorkerRecordingJSONInvalid/stdout (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/no_start
+--- PASS: TestWorkerRecordingJSONInvalid/no_start (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/no_finish
+--- PASS: TestWorkerRecordingJSONInvalid/no_finish (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/negative_total
+--- PASS: TestWorkerRecordingJSONInvalid/negative_total (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/negative_success
+--- PASS: TestWorkerRecordingJSONInvalid/negative_success (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/negative_failure
+--- PASS: TestWorkerRecordingJSONInvalid/negative_failure (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/success_above_total
+--- PASS: TestWorkerRecordingJSONInvalid/success_above_total (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/wrong_sum
+--- PASS: TestWorkerRecordingJSONInvalid/wrong_sum (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/sum_overflow
+--- PASS: TestWorkerRecordingJSONInvalid/sum_overflow (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/output_without_sampling_error
+--- PASS: TestWorkerRecordingJSONInvalid/output_without_sampling_error (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/start_encoding
+--- PASS: TestWorkerRecordingJSONInvalid/start_encoding (0.00s)
+=== RUN   TestWorkerRecordingJSONInvalid/finish_encoding
+--- PASS: TestWorkerRecordingJSONInvalid/finish_encoding (0.00s)
+--- PASS: TestWorkerRecordingJSONInvalid (0.00s)
+=== RUN   TestWorkerRecordingJSONWriter
+=== RUN   TestWorkerRecordingJSONWriter/success
+--- PASS: TestWorkerRecordingJSONWriter/success (0.00s)
+=== RUN   TestWorkerRecordingJSONWriter/error
+--- PASS: TestWorkerRecordingJSONWriter/error (0.00s)
+=== RUN   TestWorkerRecordingJSONWriter/partial_error
+--- PASS: TestWorkerRecordingJSONWriter/partial_error (0.00s)
+=== RUN   TestWorkerRecordingJSONWriter/short_write
+--- PASS: TestWorkerRecordingJSONWriter/short_write (0.00s)
+--- PASS: TestWorkerRecordingJSONWriter (0.00s)
+=== RUN   TestWorkerRecordingJSONDoesNotAccessSamples
+--- PASS: TestWorkerRecordingJSONDoesNotAccessSamples (0.00s)
+=== RUN   TestWorkerRecordingJSONFromRun
+--- PASS: TestWorkerRecordingJSONFromRun (0.01s)
+=== RUN   TestWorkerRecordingRunPreflight
+=== RUN   TestWorkerRecordingRunPreflight/nil_context
+--- PASS: TestWorkerRecordingRunPreflight/nil_context (0.00s)
+=== RUN   TestWorkerRecordingRunPreflight/nil_client
+--- PASS: TestWorkerRecordingRunPreflight/nil_client (0.00s)
+=== RUN   TestWorkerRecordingRunPreflight/invalid_url
+--- PASS: TestWorkerRecordingRunPreflight/invalid_url (0.00s)
+=== RUN   TestWorkerRecordingRunPreflight/invalid_interval
+--- PASS: TestWorkerRecordingRunPreflight/invalid_interval (0.00s)
+=== RUN   TestWorkerRecordingRunPreflight/invalid_timeout
+--- PASS: TestWorkerRecordingRunPreflight/invalid_timeout (0.00s)
+=== RUN   TestWorkerRecordingRunPreflight/empty
+--- PASS: TestWorkerRecordingRunPreflight/empty (0.00s)
+=== RUN   TestWorkerRecordingRunPreflight/blank
+--- PASS: TestWorkerRecordingRunPreflight/blank (0.00s)
+=== RUN   TestWorkerRecordingRunPreflight/stdout
+--- PASS: TestWorkerRecordingRunPreflight/stdout (0.00s)
+=== RUN   TestWorkerRecordingRunPreflight/canceled
+--- PASS: TestWorkerRecordingRunPreflight/canceled (0.00s)
+=== RUN   TestWorkerRecordingRunPreflight/expired
+--- PASS: TestWorkerRecordingRunPreflight/expired (0.00s)
+--- PASS: TestWorkerRecordingRunPreflight (0.01s)
+=== RUN   TestWorkerRecordingRunPaths
+=== RUN   TestWorkerRecordingRunPaths/empty_directory
+--- PASS: TestWorkerRecordingRunPaths/empty_directory (0.00s)
+=== RUN   TestWorkerRecordingRunPaths/old_recording
+--- PASS: TestWorkerRecordingRunPaths/old_recording (0.00s)
+=== RUN   TestWorkerRecordingRunPaths/file
+--- PASS: TestWorkerRecordingRunPaths/file (0.00s)
+=== RUN   TestWorkerRecordingRunPaths/symlink
+--- PASS: TestWorkerRecordingRunPaths/symlink (0.00s)
+=== RUN   TestWorkerRecordingRunPaths/dangling_symlink
+--- PASS: TestWorkerRecordingRunPaths/dangling_symlink (0.00s)
+=== RUN   TestWorkerRecordingRunPaths/missing_parent
+--- PASS: TestWorkerRecordingRunPaths/missing_parent (0.00s)
+--- PASS: TestWorkerRecordingRunPaths (0.00s)
+=== RUN   TestWorkerRecordingRunPortable
+=== RUN   TestWorkerRecordingRunPortable/absolute
+--- PASS: TestWorkerRecordingRunPortable/absolute (0.00s)
+=== RUN   TestWorkerRecordingRunPortable/relative
+--- PASS: TestWorkerRecordingRunPortable/relative (0.00s)
+=== RUN   TestWorkerRecordingRunPortable/spaces
+--- PASS: TestWorkerRecordingRunPortable/spaces (0.00s)
+--- PASS: TestWorkerRecordingRunPortable (0.01s)
+=== RUN   TestWorkerRecordingRunHTTP
+=== RUN   TestWorkerRecordingRunHTTP/mixed
+--- PASS: TestWorkerRecordingRunHTTP/mixed (0.01s)
+=== RUN   TestWorkerRecordingRunHTTP/all_failed
+--- PASS: TestWorkerRecordingRunHTTP/all_failed (0.01s)
+=== RUN   TestWorkerRecordingRunHTTP/deadline
+--- PASS: TestSessionStartTimeoutDoesNotLimitStreaming (0.20s)
+=== RUN   TestTailTimeoutConfig
+=== RUN   TestTailTimeoutConfig/default
+--- PASS: TestTailTimeoutConfig/default (0.00s)
+=== RUN   TestTailTimeoutConfig/explicit
+--- PASS: TestTailTimeoutConfig/explicit (0.00s)
+=== RUN   TestTailTimeoutConfig/negative
+--- PASS: TestTailTimeoutConfig/negative (0.00s)
+--- PASS: TestTailTimeoutConfig (0.00s)
+=== RUN   TestTailSessionIntegration
+=== RUN   TestTailSessionIntegration/before_end_exceeds_budget
+--- PASS: TestWorkerRecordingRunHTTP/deadline (0.31s)
+--- PASS: TestWorkerRecordingRunHTTP (0.32s)
+=== RUN   TestWorkerRecordingRunExclusiveRace
+--- PASS: TestWorkerRecordingRunExclusiveRace (0.00s)
+=== RUN   TestWorkerSampleJSONContract
+=== RUN   TestWorkerSampleJSONContract/disabled
+--- PASS: TestWorkerSampleJSONContract/disabled (0.00s)
+=== RUN   TestWorkerSampleJSONContract/idle
+--- PASS: TestWorkerSampleJSONContract/idle (0.00s)
+=== RUN   TestWorkerSampleJSONContract/waiting
+--- PASS: TestWorkerSampleJSONContract/waiting (0.00s)
+--- PASS: TestWorkerSampleJSONContract (0.00s)
+=== RUN   TestWorkerSampleJSONFailures
+=== RUN   TestWorkerSampleJSONFailures/empty
+--- PASS: TestWorkerSampleJSONFailures/empty (0.00s)
+=== RUN   TestWorkerSampleJSONFailures/canceled
+--- PASS: TestWorkerSampleJSONFailures/canceled (0.00s)
+=== RUN   TestWorkerSampleJSONFailures/deadline
+--- PASS: TestWorkerSampleJSONFailures/deadline (0.00s)
+=== RUN   TestWorkerSampleJSONFailures/multiline
+--- PASS: TestWorkerSampleJSONFailures/multiline (0.00s)
+--- PASS: TestWorkerSampleJSONFailures (0.00s)
+=== RUN   TestWorkerSampleJSONDuration
+=== RUN   TestWorkerSampleJSONDuration/zero
+--- PASS: TestWorkerSampleJSONDuration/zero (0.00s)
+=== RUN   TestWorkerSampleJSONDuration/nanoseconds
+--- PASS: TestWorkerSampleJSONDuration/nanoseconds (0.00s)
+=== RUN   TestWorkerSampleJSONDuration/max_int64
+--- PASS: TestWorkerSampleJSONDuration/max_int64 (0.00s)
+=== RUN   TestWorkerSampleJSONDuration/wall_clock_backwards
+--- PASS: TestWorkerSampleJSONDuration/wall_clock_backwards (0.00s)
+--- PASS: TestWorkerSampleJSONDuration (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/nil_writer
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/nil_writer (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/negative_index
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/negative_index (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/missing_start
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/missing_start (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/missing_finish
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/missing_finish (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/negative_duration
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/negative_duration (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/no_state_or_error
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/no_state_or_error (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/state_and_error
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/state_and_error (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/disabled_counts
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/disabled_counts (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/negative_waiting
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/negative_waiting (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/zero_limit
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/zero_limit (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/negative_limit
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/negative_limit (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/negative_active
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/negative_active (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/above_limit
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/above_limit (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/unencodable_start
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/unencodable_start (0.00s)
+=== RUN   TestWorkerSampleJSONRejectsBeforeWrite/unencodable_finish
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite/unencodable_finish (0.00s)
+--- PASS: TestWorkerSampleJSONRejectsBeforeWrite (0.00s)
+=== RUN   TestWorkerSampleJSONWriter
+=== RUN   TestWorkerSampleJSONWriter/success
+--- PASS: TestWorkerSampleJSONWriter/success (0.00s)
+=== RUN   TestWorkerSampleJSONWriter/error
+--- PASS: TestWorkerSampleJSONWriter/error (0.00s)
+=== RUN   TestWorkerSampleJSONWriter/partial_error
+--- PASS: TestWorkerSampleJSONWriter/partial_error (0.00s)
+=== RUN   TestWorkerSampleJSONWriter/short_write
+--- PASS: TestWorkerSampleJSONWriter/short_write (0.00s)
+--- PASS: TestWorkerSampleJSONWriter (0.00s)
+=== RUN   TestWorkerSampleJSONSampling
+--- PASS: TestWorkerSampleJSONSampling (0.00s)
+=== RUN   TestWorkerSampleJSONWriteFailureStopsSampling
+--- PASS: TestWorkerSampleJSONWriteFailureStopsSampling (0.00s)
+=== RUN   TestWorkerSamplingEnabledStates
+--- PASS: TestWorkerSamplingEnabledStates (0.00s)
+=== RUN   TestWorkerSamplingConfig
+=== RUN   TestWorkerSamplingConfig/http://localhost/debug/worker
+--- PASS: TestWorkerSamplingConfig/http://localhost/debug/worker (0.00s)
+=== RUN   TestWorkerSamplingConfig/https://example.test/path?q=1
+--- PASS: TestWorkerSamplingConfig/https://example.test/path?q=1 (0.00s)
+=== RUN   TestWorkerSamplingConfig/http://[::1]:8080/debug/worker
+--- PASS: TestWorkerSamplingConfig/http://[::1]:8080/debug/worker (0.00s)
+=== RUN   TestWorkerSamplingConfig/empty
+--- PASS: TestWorkerSamplingConfig/empty (0.00s)
+=== RUN   TestWorkerSamplingConfig/relative
+--- PASS: TestWorkerSamplingConfig/relative (0.00s)
+=== RUN   TestWorkerSamplingConfig/scheme
+--- PASS: TestWorkerSamplingConfig/scheme (0.00s)
+=== RUN   TestWorkerSamplingConfig/host
+--- PASS: TestWorkerSamplingConfig/host (0.00s)
+=== RUN   TestWorkerSamplingConfig/syntax
+--- PASS: TestWorkerSamplingConfig/syntax (0.00s)
+=== RUN   TestWorkerSamplingConfig/zero_interval
+--- PASS: TestWorkerSamplingConfig/zero_interval (0.00s)
+=== RUN   TestWorkerSamplingConfig/negative_interval
+--- PASS: TestWorkerSamplingConfig/negative_interval (0.00s)
+=== RUN   TestWorkerSamplingConfig/zero_timeout
+--- PASS: TestWorkerSamplingConfig/zero_timeout (0.00s)
+=== RUN   TestWorkerSamplingConfig/negative_timeout
+--- PASS: TestWorkerSamplingConfig/negative_timeout (0.00s)
+--- PASS: TestWorkerSamplingConfig (0.00s)
+=== RUN   TestWorkerSamplingPreflight
+=== RUN   TestWorkerSamplingPreflight/nil_context
+--- PASS: TestWorkerSamplingPreflight/nil_context (0.00s)
+=== RUN   TestWorkerSamplingPreflight/nil_client
+--- PASS: TestWorkerSamplingPreflight/nil_client (0.00s)
+=== RUN   TestWorkerSamplingPreflight/nil_emit
+--- PASS: TestWorkerSamplingPreflight/nil_emit (0.00s)
+=== RUN   TestWorkerSamplingPreflight/canceled
+--- PASS: TestWorkerSamplingPreflight/canceled (0.00s)
+=== RUN   TestWorkerSamplingPreflight/expired
+--- PASS: TestWorkerSamplingPreflight/expired (0.00s)
+--- PASS: TestWorkerSamplingPreflight (0.00s)
+=== RUN   TestWorkerSamplingTimeline
+--- PASS: TestWorkerSamplingTimeline (0.00s)
+=== RUN   TestWorkerSamplingParentStop
+=== RUN   TestWorkerSamplingParentStop/inflight_cancel
+--- PASS: TestWorkerSamplingParentStop/inflight_cancel (0.00s)
+=== RUN   TestWorkerSamplingParentStop/inflight_deadline
+--- PASS: TestWorkerSamplingParentStop/inflight_deadline (0.00s)
+=== RUN   TestWorkerSamplingParentStop/wait_cancel
+--- PASS: TestWorkerSamplingParentStop/wait_cancel (0.00s)
+--- PASS: TestWorkerSamplingParentStop (0.00s)
+=== RUN   TestWorkerSamplingSuccessBeforeStop
+--- PASS: TestWorkerSamplingSuccessBeforeStop (0.00s)
+=== RUN   TestWorkerSamplingEmitError
+=== RUN   TestWorkerSamplingEmitError/success
+--- PASS: TestWorkerSamplingEmitError/success (0.00s)
+=== RUN   TestWorkerSamplingEmitError/query_failure
+--- PASS: TestWorkerSamplingEmitError/query_failure (0.00s)
+=== RUN   TestWorkerSamplingEmitError/parent_cancel
+--- PASS: TestWorkerSamplingEmitError/parent_cancel (0.00s)
+--- PASS: TestWorkerSamplingEmitError (0.00s)
+=== RUN   TestWorkerSamplingHTTP
+--- PASS: TestWorkerSamplingHTTP (0.00s)
+=== RUN   TestFetchWorkerSnapshotDecodeCause
+=== RUN   TestFetchWorkerSnapshotDecodeCause/syntax
+--- PASS: TestFetchWorkerSnapshotDecodeCause/syntax (0.00s)
+=== RUN   TestFetchWorkerSnapshotDecodeCause/nested_type
+--- PASS: TestFetchWorkerSnapshotDecodeCause/nested_type (0.00s)
+--- PASS: TestFetchWorkerSnapshotDecodeCause (0.00s)
+=== RUN   TestFetchWorkerSnapshotAlreadyCanceled
+--- PASS: TestFetchWorkerSnapshotAlreadyCanceled (0.00s)
+=== RUN   TestFetchWorkerSnapshotValues
+=== RUN   TestFetchWorkerSnapshotValues/disabled
+--- PASS: TestFetchWorkerSnapshotValues/disabled (0.00s)
+=== RUN   TestFetchWorkerSnapshotValues/disabled_whitespace
+--- PASS: TestFetchWorkerSnapshotValues/disabled_whitespace (0.00s)
+=== RUN   TestFetchWorkerSnapshotValues/idle
+--- PASS: TestFetchWorkerSnapshotValues/idle (0.00s)
+=== RUN   TestFetchWorkerSnapshotValues/busy_waiting
+--- PASS: TestFetchWorkerSnapshotValues/busy_waiting (0.00s)
+=== RUN   TestFetchWorkerSnapshotValues/full
+--- PASS: TestFetchWorkerSnapshotValues/full (0.00s)
+=== RUN   TestFetchWorkerSnapshotValues/unknown_fields
+--- PASS: TestFetchWorkerSnapshotValues/unknown_fields (0.00s)
+=== RUN   TestFetchWorkerSnapshotValues/integer_boundary
+--- PASS: TestFetchWorkerSnapshotValues/integer_boundary (0.00s)
+--- PASS: TestFetchWorkerSnapshotValues (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/empty
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/empty (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/syntax
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/syntax (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/top_null
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/top_null (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/top_array
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/top_array (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/trailing
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/trailing (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/disabled_missing
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/disabled_missing (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/disabled_object
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/disabled_object (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/disabled_array
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/disabled_array (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/disabled_string_null
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/disabled_string_null (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/missing_schema_version
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/missing_schema_version (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/null_schema_version
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/null_schema_version (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/missing_processing_limit_enabled
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/missing_processing_limit_enabled (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/null_processing_limit_enabled
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/null_processing_limit_enabled (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/missing_processing
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/missing_processing (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/null_processing
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/null_processing (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/limit_missing
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/limit_missing (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/limit_null
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/limit_null (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/limit_string
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/limit_string (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/limit_float
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/limit_float (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/limit_bool
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/limit_bool (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/limit_overflow
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/limit_overflow (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/in_use_missing
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/in_use_missing (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/in_use_null
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/in_use_null (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/in_use_string
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/in_use_string (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/in_use_float
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/in_use_float (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/in_use_bool
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/in_use_bool (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/in_use_overflow
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/in_use_overflow (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/waiting_missing
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/waiting_missing (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/waiting_null
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/waiting_null (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/waiting_string
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/waiting_string (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/waiting_float
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/waiting_float (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/waiting_bool
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/waiting_bool (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/waiting_overflow
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/waiting_overflow (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/future_version
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/future_version (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/zero_version
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/zero_version (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/version_string
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/version_string (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/enabled_string
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/enabled_string (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/enabled_number
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/enabled_number (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/processing_array
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/processing_array (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/processing_number
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/processing_number (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/processing_string
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/processing_string (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/zero_limit
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/zero_limit (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/negative_limit
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/negative_limit (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/negative_use
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/negative_use (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/above_limit
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/above_limit (0.00s)
+=== RUN   TestFetchWorkerSnapshotInvalidJSON/negative_waiting
+--- PASS: TestFetchWorkerSnapshotInvalidJSON/negative_waiting (0.00s)
+--- PASS: TestFetchWorkerSnapshotInvalidJSON (0.01s)
+=== RUN   TestFetchWorkerSnapshotHTTPBounds
+=== RUN   TestFetchWorkerSnapshotHTTPBounds/unavailable
+--- PASS: TestFetchWorkerSnapshotHTTPBounds/unavailable (0.00s)
+=== RUN   TestFetchWorkerSnapshotHTTPBounds/redirect
+--- PASS: TestFetchWorkerSnapshotHTTPBounds/redirect (0.00s)
+=== RUN   TestFetchWorkerSnapshotHTTPBounds/no_content
+--- PASS: TestFetchWorkerSnapshotHTTPBounds/no_content (0.00s)
+=== RUN   TestFetchWorkerSnapshotHTTPBounds/missing_type
+--- PASS: TestFetchWorkerSnapshotHTTPBounds/missing_type (0.00s)
+=== RUN   TestFetchWorkerSnapshotHTTPBounds/wrong_type
+--- PASS: TestFetchWorkerSnapshotHTTPBounds/wrong_type (0.00s)
+=== RUN   TestFetchWorkerSnapshotHTTPBounds/invalid_type
+--- PASS: TestFetchWorkerSnapshotHTTPBounds/invalid_type (0.00s)
+=== RUN   TestFetchWorkerSnapshotHTTPBounds/4096
+--- PASS: TestFetchWorkerSnapshotHTTPBounds/4096 (0.00s)
+=== RUN   TestFetchWorkerSnapshotHTTPBounds/4097
+--- PASS: TestFetchWorkerSnapshotHTTPBounds/4097 (0.00s)
+=== RUN   TestFetchWorkerSnapshotHTTPBounds/100000
+--- PASS: TestFetchWorkerSnapshotHTTPBounds/100000 (0.00s)
+--- PASS: TestFetchWorkerSnapshotHTTPBounds (0.00s)
+=== RUN   TestFetchWorkerSnapshotErrors
+=== RUN   TestFetchWorkerSnapshotErrors/nil_context
+--- PASS: TestFetchWorkerSnapshotErrors/nil_context (0.00s)
+=== RUN   TestFetchWorkerSnapshotErrors/nil_client
+--- PASS: TestFetchWorkerSnapshotErrors/nil_client (0.00s)
+=== RUN   TestFetchWorkerSnapshotErrors/invalid_url
+--- PASS: TestFetchWorkerSnapshotErrors/invalid_url (0.00s)
+=== RUN   TestFetchWorkerSnapshotErrors/transport
+--- PASS: TestFetchWorkerSnapshotErrors/transport (0.00s)
+=== RUN   TestFetchWorkerSnapshotErrors/body_read
+--- PASS: TestFetchWorkerSnapshotErrors/body_read (0.00s)
+--- PASS: TestFetchWorkerSnapshotErrors (0.00s)
+=== RUN   TestFetchWorkerSnapshotRedirect
+--- PASS: TestFetchWorkerSnapshotRedirect (0.00s)
+=== RUN   TestFetchWorkerSnapshotConnectionReuse
+--- PASS: TestFetchWorkerSnapshotConnectionReuse (0.00s)
+=== RUN   TestFetchWorkerSnapshotCancellation
+=== RUN   TestFetchWorkerSnapshotCancellation/headers_cancel
+--- PASS: TestFetchWorkerSnapshotCancellation/headers_cancel (0.00s)
+=== RUN   TestFetchWorkerSnapshotCancellation/headers_deadline
+    tail_integration_test.go:92: TAIL_TIMEOUT_JSON {"case":"before_end_exceeds_budget","outcome":"completed","budget_ms":200,"before_end_wait_ms":300,"tail_delay_ms":50,"close_code":1000,"close_reason":"completed","eof_from_end_write_ms":0.226583,"worker_exit_from_eof_ms":51.34325,"client_close_from_eof_ms":52.431459,"handler_exit_from_eof_ms":52.578917,"worker_canceled":false,"fallback_cancel":false,"active_after_cleanup":0,"reentry_accepted":true,"final_active":0}
+--- PASS: TestTailSessionIntegration/before_end_exceeds_budget (0.36s)
+=== RUN   TestTailSessionIntegration/normal_delayed_tail
+--- PASS: TestFetchWorkerSnapshotCancellation/headers_deadline (0.20s)
+=== RUN   TestFetchWorkerSnapshotCancellation/body_cancel
+--- PASS: TestFetchWorkerSnapshotCancellation/body_cancel (0.00s)
+=== RUN   TestFetchWorkerSnapshotCancellation/body_deadline
+--- PASS: TestFetchWorkerSnapshotCancellation/body_deadline (0.20s)
+--- PASS: TestFetchWorkerSnapshotCancellation (0.41s)
+PASS
+    tail_integration_test.go:92: TAIL_TIMEOUT_JSON {"case":"normal_delayed_tail","outcome":"completed","budget_ms":1000,"before_end_wait_ms":0,"tail_delay_ms":500,"close_code":1000,"close_reason":"completed","eof_from_end_write_ms":0.271292,"worker_exit_from_eof_ms":501.318583,"client_close_from_eof_ms":502.68175,"handler_exit_from_eof_ms":502.857083,"worker_canceled":false,"fallback_cancel":false,"active_after_cleanup":0,"reentry_accepted":true,"final_active":0}
+--- PASS: TestTailSessionIntegration/normal_delayed_tail (0.51s)
+=== RUN   TestTailSessionIntegration/stalled_tail
+    tail_integration_test.go:92: TAIL_TIMEOUT_JSON {"case":"stalled_tail","outcome":"tail_timeout","budget_ms":200,"before_end_wait_ms":0,"tail_delay_ms":0,"close_code":1011,"close_reason":"tail timeout","eof_from_end_write_ms":0.215583,"worker_exit_from_eof_ms":201.747458,"client_close_from_eof_ms":202.105292,"handler_exit_from_eof_ms":202.410833,"worker_canceled":true,"fallback_cancel":false,"active_after_cleanup":0,"reentry_accepted":true,"final_active":0}
+--- PASS: TestTailSessionIntegration/stalled_tail (0.21s)
+--- PASS: TestTailSessionIntegration (1.08s)
+=== RUN   TestTailTimeoutExperiment
+    tail_integration_test.go:78: set TIDE_RUN_TAIL_TIMEOUT_EXPERIMENT=1
+--- SKIP: TestTailTimeoutExperiment (0.00s)
+=== RUN   TestTailStallBaselineExperiment
+    tail_stall_experiment_test.go:36: set TIDE_RUN_TAIL_STALL_BASELINE=1
+--- SKIP: TestTailStallBaselineExperiment (0.00s)
+=== RUN   TestTailWaitStartsOnlyAfterEnd
+--- PASS: TestTailWaitStartsOnlyAfterEnd (0.00s)
+=== RUN   TestTailWaitForwardsExitEvents
+=== RUN   TestTailWaitForwardsExitEvents/before_end/completed
+--- PASS: TestTailWaitForwardsExitEvents/before_end/completed (0.00s)
+=== RUN   TestTailWaitForwardsExitEvents/before_end/worker_failed
+--- PASS: TestTailWaitForwardsExitEvents/before_end/worker_failed (0.00s)
+=== RUN   TestTailWaitForwardsExitEvents/before_end/client_disconnected
+--- PASS: TestTailWaitForwardsExitEvents/before_end/client_disconnected (0.00s)
+=== RUN   TestTailWaitForwardsExitEvents/after_end/completed
+--- PASS: TestTailWaitForwardsExitEvents/after_end/completed (0.00s)
+=== RUN   TestTailWaitForwardsExitEvents/after_end/worker_failed
+--- PASS: TestTailWaitForwardsExitEvents/after_end/worker_failed (0.00s)
+=== RUN   TestTailWaitForwardsExitEvents/after_end/client_disconnected
+--- PASS: TestTailWaitForwardsExitEvents/after_end/client_disconnected (0.00s)
+--- PASS: TestTailWaitForwardsExitEvents (0.00s)
+=== RUN   TestTailWaitServiceCancellation
+=== RUN   TestTailWaitServiceCancellation/before_end
+--- PASS: TestTailWaitServiceCancellation/before_end (0.00s)
+=== RUN   TestTailWaitServiceCancellation/after_end
+--- PASS: TestTailWaitServiceCancellation/after_end (0.00s)
+--- PASS: TestTailWaitServiceCancellation (0.00s)
+=== RUN   TestTailWaitAlreadyEnded
+--- PASS: TestTailWaitAlreadyEnded (0.00s)
+=== RUN   TestTailSessionResult
+=== RUN   TestTailSessionResult/timeout
+--- PASS: TestTailSessionResult/timeout (0.00s)
+=== RUN   TestTailSessionResult/worker_completed_before_end
+--- PASS: TestTailSessionResult/worker_completed_before_end (0.00s)
+=== RUN   TestTailSessionResult/worker_completed_after_end
+--- PASS: TestTailSessionResult/worker_completed_after_end (0.00s)
+--- PASS: TestTailSessionResult (0.00s)
+=== RUN   TestTailEventKeepsExistingPriorities
+=== RUN   TestTailEventKeepsExistingPriorities/service_stop
+--- PASS: TestTailEventKeepsExistingPriorities/service_stop (0.00s)
+=== RUN   TestTailEventKeepsExistingPriorities/send_timeout
+--- PASS: TestTailEventKeepsExistingPriorities/send_timeout (0.00s)
+=== RUN   TestTailEventKeepsExistingPriorities/input_timeout
+--- PASS: TestTailEventKeepsExistingPriorities/input_timeout (0.00s)
+--- PASS: TestTailEventKeepsExistingPriorities (0.00s)
+=== RUN   TestGatewayShutdownWithoutCloseReply
+    unresponsive_close_test.go:72: Worker canceled after 117.25µs
+    unresponsive_close_test.go:87: short wait returned context deadline exceeded; active sessions=1
+ok      github.com/secacy/tide-artisan/internal/loadgen 7.130s
+    unresponsive_close_test.go:100: session fully released after 5.002107292s
+--- PASS: TestGatewayShutdownWithoutCloseReply (5.01s)
+=== RUN   TestGatewayWorkerFailureIsolated
+=== RUN   TestGatewayWorkerFailureIsolated/grpc_error
+--- PASS: TestGatewayWorkerFailureIsolated/grpc_error (0.01s)
+=== RUN   TestGatewayWorkerFailureIsolated/eof_before_end
+--- PASS: TestGatewayWorkerFailureIsolated/eof_before_end (0.01s)
+--- PASS: TestGatewayWorkerFailureIsolated (0.02s)
+=== RUN   TestWorkerPauseExperiment
+    worker_pause_experiment_test.go:185: set TIDE_RUN_WORKER_PAUSE_EXPERIMENT=1
+--- SKIP: TestWorkerPauseExperiment (0.00s)
+=== RUN   TestGatewayNilWorkerPool
+--- PASS: TestGatewayNilWorkerPool (0.00s)
+=== RUN   TestGatewayWorkerRouting
+=== RUN   TestGatewayWorkerRouting/sequential
+    worker_routing_test.go:239: sessions=6 Worker A=3 B=3, three audio chunks and final per session
+--- PASS: TestGatewayWorkerRouting/sequential (0.02s)
+=== RUN   TestGatewayWorkerRouting/overlapping
+=== RUN   TestGatewayWorkerRouting/overlapping/finish
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/0
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/0
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/1
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/1
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/2
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/2
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/3
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/3
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/4
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/4
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/5
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/5
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/6
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/6
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/7
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/7
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/8
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/8
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/9
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/9
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/10
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/10
+=== RUN   TestGatewayWorkerRouting/overlapping/finish/11
+=== PAUSE TestGatewayWorkerRouting/overlapping/finish/11
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/0
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/11
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/6
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/1
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/8
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/3
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/10
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/2
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/9
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/4
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/5
+=== CONT  TestGatewayWorkerRouting/overlapping/finish/7
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/8 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/4 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/0 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/6 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/11 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/1 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/3 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/7 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/5 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/2 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/9 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish/10 (0.00s)
+--- PASS: TestGatewayWorkerRouting/overlapping/finish (0.00s)
+    worker_routing_test.go:239: sessions=12 Worker A=6 B=6, three audio chunks and final per session
+--- PASS: TestGatewayWorkerRouting/overlapping (0.02s)
+--- PASS: TestGatewayWorkerRouting (0.04s)
+=== RUN   TestGatewayRoutingBeforeStart
+=== RUN   TestGatewayRoutingBeforeStart/invalid_start
+--- PASS: TestGatewayRoutingBeforeStart/invalid_start (0.00s)
+=== RUN   TestGatewayRoutingBeforeStart/start_timeout
+--- PASS: TestGatewayRoutingBeforeStart/start_timeout (0.10s)
+=== RUN   TestGatewayRoutingBeforeStart/disconnect_before_start
+--- PASS: TestGatewayRoutingBeforeStart/disconnect_before_start (0.00s)
+=== RUN   TestGatewayRoutingBeforeStart/shutdown_before_start
+--- PASS: TestGatewayRoutingBeforeStart/shutdown_before_start (0.00s)
+=== RUN   TestGatewayRoutingBeforeStart/stopped_admission
+--- PASS: TestGatewayRoutingBeforeStart/stopped_admission (0.00s)
+=== RUN   TestGatewayRoutingBeforeStart/failed_upgrade
+--- PASS: TestGatewayRoutingBeforeStart/failed_upgrade (0.00s)
+--- PASS: TestGatewayRoutingBeforeStart (0.11s)
+=== RUN   TestGatewayRoutingAdmissionRejected
+--- PASS: TestGatewayRoutingAdmissionRejected (0.01s)
+=== RUN   TestGatewayRoutingOpenFailure
+--- PASS: TestGatewayRoutingOpenFailure (0.01s)
+=== RUN   TestSessionRoutingErrorIdentity
+--- PASS: TestSessionRoutingErrorIdentity (0.00s)
+=== RUN   TestGatewayRoutingCancellation
+=== RUN   TestGatewayRoutingCancellation/client_disconnect
+--- PASS: TestGatewayRoutingCancellation/client_disconnect (0.01s)
+=== RUN   TestGatewayRoutingCancellation/service_shutdown
+--- PASS: TestGatewayRoutingCancellation/service_shutdown (0.00s)
+--- PASS: TestGatewayRoutingCancellation (0.01s)
+=== RUN   TestGatewaySelectorNilContract
+=== RUN   TestGatewaySelectorNilContract/nil_interface
+--- PASS: TestGatewaySelectorNilContract/nil_interface (0.00s)
+=== RUN   TestGatewaySelectorNilContract/nil_round_robin
+--- PASS: TestGatewaySelectorNilContract/nil_round_robin (0.00s)
+=== RUN   TestGatewaySelectorNilContract/nil_weighted_round_robin
+--- PASS: TestGatewaySelectorNilContract/nil_weighted_round_robin (0.00s)
+=== RUN   TestGatewaySelectorNilContract/nil_custom_pointer
+--- PASS: TestGatewaySelectorNilContract/nil_custom_pointer (0.00s)
+=== RUN   TestGatewaySelectorNilContract/nil_func
+--- PASS: TestGatewaySelectorNilContract/nil_func (0.00s)
+=== RUN   TestGatewaySelectorNilContract/nil_map
+--- PASS: TestGatewaySelectorNilContract/nil_map (0.00s)
+=== RUN   TestGatewaySelectorNilContract/nil_slice
+--- PASS: TestGatewaySelectorNilContract/nil_slice (0.00s)
+=== RUN   TestGatewaySelectorNilContract/nil_chan
+--- PASS: TestGatewaySelectorNilContract/nil_chan (0.00s)
+=== RUN   TestGatewaySelectorNilContract/value
+--- PASS: TestGatewaySelectorNilContract/value (0.00s)
+=== RUN   TestGatewaySelectorNilContract/pointer
+--- PASS: TestGatewaySelectorNilContract/pointer (0.00s)
+=== RUN   TestGatewaySelectorNilContract/func
+--- PASS: TestGatewaySelectorNilContract/func (0.00s)
+=== RUN   TestGatewaySelectorNilContract/empty_map
+--- PASS: TestGatewaySelectorNilContract/empty_map (0.00s)
+=== RUN   TestGatewaySelectorNilContract/empty_slice
+--- PASS: TestGatewaySelectorNilContract/empty_slice (0.00s)
+=== RUN   TestGatewaySelectorNilContract/chan
+--- PASS: TestGatewaySelectorNilContract/chan (0.00s)
+--- PASS: TestGatewaySelectorNilContract (0.00s)
+=== RUN   TestGatewayWeightedRouting
+=== RUN   TestGatewayWeightedRouting/sequential
+    worker_selector_test.go:153: sessions=12 selections=12 streams A=8 B=4; three chunks and final remain bound
+--- PASS: TestGatewayWeightedRouting/sequential (0.03s)
+=== RUN   TestGatewayWeightedRouting/overlapping
+=== RUN   TestGatewayWeightedRouting/overlapping/finish
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/0
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/0
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/1
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/1
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/2
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/2
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/3
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/3
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/4
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/4
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/5
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/5
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/6
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/6
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/7
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/7
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/8
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/8
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/9
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/9
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/10
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/10
+=== RUN   TestGatewayWeightedRouting/overlapping/finish/11
+=== PAUSE TestGatewayWeightedRouting/overlapping/finish/11
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/0
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/10
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/5
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/9
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/6
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/4
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/3
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/7
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/11
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/2
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/8
+=== CONT  TestGatewayWeightedRouting/overlapping/finish/1
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/6 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/7 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/5 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/1 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/0 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/10 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/9 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/3 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/11 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/4 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/2 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish/8 (0.00s)
+--- PASS: TestGatewayWeightedRouting/overlapping/finish (0.00s)
+    worker_selector_test.go:153: sessions=12 selections=12 streams A=8 B=4; three chunks and final remain bound
+--- PASS: TestGatewayWeightedRouting/overlapping (0.02s)
+--- PASS: TestGatewayWeightedRouting (0.05s)
+=== RUN   TestGatewayWeightedBeforeStart
+=== RUN   TestGatewayWeightedBeforeStart/invalid_start
+--- PASS: TestGatewayWeightedBeforeStart/invalid_start (0.00s)
+=== RUN   TestGatewayWeightedBeforeStart/start_timeout
+--- PASS: TestGatewayWeightedBeforeStart/start_timeout (0.10s)
+=== RUN   TestGatewayWeightedBeforeStart/disconnect
+--- PASS: TestGatewayWeightedBeforeStart/disconnect (0.00s)
+=== RUN   TestGatewayWeightedBeforeStart/service_shutdown
+--- PASS: TestGatewayWeightedBeforeStart/service_shutdown (0.00s)
+=== RUN   TestGatewayWeightedBeforeStart/stopped_admission
+--- PASS: TestGatewayWeightedBeforeStart/stopped_admission (0.00s)
+=== RUN   TestGatewayWeightedBeforeStart/failed_upgrade
+--- PASS: TestGatewayWeightedBeforeStart/failed_upgrade (0.00s)
+--- PASS: TestGatewayWeightedBeforeStart (0.11s)
+=== RUN   TestGatewayWeightedOpenFailure
+--- PASS: TestGatewayWeightedOpenFailure (0.01s)
+=== RUN   TestWorkerSendTimeoutConfig
+=== RUN   TestWorkerSendTimeoutConfig/default
+--- PASS: TestWorkerSendTimeoutConfig/default (0.00s)
+=== RUN   TestWorkerSendTimeoutConfig/custom
+--- PASS: TestWorkerSendTimeoutConfig/custom (0.00s)
+=== RUN   TestWorkerSendTimeoutConfig/negative
+--- PASS: TestWorkerSendTimeoutConfig/negative (0.00s)
+--- PASS: TestWorkerSendTimeoutConfig (0.00s)
+=== RUN   TestWorkerSendTimeoutResultPriority
+=== RUN   TestWorkerSendTimeoutResultPriority/download_first
+--- PASS: TestWorkerSendTimeoutResultPriority/download_first (0.00s)
+=== RUN   TestWorkerSendTimeoutResultPriority/service_stop_first
+--- PASS: TestWorkerSendTimeoutResultPriority/service_stop_first (0.00s)
+=== RUN   TestWorkerSendTimeoutResultPriority/send_before_input
+--- PASS: TestWorkerSendTimeoutResultPriority/send_before_input (0.00s)
+=== RUN   TestWorkerSendTimeoutResultPriority/worker_error
+--- PASS: TestWorkerSendTimeoutResultPriority/worker_error (0.00s)
+--- PASS: TestWorkerSendTimeoutResultPriority (0.00s)
+=== RUN   TestGatewayWorkerSendTimeout
+--- PASS: TestGatewayWorkerSendTimeout (0.04s)
+=== RUN   TestUploadWorkerSendTimeout
+--- PASS: TestUploadWorkerSendTimeout (0.03s)
+PASS
+ok      github.com/secacy/tide-artisan/internal/gateway 13.012s

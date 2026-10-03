@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
-	"github.com/secacy/tide-artisan/internal/workerpool"
 )
 
 // Config 描述 WebSocket Gateway 配置。
@@ -26,7 +25,7 @@ type Config struct {
 // Gateway 把 WebSocket 音频流桥接到 gRPC Worker。
 type Gateway struct {
 	ctx  context.Context
-	pool *workerpool.RoundRobin // 本 Gateway 的会话共享同一选择器，统一推进轮询位置。
+	pool WorkerSelector // 本 Gateway 的会话共享同一选择器。
 	cfg  Config
 
 	tracker *sessionTracker // 跟踪本 Gateway 已接纳但尚未完成清理的会话。用于停止接入以及等待所有会话退出。
@@ -41,13 +40,15 @@ const (
 	defaultResultWriteTimeout = 2 * time.Second
 )
 
-// New 创建 Gateway；pool 必须通过 workerpool.NewRoundRobin 构造。
-// Gateway 复用池中的客户端，连接生命周期由外部管理。
-func New(ctx context.Context, pool *workerpool.RoundRobin, cfg Config) (*Gateway, error) {
+// New 创建 Gateway。
+// pool 必须是已经完成初始化、支持并发调用的选择器。
+// Gateway 复用选择器返回的客户端，连接生命周期由外部管理。
+// nil 接口或包含 nil 动态值的选择器会被拒绝。
+func New(ctx context.Context, pool WorkerSelector, cfg Config) (*Gateway, error) {
 	if ctx == nil {
 		return nil, fmt.Errorf("gateway context is nil")
 	}
-	if pool == nil {
+	if isNilWorkerSelector(pool) {
 		return nil, fmt.Errorf("worker pool is nil")
 	}
 	if cfg.MaxMessageBytes <= 0 {

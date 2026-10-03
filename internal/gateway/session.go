@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
-	"github.com/secacy/tide-artisan/internal/workerpool"
 	"github.com/secacy/tide-artisan/internal/wsprotocol"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 )
@@ -29,8 +28,8 @@ type workerStream interface {
 // session 表示一个 WebSocket Connection 与一个 gRPC stream 之间的一对一桥接关系。
 type session struct {
 	ws       *websocket.Conn
-	pool     *workerpool.RoundRobin // 与其他 session 共享的选择器。
-	workerID string                 // 合法 start 后选中的后端标识，例如 localhost:50051；选择前为空。
+	pool     WorkerSelector // 与其他 session 共享的选择器。
+	workerID string         // 合法 start 后选中的后端标识，例如 localhost:50051；选择前为空。
 
 	startTimeout     time.Duration // 等待完整 start 消息的期限
 	inputIdleTimeout time.Duration // 限制音频输入阶段单次读取消息的等待时间
@@ -80,7 +79,7 @@ type sessionResult struct {
 var ErrInputIdleTimeout = errors.New("input idle timeout")
 
 // newSession 创建会话。
-func newSession(ws *websocket.Conn, pool *workerpool.RoundRobin, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration, tailTimeout time.Duration, resultWriteTimeout time.Duration, maxPendingAudioBytes uint64) *session {
+func newSession(ws *websocket.Conn, pool WorkerSelector, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration, tailTimeout time.Duration, resultWriteTimeout time.Duration, maxPendingAudioBytes uint64) *session {
 	return &session{
 		ws:                   ws,
 		pool:                 pool,
