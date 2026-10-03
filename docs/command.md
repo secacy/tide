@@ -354,6 +354,19 @@ GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off python3 docs/ex
 
 输出目录须为新目录；加 `--analyze-only` 只复核已完成证据。
 
+## 同条件轮询 / 加权策略对照
+
+三轮相邻对照，固定两个单名额 Worker 10ms / 20ms，每组 8/10/12 各一批20秒，共18批180场，预计约13分钟。条件和判据见 [EXP-005-12](experiments/strategy-comparison.md)。
+
+```sh
+/usr/bin/caffeinate -i env PYTHONDONTWRITEBYTECODE=1 \
+  GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  python3 docs/experiments/scripts/run_strategy_comparison.py \
+  --output /tmp/tide-strategy-comparison-new
+```
+
+输出目录必须不存在；同一命令加 `--analyze-only` 只复核已有证据，建议先复制归档到临时目录再分析。
+
 ## protoc代码生成
 ```
 protoc --go_out=. --go_opt=paths=source_relative \
