@@ -1,0 +1,25 @@
+First full attempt: selected failing-test output retained. Failure cause was incorrect test expectations for slog quoted list values; no performance experiment was run.
+Final corrected complete run is gateway-worker-strategy-startup-validation-2026-10-03.log.
+
+=== RUN   TestGatewayMultiWorkerStartup
+=== RUN   TestGatewayMultiWorkerStartup/round_robin
+2026/10/03 14:48:57 INFO gateway backend configuration strategy=round_robin workers="[127.0.0.1:55171 127.0.0.1:55170]" weights=[]
+2026/10/03 14:48:57 websocket gateway listening on :8080
+    startup_test.go:214: configuration log differs: 2026/10/03 14:48:57 INFO gateway backend configuration strategy=round_robin workers="[127.0.0.1:55171 127.0.0.1:55170]" weights=[]
+        2026/10/03 14:48:57 websocket gateway listening on :8080
+2026/10/03 14:48:57 shutting down websocket gateway
+--- FAIL: TestGatewayMultiWorkerStartup/round_robin (0.00s)
+=== RUN   TestGatewayMultiWorkerStartup/weighted_round_robin
+2026/10/03 14:48:57 INFO gateway backend configuration strategy=weighted_round_robin workers="[127.0.0.1:55173 127.0.0.1:55172]" weights="[2 1]"
+2026/10/03 14:48:57 websocket gateway listening on :8080
+    startup_test.go:214: configuration log differs: 2026/10/03 14:48:57 INFO gateway backend configuration strategy=weighted_round_robin workers="[127.0.0.1:55173 127.0.0.1:55172]" weights="[2 1]"
+        2026/10/03 14:48:57 websocket gateway listening on :8080
+2026/10/03 14:48:57 shutting down websocket gateway
+--- FAIL: TestGatewayMultiWorkerStartup/weighted_round_robin (0.00s)
+--- FAIL: TestGatewayMultiWorkerStartup (0.00s)
+=== RUN   TestGatewayStartupCLI
+=== RUN   TestGatewayStartupCLI/weighted_running
+    startup_test.go:350: actual CLI configuration log differs: 2026/10/03 14:49:01 INFO gateway backend configuration strategy=weighted_round_robin workers="[127.0.0.1:55326 127.0.0.1:55325]" weights="[2 1]"
+        2026/10/03 14:49:01 websocket gateway listening on :8080
+--- FAIL: TestGatewayStartupCLI/weighted_running (0.01s)
+--- FAIL: TestGatewayStartupCLI (3.50s)

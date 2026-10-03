@@ -15,7 +15,7 @@ const (
 
 // gatewayConfig 描述 Gateway 进程的启动配置。
 type gatewayConfig struct {
-	WorkerAddrs []string // 有序后端地址；加权策略按此顺序对应权重。
+	WorkerAddrs []string // 有序后端地址；顺序决定选择顺序，加权策略按相同位置对应权重。
 
 	WorkerStrategy string  // 已校验的选择策略，默认为普通轮询。
 	WorkerWeights  []int64 // 加权策略的正权重列表；普通轮询时为 nil。
@@ -44,7 +44,7 @@ func parseGatewayConfig(args []string) (gatewayConfig, error) {
 		&workerAddrs,
 		"workers",
 		workerAddrs,
-		"comma-separated list of gRPC worker addresses; order matters for round-robin selection",
+		"comma-separated list of gRPC worker addresses; order determines worker selection order and corresponding weight positions",
 	)
 	fs.StringVar(
 		&cfg.WorkerStrategy,

@@ -36,11 +36,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	slog.Info("gateway backend configuration",
-		"strategy", "round_robin",
-		"workers", cfg.WorkerAddrs,
-	)
-
 	// SIGINT 对应 Ctrl+C，SIGTERM 通常用于容器或进程管理器停止服务。
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
@@ -77,10 +72,20 @@ func run(ctx context.Context, cfg gatewayConfig) error {
 		})
 	}
 
-	pool, err := workerpool.NewRoundRobin(workers)
+	pool, err := newWorkerSelector(
+		workers,
+		cfg.WorkerStrategy,
+		cfg.WorkerWeights,
+	)
 	if err != nil {
-		return fmt.Errorf("create worker pool: %w", err)
+		return fmt.Errorf("create worker selector: %w", err)
 	}
+
+	slog.Info("gateway backend configuration",
+		"strategy", cfg.WorkerStrategy,
+		"workers", cfg.WorkerAddrs,
+		"weights", cfg.WorkerWeights,
+	)
 
 	sessionCtx, cancelSessions := context.WithCancel(context.Background()) // sessionCtx 管理本 Gateway 所有会话的停止通知
 	defer cancelSessions()
