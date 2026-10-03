@@ -1,0 +1,536 @@
+{
+  "generated_at": "2026-10-03T07:39:39.437277+00:00",
+  "input_sha256": {
+    "manifest.json": "854fd858e9745c73204dc6ba108db2a07f6cba97371e4d68a83f04fe8291a57c",
+    "comparison.json": "efa75bde9641a5e9dbb2025067bac8efcab2701c1ac1245f51b4d414822f77e2"
+  },
+  "all_evidence_hashes_verified": true,
+  "copy_reanalysis_equal": true,
+  "all_cohort_binaries_equal": true,
+  "all_cohort_sources_equal": true,
+  "source_commit": "b546370aa8e259972f811b80659344c3bd8e3c8a",
+  "source_files": 163,
+  "runtime_scripts": 14,
+  "binary_sha256": {
+    "asr-worker": "fa802c79f7ecb99353aeb235af83dba71f27738f819133232779c092e275b1e7",
+    "gateway": "0289ba746fa93b619b66fd16e3ef606cd3a6df241522d8f261f8616c643b7a0c",
+    "loadgen": "6830ae49d1579d7b62a1a6763a50856b0c75fcd132049396280b8055f2b2de0c",
+    "gateway-sampler": "98327d5c51c6f3707f6d8f15d01d855ec49ca9064698f00aad829a3a34f868a1",
+    "worker-sampler": "1e961b8c7e92ab5f3152bda4ef7ee27ee2e32a467f11226bacc3bbef4ce242ac"
+  },
+  "files": 339,
+  "bytes": 22086336,
+  "root_hashed_artifacts": 336,
+  "child_hashed_artifacts": [
+    53,
+    53,
+    53,
+    53,
+    53,
+    53
+  ],
+  "formal_batches": 18,
+  "formal_sessions": 180,
+  "all_formal_pre_post_idle": true,
+  "all_formal_planned_peaks_observed": true,
+  "shutdowns": [
+    {
+      "cohort": "pair-1-round_robin",
+      "processes": [
+        {
+          "process": "gateway",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-2",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-1",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "cohort": "pair-1-weighted_round_robin",
+      "processes": [
+        {
+          "process": "gateway",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-2",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-1",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "cohort": "pair-2-weighted_round_robin",
+      "processes": [
+        {
+          "process": "gateway",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-2",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-1",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "cohort": "pair-2-round_robin",
+      "processes": [
+        {
+          "process": "gateway",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-2",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-1",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "cohort": "pair-3-round_robin",
+      "processes": [
+        {
+          "process": "gateway",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-2",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-1",
+          "exit_code": 0
+        }
+      ]
+    },
+    {
+      "cohort": "pair-3-weighted_round_robin",
+      "processes": [
+        {
+          "process": "gateway",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-2",
+          "exit_code": 0
+        },
+        {
+          "process": "asr-worker-1",
+          "exit_code": 0
+        }
+      ]
+    }
+  ],
+  "sampling": {
+    "gateway": {
+      "samples": 7071,
+      "successful_samples": 7071,
+      "failed_samples": 0,
+      "window_successful_samples": 3553,
+      "window_failed_samples": 0,
+      "max_bracketing_success_gap_ns": 116980000
+    },
+    "worker1": {
+      "samples": 32925,
+      "successful_samples": 32922,
+      "failed_samples": 3,
+      "window_successful_samples": 16619,
+      "window_failed_samples": 0,
+      "max_bracketing_success_gap_ns": 58204000
+    },
+    "worker2": {
+      "samples": 32931,
+      "successful_samples": 32929,
+      "failed_samples": 2,
+      "window_successful_samples": 16621,
+      "window_failed_samples": 0,
+      "max_bracketing_success_gap_ns": 59422000
+    }
+  },
+  "batches": [
+    {
+      "pair": 1,
+      "policy": "round_robin",
+      "label": "r1-n8",
+      "planned_sessions": 8,
+      "completed": 8,
+      "criteria_met": true,
+      "tail": {
+        "samples": 8,
+        "min_ns": 17044875,
+        "p50_ns": 37727291,
+        "p95_ns": 88891666,
+        "max_ns": 88891666
+      },
+      "max_audio_schedule_lag_ns": 9363458,
+      "failures": []
+    },
+    {
+      "pair": 1,
+      "policy": "round_robin",
+      "label": "r1-n10",
+      "planned_sessions": 10,
+      "completed": 9,
+      "criteria_met": false,
+      "tail": {
+        "samples": 9,
+        "min_ns": 17993792,
+        "p50_ns": 60159666,
+        "p95_ns": 500239417,
+        "max_ns": 500239417
+      },
+      "max_audio_schedule_lag_ns": 8352666,
+      "failures": [
+        {
+          "index": 3,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 17704323000,
+          "audio_bytes_written": 569600
+        }
+      ]
+    },
+    {
+      "pair": 1,
+      "policy": "round_robin",
+      "label": "r1-n12",
+      "planned_sessions": 12,
+      "completed": 10,
+      "criteria_met": false,
+      "tail": {
+        "samples": 10,
+        "min_ns": 18868167,
+        "p50_ns": 50153125,
+        "p95_ns": 100418125,
+        "max_ns": 100418125
+      },
+      "max_audio_schedule_lag_ns": 6251292,
+      "failures": [
+        {
+          "index": 2,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 4312100000,
+          "audio_bytes_written": 140800
+        },
+        {
+          "index": 10,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 4409110000,
+          "audio_bytes_written": 144000
+        }
+      ]
+    },
+    {
+      "pair": 1,
+      "policy": "weighted_round_robin",
+      "label": "r1-n8",
+      "planned_sessions": 8,
+      "completed": 8,
+      "criteria_met": true,
+      "tail": {
+        "samples": 8,
+        "min_ns": 18729625,
+        "p50_ns": 40318000,
+        "p95_ns": 73144333,
+        "max_ns": 73144333
+      },
+      "max_audio_schedule_lag_ns": 7469292,
+      "failures": []
+    },
+    {
+      "pair": 1,
+      "policy": "weighted_round_robin",
+      "label": "r1-n10",
+      "planned_sessions": 10,
+      "completed": 10,
+      "criteria_met": true,
+      "tail": {
+        "samples": 10,
+        "min_ns": 17975417,
+        "p50_ns": 49007958,
+        "p95_ns": 90101875,
+        "max_ns": 90101875
+      },
+      "max_audio_schedule_lag_ns": 4453083,
+      "failures": []
+    },
+    {
+      "pair": 1,
+      "policy": "weighted_round_robin",
+      "label": "r1-n12",
+      "planned_sessions": 12,
+      "completed": 12,
+      "criteria_met": true,
+      "tail": {
+        "samples": 12,
+        "min_ns": 18553833,
+        "p50_ns": 50506875,
+        "p95_ns": 93345083,
+        "max_ns": 93345083
+      },
+      "max_audio_schedule_lag_ns": 5310916,
+      "failures": []
+    },
+    {
+      "pair": 2,
+      "policy": "weighted_round_robin",
+      "label": "r1-n8",
+      "planned_sessions": 8,
+      "completed": 8,
+      "criteria_met": true,
+      "tail": {
+        "samples": 8,
+        "min_ns": 19504292,
+        "p50_ns": 42335667,
+        "p95_ns": 71869000,
+        "max_ns": 71869000
+      },
+      "max_audio_schedule_lag_ns": 6309125,
+      "failures": []
+    },
+    {
+      "pair": 2,
+      "policy": "weighted_round_robin",
+      "label": "r1-n10",
+      "planned_sessions": 10,
+      "completed": 10,
+      "criteria_met": true,
+      "tail": {
+        "samples": 10,
+        "min_ns": 17401833,
+        "p50_ns": 47616834,
+        "p95_ns": 89551625,
+        "max_ns": 89551625
+      },
+      "max_audio_schedule_lag_ns": 9485625,
+      "failures": []
+    },
+    {
+      "pair": 2,
+      "policy": "weighted_round_robin",
+      "label": "r1-n12",
+      "planned_sessions": 12,
+      "completed": 12,
+      "criteria_met": true,
+      "tail": {
+        "samples": 12,
+        "min_ns": 16761166,
+        "p50_ns": 50614084,
+        "p95_ns": 91208917,
+        "max_ns": 91208917
+      },
+      "max_audio_schedule_lag_ns": 13474042,
+      "failures": []
+    },
+    {
+      "pair": 2,
+      "policy": "round_robin",
+      "label": "r1-n8",
+      "planned_sessions": 8,
+      "completed": 8,
+      "criteria_met": true,
+      "tail": {
+        "samples": 8,
+        "min_ns": 17080417,
+        "p50_ns": 38586000,
+        "p95_ns": 89010792,
+        "max_ns": 89010792
+      },
+      "max_audio_schedule_lag_ns": 6906500,
+      "failures": []
+    },
+    {
+      "pair": 2,
+      "policy": "round_robin",
+      "label": "r1-n10",
+      "planned_sessions": 10,
+      "completed": 10,
+      "criteria_met": false,
+      "tail": {
+        "samples": 10,
+        "min_ns": 17372833,
+        "p50_ns": 58799833,
+        "p95_ns": 996530083,
+        "max_ns": 996530083
+      },
+      "max_audio_schedule_lag_ns": 4991708,
+      "failures": []
+    },
+    {
+      "pair": 2,
+      "policy": "round_robin",
+      "label": "r1-n12",
+      "planned_sessions": 12,
+      "completed": 10,
+      "criteria_met": false,
+      "tail": {
+        "samples": 10,
+        "min_ns": 21609250,
+        "p50_ns": 49998750,
+        "p95_ns": 91040708,
+        "max_ns": 91040708
+      },
+      "max_audio_schedule_lag_ns": 5279875,
+      "failures": [
+        {
+          "index": 1,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 4705578000,
+          "audio_bytes_written": 153600
+        },
+        {
+          "index": 3,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 4606269000,
+          "audio_bytes_written": 150400
+        }
+      ]
+    },
+    {
+      "pair": 3,
+      "policy": "round_robin",
+      "label": "r1-n8",
+      "planned_sessions": 8,
+      "completed": 8,
+      "criteria_met": true,
+      "tail": {
+        "samples": 8,
+        "min_ns": 17734166,
+        "p50_ns": 38722459,
+        "p95_ns": 90409500,
+        "max_ns": 90409500
+      },
+      "max_audio_schedule_lag_ns": 22188750,
+      "failures": []
+    },
+    {
+      "pair": 3,
+      "policy": "round_robin",
+      "label": "r1-n10",
+      "planned_sessions": 10,
+      "completed": 10,
+      "criteria_met": false,
+      "tail": {
+        "samples": 10,
+        "min_ns": 16730958,
+        "p50_ns": 58924584,
+        "p95_ns": 958816834,
+        "max_ns": 958816834
+      },
+      "max_audio_schedule_lag_ns": 3502500,
+      "failures": []
+    },
+    {
+      "pair": 3,
+      "policy": "round_robin",
+      "label": "r1-n12",
+      "planned_sessions": 12,
+      "completed": 10,
+      "criteria_met": false,
+      "tail": {
+        "samples": 10,
+        "min_ns": 17505500,
+        "p50_ns": 47229208,
+        "p95_ns": 88400875,
+        "max_ns": 88400875
+      },
+      "max_audio_schedule_lag_ns": 6855750,
+      "failures": [
+        {
+          "index": 7,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 4515573000,
+          "audio_bytes_written": 147200
+        },
+        {
+          "index": 9,
+          "error": "run session: receive websocket stream: read websocket message: failed to get reader: received close frame: status = StatusInternalError and reason = \"audio backlog exceeded\"",
+          "elapsed_wall_ns": 4614299000,
+          "audio_bytes_written": 150400
+        }
+      ]
+    },
+    {
+      "pair": 3,
+      "policy": "weighted_round_robin",
+      "label": "r1-n8",
+      "planned_sessions": 8,
+      "completed": 8,
+      "criteria_met": true,
+      "tail": {
+        "samples": 8,
+        "min_ns": 19661167,
+        "p50_ns": 42064125,
+        "p95_ns": 75600791,
+        "max_ns": 75600791
+      },
+      "max_audio_schedule_lag_ns": 3278333,
+      "failures": []
+    },
+    {
+      "pair": 3,
+      "policy": "weighted_round_robin",
+      "label": "r1-n10",
+      "planned_sessions": 10,
+      "completed": 10,
+      "criteria_met": true,
+      "tail": {
+        "samples": 10,
+        "min_ns": 18401791,
+        "p50_ns": 48615083,
+        "p95_ns": 90495625,
+        "max_ns": 90495625
+      },
+      "max_audio_schedule_lag_ns": 4702459,
+      "failures": []
+    },
+    {
+      "pair": 3,
+      "policy": "weighted_round_robin",
+      "label": "r1-n12",
+      "planned_sessions": 12,
+      "completed": 12,
+      "criteria_met": true,
+      "tail": {
+        "samples": 12,
+        "min_ns": 18771416,
+        "p50_ns": 49551084,
+        "p95_ns": 92900208,
+        "max_ns": 92900208
+      },
+      "max_audio_schedule_lag_ns": 6209667,
+      "failures": []
+    }
+  ],
+  "environment": {
+    "go": "go version go1.26.5 darwin/arm64",
+    "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83",
+    "cpu": "Apple M2 Pro",
+    "logical_cpus": "12",
+    "memory_bytes": "34359738368",
+    "environment": {
+      "GOMAXPROCS": null,
+      "GOGC": null,
+      "GOMEMLIMIT": null,
+      "GOFLAGS": null
+    },
+    "race": false
+  },
+  "started_at": "2026-10-03T07:25:31.994430+00:00",
+  "finished_at": "2026-10-03T07:39:03.149950+00:00"
+}

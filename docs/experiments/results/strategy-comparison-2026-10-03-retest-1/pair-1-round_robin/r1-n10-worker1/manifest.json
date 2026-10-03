@@ -1,0 +1,19 @@
+{
+  "source_kind": "worker",
+  "schema_version": 1,
+  "config": {
+    "endpoint": "http://127.0.0.1:51466/debug/worker",
+    "interval_ns": 20000000,
+    "request_timeout_ns": 1000000000
+  },
+  "output_path": "samples.jsonl",
+  "started_at": "2026-10-03T07:26:27.610209Z",
+  "finished_at": "2026-10-03T07:27:07.610697Z",
+  "samples_written": 1804,
+  "successful_samples": 1804,
+  "failed_samples": 0,
+  "stop_reason": "deadline_exceeded",
+  "sampling_error": "run worker sampling: wait after sample 1803: context deadline exceeded",
+  "output_error": null,
+  "close_error": null
+}

@@ -1,0 +1,1358 @@
+{
+  "started_at": "2026-10-03T07:30:02.901486+00:00",
+  "status": "passed",
+  "source_commit": "b546370aa8e259972f811b80659344c3bd8e3c8a",
+  "tracked_diff": "",
+  "go": "go version go1.26.5 darwin/arm64",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83",
+  "cpu": "Apple M2 Pro",
+  "logical_cpus": "12",
+  "memory_bytes": "34359738368",
+  "environment": {
+    "GOMAXPROCS": null,
+    "GOGC": null,
+    "GOMEMLIMIT": null,
+    "GOFLAGS": null
+  },
+  "race": false,
+  "commands": [
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/asr-worker",
+      "./cmd/asr-worker"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/gateway",
+      "./cmd/gateway"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/loadgen",
+      "./cmd/loadgen"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/gateway-sampler",
+      "./cmd/gateway-sampler"
+    ],
+    [
+      "go",
+      "build",
+      "-o",
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+      "./cmd/worker-sampler"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/asr-worker",
+      "-listen=127.0.0.1:0",
+      "-debug-listen=127.0.0.1:0",
+      "-processing-concurrency=1",
+      "-processing-delay=10ms",
+      "-response-delay=5ms"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/asr-worker",
+      "-listen=127.0.0.1:0",
+      "-debug-listen=127.0.0.1:0",
+      "-processing-concurrency=1",
+      "-processing-delay=20ms",
+      "-response-delay=5ms"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/gateway",
+      "-workers=127.0.0.1:53075,127.0.0.1:53077",
+      "-max-pending-audio-bytes=32000",
+      "-worker-strategy=weighted_round_robin",
+      "-worker-weights=2,1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=2",
+      "-audio-bytes=64000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/warmup.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=10s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/warmup-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+      "-url=http://127.0.0.1:53076/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=10s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/warmup-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+      "-url=http://127.0.0.1:53078/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=10s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/warmup-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=8",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n8.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n8-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+      "-url=http://127.0.0.1:53076/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n8-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+      "-url=http://127.0.0.1:53078/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n8-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=10",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n10.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n10-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+      "-url=http://127.0.0.1:53076/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n10-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+      "-url=http://127.0.0.1:53078/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n10-worker2"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/loadgen",
+      "-url=ws://127.0.0.1:8080/v1/asr",
+      "-sessions=12",
+      "-audio-bytes=640000",
+      "-chunk-bytes=3200",
+      "-realtime=true",
+      "-session-timeout=35s",
+      "-expected-final-text=今天天气不错",
+      "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n12.json"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/gateway-sampler",
+      "-url=http://127.0.0.1:8080/debug/gateway",
+      "-interval=100ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n12-gateway"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+      "-url=http://127.0.0.1:53076/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n12-worker1"
+    ],
+    [
+      "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+      "-url=http://127.0.0.1:53078/debug/worker",
+      "-interval=20ms",
+      "-request-timeout=1s",
+      "-duration=40s",
+      "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n12-worker2"
+    ]
+  ],
+  "batches": [
+    {
+      "label": "warmup",
+      "planned_sessions": 2,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=2",
+        "-audio-bytes=64000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/warmup.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "warmup-gateway",
+          "started_at": "2026-10-03T07:30:06.725411+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=10s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/warmup-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:30:06.967285+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:30:16.975184+00:00"
+        },
+        "worker1": {
+          "directory": "warmup-worker1",
+          "started_at": "2026-10-03T07:30:06.731345+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+            "-url=http://127.0.0.1:53076/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=10s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/warmup-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:30:07.222007+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:30:17.263724+00:00"
+        },
+        "worker2": {
+          "directory": "warmup-worker2",
+          "started_at": "2026-10-03T07:30:06.734755+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+            "-url=http://127.0.0.1:53078/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=10s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/warmup-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:30:07.222136+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:30:17.264109+00:00"
+        }
+      },
+      "started_at": "2026-10-03T07:30:07.222142+00:00",
+      "finished_at": "2026-10-03T07:30:09.392307+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 98,
+        "successful_samples": 98,
+        "failed_samples": 0,
+        "window_successful_samples": 21,
+        "window_failed_samples": 0,
+        "observed_peak_active": 2,
+        "max_bracketing_success_gap_ns": 104275000,
+        "first_post_exit_zero_sample_delay_ns": 13596000,
+        "query_duration": {
+          "samples": 98,
+          "min_ns": 241500,
+          "p50_ns": 802292,
+          "p95_ns": 3001292,
+          "max_ns": 3415583
+        },
+        "window_active_histogram": {
+          "0": 2,
+          "2": 19
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 453,
+          "successful_samples": 453,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 99,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 0,
+          "window_busy_samples": 9,
+          "window_waiting_samples": 0,
+          "busy_sample_fraction": 0.09090909090909091,
+          "waiting_sample_fraction": 0.0,
+          "window_state_histogram": {
+            "0,0": 90,
+            "1,0": 9
+          },
+          "max_bracketing_success_gap_ns": 27057000,
+          "first_post_exit_idle_sample_delay_ns": 3359000,
+          "query_duration": {
+            "samples": 453,
+            "min_ns": 145041,
+            "p50_ns": 658333,
+            "p95_ns": 2339458,
+            "max_ns": 4879416
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 453,
+          "successful_samples": 453,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 99,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 0,
+          "window_busy_samples": 18,
+          "window_waiting_samples": 0,
+          "busy_sample_fraction": 0.18181818181818182,
+          "waiting_sample_fraction": 0.0,
+          "window_state_histogram": {
+            "0,0": 81,
+            "1,0": 18
+          },
+          "max_bracketing_success_gap_ns": 27019000,
+          "first_post_exit_idle_sample_delay_ns": 3400000,
+          "query_duration": {
+            "samples": 453,
+            "min_ns": 170125,
+            "p50_ns": 662750,
+            "p95_ns": 2392375,
+            "max_ns": 6000208
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r1-n8",
+      "planned_sessions": 8,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=8",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n8.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r1-n8-gateway",
+          "started_at": "2026-10-03T07:30:17.287914+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n8-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:30:17.312597+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:30:57.313238+00:00"
+        },
+        "worker1": {
+          "directory": "r1-n8-worker1",
+          "started_at": "2026-10-03T07:30:17.292835+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+            "-url=http://127.0.0.1:53076/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n8-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:30:17.312704+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:30:57.313376+00:00"
+        },
+        "worker2": {
+          "directory": "r1-n8-worker2",
+          "started_at": "2026-10-03T07:30:17.296653+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+            "-url=http://127.0.0.1:53078/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n8-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:30:17.312764+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:30:57.313427+00:00"
+        }
+      },
+      "started_at": "2026-10-03T07:30:17.312773+00:00",
+      "finished_at": "2026-10-03T07:30:37.318052+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 392,
+        "successful_samples": 392,
+        "failed_samples": 0,
+        "window_successful_samples": 196,
+        "window_failed_samples": 0,
+        "observed_peak_active": 8,
+        "max_bracketing_success_gap_ns": 109043000,
+        "first_post_exit_zero_sample_delay_ns": 91670000,
+        "query_duration": {
+          "samples": 392,
+          "min_ns": 246792,
+          "p50_ns": 741042,
+          "p95_ns": 2775958,
+          "max_ns": 7830792
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "8": 195
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1807,
+          "successful_samples": 1807,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 905,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 5,
+          "window_busy_samples": 584,
+          "window_waiting_samples": 489,
+          "busy_sample_fraction": 0.6453038674033149,
+          "waiting_sample_fraction": 0.5403314917127072,
+          "window_state_histogram": {
+            "0,0": 318,
+            "0,1": 3,
+            "1,0": 98,
+            "1,1": 91,
+            "1,2": 108,
+            "1,3": 87,
+            "1,4": 112,
+            "1,5": 88
+          },
+          "max_bracketing_success_gap_ns": 29346000,
+          "first_post_exit_idle_sample_delay_ns": 15848000,
+          "query_duration": {
+            "samples": 1807,
+            "min_ns": 152416,
+            "p50_ns": 633250,
+            "p95_ns": 2636958,
+            "max_ns": 8279375
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1808,
+          "successful_samples": 1807,
+          "failed_samples": 1,
+          "disabled_samples": 0,
+          "window_successful_samples": 905,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 1,
+          "window_busy_samples": 360,
+          "window_waiting_samples": 180,
+          "busy_sample_fraction": 0.39779005524861877,
+          "waiting_sample_fraction": 0.19889502762430938,
+          "window_state_histogram": {
+            "0,0": 544,
+            "0,1": 1,
+            "1,0": 181,
+            "1,1": 179
+          },
+          "max_bracketing_success_gap_ns": 29649000,
+          "first_post_exit_idle_sample_delay_ns": 15839000,
+          "query_duration": {
+            "samples": 1807,
+            "min_ns": 133750,
+            "p50_ns": 640750,
+            "p95_ns": 2617375,
+            "max_ns": 8333625
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r1-n10",
+      "planned_sessions": 10,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=10",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n10.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r1-n10-gateway",
+          "started_at": "2026-10-03T07:30:57.375279+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n10-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:30:57.385158+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:31:37.424550+00:00"
+        },
+        "worker1": {
+          "directory": "r1-n10-worker1",
+          "started_at": "2026-10-03T07:30:57.378581+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+            "-url=http://127.0.0.1:53076/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n10-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:30:57.397886+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:31:37.424818+00:00"
+        },
+        "worker2": {
+          "directory": "r1-n10-worker2",
+          "started_at": "2026-10-03T07:30:57.381691+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+            "-url=http://127.0.0.1:53078/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n10-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:30:57.397957+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:31:37.424913+00:00"
+        }
+      },
+      "started_at": "2026-10-03T07:30:57.397960+00:00",
+      "finished_at": "2026-10-03T07:31:17.458746+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 392,
+        "successful_samples": 392,
+        "failed_samples": 0,
+        "window_successful_samples": 196,
+        "window_failed_samples": 0,
+        "observed_peak_active": 10,
+        "max_bracketing_success_gap_ns": 109788000,
+        "first_post_exit_zero_sample_delay_ns": 33863000,
+        "query_duration": {
+          "samples": 392,
+          "min_ns": 230833,
+          "p50_ns": 774542,
+          "p95_ns": 2548209,
+          "max_ns": 5899750
+        },
+        "window_active_histogram": {
+          "1": 1,
+          "10": 195
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1808,
+          "successful_samples": 1808,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 913,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 5,
+          "window_busy_samples": 588,
+          "window_waiting_samples": 494,
+          "busy_sample_fraction": 0.6440306681270537,
+          "waiting_sample_fraction": 0.5410733844468785,
+          "window_state_histogram": {
+            "0,0": 319,
+            "0,1": 1,
+            "0,2": 1,
+            "0,3": 1,
+            "0,4": 2,
+            "0,5": 1,
+            "1,0": 100,
+            "1,1": 93,
+            "1,2": 106,
+            "1,3": 96,
+            "1,4": 100,
+            "1,5": 93
+          },
+          "max_bracketing_success_gap_ns": 31075000,
+          "first_post_exit_idle_sample_delay_ns": 8121000,
+          "query_duration": {
+            "samples": 1808,
+            "min_ns": 155959,
+            "p50_ns": 619583,
+            "p95_ns": 2659916,
+            "max_ns": 9288250
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1808,
+          "successful_samples": 1808,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 913,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 3,
+          "window_busy_samples": 740,
+          "window_waiting_samples": 543,
+          "busy_sample_fraction": 0.8105147864184009,
+          "waiting_sample_fraction": 0.5947426067907996,
+          "window_state_histogram": {
+            "0,0": 173,
+            "1,0": 197,
+            "1,1": 185,
+            "1,2": 185,
+            "1,3": 173
+          },
+          "max_bracketing_success_gap_ns": 30678000,
+          "first_post_exit_idle_sample_delay_ns": 8145000,
+          "query_duration": {
+            "samples": 1808,
+            "min_ns": 136291,
+            "p50_ns": 617792,
+            "p95_ns": 2677417,
+            "max_ns": 9071250
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    },
+    {
+      "label": "r1-n12",
+      "planned_sessions": 12,
+      "command": [
+        "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/loadgen",
+        "-url=ws://127.0.0.1:8080/v1/asr",
+        "-sessions=12",
+        "-audio-bytes=640000",
+        "-chunk-bytes=3200",
+        "-realtime=true",
+        "-session-timeout=35s",
+        "-expected-final-text=今天天气不错",
+        "-output=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n12.json"
+      ],
+      "sampling": {
+        "gateway": {
+          "directory": "r1-n12-gateway",
+          "started_at": "2026-10-03T07:31:37.485129+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/gateway-sampler",
+            "-url=http://127.0.0.1:8080/debug/gateway",
+            "-interval=100ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n12-gateway"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:31:37.494633+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:32:17.533725+00:00"
+        },
+        "worker1": {
+          "directory": "r1-n12-worker1",
+          "started_at": "2026-10-03T07:31:37.487975+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+            "-url=http://127.0.0.1:53076/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n12-worker1"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:31:37.507309+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:32:17.534301+00:00"
+        },
+        "worker2": {
+          "directory": "r1-n12-worker2",
+          "started_at": "2026-10-03T07:31:37.491393+00:00",
+          "command": [
+            "/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tide-load-baseline-5ujh0uyp/worker-sampler",
+            "-url=http://127.0.0.1:53078/debug/worker",
+            "-interval=20ms",
+            "-request-timeout=1s",
+            "-duration=40s",
+            "-output-dir=/Users/can/src/golang/tide-personal/docs/experiments/results/strategy-comparison-2026-10-03-retest-1/pair-2-weighted_round_robin/r1-n12-worker2"
+          ],
+          "ready_sample_index": 0,
+          "ready_observed_at": "2026-10-03T07:31:37.507368+00:00",
+          "exit_code": 0,
+          "finished_at": "2026-10-03T07:32:17.534431+00:00"
+        }
+      },
+      "started_at": "2026-10-03T07:31:37.507373+00:00",
+      "finished_at": "2026-10-03T07:31:57.536395+00:00",
+      "exit_code": 0,
+      "checks_passed": true,
+      "gateway_checks": {
+        "checks_passed": true,
+        "checks": {
+          "idle_before": true,
+          "zero_after": true,
+          "state_matches_fixture": true,
+          "window_has_no_failed_queries": true,
+          "bracket_gap_within_budget": true
+        },
+        "samples": 393,
+        "successful_samples": 393,
+        "failed_samples": 0,
+        "window_successful_samples": 197,
+        "window_failed_samples": 0,
+        "observed_peak_active": 12,
+        "max_bracketing_success_gap_ns": 107502000,
+        "first_post_exit_zero_sample_delay_ns": 101264000,
+        "query_duration": {
+          "samples": 393,
+          "min_ns": 226708,
+          "p50_ns": 553583,
+          "p95_ns": 1660916,
+          "max_ns": 7615583
+        },
+        "window_active_histogram": {
+          "0": 1,
+          "11": 1,
+          "12": 195
+        },
+        "observed_planned_peak": true
+      },
+      "workers_checks": {
+        "worker1": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1838,
+          "successful_samples": 1838,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 923,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 7,
+          "window_busy_samples": 804,
+          "window_waiting_samples": 697,
+          "busy_sample_fraction": 0.8710725893824486,
+          "waiting_sample_fraction": 0.7551462621885157,
+          "window_state_histogram": {
+            "0,0": 117,
+            "0,4": 1,
+            "0,7": 1,
+            "1,0": 109,
+            "1,1": 91,
+            "1,2": 112,
+            "1,3": 89,
+            "1,4": 107,
+            "1,5": 95,
+            "1,6": 105,
+            "1,7": 96
+          },
+          "max_bracketing_success_gap_ns": 58204000,
+          "first_post_exit_idle_sample_delay_ns": 20980000,
+          "query_duration": {
+            "samples": 1838,
+            "min_ns": 115000,
+            "p50_ns": 458417,
+            "p95_ns": 1644375,
+            "max_ns": 32656042
+          }
+        },
+        "worker2": {
+          "checks_passed": true,
+          "checks": {
+            "idle_before": true,
+            "zero_after": true,
+            "enabled_throughout": true,
+            "state_matches_fixture": true,
+            "window_has_no_failed_queries": true,
+            "window_has_observations": true,
+            "bracket_gap_within_budget": true
+          },
+          "samples": 1840,
+          "successful_samples": 1840,
+          "failed_samples": 0,
+          "disabled_samples": 0,
+          "window_successful_samples": 924,
+          "window_failed_samples": 0,
+          "observed_peak_in_use": 1,
+          "observed_peak_waiting": 3,
+          "window_busy_samples": 743,
+          "window_waiting_samples": 563,
+          "busy_sample_fraction": 0.8041125541125541,
+          "waiting_sample_fraction": 0.6093073593073594,
+          "window_state_histogram": {
+            "0,0": 177,
+            "0,1": 2,
+            "0,2": 2,
+            "1,0": 184,
+            "1,1": 179,
+            "1,2": 191,
+            "1,3": 189
+          },
+          "max_bracketing_success_gap_ns": 59422000,
+          "first_post_exit_idle_sample_delay_ns": 20386000,
+          "query_duration": {
+            "samples": 1840,
+            "min_ns": 126917,
+            "p50_ns": 451083,
+            "p95_ns": 1589417,
+            "max_ns": 7763167
+          }
+        }
+      },
+      "criteria_met": true,
+      "criteria": {
+        "all_completed": true,
+        "tail_p95_within_budget": true,
+        "sending_within_budget": true
+      }
+    }
+  ],
+  "shutdown": [
+    {
+      "process": "gateway",
+      "exit_code": 0
+    },
+    {
+      "process": "asr-worker-2",
+      "exit_code": 0
+    },
+    {
+      "process": "asr-worker-1",
+      "exit_code": 0
+    }
+  ],
+  "worker": null,
+  "gateway": {
+    "max_sessions": 64,
+    "max_message_bytes": 1048576,
+    "max_pending_audio_bytes": 32000,
+    "start_timeout_s": 10,
+    "input_idle_timeout_s": 30,
+    "worker_send_timeout_s": 2,
+    "tail_timeout_s": 15,
+    "result_write_timeout_s": 2
+  },
+  "schedule": {
+    "session_counts": [
+      8,
+      10,
+      12
+    ],
+    "repetitions": 1,
+    "audio_bytes": 640000,
+    "chunk_bytes": 3200,
+    "realtime": true,
+    "session_timeout_s": 35,
+    "warmup_sessions": 2,
+    "warmup_audio_bytes": 64000
+  },
+  "limits": [
+    "same-host independent processes, no isolation",
+    "no waiting-duration, backlog, CPU or memory sampling",
+    "sample fractions are not time utilization",
+    "client write success is not a server byte counter",
+    "finite batches are not stable capacity",
+    "sampling overhead has no A/B measurement",
+    "Mock emits only four partials then a final"
+  ],
+  "experiment": "dual_worker_strategy",
+  "worker_count": 2,
+  "policy": "weighted_round_robin",
+  "weights": [
+    2,
+    1
+  ],
+  "worker_configs": [
+    {
+      "processing_concurrency": 1,
+      "processing_delay_ns": 10000000,
+      "response_delay_ns": 5000000,
+      "partial_every_ns": 500000000,
+      "partial_texts": [
+        "今",
+        "今天",
+        "今天天气",
+        "今天天气不错"
+      ],
+      "final_text": "今天天气不错"
+    },
+    {
+      "processing_concurrency": 1,
+      "processing_delay_ns": 20000000,
+      "response_delay_ns": 5000000,
+      "partial_every_ns": 500000000,
+      "partial_texts": [
+        "今",
+        "今天",
+        "今天天气",
+        "今天天气不错"
+      ],
+      "final_text": "今天天气不错"
+    }
+  ],
+  "criteria": {
+    "all_completed": true,
+    "tail_p95_ns": 250000000,
+    "max_audio_schedule_lag_ns": 100000000
+  },
+  "source_sha256": {
+    "cmd/asr-worker/config.go": "4ec1d297d42ded79febfe0709a199f035400921b45c9dd70ba8fd35f4238cebd",
+    "cmd/asr-worker/config_test.go": "b36b2b0e8c0fdad251aa88fabf7e8d87f441f5fe988247dff0c2425c1156243b",
+    "cmd/asr-worker/debug_config_test.go": "24ed3e9b756aa8653d144cc3ffdae5720aaca817ac1b40649ba1ca5f4b30d708",
+    "cmd/asr-worker/main.go": "a099e9225f005e2a1a2c4a48bc9bede5ecc41c074421caa3d8575b48ad472adb",
+    "cmd/asr-worker/main_test.go": "0a2b2612376174bb417d24bbacada9d0a87d956a6995dd8ae1a58feab92f87f3",
+    "cmd/asr-worker/sampler_integration_test.go": "f82b16be3d5e018805f92b01cf70d58c2524bb74da797c1f01c5441f7483abf7",
+    "cmd/asr-worker/serve.go": "7bdf2e7f33c79490e65837639f9f77b32e508c8907950d2ec7c00f2e35c34591",
+    "cmd/asr-worker/serve_test.go": "b57910ad8a8504c3ee557fff608b0bd0e0542e6bbdabf0478437d85bf85653a8",
+    "cmd/asr-worker/snapshot.go": "f4fafae3cfb1fce447f19d5e3a20445e55741a008d8f68728b408a05a1f5fce9",
+    "cmd/asr-worker/snapshot_test.go": "e80296b9ff4a9d24e9154b672b8603581b25d999c19137fdefcf29e9c2448cb1",
+    "cmd/gateway-sampler/config.go": "16e80c4e45459a99f7db1369d39ab8f2c14d35158e1a635c62e969657999d50b",
+    "cmd/gateway-sampler/config_test.go": "2eccc034fa35f12760cf45e4e27e879d64fdad186f74b0ac7c2dadc1d7e2f962",
+    "cmd/gateway-sampler/main.go": "27fe3383717c92edc9ceb0192ca6c943e6756e30f2b1112ff780a347cd0eeee6",
+    "cmd/gateway-sampler/process_test.go": "42f1739d83071d2b24ea90c48e8319d0f564b6793e579a92b9f3f1f9c4e26ac0",
+    "cmd/gateway-sampler/run.go": "4246b5747d3578b125e9ecd4f1043f0f8eaa9d5b549a21ddba20fb8a0d9a60a2",
+    "cmd/gateway-sampler/run_test.go": "279d9ec624a2f011b708c451a48f82453e4c9def895a65f74644de87c99f8b29",
+    "cmd/gateway/config.go": "6f5b6af7afee6d2f5743bd3cf46e75c2476361e5a3833e4d3233ae1dd6c430b1",
+    "cmd/gateway/config_test.go": "338a756eac39cc97e4e28c28b702a6554f4c2a7e1c4be3df9a17e96ad68ee746",
+    "cmd/gateway/main.go": "60833ee3e71bca385eda53f75e4907ece05365a779c33cb64a3903f8c99dd3f1",
+    "cmd/gateway/snapshot.go": "43b04b93e70c4fb0a30074b0d732f82edc5063f86c24a2ea919d29ef1a8eecbf",
+    "cmd/gateway/snapshot_test.go": "62dc4fc58aa4909952278ab200890446a83cf829d40728756f69e995c9ddb12b",
+    "cmd/gateway/startup_test.go": "71797f4c893952a94332fc86f6c683e72f9ea5fb4ea7b3028344db11e9fb1034",
+    "cmd/gateway/weighted_startup_test.go": "165a4ef4bea00c723f57c987a47fa7aa8f6cee4a0d745831d86b8d9138b8c248",
+    "cmd/gateway/worker_addresses.go": "1716fdd0bd46f39c97505516146906a677aebf7294f12053bbfc4a55e0516213",
+    "cmd/gateway/worker_addresses_test.go": "2af1ed4a76d921fc314305a1d68028abb83738e2e4083f0b612759030363a5fd",
+    "cmd/gateway/worker_selector.go": "474311c6b61aaff43a8645fa81e787019d9044888809b67e3265b74afe2d80a5",
+    "cmd/gateway/worker_selector_test.go": "927a6a708e97413f73f2e82a52d31229d52339f7a897f44e385d236fdde04d6a",
+    "cmd/gateway/worker_weights.go": "2cc8042637858a3abb5df9dbb9712ff6f8da2d96708c43adfbb0b273cc38790e",
+    "cmd/gateway/worker_weights_test.go": "3caa63dfa72bd7c3e9ba4cc5fae5a0e977a12cafa3321dedb5942b107132ba8f",
+    "cmd/loadgen/config.go": "ed92aa67be8eb9d4b508a5a8c70b4729fb0b47ebf00e1a028a872b73269e0ec4",
+    "cmd/loadgen/config_test.go": "ec997eb8e0047930dcef2e6b3db03669481f7cd6e9635c67418fa8538ebd6222",
+    "cmd/loadgen/main.go": "e9f98a467a31272a0760fb648c7fc0093ead14317f58b5de3d3b311686143665",
+    "cmd/loadgen/main_test.go": "323d8b14b0ccf23026d3d05ea9fec83b3ed0d9031736a0486a0fd9dbbdf872f0",
+    "cmd/loadgen/process_test.go": "8b80b41b44c5dfd38c1f6006ae5f0dd2fba80fbc93ac397596bf7be8d2e7fe75",
+    "cmd/worker-sampler/config.go": "2b126859c54f0c35655a3baad2c71ceadc08c5d252b143bbc84af6947905d271",
+    "cmd/worker-sampler/config_test.go": "eed02dc0fa3bd551272a48849734af9b1551bdbadb7c1aa6a81ad0462dc3257a",
+    "cmd/worker-sampler/main.go": "5943955b811214a8ccd4f5eb01d7cccfc6e7b35242c0422682e6c7b3291e9c1a",
+    "cmd/worker-sampler/process_test.go": "b9d240c0437eed4cb568eefdc0f2d1d760a297842eb1a235db8ae8a840d2fc30",
+    "cmd/worker-sampler/run.go": "30a3145c77317135075f9b5a4dc90c5df2b8b493fe21e026321881de9ba0f236",
+    "cmd/worker-sampler/run_test.go": "4bbf9ee831f84c359e01e84fab85bd544265ef461119e21d90d6e6907a4a6ae0",
+    "cmd/ws-client/main.go": "be4023437da090b59cf6e999d606d65e93d877cb52cf5473159f379f1b043dbe",
+    "go.mod": "c9c7012d18711cb2d954c57cc784a8c70327d34b03167b91a01aabded852db4e",
+    "go.sum": "829a64643f43bb0a0fea771fa2561e6a7fa26622fcb4bbcbf7dbbb101e88f5fd",
+    "internal/audio/format.go": "5f86af2fa59391da5c06853838940abfe7879f28d06c82e1e2411456e558ddda",
+    "internal/audio/pacer.go": "c83b872b3b3ac5c0f7be0898945984d18556f7cd89521d5a4c3bbaa0dc3434cd",
+    "internal/audio/pacer_test.go": "9ca87128617203895e6c333009bf1c66018e6504c9a00bfe8307dc4f56c7eaca",
+    "internal/gateway/admission_network_test.go": "4e210935259cf79072a52bf235090f8ebb5127a837f0a7411687b664ca65e6ee",
+    "internal/gateway/admission_test.go": "fdba441ed95c69f82f677ac73e36072dbfa0ddfaf79869f6bc4eecf2512758be",
+    "internal/gateway/audio_progress.go": "e1cf00d7ca2c25990c51350f637b77a3ce127f2c53d0f89f41448741ab665e26",
+    "internal/gateway/audio_progress_test.go": "3abfabd5cd205ed374d27c088103d04660eb2f934854281e834ca3cf952bdd96",
+    "internal/gateway/backlog.go": "3d2738f4fbefa2c9042f75a9f00435c48a5d3fcc99cdf5e12c1d78923bcf8baa",
+    "internal/gateway/backlog_experiment_test.go": "aca466ce096d9f7c94d8ad6dd3c22653c54a6184addcec64b4ef42e788ac6d7b",
+    "internal/gateway/backlog_integration_test.go": "4368397d1cf4ac2ad84841dc78a9693df8f8e9631c373f1c961604882f3d406d",
+    "internal/gateway/backlog_test.go": "ef026ac2c435120c6402e3644806774ef9ed33302447e95068cdab5edffb3ee7",
+    "internal/gateway/client_disconnect_test.go": "3b169c49748940bfcdec746290ea3d2b8f553adb259beff904de0cc5624a5b1a",
+    "internal/gateway/download.go": "ac7803f645210c47c9a67caca549de40d6055383cfe4fe4ea46c9f61e10563e2",
+    "internal/gateway/handler.go": "a3e11466e0eed588c2b42e16e9e679970dbee11550f051bc3ebe1225c0d1dbb7",
+    "internal/gateway/handler_test.go": "8cc4493dbcbfdfd214fa09f10ef5cf5d7ee9d937336fb613092f3c3bb4709549",
+    "internal/gateway/input_idle_result_test.go": "c1f53731a87ce77eb4153f587aafa6036f1aaef2775d429fad32318384fb4b2a",
+    "internal/gateway/mock_worker_test.go": "4cc0511876d86dd41562a06a1081ca418d42c9c7a89d52de52882b7bd43b1cac",
+    "internal/gateway/normal_end_test.go": "c3d7f01c299c75e03d0f636cda315b2164540af0cbab5bd6aeb4f0be8ee054c4",
+    "internal/gateway/progress_baseline_experiment_test.go": "cd9e441fd48a52536576d99330d5d7df23740685f255f62369475f09b9647efd",
+    "internal/gateway/progress_integration_test.go": "9480584474ccb68b230a6775d99d58d81616c6e7894f6dde21692b04f6eb862c",
+    "internal/gateway/progress_routing_test.go": "dbd9012306ae1d3cb829222180be1d64b1556189d3230dc7a826af354cf54eef",
+    "internal/gateway/protection_cleanup_experiment_test.go": "e887afbb1ab6e85edd187c812c3197c4096e29ab19ced1ade8798b98a4ede9ac",
+    "internal/gateway/read_input_test.go": "a8174089e0df6006686ca60092137cadc9abd3b88aee5a4d7e576b86571d9eea",
+    "internal/gateway/resource_cleanup_test.go": "381dfcb634aad577ee6a76a2ceb0a79f741d530fdd67bce9aa32da4faf61d9fe",
+    "internal/gateway/result_write.go": "c4857e2586727457bcd38dd6fd8dcb0b4e214bcbca3484bd0427b3a71069437c",
+    "internal/gateway/result_write_experiment_test.go": "7ba5ae547468efe125494336e01e99597b1befc9772a01da0439d418093306cf",
+    "internal/gateway/result_write_integration_test.go": "3ff166cfa698ef2fcef6d8509a3a880ca489a400dbbfd2239c2c694f8d31de52",
+    "internal/gateway/result_write_test.go": "118618116884f84b87f13a43db2d76b153c22fd4b0df33d080aa11d586c5589e",
+    "internal/gateway/send.go": "dd499b61fb2fb7f5268b51c5f856d755d4a48b34300d35cc68bf6f9fed4c1163",
+    "internal/gateway/send_test.go": "99511f81c61943cd8ddc32f219587b1b6a087f892029cad644cb45e9c335e467",
+    "internal/gateway/session.go": "728e5922757716bcef3accb81d8d00cbe0662e666c3fc370b2deffea67b89de8",
+    "internal/gateway/shutdown_stream_test.go": "16746cf845e38a6f72a4e71a33fed2bc5388d4d0ab99c53e37f83b2787c7e347",
+    "internal/gateway/slow_reader_experiment_test.go": "a6f02888da9f0a52bb10aab79e3748ce99650848c1e5121f6e7949912c775a67",
+    "internal/gateway/slow_worker_experiment_test.go": "1f64a1d05c5e7e1e7684af8d5dd7bcd6ea75434eb0ce8879780d2903e5493966",
+    "internal/gateway/snapshot.go": "2af18621f6fea505cb6e0299bfb5705665ef95a299cfde806cd02c6bc567d58d",
+    "internal/gateway/snapshot_test.go": "5cc150ee9927f115b36fdb86ca7557e24c9c3b5a41cbed3343e80d92d1b5f67a",
+    "internal/gateway/stalled_worker_experiment_test.go": "8d99c872c0e9a63f2b7d1052f409e4d8f4dd5886400bd9224a6b0214829e243b",
+    "internal/gateway/start_timeout_test.go": "e1bdd23b84e4f8092373fcbac57ea7b6411cd4821705edc3d9b93a97769c1eed",
+    "internal/gateway/tail.go": "28053ca665c70e6c0011d5a1d0ed5f899bb49ab51642bb26ad8cb354cd6d7554",
+    "internal/gateway/tail_config_test.go": "c4891e141157b6d6de8338a53528f0784aa1aed3a28545075cc5d8082e8a5554",
+    "internal/gateway/tail_integration_test.go": "1a7ec9abed768d50f907569a7d5f736e5944fe1635adfeb8cd0d73c68cb26381",
+    "internal/gateway/tail_stall_experiment_test.go": "81bf3e56ddebada2ff7a1ba4f0c3e561eabf25f011549a4cfbad15319ae9160a",
+    "internal/gateway/tail_test.go": "f0413c578bc08cdeacdcf850edfd96b97b342d6cdd38f510cf0066a27f6780d3",
+    "internal/gateway/tracker.go": "a066243161406545220f69e76019d02428673f51b73540c45386d2574fc144dc",
+    "internal/gateway/unresponsive_close_test.go": "1205d9658fdf85d8a4c73c87bc06bad26b8784493f0514c4c16b0f6724410553",
+    "internal/gateway/upload.go": "7565131b91a28ffcb47553fc72e7c6bdf57a1ebea3872af35f129f78e277b2a2",
+    "internal/gateway/worker_failure_test.go": "ecacbb660e75d7d494f1dc41b7faf749ace4b88135c06a37afa2504b19883c2a",
+    "internal/gateway/worker_pause_experiment_test.go": "61ea060f0394e0dc4e6059ff99ef94a7061afab82725346f7d1b7f692fde07f4",
+    "internal/gateway/worker_pool_test.go": "b011b163f70a1c49f3d058a364ad3be1bed3775f8ab6fac05564d73d12d2cde5",
+    "internal/gateway/worker_routing_test.go": "99e12c1289e0405544007d29beb24911770af7f84da8d367a982e626fd48ac63",
+    "internal/gateway/worker_selector.go": "27e1b791dc9e900616580a776ac34552b330ced79ca68174280710c25741eeaa",
+    "internal/gateway/worker_selector_test.go": "dab219722edb73458b7f6ed53a5e59571134d3dd832e568568c737442242a992",
+    "internal/gateway/worker_send_timeout_test.go": "01493e99a3610f8cab283012e90944d11692e90c8483e84c3093d0b95ea42b92",
+    "internal/loadgen/batch.go": "2f8eea4fedd87f62d9ba888ffb4ada06af241b69c8981460a87da9aeeebfc95d",
+    "internal/loadgen/batch_config_test.go": "638f90dece23059fe3b6f22e0c85d0083a85d6223b1a1dff4176d8a505c60280",
+    "internal/loadgen/batch_test.go": "ee63633ffdb3ba2eb19d4dad0a56092971da4b7cf2b75977fb343e332a034af0",
+    "internal/loadgen/gateway_recording.go": "dc19ecf40ef22ef95a65c456b29377425a0ae8491c2d7e14e05104ae60a60848",
+    "internal/loadgen/gateway_recording_json.go": "e435b1ad0f2be46e1397dae0897f11681be97d6d2c36957b35043769770578c9",
+    "internal/loadgen/gateway_recording_json_test.go": "22c71fa385180367717f1d7bc1702921bd4ae8654545298247fc3130344960e3",
+    "internal/loadgen/gateway_recording_run_test.go": "cb7d5a39271c271f9730342b54520f36700c7447f27138818d7b18167e1ea56b",
+    "internal/loadgen/gateway_recording_test.go": "659a6d549df92b1e4d5d70bde68db5a0054eb8f08f05658bd33c4de0772c5288",
+    "internal/loadgen/gateway_sample_json.go": "f6ffa4220b794db981569e4b1e0e4b197d115c86e3ed7e69dee7289b5b05cb71",
+    "internal/loadgen/gateway_sample_json_test.go": "0bb1128e34a9e0559d69e25c42b386e25b0639f49abfe9d1b60cfa2222441947",
+    "internal/loadgen/gateway_sampling.go": "fa253d61540f35891ec27253fbf1604cb798358150242c57a9bd8f6ea448c34e",
+    "internal/loadgen/gateway_sampling_test.go": "1054fa7cc8fae496ee7d569e7c82760f75407d45dc3486ac92f09ee9ef43dfa7",
+    "internal/loadgen/gateway_snapshot.go": "1423e0f5538e1bb07da8032deda1eeb2e60ff80816f45e9652e4d5037aa5f621",
+    "internal/loadgen/gateway_snapshot_test.go": "cc3271b3fec0c915463368f9b7a6a4d590ffd8a70215194ae079373e154b7a06",
+    "internal/loadgen/json_output.go": "4186f0e10d9564725e17bd5c761a7ca655a407826c04dd651f7d536822827b1f",
+    "internal/loadgen/json_output_test.go": "3593883af4830e62d6da4077ff65060cc5e758eb8a150050abef87f660cba531",
+    "internal/loadgen/recorder.go": "06f5b940cfa5b994e48e6292bad1d5311ad8f58f541380954efb1ac199b0813c",
+    "internal/loadgen/recorder_test.go": "9812d4ffe30adcf697775b1a78da1606d150eb09dae03b2b89b3a0621bffb868",
+    "internal/loadgen/sampling_loop.go": "0308eee32f85d982c6a09c24752ef42d05c7d13a9819204ee7ea319dc6240e17",
+    "internal/loadgen/schedule_json_test.go": "5e75d9df750b6521351c1abfa2bf4c1d8594449cd084da135a861baad025d6a0",
+    "internal/loadgen/schedule_recorder_test.go": "2aa3e42aafa1b53483f75b13c6a487089ec76b879569854317ef005f8803fcfa",
+    "internal/loadgen/session.go": "f1abe8b309018d1db81e4b48727abeaa29d13e59de15e78f788a7862172a10db",
+    "internal/loadgen/session_test.go": "d74db0f50dd726ddd60a5e42c47df055bacd9742b038a8b266213a01cedd4150",
+    "internal/loadgen/snapshot_recording.go": "bc627d04fdf3676a79f51e0e3fc5d91c7e22eb1c3403019a2011a59392ffaaf9",
+    "internal/loadgen/snapshot_recording_json.go": "902c5aefbdc849ab735dd1b4da713dc236cce9ae1e0420c6d31a33c8562b9c5b",
+    "internal/loadgen/source.go": "745448a03b85d5ce785e898632838446ef81b5d21ac1e07cb789357ffd415710",
+    "internal/loadgen/source_test.go": "7ba0f6e54a1ee3c6f1d71f02cea3b258e0bb1e14f4d31010dfc1d720a23a6850",
+    "internal/loadgen/summary.go": "9a2653b522c4d2b6cd051639ffe8125b9ea5920651d26028c7aeee31951f2d17",
+    "internal/loadgen/summary_test.go": "391b6923decc8a2ca038300fc905438594f24fdefff0e457c2b31b3eee93aaa4",
+    "internal/loadgen/worker_recording.go": "8141b25d9c3a8781692f5652110f0a81d3e2f3353998a20a003aa7152122cf35",
+    "internal/loadgen/worker_recording_json.go": "4c7bcbf7b6e8450012bf274b35ac1d61ddcfb76c4eab018dcf27a13b1eb27a99",
+    "internal/loadgen/worker_recording_json_test.go": "e073c33c56fd0a3bb9396dce918889dc756e2ddc9df472c9a7260ff5fe332aed",
+    "internal/loadgen/worker_recording_run_test.go": "b439045122922170b3c3fe194717831809d900f8eda670d12f290f130580be97",
+    "internal/loadgen/worker_recording_test.go": "cc2256b84cfab15dab1cc2ca73acb5d39229c7a2fe98080a65a059778bb0b571",
+    "internal/loadgen/worker_sample_json.go": "7bb5394b0c96f95daba1d3d909f5bd6b2450a4883999ce0f512f857cbf9f5beb",
+    "internal/loadgen/worker_sample_json_test.go": "e86791074aae30817ed8accb8971388f8bf79851953df30e038ca0536b5296c7",
+    "internal/loadgen/worker_sampling.go": "b66e6f1ff530dfccc31ec04245404d95a99af406fe3fd3d6de68a749ca07b7df",
+    "internal/loadgen/worker_sampling_test.go": "742c168f6045564bdfd65ad2cc7e10c33a0a5c38798efaf06bb7520f9b5088f5",
+    "internal/loadgen/worker_snapshot.go": "2199e135b86f90acbaa496d77c6480155ecb30eac785e36363b2f2338b06fe58",
+    "internal/loadgen/worker_snapshot_test.go": "368d75bed98190dddc880d471915143fb53d58f36f5a66987b3e86eeaeb4ffda",
+    "internal/mockasr/constructor_test.go": "321e0fcb12806f3e9e19d8866da89f358bf3f36c25ff492832bf862143333c87",
+    "internal/mockasr/pause_test.go": "a34def39531a4ec061f61b9a5c2afe123a5997566a20ca150b3abf774f36617f",
+    "internal/mockasr/processing_capacity_test.go": "bb511c73e0a952e7d5a1336a0d48b61bd34de6f32bc9b977116b2543d2ec6540",
+    "internal/mockasr/processing_slots.go": "77c02ffaf45bd46fd91af9460c63d7aad9d733a4fe2d0542669ff1499b89437f",
+    "internal/mockasr/processing_slots_test.go": "9c54576cd7b6f8e06fdfaea054fbff1a9bcdaf55259d12e9dbe42ab77bea5463",
+    "internal/mockasr/processing_snapshot_test.go": "1aa433b2846f1f80b0e4d50f651ef463274f2360bdd5fb8acab35a9bdfb7b815",
+    "internal/mockasr/progress_test.go": "bff87321a4e6ce0f9fa909742a43d807e141b40b7657c6288deadd99e444f833",
+    "internal/mockasr/snapshot.go": "a09b4f2d9c2ce8a658867d8690b500f36a8b5b454edc3e7959a503073d6c7a96",
+    "internal/mockasr/snapshot_test.go": "29ed5c3999bd1bdfd09feb8269c9743a20a5505cede5925e6746b672dfec33cf",
+    "internal/mockasr/stall_test.go": "cd63802075ac51ec16dd8756a084905c5f63290c4a2881980f1d4603171e1b0e",
+    "internal/mockasr/worker.go": "4c1b37f3a5961f730d86b7df3c4166a18d58aca43316223f62d278d12050e1a1",
+    "internal/mockasr/worker_test.go": "8fec412437a0cf9612f64545c01def79ca4c064a39d3cdbd79b70aaf02b7a03f",
+    "internal/workerpool/round_robin.go": "b48aeb9fa48177b3e5c3f1c558bdf61a4cecf42d20ae09fb967a2d7a01fb6371",
+    "internal/workerpool/round_robin_test.go": "fcdfae2c97e1859444f75cd05eb030fd94a123c0207561186f865465ff367210",
+    "internal/workerpool/weighted_round_robin.go": "d7aa2757ed7a922ec0cc88a17e212f525aa96f89264a64ac6e9f2e339ca3659c",
+    "internal/workerpool/weighted_round_robin_test.go": "1e82b31d79a183d0e047595c8de77f457bb183c419a5a8af21c029e4bdc7b0f6",
+    "internal/wsclient/client.go": "4ed80ad8b6235527e9cc5ee78eb360790b826b72ea7ceae58278898419c51661",
+    "internal/wsclient/planned_write_test.go": "c723fd208b2767534bfc4251c8dae6eae544ad721aab40325f0faf2db5506145",
+    "internal/wsclient/receiver.go": "2c9beb9695a27974a011a993b61a0c9e172a3410c9b3833505da4465ddb49a41",
+    "internal/wsclient/receiver_test.go": "2711223f564f9c499b0662727873126d031223fdbb638f691d3de0a7f6c479ef",
+    "internal/wsclient/sender.go": "e5f66093523328099c95240cd06c2dab13363e2e2881436621fd4c8b1dd21a3d",
+    "internal/wsclient/sender_test.go": "b8869cfab223cde121699614ea55b944264fa7bf0ac6d85fdc47c9e64cc2e8f9",
+    "internal/wsclient/write_observer.go": "24ae84debcadba609bbf0afca2ca967ccb0ccc6cbea1094574fbf0d0a0a94ab1",
+    "internal/wsprotocol/protocol.go": "744893ed3b9cfd381ef456adb5e8e20b4c2906a0e0ad7ef2a2c107b30939316a",
+    "proto/tide/asr/v1/asr.pb.go": "3ca21427d90a92607411ca201b441bb51754c8db6d734f643aa8810b99bec911",
+    "proto/tide/asr/v1/asr.proto": "f849ea264fa53bd7c1a7f9240c5ba87500301e59b497e76d4ff735dfd9ef0797",
+    "proto/tide/asr/v1/asr_grpc.pb.go": "f3f4f45775d909c068a680574b158d4ecc0e431ba93c1521665c35dbd2eaf673"
+  },
+  "sampling": {
+    "gateway_interval_ns": 100000000,
+    "worker_interval_ns": 20000000,
+    "request_timeout_ns": 1000000000,
+    "duration_ns": 40000000000,
+    "readiness_timeout_s": 2,
+    "max_bracketing_success_gap_ns": 500000000
+  },
+  "script_sha256": {
+    "run_joint_observation_baseline.py": "84d914ae2f1094929b1cffd303aad649a6b63f78d1dc788f608b605c18a6ee8e",
+    "summarize_joint_observations.py": "25bb4ffd596192ed60167009c283b1afd41b96664a3a6b65591eda564c8036e5",
+    "summarize_gateway_observations.py": "1cc1e46f9baffd9a689ed13b1815e03f1235aef0f60f4d1a8b00b89a889f65cb",
+    "run_loadgen_baseline.py": "2e9aa062389c6229fdfcdf3c1d134c414fbd4d93af70e288489de7aadf3d2e97",
+    "summarize_pressure_sweep.py": "728f0f5a347e86563c6f7bf0886f96ee697e3153eb9092dd5017dce7d79b4f93",
+    "run_pressure_sweep.py": "938627d4d544edaf08a76ab3fa49279c9baf958ca8fbd18a00e38df2f7efd89b",
+    "run_boundary_study.py": "6893ef2fdba7810ef22065c07fd742d68de5cac762aa28332be4c9655c40f8f3",
+    "run_worker_comparison.py": "5d54fcc9e0c7b71cb76e9ee7a0da541f65381ee1e8f001f47de2e876571f33be",
+    "worker_comparison_contract.py": "2fa2d6cc067c098105cfc7f567fec98fb492a9b3649309d6e5b0d88fc6451d4a",
+    "run_dual_worker_sweep.py": "77395b3c9e66c451989ffaf0940873a0e71fb7258e95d3abae0106eeea4f40f9",
+    "run_dual_worker_boundary.py": "cd661e1a1b11a7e4ab323070558b1a209c925773e2e110a91e21995f2b737e2d",
+    "run_dual_worker_extended.py": "2e3667b619a692dcb4dd5e565b59258925fa83a74125a8551d64e19d6383fa99",
+    "run_heterogeneous_workers.py": "980685e2f80fa06b8869f2f7d47b85b8acd37167f878c4fcf1c8fae001e933c4",
+    "run_strategy_comparison.py": "5a3db6fb5323f09873a120d9f80b86ad14805bad3b46fb4b6c71634159aea7d6"
+  },
+  "binary_sha256": {
+    "asr-worker": "fa802c79f7ecb99353aeb235af83dba71f27738f819133232779c092e275b1e7",
+    "gateway": "0289ba746fa93b619b66fd16e3ef606cd3a6df241522d8f261f8616c643b7a0c",
+    "loadgen": "6830ae49d1579d7b62a1a6763a50856b0c75fcd132049396280b8055f2b2de0c",
+    "gateway-sampler": "98327d5c51c6f3707f6d8f15d01d855ec49ca9064698f00aad829a3a34f868a1",
+    "worker-sampler": "1e961b8c7e92ab5f3152bda4ef7ee27ee2e32a467f11226bacc3bbef4ce242ac"
+  },
+  "workers": [
+    {
+      "id": "worker1",
+      "address": "127.0.0.1:53075",
+      "endpoint": "http://127.0.0.1:53076/debug/worker",
+      "config": {
+        "processing_concurrency": 1,
+        "processing_delay_ns": 10000000,
+        "response_delay_ns": 5000000,
+        "partial_every_ns": 500000000,
+        "partial_texts": [
+          "今",
+          "今天",
+          "今天天气",
+          "今天天气不错"
+        ],
+        "final_text": "今天天气不错"
+      }
+    },
+    {
+      "id": "worker2",
+      "address": "127.0.0.1:53077",
+      "endpoint": "http://127.0.0.1:53078/debug/worker",
+      "config": {
+        "processing_concurrency": 1,
+        "processing_delay_ns": 20000000,
+        "response_delay_ns": 5000000,
+        "partial_every_ns": 500000000,
+        "partial_texts": [
+          "今",
+          "今天",
+          "今天天气",
+          "今天天气不错"
+        ],
+        "final_text": "今天天气不错"
+      }
+    }
+  ],
+  "finished_at": "2026-10-03T07:32:17.608180+00:00",
+  "artifact_sha256": {
+    "gateway.log": "5e224569cb34e2bdd3813431e31020777b19fa3cfc080357f35f7d6773c5233d",
+    "r1-n12.log": "70a29fb4a09ada0e7b9afa3b4529e5b95bcfec419d204836e126a95447cfc7e5",
+    "warmup-worker1.log": "7fba0be64155964e07303721669a85962abaa2df02989a938a8ceacadfa3d1cc",
+    "build-asr-worker.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "summary.json": "3668305a160b550a5166f30052d8b9e6c084cdba9e30ec75c413e4b742bc9391",
+    "warmup-worker2.log": "d3b73d715ff30bb6d11d9d8d82515a8537bc252f39ebec4cf271f68d9d14f6d5",
+    "r1-n10.log": "e3742c5ed0dc7fbe99369212dcea143a63ec2a580c98dd3cd07642816d82af8c",
+    "r1-n12-worker2.log": "73de24a20b55278a06c35ef7034ff3f37be684a33d49407805824091392b8e36",
+    "r1-n12-worker1.log": "7ab2f696bde68a21f126cc3c96b9c78560bb89ac6094fa4ec18a0467464989fc",
+    "r1-n8.log": "0b933579c9fc7cf4d0757cb129396889b28dec700b40a90727943c917dec0b53",
+    "warmup.log": "c5d1cdc8de0fc30a31968714f1dc966653b233795869c39ca67b70143faf9767",
+    "r1-n10-gateway.log": "4ed34dd24dd5c062f100d8b70cbe46327419eb64cc46f2838c80861caac32484",
+    "r1-n10.json": "64083d3074400c2cd9bdb8554fbc053b3fb45b60aac2d9414449c61b0320977b",
+    "r1-n8-gateway.log": "4269195d8323d6f37497d16bcee334ae8e812315a4a4d4aa31f123521b32a935",
+    "r1-n8.json": "63aeef80d4ebd7214450ad7b348428c953fcc7782218ad2c6765c57df9917cd7",
+    "r1-n12-gateway.log": "10ead11de84fde14ef2862cdccb786f2b84e8b394057ed2580c7d495fb9dafc5",
+    "r1-n12.json": "64d77b54b54a858e63c597514504ef25d87d95f2e5eb5b0535d65bd764be46ae",
+    "build-worker-sampler.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "warmup.json": "90b635c6efc969c1ff2fecabd677e0dedd55383d1175a193edfe3f3c954dba1e",
+    "build-loadgen.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "warmup-gateway.log": "c57b38770fcdd32926d13331a4a55f30d65e622c23ba708a415af808adfe6f23",
+    "asr-worker-2.log": "23ea81d69ab9d57b7ac1124e71011d8418cb38ae527a176f0607eddaed5046b4",
+    "build-gateway.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "asr-worker-1.log": "7ce25bd50a025f0d20d99d2bfc600838d04cfdd3e7358b626010a101800fc084",
+    "r1-n10-worker2.log": "c654d924fc6f643ae50b53d8f0afd7ec4f6d2903270d54e15cf89d5c5636ada0",
+    "r1-n8-worker1.log": "fc4d7e5b83188685917aae686e274cb1c59a4c957ac31ec8e8d0b9ab6305ad54",
+    "build-gateway-sampler.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "r1-n10-worker1.log": "955b91fe77389a27dc41f5680834b1fc8cf93bbef0826fdd6aa753242e62d909",
+    "r1-n8-worker2.log": "f10451fd64d55614431aff19b973831b95fd6d709d438ea637ec3884ec8eb6bc",
+    "r1-n10-gateway/manifest.json": "657a9ce8b55f567e7cc485ef03f012bda01d0822d0d6e55f9f31b1bbdcd55df2",
+    "r1-n10-gateway/samples.jsonl": "ac281d54e3eee8d2ecb0696e7ce5ea5ac1588332d3db759753469e5be8af3e39",
+    "r1-n8-gateway/manifest.json": "ac37223200a026f7903a8205e59c7b3fb747fec0420c78a655ba955d737b875e",
+    "r1-n8-gateway/samples.jsonl": "ded7d59700716535be592c4c6971beda29e5b89508316d0e77a169dcfc078a1d",
+    "r1-n12-worker1/manifest.json": "2577ff1f989444b33f78a54938d7a59ceea7c6a5fb6d35274aaf476e59761fa9",
+    "r1-n12-worker1/samples.jsonl": "f5b1bb79cad82fcfce7806576e3b61f8bb3998b56624a84840ae9d65d3f205a2",
+    "warmup-gateway/manifest.json": "c054c712e32ae856d7e2b7c72f6dfaf011c0b58c377097813335cb3ae0b29d9f",
+    "warmup-gateway/samples.jsonl": "d48a6157bffae8a5534190cfd1863014d499596a1b751cce003abffd8b6c837d",
+    "r1-n10-worker1/manifest.json": "271e8cd5b2fc9933a01b9eecb6d0c1f8b0d2fba98db86457180a7afe741e1d70",
+    "r1-n10-worker1/samples.jsonl": "4f6c87f2d132bc3874a964a155db1096518db1fd1ecd3780b66cd0a467283056",
+    "r1-n8-worker1/manifest.json": "d9be8dc1380aa4f592d5caeac8da0246a5075a4518ec65dcde44a75eb7cb27c0",
+    "r1-n8-worker1/samples.jsonl": "81d15172aff4929188081b786bb7ec808434164df4ea85ca624f40ad4f54594b",
+    "warmup-worker1/manifest.json": "4b4a16f1aa4cf28240cc09686ed186cc6121106a16b20dece951355393ada686",
+    "warmup-worker1/samples.jsonl": "04dff59659504975ce4bb1be70e9b087c885edff05d3e24a7b7d59556218e7f7",
+    "r1-n12-gateway/manifest.json": "0a4890bb1ea314be8033557f21d3917fb51cf3ad4abb4816c763f17fbca301de",
+    "r1-n12-gateway/samples.jsonl": "fc6fede604b718e495a46f524c4cc275b157a2367ebd2b77406489d80f719bfc",
+    "r1-n12-worker2/manifest.json": "569a861aaf76dcd226d1048912ecb3a9e8eb100fa9d13be9e0cec0aa4e29c99a",
+    "r1-n12-worker2/samples.jsonl": "bb5a2eb5f5527f64bca5f1cb5c476ac4f88a97660dcbd4c1b8c91bf304495cec",
+    "r1-n10-worker2/manifest.json": "2d0756c9cddf5fd4e673b89f1674862014b9d899ecbe9712e44a24a0715b8168",
+    "r1-n10-worker2/samples.jsonl": "7542511e46a431c32c1a01ff1581fc6f7e65f949e66f7bf663f70150c9a4dcd5",
+    "r1-n8-worker2/manifest.json": "8bba2363dbfed3f23dd5d1bcf02270434f1e012869feb5eee3446c03f8fc1800",
+    "r1-n8-worker2/samples.jsonl": "ceef027ea5d91f6d3a0b99268798990cc0aa7a7651c41faec47d8eeabbf2a62a",
+    "warmup-worker2/manifest.json": "459fb7700b0ba78f1dcb35e2cdeb68bbb55f874bb5ac31e12b4b28e0a460247c",
+    "warmup-worker2/samples.jsonl": "3aa4bbc09f41cdef5a6dcbee1d01a69534fb473a64fa535dadbab886f39aad0f"
+  }
+}

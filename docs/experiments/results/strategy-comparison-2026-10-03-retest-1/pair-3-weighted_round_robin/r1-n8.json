@@ -1,0 +1,334 @@
+{
+  "schema_version": 2,
+  "tail_percentile_method": "nearest_rank",
+  "config": {
+    "sessions": 8,
+    "session": {
+      "url": "ws://127.0.0.1:8080/v1/asr",
+      "audio_bytes": 640000,
+      "chunk_bytes": 3200,
+      "realtime": true,
+      "timeout_ns": 35000000000,
+      "expected_final_text": "今天天气不错"
+    }
+  },
+  "started_at": "2026-10-03T07:37:02.64297Z",
+  "finished_at": "2026-10-03T07:37:22.621509Z",
+  "batch_error": null,
+  "summary": {
+    "planned_sessions": 8,
+    "completed": 8,
+    "failed": 0,
+    "canceled": 0,
+    "timed_out": 0,
+    "completion_rate": 1,
+    "planned_audio_bytes": 5120000,
+    "audio_bytes_written": 5120000,
+    "elapsed_ns": 19978412708,
+    "tail": {
+      "samples": 8,
+      "min_ns": 19661167,
+      "p50_ns": 42064125,
+      "p95_ns": 75600791,
+      "max_ns": 75600791
+    }
+  },
+  "sessions": [
+    {
+      "index": 0,
+      "started_at": "2026-10-03T07:37:02.643087Z",
+      "finished_at": "2026-10-03T07:37:22.567584Z",
+      "outcome": "completed",
+      "error": null,
+      "tail_latency_ns": 19661167,
+      "observation": {
+        "audio_bytes_written": 640000,
+        "audio_chunks_written": 200,
+        "write_failures": 0,
+        "max_audio_write_duration_ns": 398458,
+        "audio_schedule_samples": 200,
+        "max_audio_schedule_lag_ns": 3031792,
+        "first_audio_started_at": "2026-10-03T07:37:02.644015Z",
+        "last_audio_finished_at": "2026-10-03T07:37:22.545553Z",
+        "start_write": {
+          "kind": "start",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:02.644001Z",
+          "finished_at": "2026-10-03T07:37:02.644012Z",
+          "error": null
+        },
+        "end_write": {
+          "kind": "end",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:22.547546Z",
+          "finished_at": "2026-10-03T07:37:22.547654Z",
+          "error": null
+        },
+        "result_count": 5,
+        "final_result_count": 1,
+        "first_result_at": "2026-10-03T07:37:03.104224Z",
+        "last_result_at": "2026-10-03T07:37:22.567207Z",
+        "last_final_at": "2026-10-03T07:37:22.567207Z"
+      }
+    },
+    {
+      "index": 1,
+      "started_at": "2026-10-03T07:37:02.643059Z",
+      "finished_at": "2026-10-03T07:37:22.596868Z",
+      "outcome": "completed",
+      "error": null,
+      "tail_latency_ns": 49217000,
+      "observation": {
+        "audio_bytes_written": 640000,
+        "audio_chunks_written": 200,
+        "write_failures": 0,
+        "max_audio_write_duration_ns": 988333,
+        "audio_schedule_samples": 200,
+        "max_audio_schedule_lag_ns": 3278333,
+        "first_audio_started_at": "2026-10-03T07:37:02.644036Z",
+        "last_audio_finished_at": "2026-10-03T07:37:22.547502Z",
+        "start_write": {
+          "kind": "start",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:02.644027Z",
+          "finished_at": "2026-10-03T07:37:02.644036Z",
+          "error": null
+        },
+        "end_write": {
+          "kind": "end",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:22.547506Z",
+          "finished_at": "2026-10-03T07:37:22.547537Z",
+          "error": null
+        },
+        "result_count": 5,
+        "final_result_count": 1,
+        "first_result_at": "2026-10-03T07:37:03.074536Z",
+        "last_result_at": "2026-10-03T07:37:22.596723Z",
+        "last_final_at": "2026-10-03T07:37:22.596723Z"
+      }
+    },
+    {
+      "index": 2,
+      "started_at": "2026-10-03T07:37:02.643084Z",
+      "finished_at": "2026-10-03T07:37:22.577606Z",
+      "outcome": "completed",
+      "error": null,
+      "tail_latency_ns": 30370875,
+      "observation": {
+        "audio_bytes_written": 640000,
+        "audio_chunks_written": 200,
+        "write_failures": 0,
+        "max_audio_write_duration_ns": 1187375,
+        "audio_schedule_samples": 200,
+        "max_audio_schedule_lag_ns": 2796250,
+        "first_audio_started_at": "2026-10-03T07:37:02.644052Z",
+        "last_audio_finished_at": "2026-10-03T07:37:22.54708Z",
+        "start_write": {
+          "kind": "start",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:02.644046Z",
+          "finished_at": "2026-10-03T07:37:02.644052Z",
+          "error": null
+        },
+        "end_write": {
+          "kind": "end",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:22.547088Z",
+          "finished_at": "2026-10-03T07:37:22.547247Z",
+          "error": null
+        },
+        "result_count": 5,
+        "final_result_count": 1,
+        "first_result_at": "2026-10-03T07:37:03.074409Z",
+        "last_result_at": "2026-10-03T07:37:22.577459Z",
+        "last_final_at": "2026-10-03T07:37:22.577459Z"
+      }
+    },
+    {
+      "index": 3,
+      "started_at": "2026-10-03T07:37:02.642986Z",
+      "finished_at": "2026-10-03T07:37:22.611486Z",
+      "outcome": "completed",
+      "error": null,
+      "tail_latency_ns": 65426375,
+      "observation": {
+        "audio_bytes_written": 640000,
+        "audio_chunks_written": 200,
+        "write_failures": 0,
+        "max_audio_write_duration_ns": 842458,
+        "audio_schedule_samples": 200,
+        "max_audio_schedule_lag_ns": 2696000,
+        "first_audio_started_at": "2026-10-03T07:37:02.644053Z",
+        "last_audio_finished_at": "2026-10-03T07:37:22.545501Z",
+        "start_write": {
+          "kind": "start",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:02.644034Z",
+          "finished_at": "2026-10-03T07:37:02.64405Z",
+          "error": null
+        },
+        "end_write": {
+          "kind": "end",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:22.545704Z",
+          "finished_at": "2026-10-03T07:37:22.548232Z",
+          "error": null
+        },
+        "result_count": 5,
+        "final_result_count": 1,
+        "first_result_at": "2026-10-03T07:37:03.115548Z",
+        "last_result_at": "2026-10-03T07:37:22.611131Z",
+        "last_final_at": "2026-10-03T07:37:22.611131Z"
+      }
+    },
+    {
+      "index": 4,
+      "started_at": "2026-10-03T07:37:02.643018Z",
+      "finished_at": "2026-10-03T07:37:22.621496Z",
+      "outcome": "completed",
+      "error": null,
+      "tail_latency_ns": 75600791,
+      "observation": {
+        "audio_bytes_written": 640000,
+        "audio_chunks_written": 200,
+        "write_failures": 0,
+        "max_audio_write_duration_ns": 194084,
+        "audio_schedule_samples": 200,
+        "max_audio_schedule_lag_ns": 2877875,
+        "first_audio_started_at": "2026-10-03T07:37:02.644011Z",
+        "last_audio_finished_at": "2026-10-03T07:37:22.545691Z",
+        "start_write": {
+          "kind": "start",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:02.643993Z",
+          "finished_at": "2026-10-03T07:37:02.644008Z",
+          "error": null
+        },
+        "end_write": {
+          "kind": "end",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:22.545712Z",
+          "finished_at": "2026-10-03T07:37:22.545864Z",
+          "error": null
+        },
+        "result_count": 5,
+        "final_result_count": 1,
+        "first_result_at": "2026-10-03T07:37:03.093744Z",
+        "last_result_at": "2026-10-03T07:37:22.621313Z",
+        "last_final_at": "2026-10-03T07:37:22.621313Z"
+      }
+    },
+    {
+      "index": 5,
+      "started_at": "2026-10-03T07:37:02.643066Z",
+      "finished_at": "2026-10-03T07:37:22.588132Z",
+      "outcome": "completed",
+      "error": null,
+      "tail_latency_ns": 42064125,
+      "observation": {
+        "audio_bytes_written": 640000,
+        "audio_chunks_written": 200,
+        "write_failures": 0,
+        "max_audio_write_duration_ns": 360125,
+        "audio_schedule_samples": 200,
+        "max_audio_schedule_lag_ns": 2757583,
+        "first_audio_started_at": "2026-10-03T07:37:02.644032Z",
+        "last_audio_finished_at": "2026-10-03T07:37:22.545905Z",
+        "start_write": {
+          "kind": "start",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:02.64402Z",
+          "finished_at": "2026-10-03T07:37:02.644029Z",
+          "error": null
+        },
+        "end_write": {
+          "kind": "end",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:22.545909Z",
+          "finished_at": "2026-10-03T07:37:22.545922Z",
+          "error": null
+        },
+        "result_count": 5,
+        "final_result_count": 1,
+        "first_result_at": "2026-10-03T07:37:03.083079Z",
+        "last_result_at": "2026-10-03T07:37:22.587973Z",
+        "last_final_at": "2026-10-03T07:37:22.587973Z"
+      }
+    },
+    {
+      "index": 6,
+      "started_at": "2026-10-03T07:37:02.643077Z",
+      "finished_at": "2026-10-03T07:37:22.598415Z",
+      "outcome": "completed",
+      "error": null,
+      "tail_latency_ns": 50662375,
+      "observation": {
+        "audio_bytes_written": 640000,
+        "audio_chunks_written": 200,
+        "write_failures": 0,
+        "max_audio_write_duration_ns": 429167,
+        "audio_schedule_samples": 200,
+        "max_audio_schedule_lag_ns": 3088750,
+        "first_audio_started_at": "2026-10-03T07:37:02.64404Z",
+        "last_audio_finished_at": "2026-10-03T07:37:22.547684Z",
+        "start_write": {
+          "kind": "start",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:02.644031Z",
+          "finished_at": "2026-10-03T07:37:02.64404Z",
+          "error": null
+        },
+        "end_write": {
+          "kind": "end",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:22.547687Z",
+          "finished_at": "2026-10-03T07:37:22.547846Z",
+          "error": null
+        },
+        "result_count": 5,
+        "final_result_count": 1,
+        "first_result_at": "2026-10-03T07:37:03.062784Z",
+        "last_result_at": "2026-10-03T07:37:22.598349Z",
+        "last_final_at": "2026-10-03T07:37:22.598349Z"
+      }
+    },
+    {
+      "index": 7,
+      "started_at": "2026-10-03T07:37:02.64299Z",
+      "finished_at": "2026-10-03T07:37:22.577494Z",
+      "outcome": "completed",
+      "error": null,
+      "tail_latency_ns": 29921667,
+      "observation": {
+        "audio_bytes_written": 640000,
+        "audio_chunks_written": 200,
+        "write_failures": 0,
+        "max_audio_write_duration_ns": 362083,
+        "audio_schedule_samples": 200,
+        "max_audio_schedule_lag_ns": 3050417,
+        "first_audio_started_at": "2026-10-03T07:37:02.644037Z",
+        "last_audio_finished_at": "2026-10-03T07:37:22.547308Z",
+        "start_write": {
+          "kind": "start",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:02.644022Z",
+          "finished_at": "2026-10-03T07:37:02.64403Z",
+          "error": null
+        },
+        "end_write": {
+          "kind": "end",
+          "audio_bytes": 0,
+          "started_at": "2026-10-03T07:37:22.547334Z",
+          "finished_at": "2026-10-03T07:37:22.547427Z",
+          "error": null
+        },
+        "result_count": 5,
+        "final_result_count": 1,
+        "first_result_at": "2026-10-03T07:37:03.093858Z",
+        "last_result_at": "2026-10-03T07:37:22.577255Z",
+        "last_final_at": "2026-10-03T07:37:22.577255Z"
+      }
+    }
+  ]
+}
