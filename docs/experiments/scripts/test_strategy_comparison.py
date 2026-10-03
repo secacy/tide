@@ -4,9 +4,9 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, call, patch
 
-from run_joint_observation_baseline import run
+from run_joint_observation_baseline import check_gateway_port, run
 from run_loadgen_baseline import digest, save
 from run_strategy_comparison import EXPERIMENT, ORDER, POLICIES, aggregate, compare, run_comparison, validate_cohorts
 from summarize_pressure_sweep import pressure_profile
@@ -34,6 +34,23 @@ def gateway_log(m):
 
 
 class StrategyComparisonTests(unittest.TestCase):
+    def test_port_probe_sets_reuse_before_bind_and_closes(self):
+        import socket
+        probe=MagicMock()
+        with patch("run_joint_observation_baseline.socket.socket") as create:
+            create.return_value.__enter__.return_value=probe
+            check_gateway_port()
+            self.assertEqual(probe.mock_calls,[call.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1),
+                                              call.bind(("127.0.0.1",8080))])
+            create.return_value.__exit__.assert_called_once()
+
+    def test_port_probe_preserves_occupied_listener_error_and_closes(self):
+        probe=MagicMock();probe.bind.side_effect=OSError(48,"Address already in use")
+        with patch("run_joint_observation_baseline.socket.socket") as create:
+            create.return_value.__enter__.return_value=probe
+            with self.assertRaises(OSError):check_gateway_port()
+            create.return_value.__exit__.assert_called_once()
+
     def test_fixed_profile_and_both_manifests(self):
         self.assertEqual(pressure_profile("dual_worker_strategy"), dict(experiment="dual_worker_strategy",
                          counts=(8,10,12), repetitions=1, audio_bytes=640000, timeout_s=35, duration_s=40))

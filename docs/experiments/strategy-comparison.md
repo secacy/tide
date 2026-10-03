@@ -43,6 +43,16 @@ EXP-005-11 的两个单名额 Worker 分别每块处理 10ms / 20ms，普通轮�
 
 [验证记录](results/strategy-comparison-validation-2026-10-03.log)。
 
+## 首次尝试中断与完整复测（复测前记录）
+
+首次尝试使用工具提交 `7e9a2fb`，完成前三组、9个正式批次后，第四组在启动前的 8080 bind 预检查失败：`OSError(48, Address already in use)`。此前组 Gateway 和 Worker 均退出0，检查时没有监听进程；稍后普通 bind 也可通过。自有连接实验复现“监听关闭后普通 bind 暂时失败、SO_REUSEADDR bind 成功”，且正在监听的地址仍拒绝。支持关闭后的端口状态造成误报的解释，未在失败当时直接采集 TCP 状态。
+
+修正仅限实验预检查：先设置 SO_REUSEADDR 再 bind，不停止已有进程、不使用 SO_REUSEPORT。新增两个检查，共85个 Python 测试完整通过。所有85项验证属于工具正确性；真实端口检查结果附在验证记录。首次原始目录和运行输出保留，不计入正式三轮聚合。
+
+完整复测使用新目录 `strategy-comparison-2026-10-03-retest-1`，六组从头执行，输入、顺序和业务/数据质量判据不变。初次尝试不是按性能结果淘汰，而是固定端口启动预检查中断；不拼接已完成组，也不修改旧哈希。
+
+[首次原始目录](results/strategy-comparison-2026-10-03/)及[中断输出](results/strategy-comparison-first-attempt-run-2026-10-03.log)。
+
 ## 结果
 
-正式数据待执行；不得提前声称加权策略提高容量或完成率。
+完整复测数据待执行；不得提前声称加权策略提高容量或完成率。

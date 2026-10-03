@@ -36,6 +36,13 @@ def wait_sampling_ready(process, directory, kind="gateway"):
     raise RuntimeError("sampler did not record an idle snapshot within 2s")
 
 
+def check_gateway_port():
+    """检查固定监听地址；允许已关闭连接的端口复用，不允许占用现有监听。"""
+    with socket.socket() as probe:
+        probe.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        probe.bind(("127.0.0.1", 8080))
+
+
 def run(output, *, pressure=False, profile=None, selection=None, worker_count=1, policy="round_robin"):
     """每批先启动有限采样再运行负载；所有尝试独立保存，异常也回收自有进程。"""
     # 复用进程/采样/归档流程；不同实验的负载判据由各自分析器解释。
@@ -103,8 +110,7 @@ def run(output, *, pressure=False, profile=None, selection=None, worker_count=1,
         if spec["experiment"] in ("dual_worker_boundary_short", "dual_worker_extended") and manifest["source_sha256"] != (selection or {}).get("source_sha256"):
             raise ValueError("Go source differs from reference sweep")
         # 当前 Gateway 固定监听 8080；占用则中止，不使用或停止已有服务。
-        with socket.socket() as probe:
-            probe.bind(("127.0.0.1", 8080))
+        check_gateway_port()
         with tempfile.TemporaryDirectory(prefix="tide-load-baseline-") as temp:
             binaries = {}
             for name in ("asr-worker", "gateway", "loadgen", "gateway-sampler", "worker-sampler"):
