@@ -78,17 +78,31 @@ type sessionResult struct {
 // ErrInputIdleTimeout 表示等待下一条完整输入消息超时。
 var ErrInputIdleTimeout = errors.New("input idle timeout")
 
-// newSession 创建会话。
-func newSession(ws *websocket.Conn, pool WorkerSelector, startTimeout time.Duration, inputIdleTimeout time.Duration, workerSendTimeout time.Duration, tailTimeout time.Duration, resultWriteTimeout time.Duration, maxPendingAudioBytes uint64) *session {
+// sessionConfig 保存创建会话时复制的期限和音频积压预算。
+// 生产配置由 Gateway.New 完成校验和默认值填充，再经 Config.sessionConfig 转换。
+// 所有期限必须为正；本配置不持有连接或运行状态。
+type sessionConfig struct {
+	StartTimeout         time.Duration // 等待完整 start 消息的期限。
+	InputIdleTimeout     time.Duration // 音频输入阶段单次读取完整消息的期限。
+	WorkerSendTimeout    time.Duration // 单次向 Worker 发送音频的期限。
+	TailTimeout          time.Duration // 合法 end 后等待尾部结果和响应流结束的预算。
+	ResultWriteTimeout   time.Duration // 单条识别结果写回客户端的期限。
+	MaxPendingAudioBytes uint64        // 未确认处理的音频字节预算；0 表示关闭限制。
+}
+
+// newSession 使用已解析的 cfg 创建会话，不重新校验或填充默认值。
+// ws 是本场会话的连接，pool 是与其他会话共享的选择器。
+// cfg 按值复制；创建本身不选择后端、不执行 I/O、不启动 goroutine。
+func newSession(ws *websocket.Conn, pool WorkerSelector, cfg sessionConfig) *session {
 	return &session{
 		ws:                   ws,
 		pool:                 pool,
-		startTimeout:         startTimeout,
-		inputIdleTimeout:     inputIdleTimeout,
-		workerSendTimeout:    workerSendTimeout,
-		tailTimeout:          tailTimeout,
-		resultWriteTimeout:   resultWriteTimeout,
-		maxPendingAudioBytes: maxPendingAudioBytes,
+		startTimeout:         cfg.StartTimeout,
+		inputIdleTimeout:     cfg.InputIdleTimeout,
+		workerSendTimeout:    cfg.WorkerSendTimeout,
+		tailTimeout:          cfg.TailTimeout,
+		resultWriteTimeout:   cfg.ResultWriteTimeout,
+		maxPendingAudioBytes: cfg.MaxPendingAudioBytes,
 	}
 }
 

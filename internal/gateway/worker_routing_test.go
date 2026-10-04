@@ -193,7 +193,13 @@ func TestSessionRoutingErrorIdentity(t *testing.T) {
 			return
 		}
 		defer ws.CloseNow()
-		s := newSession(ws, pool, time.Second, time.Second, time.Second, time.Second, time.Second, 0)
+		s := newSession(ws, pool, sessionConfig{
+			StartTimeout:       time.Second,
+			InputIdleTimeout:   time.Second,
+			WorkerSendTimeout:  time.Second,
+			TailTimeout:        time.Second,
+			ResultWriteTimeout: time.Second,
+		})
 		err = s.run(parent)
 		done <- outcome{id: s.workerID, err: err}
 	}))

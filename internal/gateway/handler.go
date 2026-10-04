@@ -95,6 +95,20 @@ func New(ctx context.Context, pool WorkerSelector, cfg Config) (*Gateway, error)
 	}, nil
 }
 
+// sessionConfig 从 Gateway.New 已校验并填充默认值的配置提取会话参数。
+// MaxPendingAudioBytes 已保证非负，此处转换为会话计数使用的 uint64。
+// 不重复校验或填充默认值，不包含网关准入与消息大小设置。
+func (c Config) sessionConfig() sessionConfig {
+	return sessionConfig{
+		StartTimeout:         c.StartTimeout,
+		InputIdleTimeout:     c.InputIdleTimeout,
+		WorkerSendTimeout:    c.WorkerSendTimeout,
+		TailTimeout:          c.TailTimeout,
+		ResultWriteTimeout:   c.ResultWriteTimeout,
+		MaxPendingAudioBytes: uint64(c.MaxPendingAudioBytes),
+	}
+}
+
 // ServeHTTP 只负责建立 WebSocket Connection。
 //
 // Session 的协议校验、gRPC stream、错误分类和关闭流程全部由 session.run 负责。
@@ -122,7 +136,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	conn.SetReadLimit(g.cfg.MaxMessageBytes)
 
-	s := newSession(conn, g.pool, g.cfg.StartTimeout, g.cfg.InputIdleTimeout, g.cfg.WorkerSendTimeout, g.cfg.TailTimeout, g.cfg.ResultWriteTimeout, uint64(g.cfg.MaxPendingAudioBytes))
+	s := newSession(conn, g.pool, g.cfg.sessionConfig())
 	_ = s.run(g.ctx)
 }
 

@@ -52,7 +52,13 @@ func dialSessionWithTimeouts(t *testing.T, parent context.Context, worker asrv1.
 			return
 		}
 		defer ws.CloseNow()
-		result <- newSession(ws, singleWorkerPool(t, worker), startTimeout, inputIdleTimeout, defaultWorkerSendTimeout, defaultTailTimeout, defaultResultWriteTimeout, 0).run(ctx)
+		result <- newSession(ws, singleWorkerPool(t, worker), sessionConfig{
+			StartTimeout:       startTimeout,
+			InputIdleTimeout:   inputIdleTimeout,
+			WorkerSendTimeout:  defaultWorkerSendTimeout,
+			TailTimeout:        defaultTailTimeout,
+			ResultWriteTimeout: defaultResultWriteTimeout,
+		}).run(ctx)
 	}))
 	var conn *websocket.Conn
 	t.Cleanup(func() {

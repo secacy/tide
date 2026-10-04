@@ -31,7 +31,13 @@ func dialInputReader(t *testing.T, parent context.Context, timeout time.Duration
 			return
 		}
 		defer ws.CloseNow()
-		s := newSession(ws, singleWorkerPool(t, &recordingWorker{}), defaultStartTimeout, timeout, defaultWorkerSendTimeout, defaultTailTimeout, defaultResultWriteTimeout, 0)
+		s := newSession(ws, singleWorkerPool(t, &recordingWorker{}), sessionConfig{
+			StartTimeout:       defaultStartTimeout,
+			InputIdleTimeout:   timeout,
+			WorkerSendTimeout:  defaultWorkerSendTimeout,
+			TailTimeout:        defaultTailTimeout,
+			ResultWriteTimeout: defaultResultWriteTimeout,
+		})
 		fn(ctx, s)
 	}))
 	var conn *websocket.Conn
