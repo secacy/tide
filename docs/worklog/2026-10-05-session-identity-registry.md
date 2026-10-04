@@ -1,6 +1,6 @@
 # 第六阶段：会话身份、注册表职责与身份部件
 
-日期：2026-10-05。状态：设计与实现指导，等待开发者实现身份部件；注册表尚未实现。当前依据 `2be0e77`、[恢复契约](2026-10-04-session-resume-contract.md)及 [ADR-003](../adr/003-session-admission.md)。
+日期：2026-10-05。状态：身份部件已由开发者实现并通过定向验收；注册表所有权仍为设计，尚未实现。当前依据 `2be0e77`、[恢复契约](2026-10-04-session-resume-contract.md)及 [ADR-003](../adr/003-session-admission.md)。
 
 ## 为什么现在需要身份与注册表
 
@@ -84,3 +84,21 @@ func (i sessionIdentity) matchesResumeToken(candidate string) bool
 实现后由助手补测试：固定字节序列的精确编码、ID/凭据来源分离、Reader 多次短读、零字节 EOF、部分 EOF、自定义错误可追溯、失败时零值返回、正确/错误/空/不同长度/首尾空格凭据、零值身份拒绝，以及独立身份互不匹配。测试不以随机生成多次未碰撞证明唯一性，也不比较纳秒级时间来证明安全性。
 
 身份部件无可变共享状态，不需要给它加锁。注册表 map 的并发安全和每个逻辑会话的串行状态管理是下一步的独立问题。身份验收后再明确逻辑会话引用/命令入口与注册表接口，然后实现注册表及竞争测试；暂不引入外部存储或修改 Worker 选择规则。
+
+
+## 身份部件验收（2026-10-05）
+
+开发者完成 [session_identity.go](../../internal/gateway/session_identity.go)，助手评审并新增 [session_identity_test.go](../../internal/gateway/session_identity_test.go)。核心逻辑无需修改：构造器完整读取 48 字节、分开编码 ID/凭据，失败返回零值并包装原错误；匹配先检查长度，再执行 ConstantTimeCompare，不修改身份。
+
+执行：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race ./internal/gateway -run '^TestSessionIdentity' -count=1 -timeout=30s -json
+```
+
+7 个顶层测试、31 个叶级场景通过，含父测试共 36 项 pass，包耗时 2.559 秒，无失败或跳过，未报告数据竞争。测试使用固定材料，既不评估随机源质量，也不以未发生碰撞证明全局唯一性。耗时不是身份服务吞吐或恢复性能。
+
+覆盖三组精确编码向量（顺序字节、零值测试材料及 URL-safe 无填充极值）、恰好消费 48 字节而不多读、改变 ID/凭据材料只影响对应字段、1/7 字节分次读取、完整数据伴随 EOF、nil/零字节 EOF/部分 EOF/自定义错误与部分数据失败、失败时零值返回和 errors.Is 可追溯原因。凭据覆盖正确值、首/中/尾字节变化、长度变化、空白、大小写、填充差异，以及零值或非法长度存储凭据拒绝。16 个调用者各 100 轮只读匹配通过 race；并发读取的前提是身份发布后不再修改字段。
+
+实现没有生产调用，现有会话、tracker、Worker 选择及 WebSocket v1 行为沿用。本次只运行对应部件的定向 race，没有重复全项目网络/进程回归。注册表插入冲突、恢复请求竞争和关闭引用失效仍未验证；下一步确定逻辑会话命令入口与注册表接口，由开发者实现，助手补竞争测试。
