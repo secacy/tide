@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -85,46 +84,6 @@ func TestGatewayStartTimeoutReleasesSession(t *testing.T) {
 	if err == nil || clientCtx.Err() != nil {
 		t.Fatalf("expected server closure before client deadline, got: %v", err)
 	}
-}
-
-// dialTestSession 通过真实 WebSocket 运行单个 session，并暴露 run 的返回值。
-// result 容量为 1，确保测试失败时 handler 不会阻塞在发送结果上。
-// parent 决定服务生命周期；客户端使用独立 context。
-func dialTestSession(t *testing.T, parent context.Context, worker asrv1.ASRServiceClient, timeout time.Duration) (*websocket.Conn, <-chan error) {
-	t.Helper()
-	return dialSessionWithTimeouts(t, parent, worker, timeout, defaultInputIdleTimeout)
-}
-
-// dialSessionWithTimeouts 允许分别设置启动期限和输入空闲期限，其他行为与 dialTestSession 相同。
-func dialSessionWithTimeouts(t *testing.T, parent context.Context, worker asrv1.ASRServiceClient, startTimeout, inputIdleTimeout time.Duration) (*websocket.Conn, <-chan error) {
-	t.Helper()
-	ctx, cancel := context.WithCancel(parent)
-	result := make(chan error, 1)
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ws, err := websocket.Accept(w, r, nil)
-		if err != nil {
-			result <- err
-			return
-		}
-		defer ws.CloseNow()
-		result <- newSession(ws, singleWorkerPool(t, worker), startTimeout, inputIdleTimeout, defaultWorkerSendTimeout, defaultTailTimeout, defaultResultWriteTimeout, 0).run(ctx)
-	}))
-	var conn *websocket.Conn
-	t.Cleanup(func() {
-		cancel()
-		if conn != nil {
-			_ = conn.CloseNow()
-		}
-		server.Close()
-	})
-	dialCtx, cancelDial := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancelDial()
-	var err error
-	conn, _, err = websocket.Dial(dialCtx, "ws"+strings.TrimPrefix(server.URL, "http"), nil)
-	if err != nil {
-		t.Fatalf("connect websocket: %v", err)
-	}
-	return conn, result
 }
 
 // TestSessionStartTimeoutCause 区分启动期限到期、服务主动取消和服务期限到期。

@@ -5,29 +5,11 @@ import (
 	"errors"
 	"net/http/httptest"
 	"strings"
-	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/coder/websocket"
-	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
-	"google.golang.org/grpc"
 )
-
-// recordingWorker 记录是否尝试创建识别流；当前测试不需要真正运行 Worker。
-type recordingWorker struct {
-	called atomic.Bool // 服务端 goroutine 写入，测试 goroutine 读取。
-}
-
-// StreamingRecognize 记录意外的建流调用，并返回错误。
-// 未收到 start 时不应该调用此方法。
-func (w *recordingWorker) StreamingRecognize(
-	_ context.Context,
-	_ ...grpc.CallOption,
-) (grpc.BidiStreamingClient[asrv1.StreamingRecognizeRequest, asrv1.StreamingRecognizeResponse], error) {
-	w.called.Store(true)
-	return nil, errors.New("unexpected worker stream creation")
-}
 
 // TestGatewayShutdownBeforeStart 验证连接后未发送 start 的会话也会响应服务取消，
 // 完成资源清理和退出登记，且不会创建 Worker stream。

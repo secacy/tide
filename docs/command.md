@@ -1,3 +1,5 @@
+测试与回归入口见 [testing.md](testing.md)，仓库根目录可运行 `make help` 查看常用命令。
+
 ## wav转pcm
 ```bash
 ffmpeg \

@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -168,21 +167,5 @@ func TestGatewayNormalEndPreservesTail(t *testing.T) {
 				t.Fatal("normal completion depended on service cancellation")
 			}
 		})
-	}
-}
-
-// assertRecognitionResult 验证完整结果及其消息类型，连续调用同时验证返回顺序。
-func assertRecognitionResult(t *testing.T, ctx context.Context, conn *websocket.Conn, want wsprotocol.ResultMessage) {
-	t.Helper()
-	typ, data, err := conn.Read(ctx)
-	if err != nil {
-		t.Fatalf("read result for %s: %v", want.SegmentID, err)
-	}
-	var got wsprotocol.ResultMessage
-	if err := json.Unmarshal(data, &got); err != nil {
-		t.Fatalf("decode result: %v", err)
-	}
-	if typ != websocket.MessageText || got != want {
-		t.Fatalf("result type=%v body=%+v, want %+v", typ, got, want)
 	}
 }

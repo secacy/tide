@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
-	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -157,55 +155,13 @@ func TestGatewayWeightedRouting(t *testing.T) {
 
 // TestGatewayWeightedBeforeStart 不合法或未开始的连接不得消耗选择，即使存在可用加权后端。
 func TestGatewayWeightedBeforeStart(t *testing.T) {
-	for _, mode := range []string{"invalid_start", "start_timeout", "disconnect", "service_shutdown", "stopped_admission", "failed_upgrade"} {
+	for _, mode := range []string{"invalid_start", "start_timeout", "disconnect_before_start", "shutdown_before_start", "stopped_admission", "failed_upgrade"} {
 		t.Run(mode, func(t *testing.T) {
 			a, b := &recordingWorker{}, &recordingWorker{}
 			selector := newCountedWeightedSelector(t, []workerpool.Worker{{ID: "A", Client: a}, {ID: "B", Client: b}})
 			f := newSelectorRoutingFixture(t, selector, Config{StartTimeout: 100 * time.Millisecond})
 			ctx := routingContext(t)
-			switch mode {
-			case "stopped_admission":
-				f.g.StopAccepting()
-				conn, response, err := websocket.Dial(ctx, f.url, nil)
-				if conn != nil {
-					conn.CloseNow()
-				}
-				if err == nil || response == nil || response.StatusCode != http.StatusServiceUnavailable {
-					t.Fatalf("expected 503: %v %v", response, err)
-				}
-			case "failed_upgrade":
-				req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http"+strings.TrimPrefix(f.url, "ws"), nil)
-				if err != nil {
-					t.Fatal(err)
-				}
-				response, err := http.DefaultClient.Do(req)
-				if err != nil {
-					t.Fatal(err)
-				}
-				response.Body.Close()
-				if response.StatusCode == http.StatusSwitchingProtocols {
-					t.Fatal("unexpected upgrade")
-				}
-			default:
-				conn := f.dial(t, ctx, mode)
-				switch mode {
-				case "invalid_start":
-					routingWrite(t, ctx, conn, websocket.MessageText, `{"type":"end"}`)
-				case "disconnect":
-					conn.CloseNow()
-				case "service_shutdown":
-					f.g.StopAccepting()
-					f.cancel()
-				}
-				if mode != "disconnect" {
-					_, _, err := conn.Read(ctx)
-					if err == nil || ctx.Err() != nil {
-						t.Fatalf("server did not close independently: %v", err)
-					}
-				}
-			}
-			f.waitHandlers(t, ctx, 1)
-			f.assertActive(t, 0)
+			runRoutingBeforeStart(t, ctx, f, mode)
 			if selector.calls.Load() != 0 || a.called.Load() || b.called.Load() {
 				t.Fatal("pre-start exit consumed selection or opened RPC")
 			}

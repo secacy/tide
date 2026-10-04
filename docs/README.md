@@ -6,6 +6,7 @@
 | --- | --- | --- |
 | [MILESTONES.md](MILESTONES.md) | 阶段目标、进度、验收结论与证据缺口 | 是 |
 | [command.md](command.md) | 当前可用命令、参数和运行方式 | 是 |
+| [testing.md](testing.md) | 测试入口、覆盖范围、显式实验开关及公共夹具组织 | 是 |
 | [adr/](adr/README.md) | 正式架构决策：问题、备选方案、选择、后果与约束 | 是 |
 | `worklog/` | 工程推进记录：技术设计、协议契约、分步实现、问题修正与验收 | 是 |
 | `experiments/` | 实验条件、判据、报告、工具与归档证据 | 是 |
