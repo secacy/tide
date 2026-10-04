@@ -3,7 +3,7 @@
 日期：2026-10-02
 状态：九批联合观测基线已完成；尚未测定稳定容量。
 执行源码：`6cb4d0d`；本轮未修改 Go 代码。
-相关：[Gateway 观测基线](gateway-observation-baseline.md)、[Worker 采样工具](../designs/2026-10-02-worker-recording-tool.md)。
+相关：[Gateway 观测基线](gateway-observation-baseline.md)、[Worker 采样工具](../worklog/2026-10-02-worker-recording-tool.md)。
 
 ## 问题与方案选择
 

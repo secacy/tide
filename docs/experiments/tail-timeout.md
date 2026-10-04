@@ -2,7 +2,7 @@
 
 Date: 2026-09-22
 Status: 本步实现及验收完成；第四阶段仍在进行。
-Related: [改造前基线](tail-stall-baseline.md)、[方案与取舍](../designs/2026-09-22-tail-timeout.md)
+Related: [改造前基线](tail-stall-baseline.md)、[方案与取舍](../worklog/2026-09-22-tail-timeout.md)
 
 ## Situation / Task
 

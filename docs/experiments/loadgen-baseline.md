@@ -3,7 +3,7 @@
 Date: 2026-09-29
 Status: 已完成小规模基线；未测稳定容量。
 Source: f5377dd；业务代码不变，新增实验脚本与记录。
-Related: [并发负载设计](../designs/2026-09-28-concurrent-load.md)
+Related: [并发负载设计](../worklog/2026-09-28-concurrent-load.md)
 
 ## 问题与实验前假设
 

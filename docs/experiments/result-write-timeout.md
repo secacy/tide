@@ -2,7 +2,7 @@
 
 Date: 2026-09-22
 Status: 本步实现和验收完成；第四阶段尚未完成。
-Related: [慢客户端基线](slow-reader-baseline.md)、[方案与取舍](../designs/2026-09-22-result-write-timeout.md)
+Related: [慢客户端基线](slow-reader-baseline.md)、[方案与取舍](../worklog/2026-09-22-result-write-timeout.md)
 
 ## Situation / Task
 

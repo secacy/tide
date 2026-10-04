@@ -2,7 +2,7 @@
 
 Date: 2026-09-21
 Status: 实现与验证完成；仅代表单次 Send 等待保护，不代表第四阶段整体完成。
-Related: [改造前停读实验](stalled-worker.md)、[方案取舍](../designs/2026-09-21-worker-send-timeout.md)、[Milestones](../MILESTONES.md)
+Related: [改造前停读实验](stalled-worker.md)、[方案取舍](../worklog/2026-09-21-worker-send-timeout.md)、[Milestones](../MILESTONES.md)
 
 ## 问题与改动
 

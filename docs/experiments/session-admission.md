@@ -2,7 +2,7 @@
 
 Date: 2026-09-22
 Status: 已完成本步验收；不代表第四阶段完成或稳定容量已确定。
-Related: [设计与取舍](../designs/2026-09-22-session-admission.md)、[Milestones](../MILESTONES.md)
+Related: [设计与取舍](../worklog/2026-09-22-session-admission.md)、[Milestones](../MILESTONES.md)
 
 ## Situation / Task
 
