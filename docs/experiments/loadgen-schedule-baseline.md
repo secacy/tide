@@ -3,7 +3,7 @@
 Date: 2026-09-29
 Status: 已完成同条件复测；未测稳定容量。
 Source: ec4fc6d；本轮不修改业务代码。
-Related: [原基线 EXP-005-01](loadgen-baseline.md)、[并发负载设计](../worklog/designs/2026-09-28-concurrent-load.md)
+Related: [原基线 EXP-005-01](loadgen-baseline.md)、[并发负载设计](../designs/2026-09-28-concurrent-load.md)
 
 ## 问题与方案选择
 

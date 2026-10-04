@@ -46,7 +46,7 @@ processed_audio_bytes 表示本次流从起点连续完成处理的原始音频�
 
 开发者已完成 download 分流：按 progress 是否存在判断，非法混合消息归为 resultWorkerFailed，合法进度继续接收，不向客户端写回。当前不保存累计值，也不约束积压。
 
-助手新增 [progress_routing_test.go](../../../internal/gateway/progress_routing_test.go)：
+助手新增 [progress_routing_test.go](../../internal/gateway/progress_routing_test.go)：
 
 - 零值、非零值和重复进度不开始结果写入；后续 Recv 原始错误保留。
 - segment_id、text、is_final 单独混入及全部混入时，均归为 Worker 失败并停止接收。
@@ -66,7 +66,7 @@ processed_audio_bytes 表示本次流从起点连续完成处理的原始音频�
 
 Mock 已在 ProcessingDelay 完成、累计计数更新后调用 sendProgress；消息只携带 progress，发送成功路径符合约定。sendProgress 使用 `%w` 保留底层错误，但 StreamingRecognize 调用处又通过 `status.Errorf(codes.Internal, ..., err)` 将所有失败改成 Internal 并丢失原始错误链。此处应直接返回 sendProgress 已包装的错误，与 sendPartial 的调用方式一致。
 
-助手更新了 worker/pause/stall 测试夹具：保留全部响应与发送时刻，另外提供仅文本的视图，原有文本数量与时间断言继续生效。新增 [progress_test.go](../../../internal/mockasr/progress_test.go) 覆盖变长静音 PCM 累计、空块、非法 PCM、文本耗尽、逐流计数重置、处理完成时刻、ResponseDelay 分离、暂停恢复、永久停读及发送失败。
+助手更新了 worker/pause/stall 测试夹具：保留全部响应与发送时刻，另外提供仅文本的视图，原有文本数量与时间断言继续生效。新增 [progress_test.go](../../internal/mockasr/progress_test.go) 覆盖变长静音 PCM 累计、空块、非法 PCM、文本耗尽、逐流计数重置、处理完成时刻、ResponseDelay 分离、暂停恢复、永久停读及发送失败。
 
 验证结果：
 
@@ -107,7 +107,7 @@ Mock 已在 ProcessingDelay 完成、累计计数更新后调用 sendProgress；
 
 开发者已实现 audioProgress，校验顺序、溢出判断、同锁更新与快照均符合设计。助手按用户要求补充了三个方法的注释，未修改业务逻辑。
 
-新增 [audio_progress_test.go](../../../internal/gateway/audio_progress_test.go) 覆盖累计/增量含义、重复确认、回退/越界失败后状态不变、uint64 极值与溢出、值快照和实例独立性，以及并发累加/确认/快照一致性。`go test -race ./internal/gateway -run '^TestAudioProgress' -count=1 -timeout=30s` 通过。此轮仅验证未接入的独立组件，没有重复运行网络回归，也没有容量或积压控制结论。
+新增 [audio_progress_test.go](../../internal/gateway/audio_progress_test.go) 覆盖累计/增量含义、重复确认、回退/越界失败后状态不变、uint64 极值与溢出、值快照和实例独立性，以及并发累加/确认/快照一致性。`go test -race ./internal/gateway -run '^TestAudioProgress' -count=1 -timeout=30s` 通过。此轮仅验证未接入的独立组件，没有重复运行网络回归，也没有容量或积压控制结论。
 
 下一小步由开发者接入现有链路，不增加阈值或队列：
 
@@ -124,7 +124,7 @@ Mock 已在 ProcessingDelay 完成、累计计数更新后调用 sendProgress；
 
 开发者已完成 session 独立持有计量器、upload 在 Send 前登记、download 保存并校验累计确认，以及 resultInternalFailed 的集中收尾。检查未发现需要修改的实现问题；助手只更新测试和文档。
 
-新增 [progress_integration_test.go](../../../internal/gateway/progress_integration_test.go)，并调整 [progress_routing_test.go](../../../internal/gateway/progress_routing_test.go)：
+新增 [progress_integration_test.go](../../internal/gateway/progress_integration_test.go)，并调整 [progress_routing_test.go](../../internal/gateway/progress_routing_test.go)：
 
 - 下载分流单测先登记 3200 字节，再接收 0/3200/3200 的累计确认；最终接收量与处理量均为 3200，未确认量为 0。
 - 受控 gRPC 接口替身在 Send 返回前交付确认和文本。完整 session.run 测试在客户端收到文本后检查 Send 仍未返回，且累计接收/处理均为 3200；随后允许 Send 返回并发送 end，正常关闭为 1000。该测试固定事件顺序，不依赖自然竞争概率，也不代表真实网络延迟。
@@ -138,7 +138,7 @@ Mock 已在 ProcessingDelay 完成、累计计数更新后调用 sendProgress；
 
 ## 2026-09-23 积压基线完成
 
-[EXP-004-10](../../experiments/progress-backlog-baseline.md) 已完成九次正式测量。正常、暂停 500ms 和持续降速的网关未确认量观测峰值分别为 0.1、0.5、4.3 秒音频。持续降速尾部等待为 10.134–10.153 秒，最大 Send 为 1.202–1.208 秒，仍在已有操作期限内。
+[EXP-004-10](../experiments/progress-backlog-baseline.md) 已完成九次正式测量。正常、暂停 500ms 和持续降速的网关未确认量观测峰值分别为 0.1、0.5、4.3 秒音频。持续降速尾部等待为 10.134–10.153 秒，最大 Send 为 1.202–1.208 秒，仍在已有操作期限内。
 
 实验还明确了计量边界：降速组客户端 end Write 返回后，网关账目内未确认量为 4.1 秒，但另有 1 秒已完成客户端 Write 的音频尚未登记到网关。因此以后限制 pendingBytes，只能说明对网关已读取音频的控制，不能直接宣称所有上游缓冲、端到端延迟或总内存都已受控。
 

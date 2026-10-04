@@ -1,10 +1,10 @@
 # 第五阶段：独立平滑加权轮询
 
-状态：独立选择器、Gateway 接口、策略/权重解析及实际启动组装均由开发者实现并通过验收；两种策略的同资源对照、加权两分钟筛查及过载后短探测已完成。综合结果见[第五阶段总结](../M5-调度与容量实验.md)；下文逐步验收记录保留当时范围。
+状态：独立选择器、Gateway 接口、策略/权重解析及实际启动组装均由开发者实现并通过验收；两种策略的同资源对照、加权两分钟筛查及过载后短探测已完成。综合结果见[第五阶段验收范围](../MILESTONES.md#第五阶段总结与验收范围2026-10-03)；下文逐步验收记录保留当时范围。
 
 ## 问题与选择
 
-[EXP-005-11](../../experiments/heterogeneous-workers.md)在两个单名额 Worker、逐块耗时 10ms / 20ms 下观察到：10 并发三批均未达标，慢实例几乎每次采样繁忙且存在等待，快实例仍频繁空闲。下一假设是按已知处理能力调整新会话分配比例，并通过同条件实验验证，而非预先宣称改善。
+[EXP-005-11](../experiments/heterogeneous-workers.md)在两个单名额 Worker、逐块耗时 10ms / 20ms 下观察到：10 并发三批均未达标，慢实例几乎每次采样繁忙且存在等待，快实例仍频繁空闲。下一假设是按已知处理能力调整新会话分配比例，并通过同条件实验验证，而非预先宣称改善。
 
 普通轮询不考虑能力差异。最少活跃会话需要登记和归还，而且相同会话数并不代表快慢实例压力相同。实时负载调度需要处理探测滞后、失败与分配振荡。本阶段先选静态权重，以较小改动检验分配比例的作用；它不适应运行中能力变化，也不保证任意时刻活跃会话比例。
 
@@ -23,7 +23,7 @@
 
 ## 正确性验收
 
-测试文件：[weighted_round_robin_test.go](../../../internal/workerpool/weighted_round_robin_test.go)。[运行记录与源码哈希](../../experiments/results/weighted-round-robin-validation-2026-10-03.log)。
+测试文件：[weighted_round_robin_test.go](../../internal/workerpool/weighted_round_robin_test.go)。[运行记录与源码哈希](../experiments/results/weighted-round-robin-validation-2026-10-03.log)。
 
 运行 `go test -race -json ./internal/workerpool`，新增 32 项、包内共 47 项检查通过（统计包含父测试和子测试），无失败或跳过。
 
@@ -43,14 +43,14 @@ nil 校验在 New 内执行一次：拒绝 nil 接口和含 nil 动态值的实�
 
 选择位置仍为合法 start 后一次 Pick，后续使用返回的 Client 建流；音频、end、尾部结果及清理不再选择。建流失败保留一次选择，不回退、不重试另一个实例；RPC context 取消、会话名额释放沿用原有机制。
 
-[新增测试](../../../internal/gateway/worker_selector_test.go)和复用的真实 TCP 路由夹具验证：
+[新增测试](../../internal/gateway/worker_selector_test.go)和复用的真实 TCP 路由夹具验证：
 
 - nil 接口、两种正式选择器的 nil 指针以及自定义 nil 动态值被拒绝；非 nil 的值、指针、函数、空 map/slice 和 channel 实现可通过构造，构造不调用 Pick。
 - 加权 2:1 的顺序和交叠各 12 场，均调用 Pick 12 次、建立 A=8/B=4 条流；每场三块音频与尾部结果来自同一实例。交叠组先保持全部会话，再并行完成，避免依靠时序偶然重叠。
 - 非法 start、start 超时、开始前断连或停服、停止准入以及升级失败均没有选择或后端调用。
 - 六场按 A/B/A/A/B/A 选择，A 建流四次确定性失败，B 两场完整完成；没有重选或回退，失败 RPC context 取消，每场处理后 active=0，名额可继续使用。
 
-核心实现未发现需要修改的问题。新增 39 项检查，Gateway、workerpool、Gateway 命令及 loadgen 四包共 1048 项检查通过 race；12 个显式实验按默认规则跳过，统计包含父测试和子测试。[测试运行记录与源码哈希](../../experiments/results/gateway-worker-selector-validation-2026-10-03.log)。首次沙箱运行因本地端口绑定限制中止，随后正常审批的完整重跑通过。
+核心实现未发现需要修改的问题。新增 39 项检查，Gateway、workerpool、Gateway 命令及 loadgen 四包共 1048 项检查通过 race；12 个显式实验按默认规则跳过，统计包含父测试和子测试。[测试运行记录与源码哈希](../experiments/results/gateway-worker-selector-validation-2026-10-03.log)。首次沙箱运行因本地端口绑定限制中止，随后正常审批的完整重跑通过。
 
 本步验证接入正确性，尚无加权策略性能结果。
 
@@ -67,9 +67,9 @@ nil 校验在 New 内执行一次：拒绝 nil 接口和含 nil 动态值的实�
 - `workerpool.MaxTotalWeight` 为共享的 1000000 总量上限；解析层和选择器都在加法前校验剩余空间。选择器保留自己的校验，供直接构造的调用方使用。
 - 参数错误返回零值 gatewayConfig；帮助继续返回 flag.ErrHelp。多次调用创建独立配置和切片，不创建连接或启动服务。
 
-新增 [worker_weights_test.go](../../../cmd/gateway/worker_weights_test.go)，并更新原默认配置深比较期望。覆盖默认兼容、两种赋值形式、保留地址与权重顺序、策略组合、空元素、数量、int64 极值与溢出、总和边界、重复参数和返回配置隔离。核心实现无需修改。
+新增 [worker_weights_test.go](../../cmd/gateway/worker_weights_test.go)，并更新原默认配置深比较期望。覆盖默认兼容、两种赋值形式、保留地址与权重顺序、策略组合、空元素、数量、int64 极值与溢出、总和边界、重复参数和返回配置隔离。核心实现无需修改。
 
-网络无关定向检查 228 项通过；随后 Gateway 命令及 workerpool 两包完整回归 251 项通过 race，其中新增 71 项，均含父测试和子测试，无失败或跳过。[运行记录与源码哈希](../../experiments/results/gateway-worker-strategy-config-validation-2026-10-03.log)。
+网络无关定向检查 228 项通过；随后 Gateway 命令及 workerpool 两包完整回归 251 项通过 race，其中新增 71 项，均含父测试和子测试，无失败或跳过。[运行记录与源码哈希](../experiments/results/gateway-worker-strategy-config-validation-2026-10-03.log)。
 
 配置解析验收时尚未接入 main/run；随后实际启动组装也已完成，见下。
 
@@ -81,19 +81,19 @@ newWorkerSelector 是命令包内的小工厂，只依赖有序 Worker、策略�
 
 run 按配置调用工厂，成功后记录 strategy、workers 和 weights，再创建 Gateway。main 的固定轮询日志已移除。gRPC 客户端在创建成功后立即登记，run 的 defer 覆盖随后所有失败与退出路径；选择器不关闭共享连接。错误路径清理经代码审查，尚未对未建立 TCP 连接的 ClientConn 注入关闭计数。
 
-[工厂测试](../../../cmd/gateway/worker_selector_test.go)检查真实选择顺序、权重位置对应、单实例边界、未知/空策略、数量及构造器错误、nil 接口返回、输入隔离，以及 run 在工厂失败时返回组装错误。
+[工厂测试](../../cmd/gateway/worker_selector_test.go)检查真实选择顺序、权重位置对应、单实例边界、未知/空策略、数量及构造器错误、nil 接口返回、输入隔离，以及 run 在工厂失败时返回组装错误。
 
-[真实启动测试](../../../cmd/gateway/startup_test.go)对 parse → run → WebSocket → TCP gRPC 链路分别运行六场：普通轮询 B/A/B/A/B/A，后端分布 3/3；加权轮询 B/A/B/B/A/B，分布 4/2。每组四场正常完成、两场保持活动后随停服取消，每个后端复用一个 TCP gRPC 连接，Gateway 返回后、测试后端关闭前均观测 opened=1/closed=1。实际配置日志的策略、地址位置和权重匹配。
+[真实启动测试](../../cmd/gateway/startup_test.go)对 parse → run → WebSocket → TCP gRPC 链路分别运行六场：普通轮询 B/A/B/A/B/A，后端分布 3/3；加权轮询 B/A/B/B/A/B，分布 4/2。每组四场正常完成、两场保持活动后随停服取消，每个后端复用一个 TCP gRPC 连接，Gateway 返回后、测试后端关闭前均观测 opened=1/closed=1。实际配置日志的策略、地址位置和权重匹配。
 
-CLI 测试使用 `go build -race` 生成程序，验证帮助中的两种新参数及四个新增非法组合退出。[真实加权进程](../../../cmd/gateway/weighted_startup_test.go)另运行六场、两块音频及尾部结果全部通过，实际路由 4/2，随后 SIGTERM 退出 0；后端仍存活时观测两个共享连接都关闭。监听就绪来自本进程的日志，不使用其他进程的健康接口。
+CLI 测试使用 `go build -race` 生成程序，验证帮助中的两种新参数及四个新增非法组合退出。[真实加权进程](../../cmd/gateway/weighted_startup_test.go)另运行六场、两块音频及尾部结果全部通过，实际路由 4/2，随后 SIGTERM 退出 0；后端仍存活时观测两个共享连接都关闭。监听就绪来自本进程的日志，不使用其他进程的健康接口。
 
-工厂定向 24 项检查通过；四个相关包最终 1153 项检查通过 race，12 个显式实验默认跳过，较上一轮同包回归净增加 34 项，均含父测试和子测试。[最终运行与源码哈希](../../experiments/results/gateway-worker-strategy-startup-validation-2026-10-03.log)。首轮测试曾错误地期望 slog 列表不带引号，修正测试断言后完整回归通过；[首轮失败输出](../../experiments/results/gateway-worker-strategy-startup-first-attempt-2026-10-03.log)保留。核心工厂及启动逻辑无需修改，仅修正一处重复注释符号。
+工厂定向 24 项检查通过；四个相关包最终 1153 项检查通过 race，12 个显式实验默认跳过，较上一轮同包回归净增加 34 项，均含父测试和子测试。[最终运行与源码哈希](../experiments/results/gateway-worker-strategy-startup-validation-2026-10-03.log)。首轮测试曾错误地期望 slog 列表不带引号，修正测试断言后完整回归通过；[首轮失败输出](../experiments/results/gateway-worker-strategy-startup-first-attempt-2026-10-03.log)保留。核心工厂及启动逻辑无需修改，仅修正一处重复注释符号。
 
-两种策略启动命令已发布到 [command.md](../../command.md)。上述会话数量是正确性验收，没有作为负载性能结果；下一步固定同资源策略对照实验。
+两种策略启动命令已发布到 [command.md](../command.md)。上述会话数量是正确性验收，没有作为负载性能结果；下一步固定同资源策略对照实验。
 
 ## 后续顺序
 
 1. 已完成 Gateway 选择接口接入：合法 start 后只选一次，整场会话绑定，建流失败不回退，接口 nil 契约已验证。
 2. 策略解析、实际启动组装及配置日志均已完成；默认普通轮询，命令可显式切换加权轮询。
-3. 已完成相同 Worker 资源与负载下的[轮询/加权对照](../../experiments/strategy-comparison.md)，以及[两分钟筛查](../../experiments/weighted-extended.md)和[过载后短探测](../../experiments/weighted-overload.md)。2:1 在已测条件下有效，未证明最优。
+3. 已完成相同 Worker 资源与负载下的[轮询/加权对照](../experiments/strategy-comparison.md)，以及[两分钟筛查](../experiments/weighted-extended.md)和[过载后短探测](../experiments/weighted-overload.md)。2:1 在已测条件下有效，未证明最优。
 4. 已汇总第五阶段 STAR + T；下一步先设计第六阶段恢复语义，保留当前未测容量与资源边界。

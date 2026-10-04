@@ -2,7 +2,7 @@
 
 ## 问题与实验依据
 
-[EXP-004-10](../../experiments/progress-backlog-baseline.md) 中，正常、暂停 500ms、持续降速三组的网关未确认音频观测峰值分别为 0.1、0.5、4.3 秒。降速组 Send 最大约 1.2 秒，未触发 2 秒发送期限，但客户端 end 后还需等待约 10.14 秒。这表明操作期限不能代替对处理积压的限制。
+[EXP-004-10](../experiments/progress-backlog-baseline.md) 中，正常、暂停 500ms、持续降速三组的网关未确认音频观测峰值分别为 0.1、0.5、4.3 秒。降速组 Send 最大约 1.2 秒，未触发 2 秒发送期限，但客户端 end 后还需等待约 10.14 秒。这表明操作期限不能代替对处理积压的限制。
 
 新增策略针对每个会话已完整读取、尚未获得 Worker 处理确认的原始音频字节数。目标是控制继续向慢 Worker 投入多少未确认音频，并让超限失败可区分、可验证；不宣称提高模型处理速度。
 
@@ -68,7 +68,7 @@ func checkPendingAudioLimit(p audioProgressSnapshot, maxBytes uint64) error
 
 ## 2026-09-25 判断函数验收
 
-开发者实现符合约定：0 关闭、等于预算允许、严格超过时 `%w` 包装 ErrAudioBacklogExceeded，带实际值和预算值。助手未修改业务实现，新增 [backlog_test.go](../../../internal/gateway/backlog_test.go)。
+开发者实现符合约定：0 关闭、等于预算允许、严格超过时 `%w` 包装 ErrAudioBacklogExceeded，带实际值和预算值。助手未修改业务实现，新增 [backlog_test.go](../../internal/gateway/backlog_test.go)。
 
 测试覆盖九组开关/比较边界，包括大量已接收但已确认音频不占未确认预算、uint64 极值；另验证超限判断不回滚已读块、新确认只影响新快照、历史快照保持原值。`go test -race ./internal/gateway -run '^TestPendingAudioLimit' -count=1 -timeout=30s` 通过。本轮仅为尚未接入的纯函数验证，未重新执行网络回归或负载实验。
 
@@ -87,7 +87,7 @@ func checkPendingAudioLimit(p audioProgressSnapshot, maxBytes uint64) error
 
 ## 2026-09-25 链路接入检查
 
-开发者已完成配置字段、构造传参、上传检查及独立退出类别和集中收尾。助手适配三个测试/实验夹具的 newSession 调用，新增 [backlog_integration_test.go](../../../internal/gateway/backlog_integration_test.go)，未修改业务逻辑。
+开发者已完成配置字段、构造传参、上传检查及独立退出类别和集中收尾。助手适配三个测试/实验夹具的 newSession 调用，新增 [backlog_integration_test.go](../../internal/gateway/backlog_integration_test.go)，未修改业务逻辑。
 
 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./... -count=1 -timeout=180s` 执行完成：Gateway 包因两个负值配置子用例失败而未通过（10.190s），Mock 包通过（1.595s），未报告数据竞争。失败原因是 New 未拒绝负数；-1 转为 uint64 后成为最大值。需在 New 返回 Gateway 前补上负值拒绝，0 保持关闭，随后复验。
 
@@ -112,6 +112,6 @@ func checkPendingAudioLimit(p audioProgressSnapshot, maxBytes uint64) error
 
 ## 2026-09-25 对照实验完成
 
-[EXP-004-11](../../experiments/backlog-comparison.md) 完成同一源码、三场景、关闭/启用预算各三次的 18 次正式主测量，并保留无 race 原始数据。正常与短暂停顿启用后 6/6 完成；持续降速启用后 3/3 在 35200 字节处超限失败，关闭时三次积压观测峰值均为 137600 字节。失败组自输入起点到 handler 返回为 1.8013–1.8023s；不冒充判断点至清理时延。18 次清理后名额归零，额外 18 次短会话均正常复用。
+[EXP-004-11](../experiments/backlog-comparison.md) 完成同一源码、三场景、关闭/启用预算各三次的 18 次正式主测量，并保留无 race 原始数据。正常与短暂停顿启用后 6/6 完成；持续降速启用后 3/3 在 35200 字节处超限失败，关闭时三次积压观测峰值均为 137600 字节。失败组自输入起点到 handler 返回为 1.8013–1.8023s；不冒充判断点至清理时延。18 次清理后名额归零，额外 18 次短会话均正常复用。
 
 全量 race 回归及六场景完整夹具 race 验证通过，正式运行前后测量源码哈希一致。具体输入、计数口径、失败代价与采样限制见实验报告。本方案完成当前小步验收，第四阶段整体状态仍待范围与证据梳理，不因单会话实验通过而声称总内存有界或稳定容量已知。

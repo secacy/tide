@@ -16,7 +16,7 @@
 | 正常尾部与生命周期不退化 | 全量 race 回归通过，预算对照 18 次清理/复用通过 | 现有范围通过；2026-09-26 补充四类保护退出的反复资源验收，见 EXP-004-12 |
 | 能用于普通启动 | 2026-09-26 已接入命令行预算参数，并通过配置与真实命令检查 | 默认保持关闭，可用启动参数显式启用；不将实验候选值设为默认 |
 
-参考：[Milestones](../../MILESTONES.md)、[积压预算对照](../../experiments/backlog-comparison.md)、[准入实验](../../experiments/session-admission.md)、[生命周期资源实验](../../experiments/session-lifecycle-cleanup.md)。
+参考：[Milestones](../MILESTONES.md)、[积压预算对照](../experiments/backlog-comparison.md)、[准入实验](../experiments/session-admission.md)、[生命周期资源实验](../experiments/session-lifecycle-cleanup.md)。
 
 ## 为什么暂不增加有界队列
 
@@ -63,7 +63,7 @@ go run ./cmd/gateway -max-pending-audio-bytes=32000
 
 ## 2026-09-26 启动参数验收
 
-开发者已实现 parseGatewayConfig、main 的参数/帮助处理及 run(ctx, cfg) 传参。检查确认 run 将配置直接传入 gateway.New，保留默认 0 和原 1MiB 消息上限。助手补充 [config_test.go](../../../cmd/gateway/config_test.go)，并更新 run 注释和[启动说明](../../command.md)。
+开发者已实现 parseGatewayConfig、main 的参数/帮助处理及 run(ctx, cfg) 传参。检查确认 run 将配置直接传入 gateway.New，保留默认 0 和原 1MiB 消息上限。助手补充 [config_test.go](../../cmd/gateway/config_test.go)，并更新 run 注释和[启动说明](../command.md)。
 
 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./cmd/gateway -count=1 -timeout=30s` 通过（1.673s，20 个子用例），验证省略/显式 0、两种赋值写法、正负边界、配置校验、非法数字、溢出、未知参数、多余位置参数和帮助。独立 FlagSet 没有把前一次配置带入后一次默认解析。
 
@@ -75,7 +75,7 @@ go run ./cmd/gateway -max-pending-audio-bytes=32000
 
 ## 2026-09-26 反复保护退出验收完成
 
-[EXP-004-12](../../experiments/protection-cleanup.md) 完成三次正常/混合故障对照，共 600 个正式会话、60 个预热会话。真实 Gateway.ServeHTTP、WebSocket 与 gRPC TCP 共用持久服务；Send/Write 故障使用确定性门闩，未重复通过大量流量填满 OS 缓冲。
+[EXP-004-12](../experiments/protection-cleanup.md) 完成三次正常/混合故障对照，共 600 个正式会话、60 个预热会话。真实 Gateway.ServeHTTP、WebSocket 与 gRPC TCP 共用持久服务；Send/Write 故障使用确定性门闩，未重复通过大量流量填满 OS 缓冲。
 
 四类保护退出各 60 次，全部正式会话清理检查通过；132 个采样点的 goroutine 均为 12。第一轮混合组第 20 轮存活堆比预热基线高 9.09 KiB，后两次低于基线，未出现跨重复一致的逐轮增长模式。跨夹具起点变化及沉降结果原样保留，不把有限样本当成总内存上界或绝无泄漏的证明。
 

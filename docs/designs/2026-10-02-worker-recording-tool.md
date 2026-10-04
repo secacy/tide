@@ -4,7 +4,7 @@
 
 状态：已实现并通过全项目 race 回归。此项由助手按调整后的分工完成，属于负载与指标采集工具；下一步接入 Gateway/Worker 联合观测实验。
 
-相关：[Worker 处理观测设计](2026-10-01-worker-processing-observation.md)、[运行命令](../../command.md#worker-处理状态采样)。
+相关：[Worker 处理观测设计](2026-10-01-worker-processing-observation.md)、[运行命令](../command.md#worker-处理状态采样)。
 
 ## 解决什么问题
 

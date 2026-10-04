@@ -3,7 +3,7 @@
 Date: 2026-10-01
 Status: 已完成九批联合观测基线；未测稳定容量。
 Source: 1c67120；本轮未修改 Go 业务代码。
-Related: [发送排期基线 EXP-005-02](loadgen-schedule-baseline.md)、[并发负载设计](../worklog/designs/2026-09-28-concurrent-load.md)
+Related: [发送排期基线 EXP-005-02](loadgen-schedule-baseline.md)、[并发负载设计](../designs/2026-09-28-concurrent-load.md)
 
 ## 问题与取舍
 

@@ -1,6 +1,6 @@
 # 单次 Worker 发送等待期限：实现指导
 
-状态：辅助函数及 Gateway 接入已实现并验证。关联：[改造前停读实验](../../experiments/stalled-worker.md)、[改造后自主清理结果](../../experiments/worker-send-timeout.md)。以下实现步骤保留设计过程，当前完成情况以验证记录为准。
+状态：辅助函数及 Gateway 接入已实现并验证。关联：[改造前停读实验](../experiments/stalled-worker.md)、[改造后自主清理结果](../experiments/worker-send-timeout.md)。以下实现步骤保留设计过程，当前完成情况以验证记录为准。
 
 ## 问题与本步目标
 
@@ -82,7 +82,7 @@ func sendWithTimeout(
 
 ### 当前验证结果
 
-开发者已实现 [send.go](../../../internal/gateway/send.go)，助手补充 [send_test.go](../../../internal/gateway/send_test.go)。配置非法分支已与真实发送超时分开，不再包装 `ErrWorkerSendTimeout`。
+开发者已实现 [send.go](../../internal/gateway/send.go)，助手补充 [send_test.go](../../internal/gateway/send_test.go)。配置非法分支已与真实发送超时分开，不再包装 `ErrWorkerSendTimeout`。
 
 已通过：
 

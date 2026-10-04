@@ -61,14 +61,14 @@ resultWriteExpired 在短锁内取 context 指针，释放锁后检查非 nil �
 ## 2026-09-22 首步复验
 
 - writeResult 已在 Write 前公开 context，并在 Write 返回后先读取期限状态再 cancel；父 context 错误优先于本次写回超时，符合约定。
-- 新增 [result_write_test.go](../../../internal/gateway/result_write_test.go)，使用真实 WebSocket 与可被 Close 唤醒的受控底层 Write，验证取消实际解除写入，而不是仅让外层等待返回。
+- 新增 [result_write_test.go](../../internal/gateway/result_write_test.go)，使用真实 WebSocket 与可被 Close 唤醒的受控底层 Write，验证取消实际解除写入，而不是仅让外层等待返回。
 - `go test -race ./internal/gateway -run '^TestResultWrite' -count=1 -timeout=30s` 未通过：0 和负值配置错误返回 ErrResultWriteTimeout，两个边界用例失败。应改为普通参数错误，例如 fmt.Errorf("result write timeout must be positive: %s", s.resultWriteTimeout)。
 - 本次正常连续写入、每次新期限、父 context 已结束、阻塞中父取消、自身期限到期、状态保留及已关闭连接写入的用例通过，未报告数据竞争；整组仍因参数分类失败而失败。
 - 此处受控底层等待是行为测试，不是停止读取后填满真实 TCP 缓冲的性能实验。辅助方法仍未接入 download，没有新增链路收益。
 
 ## 修正复验与完整链路集成任务
 
-无效期限已改为普通参数错误，定向测试连续三轮通过 race 检查。真实 TCP 三轮[慢客户端基线](../../experiments/slow-reader-baseline.md)均观察到同一次底层 Write 持续等待约 804–808ms、active=1，需要外部取消。外部取消至 handler 返回约 5.001–5.002 秒，包含现有服务停止关闭流程的等待；这不是写回期限保护的结果。
+无效期限已改为普通参数错误，定向测试连续三轮通过 race 检查。真实 TCP 三轮[慢客户端基线](../experiments/slow-reader-baseline.md)均观察到同一次底层 Write 持续等待约 804–808ms、active=1，需要外部取消。外部取消至 handler 返回约 5.001–5.002 秒，包含现有服务停止关闭流程的等待；这不是写回期限保护的结果。
 
 下一步由开发者完成：
 
@@ -92,4 +92,4 @@ resultWriteExpired 在短锁内取 context 指针，释放锁后检查非 nil �
 
 定向测试连续三轮通过 race 检查，全量 race 回归通过。完整 run 的受控传输测试直接验证 ErrResultWriteTimeout；优先级测试验证读取失败事件先到仍保留写回超时原因。
 
-真实 TCP 三轮实验使用 200ms 测试预算，自主清理 3/3，外部兜底由 3/3 降为 0/3，名额归零后重新接入 3/3 成功。从已观测阻塞的底层 Write 开始到 handler 返回为 201.18–201.41ms；与基线的外部取消起点不同，不计算加速倍数。详见[结果写回期限验收](../../experiments/result-write-timeout.md)。
+真实 TCP 三轮实验使用 200ms 测试预算，自主清理 3/3，外部兜底由 3/3 降为 0/3，名额归零后重新接入 3/3 成功。从已观测阻塞的底层 Write 开始到 handler 返回为 201.18–201.41ms；与基线的外部取消起点不同，不计算加速倍数。详见[结果写回期限验收](../experiments/result-write-timeout.md)。

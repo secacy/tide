@@ -74,7 +74,7 @@ func (s *processingSlots) acquire(ctx context.Context) (release func(), err erro
 
 ## 2026-09-27 独立部件实现验收
 
-本轮按当前源码重新核对并验收：开发者新增 [processing_slots.go](../../../internal/mockasr/processing_slots.go)，已实现正容量校验、可取消获取、取得后再次检查取消，以及 sync.Once 幂等归还。助手未修改业务逻辑，新增 [processing_slots_test.go](../../../internal/mockasr/processing_slots_test.go)。
+本轮按当前源码重新核对并验收：开发者新增 [processing_slots.go](../../internal/mockasr/processing_slots.go)，已实现正容量校验、可取消获取、取得后再次检查取消，以及 sync.Once 幂等归还。助手未修改业务逻辑，新增 [processing_slots_test.go](../../internal/mockasr/processing_slots_test.go)。
 
 验证命令：
 
@@ -173,7 +173,7 @@ GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
 go test -race ./... -count=1 -timeout=180s
 ```
 
-全项目通过，无数据竞争报告：cmd/gateway 1.651s、internal/gateway 13.039s、internal/mockasr 2.395s。新增五个顶层测试的 22 个子用例全部通过，此前失败的新增 4 个及既有 2 个取消子用例全部恢复通过。验证入口：[processing_capacity_test.go](../../../internal/mockasr/processing_capacity_test.go)。没有开启额外可选负载实验。
+全项目通过，无数据竞争报告：cmd/gateway 1.651s、internal/gateway 13.039s、internal/mockasr 2.395s。新增五个顶层测试的 22 个子用例全部通过，此前失败的新增 4 个及既有 2 个取消子用例全部恢复通过。验证入口：[processing_capacity_test.go](../../internal/mockasr/processing_capacity_test.go)。没有开启额外可选负载实验。
 
 本步收益是 Mock 具备可配置、实例共享且可取消的处理瓶颈，为后续多 Worker 容量对照提供可控条件；不能据虚拟时钟测试推断实际稳定容量或真实 ASR 性能。下一步支持 Worker 监听地址和处理参数的启动配置，再推进多 Worker 新会话分配。
 
@@ -233,7 +233,7 @@ ResponseDelay 不占处理名额，但会延后同一流读取后续音频，容
 
 main 已调用参数解析器，帮助直接正常返回、错误非零退出；run 接收 workerConfig，先校验并创建 Mock，再监听 cfg.ListenAddr。启动日志记录实际绑定地址与三个处理/响应参数。构造、监听错误通过 %w 保留原始错误；Serve 当前直接返回原始错误，保留错误链，阶段前缀仅属诊断增强，不作为阻塞项。
 
-助手新增 [main_test.go](../../../cmd/asr-worker/main_test.go)，执行：
+助手新增 [main_test.go](../../cmd/asr-worker/main_test.go)，执行：
 
 ```sh
 GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
@@ -248,4 +248,4 @@ go test -race ./cmd/asr-worker -count=1 -timeout=120s -v
 
 外层测试以 -race 运行；真实子进程通过普通 go build 构建，本次不声称对子进程开启 race。网络检查验证启动接线及完整响应，没有测量真实处理并行度或稳定容量；共享名额语义由已有 Mock 并发测试覆盖。改动限于 Worker 命令入口，本次完成相关包回归，未重复 Gateway 全项目测试。
 
-[运行文档](../../command.md)已改为包路径启动并补四项参数、双实例示例及日志说明。Gateway 仍使用单一 localhost:50051，下步进入多个 Worker 的新会话分配设计。
+[运行文档](../command.md)已改为包路径启动并补四项参数、双实例示例及日志说明。Gateway 仍使用单一 localhost:50051，下步进入多个 Worker 的新会话分配设计。

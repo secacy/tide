@@ -73,7 +73,7 @@ Pick 在锁内取 workers[next]，推进并回绕下标，返回 Worker 值副�
 
 开发者已实现 Worker、RoundRobin、构造校验与切片复制，以及短锁内的 Pick 和下标回绕。构造检查重复 ID 时漏写已见 ID 的 map，因此重复 ID 不会被拒绝。修正时按原约定使用原始 w.ID 作为查重和插入键；strings.TrimSpace 仅用于判定是否全空白，不作为 ID 规范化步骤。
 
-助手新增 [round_robin_test.go](../../../internal/workerpool/round_robin_test.go)，执行：
+助手新增 [round_robin_test.go](../../internal/workerpool/round_robin_test.go)，执行：
 
 ```sh
 GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
@@ -122,7 +122,7 @@ go test -race ./internal/workerpool -count=1 -timeout=30s -v
 
 开发者已完成三个生产文件：Gateway/session 共享一个 RoundRobin；start 校验成功后保存选中 Worker ID 并创建一次 stream；建流错误保留 ID 与错误链；生产入口复用原 grpcConn，以 localhost:50051 组装单项池。现有 finish、取消、goroutine 等待及 tracker 清理逻辑保持不变。
 
-助手适配旧测试的构造参数及测试 session 字段，新增单后端组装帮助函数 [worker_pool_test.go](../../../internal/gateway/worker_pool_test.go) 和七个顶层路由测试 [worker_routing_test.go](../../../internal/gateway/worker_routing_test.go)。测试使用真实 WebSocket 与两个独立临时 TCP gRPC 后端；建流失败在客户端方法处可控注入。
+助手适配旧测试的构造参数及测试 session 字段，新增单后端组装帮助函数 [worker_pool_test.go](../../internal/gateway/worker_pool_test.go) 和七个顶层路由测试 [worker_routing_test.go](../../internal/gateway/worker_routing_test.go)。测试使用真实 WebSocket 与两个独立临时 TCP gRPC 后端；建流失败在客户端方法处可控注入。
 
 验证结果：
 
@@ -186,7 +186,7 @@ go test -race config.go worker_addresses.go config_test.go worker_addresses_test
 
 ### 多地址入口修正后验收（2026-09-28）
 
-地址校验已接入，端口 ParseUint 与 slog 键值对写法均已修正。助手新增 [startup_test.go](../../../cmd/gateway/startup_test.go)，没有修改生产逻辑。
+地址校验已接入，端口 ParseUint 与 slog 键值对写法均已修正。助手新增 [startup_test.go](../../cmd/gateway/startup_test.go)，没有修改生产逻辑。
 
 执行：
 
@@ -205,4 +205,4 @@ go test -race ./cmd/gateway -count=1 -timeout=120s -v
 
 该测试因当前 HTTP 地址固定 :8080，会在端口已占用时明确跳过；本次实际执行并通过，没有跳过。中途 NewClient 构造失败后的统一 defer 清理只完成代码审查，未通过故障注入验证；不混同为实测证据。
 
-本步只改变 cmd/gateway 的启动组装，定向包测试已覆盖受影响入口及真实链路，未重复其他包的网络回归。更新 [运行文档](../../command.md) 发布 -workers 与预算组合命令。这些属于配置、分配与资源回收正确性证据，不是容量或吞吐结论；后续进入并发负载工具、指标口径和容量实验。
+本步只改变 cmd/gateway 的启动组装，定向包测试已覆盖受影响入口及真实链路，未重复其他包的网络回归。更新 [运行文档](../command.md) 发布 -workers 与预算组合命令。这些属于配置、分配与资源回收正确性证据，不是容量或吞吐结论；后续进入并发负载工具、指标口径和容量实验。

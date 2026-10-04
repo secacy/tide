@@ -2,7 +2,7 @@
 
 日期：2026-10-01
 状态：Worker HTTP、单次查询、串行采样、记录文件及独立命令均已完成。按调整后的分工，第六、七步由助手完成；全项目回归通过；2026-10-02 已完成第八步联合观测基线，结果见文末。
-相关：[共享处理名额](2026-09-27-worker-processing-capacity.md)、[Gateway 联合观测基线](../../experiments/gateway-observation-baseline.md)
+相关：[共享处理名额](2026-09-27-worker-processing-capacity.md)、[Gateway 联合观测基线](../experiments/gateway-observation-baseline.md)
 
 ## 为什么继续补这项
 
@@ -104,9 +104,9 @@ snapshot 加锁读取 cap(tokens)、inUse、waiting 后返回值副本。不要�
 
 ## 首步实现与验收（2026-10-01）
 
-开发者实现 [processing_slots.go](../../../internal/mockasr/processing_slots.go)，保留 channel 名额控制，增加 InUse/Waiting、立即获取与满额等待两条路径、值快照及独立幂等归还闭包。初次审查发现持锁复查 ctx.Err 的返回分支缺少 Unlock；复查时开发者已补齐，助手未修改生产逻辑。新增确定性回归检查确保该路径返回取消错误后，锁已释放、快照可读且名额仍可复用。
+开发者实现 [processing_slots.go](../../internal/mockasr/processing_slots.go)，保留 channel 名额控制，增加 InUse/Waiting、立即获取与满额等待两条路径、值快照及独立幂等归还闭包。初次审查发现持锁复查 ctx.Err 的返回分支缺少 Unlock；复查时开发者已补齐，助手未修改生产逻辑。新增确定性回归检查确保该路径返回取消错误后，锁已释放、快照可读且名额仍可复用。
 
-助手新增 [processing_snapshot_test.go](../../../internal/mockasr/processing_snapshot_test.go)，7 个顶层测试、9 项叶子检查：
+助手新增 [processing_snapshot_test.go](../../internal/mockasr/processing_snapshot_test.go)，7 个顶层测试、9 项叶子检查：
 
 - 容量内获取只增加 InUse，历史快照和值副本不随内部变化而改变，归还后归零。
 - 容量为 1 时登记 3 个等待者，每次归还只完成一个占用交接，Waiting 依次减少，最后两项归零；不要求等待顺序。
@@ -178,9 +178,9 @@ func (w *Worker) ProcessingSnapshot() (snapshot ProcessingSnapshot, enabled bool
 
 ### 第二步实现与验收
 
-开发者实现 [snapshot.go](../../../internal/mockasr/snapshot.go)，使用独立公开值类型与 enabled，启用时映射一次池快照，未启用时返回零值与 false。审查未发现需要修改的生产逻辑；未增加 Worker 级锁或改变处理名额的获取、归还区间。
+开发者实现 [snapshot.go](../../internal/mockasr/snapshot.go)，使用独立公开值类型与 enabled，启用时映射一次池快照，未启用时返回零值与 false。审查未发现需要修改的生产逻辑；未增加 Worker 级锁或改变处理名额的获取、归还区间。
 
-助手新增 [snapshot_test.go](../../../internal/mockasr/snapshot_test.go)，两个顶层测试、四项叶子检查，使用实际 processChunk 和虚拟时间控制状态：
+助手新增 [snapshot_test.go](../../internal/mockasr/snapshot_test.go)，两个顶层测试、四项叶子检查，使用实际 processChunk 和虚拟时间控制状态：
 
 - 关闭限制时，同时运行两个处理请求，处理前、处理中与取消后均返回零值和 false，避免将未采集解释为空闲。
 - 启用一个名额时，正常完成、等待者取消、持有者取消三种路径均验证占用与等待的转换，以及最后归零；未取消的请求正常完成。
@@ -270,9 +270,9 @@ routes 创建 http.NewServeMux()，注册 `GET /debug/worker` 到该 Handler 后
 
 ### 第三步实现与验收
 
-开发者实现 [cmd/asr-worker/snapshot.go](../../../cmd/asr-worker/snapshot.go)：独立 DTO、每请求一次快照、未启用时明确 null、编码后设置响应头与写回、私有 GET 路由均符合约定。助手未修改生产代码。
+开发者实现 [cmd/asr-worker/snapshot.go](../../cmd/asr-worker/snapshot.go)：独立 DTO、每请求一次快照、未启用时明确 null、编码后设置响应头与写回、私有 GET 路由均符合约定。助手未修改生产代码。
 
-新增 [snapshot_test.go](../../../cmd/asr-worker/snapshot_test.go)，六个顶层测试、14 项叶子检查：
+新增 [snapshot_test.go](../../cmd/asr-worker/snapshot_test.go)，六个顶层测试、14 项叶子检查：
 
 - 未启用和启用空闲两种响应，独立解码核对所有字段、零值、null、版本、响应头与没有多余响应；重复查询不改变名额状态。
 - 真实临时 HTTP 服务验证 GET、HEAD 无正文、POST/DELETE 返回 405，以及未知路径和子路径返回 404。
@@ -342,11 +342,11 @@ type workerConfig struct {
 
 ### 第四步之一实现与验收
 
-开发者在 [config.go](../../../cmd/asr-worker/config.go) 增加 DebugListenAddr、-debug-listen 参数、说明文案和纯空白拒绝校验。默认及显式空值关闭、非空地址原值保留均符合约定。助手仅执行 gofmt，未修改生产逻辑。
+开发者在 [config.go](../../cmd/asr-worker/config.go) 增加 DebugListenAddr、-debug-listen 参数、说明文案和纯空白拒绝校验。默认及显式空值关闭、非空地址原值保留均符合约定。助手仅执行 gofmt，未修改生产逻辑。
 
-新增 [debug_config_test.go](../../../cmd/asr-worker/debug_config_test.go)，四个顶层测试、19 项叶子检查：11 项地址/默认值检查、5 项无效输入检查、2 项处理限制独立配置检查和1项重复解析检查。覆盖 IPv4/IPv6、通配地址、系统分配端口、两个相同的 :0 地址不提前拒绝、地址格式校验延后、保留两侧空格、普通/控制/Unicode 空白拒绝及错误返回零配置。两个处理限制用例分别检查 HTTP 开启和关闭，确认两类开关不互相推导。
+新增 [debug_config_test.go](../../cmd/asr-worker/debug_config_test.go)，四个顶层测试、19 项叶子检查：11 项地址/默认值检查、5 项无效输入检查、2 项处理限制独立配置检查和1项重复解析检查。覆盖 IPv4/IPv6、通配地址、系统分配端口、两个相同的 :0 地址不提前拒绝、地址格式校验延后、保留两侧空格、普通/控制/Unicode 空白拒绝及错误返回零配置。两个处理限制用例分别检查 HTTP 开启和关闭，确认两类开关不互相推导。
 
-在已有 [main_test.go](../../../cmd/asr-worker/main_test.go) 的真实进程 -h/-help 检查中，补充核对 debug-listen、HTTP、空值关闭和本机地址示例文案，未新增构建流程。
+在已有 [main_test.go](../../cmd/asr-worker/main_test.go) 的真实进程 -h/-help 检查中，补充核对 debug-listen、HTTP、空值关闭和本机地址示例文案，未新增构建流程。
 
 执行 `go test -race ./cmd/asr-worker -count=1 -timeout=90s -json`，16 个顶层测试、67 项叶子检查全部通过，无失败、跳过或数据竞争报告。包含原有配置、Handler、启动错误及真实 Worker 子进程/RPC 回归；本次未重跑 Mock 包或全项目测试。
 
@@ -443,9 +443,9 @@ Serve 返回值的归类顺序：先识别是否正常停止候选，再结合 g
 
 ### 第四步之二实现与验收
 
-开发者修改 [main.go](../../../cmd/asr-worker/main.go)，新增 [serve.go](../../../cmd/asr-worker/serve.go)。信号 context、双监听失败回滚、同一 Worker 接线、实际端口日志、errgroup 协调与共享期限收尾符合设计；HTTP 清理通过缓冲结果 channel 返回错误，gRPC 使用完成 channel，同样实现清理结果同步。助手未修改生产逻辑。main 额外将启动前信号取消产生的 context.Canceled 视为正常停止；正常运行后的超时仍返回错误。
+开发者修改 [main.go](../../cmd/asr-worker/main.go)，新增 [serve.go](../../cmd/asr-worker/serve.go)。信号 context、双监听失败回滚、同一 Worker 接线、实际端口日志、errgroup 协调与共享期限收尾符合设计；HTTP 清理通过缓冲结果 channel 返回错误，gRPC 使用完成 channel，同样实现清理结果同步。助手未修改生产逻辑。main 额外将启动前信号取消产生的 context.Canceled 视为正常停止；正常运行后的超时仍返回错误。
 
-助手适配 [main_test.go](../../../cmd/asr-worker/main_test.go) 的 run 签名及新的 gRPC 监听错误文案，扩展进程夹具读取实际 HTTP 地址和发送信号，新增 [serve_test.go](../../../cmd/asr-worker/serve_test.go)。共新增 17 项叶子检查：
+助手适配 [main_test.go](../../cmd/asr-worker/main_test.go) 的 run 签名及新的 gRPC 监听错误文案，扩展进程夹具读取实际 HTTP 地址和发送信号，新增 [serve_test.go](../../cmd/asr-worker/serve_test.go)。共新增 17 项叶子检查：
 
 - 3 项启动检查：HTTP 与 gRPC 争用同一端口、HTTP 地址无效、进入 run 前已取消；失败后原 gRPC 地址可重新绑定。
 - 5 项协调检查：注入 gRPC/HTTP Accept 错误，保留原错误并关闭对方；提前 Stop/Close 被判定为意外停止而非永久等待；取消先于 Serve 启动也能收尾。Accept 故障用同步点确认双方已进入监听，避免测试依赖 goroutine 调度顺序。
@@ -455,7 +455,7 @@ Serve 返回值的归类顺序：先识别是否正常停止候选，再结合 g
 
 先运行新增启动/协调/收尾定向检查通过；补齐真实 Mock 与进程用例后，运行 `go test -race ./... -count=1 -timeout=120s -json`，全项目 1000 项叶子检查通过，12 个需显式开启的实验默认跳过，无失败或数据竞争报告。Worker 命令包 84 项检查通过。测试没有对任意不响应取消的 handler 给出有界退出保证，也未独立注入 HTTP Close 自身返回错误的分支。
 
-已发布 [命令用法](../../command.md)，包含可选查询地址、实际端口日志、未启用 null、信号和退出码。当前能从正式进程查询状态，但尚未实现 Worker 专用查询客户端、周期采样或新的联合负载实验。下一步设计单次 Worker 查询，保持未知与零的区别，再接入采样；不把本次测试计数当作容量或性能改善数据。
+已发布 [命令用法](../command.md)，包含可选查询地址、实际端口日志、未启用 null、信号和退出码。当前能从正式进程查询状态，但尚未实现 Worker 专用查询客户端、周期采样或新的联合负载实验。下一步设计单次 Worker 查询，保持未知与零的区别，再接入采样；不把本次测试计数当作容量或性能改善数据。
 
 ## 第五步：单次 Worker 查询客户端（2026-10-01，已验收）
 
@@ -552,9 +552,9 @@ func decodeWorkerSnapshot(data []byte) (WorkerState, error)
 
 ### 第五步实现与验收
 
-开发者实现 [worker_snapshot.go](../../../internal/loadgen/worker_snapshot.go)：公开值快照、RawMessage 区分缺失与 null、指针字段校验完整性、独立纯解码、客户端副本拒绝重定向、4KiB 响应边界和错误链均符合约定。助手未修改生产代码。
+开发者实现 [worker_snapshot.go](../../internal/loadgen/worker_snapshot.go)：公开值快照、RawMessage 区分缺失与 null、指针字段校验完整性、独立纯解码、客户端副本拒绝重定向、4KiB 响应边界和错误链均符合约定。助手未修改生产代码。
 
-新增 [worker_snapshot_test.go](../../../internal/loadgen/worker_snapshot_test.go)，九个顶层测试、76 项叶子检查，通过公开 Fetch 入口覆盖：
+新增 [worker_snapshot_test.go](../../internal/loadgen/worker_snapshot_test.go)，九个顶层测试、76 项叶子检查，通过公开 Fetch 入口覆盖：
 
 - 7 项合法状态：未启用、带空白的 null、有效空闲、忙碌与等待、满额、未知字段及媒体类型参数兼容、int 最大值；等待可以超过 Limit，不额外强制等待时必须满额。
 - 46 项非法 JSON/状态：顶层错误、尾随 JSON、版本和开关错误、processing 缺失/null/非对象、关闭限制却返回对象、三个计数缺失/null/错类型/溢出，以及非法数值范围。均返回零状态和错误。
@@ -566,7 +566,7 @@ func decodeWorkerSnapshot(data []byte) (WorkerState, error)
 - 4 项真实取消/超时：等待响应头、读取响应体分别验证主动取消与期限到期，保留 context 错误。
 - 1 项已取消请求：返回 Canceled，服务器没有收到请求。
 
-将 [cmd/asr-worker/serve_test.go](../../../cmd/asr-worker/serve_test.go) 的 waitProcessState 从手写 JSON 解码改为调用 FetchWorkerSnapshot。已有真实 Worker 子进程测试使用新客户端读取空闲与处理占用；同实例真实 RPC 竞争测试通过新客户端读取 InUse=1、Waiting=1，随后继续验证强制收尾归零。HTTP JSON 字段契约仍由独立 Handler 测试检查，避免只依赖客户端与服务端相互兼容。
+将 [cmd/asr-worker/serve_test.go](../../cmd/asr-worker/serve_test.go) 的 waitProcessState 从手写 JSON 解码改为调用 FetchWorkerSnapshot。已有真实 Worker 子进程测试使用新客户端读取空闲与处理占用；同实例真实 RPC 竞争测试通过新客户端读取 InUse=1、Waiting=1，随后继续验证强制收尾归零。HTTP JSON 字段契约仍由独立 Handler 测试检查，避免只依赖客户端与服务端相互兼容。
 
 执行 `go test -race ./internal/loadgen ./cmd/asr-worker -count=1 -timeout=120s -json`：loadgen 包 417 项、Worker 命令包 84 项，共 501 项叶子检查通过，无失败、跳过或数据竞争报告。本次没有重跑全项目；上一小步全项目 1000 项记录保持历史含义。子进程仍沿用普通二进制构建。
 
@@ -701,9 +701,9 @@ RunWorkerSampling 做相同前置校验，委托 runSamplingLoop[WorkerState]，
 
 用户在实现前调整分工：负载工具、指标采集及配套测试/文档由助手承接，核心会话管理、背压和调度仍以用户实现与助手指导为主；指标定义、实验条件和结论边界仍需讲清楚。助手沿用用户已创建的仅含 package 声明的 worker_sampling.go，完成本步代码，不再将采样基础设施逐函数拆成用户练习。
 
-新增 [sampling_loop.go](../../../internal/loadgen/sampling_loop.go) 和 [worker_sampling.go](../../../internal/loadgen/worker_sampling.go)，将 [Gateway 入口](../../../internal/loadgen/gateway_sampling.go) 的原循环迁移到私有泛型函数。公开 Gateway 配置、类型、函数签名、校验和错误语义保持；Worker 通过独立公开入口适配同一时序。取消间隔 timer 后直接丢弃，不进行可能阻塞的排空。
+新增 [sampling_loop.go](../../internal/loadgen/sampling_loop.go) 和 [worker_sampling.go](../../internal/loadgen/worker_sampling.go)，将 [Gateway 入口](../../internal/loadgen/gateway_sampling.go) 的原循环迁移到私有泛型函数。公开 Gateway 配置、类型、函数签名、校验和错误语义保持；Worker 通过独立公开入口适配同一时序。取消间隔 timer 后直接丢弃，不进行可能阻塞的排空。
 
-新增 [worker_sampling_test.go](../../../internal/loadgen/worker_sampling_test.go)，八个顶层测试、27 项叶子检查，覆盖配置/依赖拒绝、首次立即查询、慢查询不重叠、交付后再计间隔、子期限后继续、父取消中的最后一次尝试、成功事实不被取消改写、交付错误优先级、历史状态独立和真实 HTTP 循环。专门验证未启用限制仍为非 nil 成功 State，有效零值/等待/再次未启用不会自动停止，两条未启用样本也不共享可变存储。时序使用虚拟时间，HTTP 用例不作为负载性能测量。
+新增 [worker_sampling_test.go](../../internal/loadgen/worker_sampling_test.go)，八个顶层测试、27 项叶子检查，覆盖配置/依赖拒绝、首次立即查询、慢查询不重叠、交付后再计间隔、子期限后继续、父取消中的最后一次尝试、成功事实不被取消改写、交付错误优先级、历史状态独立和真实 HTTP 循环。专门验证未启用限制仍为非 nil 成功 State，有效零值/等待/再次未启用不会自动停止，两条未启用样本也不共享可变存储。时序使用虚拟时间，HTTP 用例不作为负载性能测量。
 
 执行 `go test -race ./internal/loadgen ./cmd/gateway-sampler ./cmd/loadgen ./cmd/asr-worker -count=1 -timeout=120s -json`：loadgen 444 项、gateway-sampler 95 项、loadgen 命令 62 项、Worker 命令 84 项，共 685 项叶子检查通过，无失败、跳过或数据竞争报告。原 Gateway 采样、JSON、文件记录、清单、命令退出以及真实 Worker 查询接线回归通过；没有重跑全项目或正式性能实验。
 
@@ -717,4 +717,4 @@ RunWorkerSampling 做相同前置校验，委托 runSamplingLoop[WorkerState]，
 
 助手已完成实验编排、Worker 样本校验与分组分析；预先固定条件后提交 `6cb4d0d`，再执行正式测量。1/2/4 场各三批，21/21 场完整完成；Gateway 890 条和 Worker 4149 条有效采样、无查询失败。各批接入峰值及双方前后空闲均覆盖，两场/四场采到的等待峰值为 1/3。全量 91 份证据与源码/脚本哈希已复核，复制后重新分析与归档分组一致。
 
-新增八个分析测试与八个既有 Gateway 测试通过，旧报告六个兼容测试通过；没有改 Go 代码或重跑 Go 测试。完整方案取舍、判据、指标边界、数值和可用于 STAR Result 的表述见 [EXP-005-04](../../experiments/joint-observation-baseline.md)。当前只能说明小规模负载下的处理争用及完成行为，下一步加压前先明确更长观察窗口和失败会话统计。
+新增八个分析测试与八个既有 Gateway 测试通过，旧报告六个兼容测试通过；没有改 Go 代码或重跑 Go 测试。完整方案取舍、判据、指标边界、数值和可用于 STAR Result 的表述见 [EXP-005-04](../experiments/joint-observation-baseline.md)。当前只能说明小规模负载下的处理争用及完成行为，下一步加压前先明确更长观察窗口和失败会话统计。

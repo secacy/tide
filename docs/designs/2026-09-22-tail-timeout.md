@@ -51,7 +51,7 @@ Gateway 收到合法 end 后不再使用输入空闲超时，Worker Send 期限�
 ## 2026-09-22 首步检查
 
 - waitSessionEvent 正确地在观察到 end 后创建计时器，并通过局部 endSignal=nil 禁用已关闭的通知通道；退出事件、服务取消及尾部超时的返回语义符合约定。
-- 新增 [tail_test.go](../../../internal/gateway/tail_test.go)，使用虚拟时间验证 end 前一小时不触发尾部超时、end 后完整预算、end 前后退出事件和取消，以及调用前 end 已发生的情况。
+- 新增 [tail_test.go](../../internal/gateway/tail_test.go)，使用虚拟时间验证 end 前一小时不触发尾部超时、end 后完整预算、end 前后退出事件和取消，以及调用前 end 已发生的情况。
 - `go test -race ./internal/gateway -run '^TestTailWait' -count=3 -timeout=30s` 通过。
 - 代码检查发现提前返回时没有显式停止已创建的 timer。应在变量声明后注册 defer 闭包，在函数退出时检查 timer 非 nil 再 Stop。此项是资源收尾约定，以上行为测试通过不代表已经验证 Stop 调用；不将此问题描述为已实测的持续内存泄漏。
 - 当前辅助函数尚未被 waitSessionResult 调用；后续先完成该收尾，再记录接入前尾部停滞基线并接入配置与 finish。
@@ -59,7 +59,7 @@ Gateway 收到合法 end 后不再使用输入空闲超时，Worker Send 期限�
 ## 2026-09-22 复验及集成任务
 
 - defer 闭包和括号已修正，定向测试连续三轮通过；已创建的 timer 在退出时显式停止。
-- 已记录[尾部停滞基线](../../experiments/tail-stall-baseline.md)：三次均在约 500ms 观察窗口后继续占用唯一名额，三次新接入均返回 503，需要外部服务取消才能退出；另有一轮 race 验证通过。这不是改造后结果。
+- 已记录[尾部停滞基线](../experiments/tail-stall-baseline.md)：三次均在约 500ms 观察窗口后继续占用唯一名额，三次新接入均返回 503，需要外部服务取消才能退出；另有一轮 race 验证通过。这不是改造后结果。
 - 下一步由开发者增加 Config.TailTimeout（0→15s、负值报错）、session.tailTimeout 和 newSession 构造传参。
 - waitSessionResult 仅将开头的等待 select 替换为 waitSessionEvent(ctx, events, inputEnded, s.tailTimeout)，保留服务停止、Worker Send 超时、输入空闲超时的已有优先级检查，以及 completed 必须有合法 end 的检查。
 - finish 增加 resultTailTimeout 分支：取消 RPC，尝试 1011 / tail timeout 关闭，取消 WebSocket I/O，返回关闭错误（若有）；run 继续等待 goroutine，handler 完成后归还名额。这里的 timeout 由协调者直接返回，不需要另外启动回调或仿照发送期限再次取消 RPC 写入 cause。
@@ -77,4 +77,4 @@ Gateway 收到合法 end 后不再使用输入空闲超时，Worker Send 期限�
 
 New 的默认值与负值校验、newSession 参数与字段赋值、ServeHTTP 传参和 finish 正常返回已补齐。助手同步了旧测试构造调用，增加真实链路与协调者优先级测试。
 
-定向测试连续三轮通过 race 检查；随后新增的协调者测试随全量 race 回归通过。正常尾部不被误伤，end 前超过尾部预算仍可继续输入。正式三次停滞实验配置 200ms，全部自主以 1011 / tail timeout 退出，外部兜底从 3/3 降为 0/3，清理后重新接入 3/3 成功。相对测试观察到 Worker EOF，handler 返回为 201.45–202.65ms；这不是 timer 精确起点到完成的测量。完整条件和限制见[尾部期限验收](../../experiments/tail-timeout.md)。
+定向测试连续三轮通过 race 检查；随后新增的协调者测试随全量 race 回归通过。正常尾部不被误伤，end 前超过尾部预算仍可继续输入。正式三次停滞实验配置 200ms，全部自主以 1011 / tail timeout 退出，外部兜底从 3/3 降为 0/3，清理后重新接入 3/3 成功。相对测试观察到 Worker EOF，handler 返回为 201.45–202.65ms；这不是 timer 精确起点到完成的测量。完整条件和限制见[尾部期限验收](../experiments/tail-timeout.md)。

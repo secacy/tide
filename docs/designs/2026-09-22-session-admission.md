@@ -56,8 +56,8 @@ Status: 2026-09-22 修正完成，定向 race 测试、全量 race 回归和五�
 - 新 tryEnter 已在同一把锁内完成停止判定、上限判定与递增；配置默认值、负值校验与 tracker 传参符合约定。
 - tracker.go 仍保留旧的 tryEnter() bool，与新 tryEnter() error 重名。定向测试命令 `go test -race ./internal/gateway -run '^TestAdmission' -count=1` 在编译阶段失败，尚未执行测试用例。
 - handler.go 的满载分支写出 503 后未 return，仍会尝试升级并执行 defer leave。这会让未取得名额的请求扣除已有会话计数，属于代码检查发现的问题。
-- 助手已补 [admission_test.go](../../../internal/gateway/admission_test.go)，覆盖配置、并发登记、停止与清理、拒绝不改变已有名额、升级失败归还名额。真实连接的五轮量化验收待上述修正后继续。
+- 助手已补 [admission_test.go](../../internal/gateway/admission_test.go)，覆盖配置、并发登记、停止与清理、拒绝不改变已有名额、升级失败归还名额。真实连接的五轮量化验收待上述修正后继续。
 
 ## 修正后验收
 
-旧方法已删除，满载分支已补 return。定向准入测试连续三轮通过 race 检查，全量 race 回归通过；五轮真实连接实验完成 100 次突发尝试，20 次接纳、80 次容量拒绝、0 次其他错误，每轮持有名额为 4，清理后为 0。另有 5 次重新接入均正常完成。详见[准入验收记录](../../experiments/session-admission.md)。
+旧方法已删除，满载分支已补 return。定向准入测试连续三轮通过 race 检查，全量 race 回归通过；五轮真实连接实验完成 100 次突发尝试，20 次接纳、80 次容量拒绝、0 次其他错误，每轮持有名额为 4，清理后为 0。另有 5 次重新接入均正常完成。详见[准入验收记录](../experiments/session-admission.md)。

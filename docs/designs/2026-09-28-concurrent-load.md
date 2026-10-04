@@ -2,7 +2,7 @@
 
 状态：负载工具、Gateway/逐 Worker 采样与实验编排已实现并验收；已完成单/双 Worker 运行点、同资源策略对照、两分钟筛查及过载后短探测。当前 Mock 实验范围已汇总验收，长时稳定容量尚未验证。历史小步记录保留其当时结论。
 
-当前小步：已完成[第五阶段 STAR + T 与验收范围](../M5-调度与容量实验.md)。同资源异速 Mock 下，12 并发、20 秒三批完成率由轮询 30/36 提高到加权 36/36；加权两分钟 24/24 完成。16 并发三批 41/48 完成、七次积压保护失败，后续低负载探测 6/6 完成。12 为已验证档位、16 为已测过载点，13–15 未测；下一步进入第六阶段恢复语义设计，长时稳定容量和严格资源边界的证据缺口继续保留。
+当前小步：已完成[第五阶段验收范围](../MILESTONES.md#第五阶段总结与验收范围2026-10-03)。同资源异速 Mock 下，12 并发、20 秒三批完成率由轮询 30/36 提高到加权 36/36；加权两分钟 24/24 完成。16 并发三批 41/48 完成、七次积压保护失败，后续低负载探测 6/6 完成。12 为已验证档位、16 为已测过载点，13–15 未测；下一步进入第六阶段恢复语义设计，长时稳定容量和严格资源边界的证据缺口继续保留。
 
 ## 为什么先准备负载与观测
 
@@ -736,7 +736,7 @@ func toWriteEventJSON(event wsclient.WriteEvent) *writeEventJSON
 
 ### JSON 输出验收（2026-09-29）
 
-实现入口：[json_output.go](../../../internal/loadgen/json_output.go)；测试入口：[json_output_test.go](../../../internal/loadgen/json_output_test.go)。本轮未修改生产逻辑。
+实现入口：[json_output.go](../../internal/loadgen/json_output.go)；测试入口：[json_output_test.go](../../internal/loadgen/json_output_test.go)。本轮未修改生产逻辑。
 
 新增 6 个顶层测试、13 项叶子检查；loadgen 包共 34 个顶层测试、120 项叶子检查全部通过 `go test -race ./internal/loadgen -count=1 -timeout=60s -v`，包耗时 4.755s，未报告数据竞争。该耗时是测试执行耗时，不是链路延迟。
 
@@ -816,10 +816,10 @@ fs.Parse 失败返回零配置与原错误，保留 flag.ErrHelp；拒绝任何�
 
 ### 参数解析与共享校验验收（2026-09-29）
 
-实现入口：[config.go](../../../cmd/loadgen/config.go)、[batch.go](../../../internal/loadgen/batch.go)、[summary.go](../../../internal/loadgen/summary.go)。本轮生产逻辑审查无须修正。
+实现入口：[config.go](../../cmd/loadgen/config.go)、[batch.go](../../internal/loadgen/batch.go)、[summary.go](../../internal/loadgen/summary.go)。本轮生产逻辑审查无须修正。
 
-- 新增命令参数测试 [config_test.go](../../../cmd/loadgen/config_test.go)：4 个顶层测试、44 项叶子检查通过 `go test -race ./cmd/loadgen -count=1 -timeout=60s -v`，包耗时 1.461s。覆盖全部默认/覆盖值、false 与短期限、必填参数、帮助、格式/范围/采样对齐错误、总量溢出、URL 与输出路径规则；保留原始尾部文本及路径，不修改传入参数。
-- 新增 [batch_config_test.go](../../../internal/loadgen/batch_config_test.go) 的 5 项边界检查，并扩展批次启动前检查的溢出场景：两场每场 4611686018427387902 字节可通过数值校验，每场 4611686018427387904 字节被拒绝；零/负字节数先返回错误，未发生除零。极值只做 Validate，不实际分配或运行对应负载。
+- 新增命令参数测试 [config_test.go](../../cmd/loadgen/config_test.go)：4 个顶层测试、44 项叶子检查通过 `go test -race ./cmd/loadgen -count=1 -timeout=60s -v`，包耗时 1.461s。覆盖全部默认/覆盖值、false 与短期限、必填参数、帮助、格式/范围/采样对齐错误、总量溢出、URL 与输出路径规则；保留原始尾部文本及路径，不修改传入参数。
+- 新增 [batch_config_test.go](../../internal/loadgen/batch_config_test.go) 的 5 项边界检查，并扩展批次启动前检查的溢出场景：两场每场 4611686018427387902 字节可通过数值校验，每场 4611686018427387904 字节被拒绝；零/负字节数先返回错误，未发生除零。极值只做 Validate，不实际分配或运行对应负载。
 - `RunBatch` 溢出场景与原有启动前失败场景均返回零报告，HTTP 请求总数为 0。loadgen 包共 35 个顶层测试、126 项叶子检查通过 `go test -race ./internal/loadgen -count=1 -timeout=60s -v`，包耗时 4.691s；原有运行、摘要与 JSON 输出回归通过，未报告数据竞争。
 - 用临时目录验证：解析可接受父目录尚不存在的输出路径，且不创建文件；已有文件内容保持不变。`.invalid` 地址仍能解析通过，网络可达性留给运行阶段。
 
@@ -897,7 +897,7 @@ main 先 parseLoadConfig(os.Args[1:])：flag.ErrHelp 正常返回；其他解析
 
 ### 运行入口与文件保存验收（2026-09-29）
 
-实现：[main.go](../../../cmd/loadgen/main.go)。新增测试：[main_test.go](../../../cmd/loadgen/main_test.go)、[process_test.go](../../../cmd/loadgen/process_test.go)。生产逻辑无需修改。
+实现：[main.go](../../cmd/loadgen/main.go)。新增测试：[main_test.go](../../cmd/loadgen/main_test.go)、[process_test.go](../../cmd/loadgen/process_test.go)。生产逻辑无需修改。
 
 执行 `go test -race ./cmd/loadgen ./internal/loadgen -count=1 -timeout=120s -v`：命令包 8 个顶层测试、62 项叶子检查通过（5.141s）；loadgen 包 35 个顶层测试、126 项叶子检查通过（5.107s）。本轮新增 4 个顶层测试、18 项叶子检查，总计 188 项通过，未报告数据竞争。包耗时不是业务延迟指标。
 
@@ -906,12 +906,12 @@ main 先 parseLoadConfig(os.Args[1:])：flag.ErrHelp 正常返回；其他解析
 - 网络夹具严格检查每场 start、4/4/2 三块静音音频共 10 字节与 end。保存后的报告可解码为恰好一个 JSON 文档，序号、成功/失败错误及尾部样本一致，计划的两场记录均存在，实际写出总量为 20 字节。日志在 stderr，不污染 stdout。
 - 代码审查确认文件成功打开后立即 defer Close，命名返回值合并关闭错误，所有后续路径执行同一关闭操作。未注入实际文件 Close 失败或磁盘写入失败；不声称这些文件故障已经实测。既有 WriteBatchJSON 故障 writer 测试继续覆盖写入错误链与短写。预取消检查后、批次启动前的精确取消竞争窗口及零报告 nil 错误防御分支仅审查，未通过夹具强制触发。
 
-这些是本机受控 WebSocket 对端的正确性与命令验收，并非真实进程 Gateway/Worker 的容量测量。既有 loadgen 测试继续覆盖真实 Gateway/Mock 单会话。当前有限批次命令可用，使用说明已补至 [command.md](../../command.md)；下一步先做小规模完整链路基线，补齐负载到达、发送落后和服务端观察，再确定容量实验条件。
+这些是本机受控 WebSocket 对端的正确性与命令验收，并非真实进程 Gateway/Worker 的容量测量。既有 loadgen 测试继续覆盖真实 Gateway/Mock 单会话。当前有限批次命令可用，使用说明已补至 [command.md](../command.md)；下一步先做小规模完整链路基线，补齐负载到达、发送落后和服务端观察，再确定容量实验条件。
 
 
 ## 第六步：小规模完整链路基线（2026-09-29，已完成）
 
-见 [EXP-005-01](../../experiments/loadgen-baseline.md)。单 Worker 固定共享名额 1、每块模拟处理 10ms、文本响应 5ms，Gateway 预算 32000 字节；独立真实进程、非 race 构建。1/2/4 场各三批、每场 5 秒静音 PCM，正式 21/21 完成，共 3360000 字节、1050 块、84 partial + 21 final，所有首条结果早于 end。各组尾部 p50 为 17.202/18.362/28.529ms，p95（本组最大值）为 17.851/28.459/49.855ms；发送跨度 4.900815–4.902324 秒。
+见 [EXP-005-01](../experiments/loadgen-baseline.md)。单 Worker 固定共享名额 1、每块模拟处理 10ms、文本响应 5ms，Gateway 预算 32000 字节；独立真实进程、非 race 构建。1/2/4 场各三批、每场 5 秒静音 PCM，正式 21/21 完成，共 3360000 字节、1050 块、84 partial + 21 final，所有首条结果早于 end。各组尾部 p50 为 17.202/18.362/28.529ms，p95（本组最大值）为 17.851/28.459/49.855ms；发送跨度 4.900815–4.902324 秒。
 
 首次预热暴露实验脚本的时钟假设错误，未开始正式测量。Go Sub 的单调时长不能从 JSON 墙钟戳逐纳秒重建；保留首次记录，在新目录用修正脚本完成九批。没有修改业务代码，也没有将本轮结果写作性能改进。
 
@@ -998,9 +998,9 @@ writeJSON 调用该 helper 时传 time.Time{}。writeObserved 保持 StartedAt �
 
 ### 发送计划事件验收（2026-09-29）
 
-实现：[pacer.go](../../../internal/audio/pacer.go)、[sender.go](../../../internal/wsclient/sender.go)、[write_observer.go](../../../internal/wsclient/write_observer.go)。生产逻辑无需修正，助手补充 Advance 的实际字节/尾块注释与 writeObserved 的 plannedAt 参数说明。
+实现：[pacer.go](../../internal/audio/pacer.go)、[sender.go](../../internal/wsclient/sender.go)、[write_observer.go](../../internal/wsclient/write_observer.go)。生产逻辑无需修正，助手补充 Advance 的实际字节/尾块注释与 writeObserved 的 plannedAt 参数说明。
 
-新增 [pacer_test.go](../../../internal/audio/pacer_test.go) 两个顶层测试、5 项叶子检查；新增 [planned_write_test.go](../../../internal/wsclient/planned_write_test.go) 五个顶层测试、6 项叶子检查。同步已有直接调用 helper 的测试签名，强化原等待取消测试的 PlannedAt 非零断言。
+新增 [pacer_test.go](../../internal/audio/pacer_test.go) 两个顶层测试、5 项叶子检查；新增 [planned_write_test.go](../../internal/wsclient/planned_write_test.go) 五个顶层测试、6 项叶子检查。同步已有直接调用 helper 的测试签名，强化原等待取消测试的 PlannedAt 非零断言。
 
 - 使用 synctest 验证首块计划为构造时刻；连续推进 3200/1600/2 字节后计划分别增加 100ms/50ms/62500ns，重复读取与时间流逝不改计划。虚拟时间下，目标在 200ms 后时等待准确到期；目标已过立即返回；取消和 50ms 期限中断等待且不推进计划。
 - 真实 WebSocket 检查 3200/3200/2 字节三块及控制消息：实时音频计划按 100ms 递增，实际 Write 不早于计划；非实时音频与 start/end 的 PlannedAt 为零。
@@ -1079,7 +1079,7 @@ MaxAudioScheduleLag time.Duration
 
 ### 会话内排期统计验收（2026-09-29）
 
-生产逻辑符合设计，仅补 ObserveWrite 注释明确失败尝试参与统计。新增 [schedule_recorder_test.go](../../../internal/loadgen/schedule_recorder_test.go) 四个顶层测试、12 项叶子检查，增强既有并发快照测试。
+生产逻辑符合设计，仅补 ObserveWrite 注释明确失败尝试参与统计。新增 [schedule_recorder_test.go](../../internal/loadgen/schedule_recorder_test.go) 四个顶层测试、12 项叶子检查，增强既有并发快照测试。
 
 - 覆盖缺失 PlannedAt/StartedAt、零落后、提前归零、7ns 精度、有计划失败写入，以及意外带计划的控制事件。跳过排期统计不影响原音频量或失败账目。
 - 混合事件得到 3 个排期样本、最大落后 40ms、最大 Write 耗时 200ms、成功音频 10 字节/3 块、失败 1 次，验证落后与写入耗时独立，失败样本不计成功音频。
@@ -1148,7 +1148,7 @@ WriteBatchJSON 已先调用 SummarizeBatch，因此此类矛盾报告会在调�
 
 初次检查发现 WriteBatchJSON 的实际 SchemaVersion 仍为 1，版本契约测试失败；开发者改为 2 后复验通过。新报告输出 v2，不改写历史 v1 文件。
 
-新增 [schedule_json_test.go](../../../internal/loadgen/schedule_json_test.go) 三个顶层测试、12 项叶子检查，并更新原有完整 JSON 契约期望：
+新增 [schedule_json_test.go](../../internal/loadgen/schedule_json_test.go) 三个顶层测试、12 项叶子检查，并更新原有完整 JSON 契约期望：
 
 - 区分零样本 null 与有样本零落后，保留 7ns 及 int64 边界值精度；边界值为格式测试夹具，不是实测负载。
 - failed/canceled/timed_out 均保留排期事实，转换不修改输入。
@@ -1166,7 +1166,7 @@ WriteBatchJSON 已先调用 SummarizeBatch，因此此类矛盾报告会在调�
 
 ## 排期观测同条件复测（2026-09-29）
 
-[EXP-005-02](../../experiments/loadgen-schedule-baseline.md) 已完成，源码 ec4fc6d，业务与脚本均未修改。沿用单 Worker、1/2/4 场各三批、每场 5 秒条件，21/21 场完整完成，1050/1050 块有排期样本，成功写出 3360000 字节，首条结果均早于 end。三组最大排期落后为 34.686/8.600/4.386ms，发送跨度整体为 4.900692–4.901533 秒。
+[EXP-005-02](../experiments/loadgen-schedule-baseline.md) 已完成，源码 ec4fc6d，业务与脚本均未修改。沿用单 Worker、1/2/4 场各三批、每场 5 秒条件，21/21 场完整完成，1050/1050 块有排期样本，成功写出 3360000 字节，首条结果均早于 end。三组最大排期落后为 34.686/8.600/4.386ms，发送跨度整体为 4.900692–4.901533 秒。
 
 最大落后出现在第一轮单场，该会话总跨度仍约 4.901 秒，说明总跨度不能替代逐块落后观测。保留该样本，不重跑替换；最大值不包含发生位置和原因，不能推导逐块 p95。旧基线无此指标，不形成优化 A/B 结论。下一小步设计 Gateway 活动会话快照，复用 tracker 作为唯一计数来源。
 
@@ -1232,7 +1232,7 @@ tracker.snapshot 用现有 mu 加锁，复制 active/maxActive/stopping 到上�
 
 生产实现符合设计，未修改开发者的业务逻辑。Gateway.Snapshot 委托 tracker.snapshot，三个标量在同一把现有 Mutex 下复制返回，无额外计数、后台任务或生命周期变化。
 
-新增 [snapshot_test.go](../../../internal/gateway/snapshot_test.go) 五个顶层测试、七项叶子检查：
+新增 [snapshot_test.go](../../internal/gateway/snapshot_test.go) 五个顶层测试、七项叶子检查：
 
 - 默认上限 64 与显式上限 2；逐次登记、满额拒绝、停止接入、停止状态拒绝、逐次释放与 drained 通知。快照读取不提前释放名额或结束等待。
 - 修改返回值、后续会话变化与另一个 Gateway 均不污染旧快照或内部状态。
@@ -1300,7 +1300,7 @@ schema_version=1 是本接口自己的格式版本，与负载报告的 v2 独�
 
 开发者实现符合方案，业务代码无需修改。routes 接收具体 Gateway，查询在获取一次值快照后编码；显式 WriteHeader(200) 位于成功编码和设置响应头之后，符合接口约定。
 
-新增 [cmd/gateway/snapshot_test.go](../../../cmd/gateway/snapshot_test.go) 五个顶层测试、11 项叶子检查：
+新增 [cmd/gateway/snapshot_test.go](../../cmd/gateway/snapshot_test.go) 五个顶层测试、11 项叶子检查：
 
 - 独立按 JSON 字段检查版本、精确字段集合、数字/布尔类型、0/false 保留、默认上限 64、显式上限及停止状态；不复用生产 DTO 解码。重复查询不改状态，不调用 Worker。
 - 真实 HTTP GET/HEAD 路由、HEAD 无响应体、POST/DELETE 返回 405 并包含 Allow、未注册子路径返回 404，以及 /healthz 仍返回 ok。正常查询 Content-Type 与 Cache-Control 符合约定。
@@ -1310,7 +1310,7 @@ schema_version=1 是本接口自己的格式版本，与负载报告的 v2 独�
 
 `go test -race ./cmd/gateway ./internal/gateway -count=1 -timeout=180s -json` 通过：命令包 13 个顶层测试、97 项叶子检查（3.569s），Gateway 包 82 个顶层测试、178 项叶子检查（13.597s），共 275 项，未报告数据竞争。12 个需显式启用的实验默认跳过；此处请求次数与运行时间仅为行为验证，不是性能实验。
 
-[使用说明](../../command.md)已补查询示例。尚未接实验采样，下一步固定采样周期、单次请求期限、开始/结束时刻与失败样本口径，然后再采集活动曲线。
+[使用说明](../command.md)已补查询示例。尚未接实验采样，下一步固定采样周期、单次请求期限、开始/结束时刻与失败样本口径，然后再采集活动曲线。
 
 
 ## 第八步之三：客户端单次 Gateway 查询（2026-09-30，已验收）
@@ -1376,7 +1376,7 @@ GatewayState 不导入 internal/gateway：客户端通过 HTTP 契约读取，�
 
 开发者实现符合约定，生产逻辑未修改。私有指针 DTO 校验缺失/null，全部检查通过后才返回 GatewayState；HTTP 客户端副本禁用重定向并继续复用 Transport，所有取得响应后的返回路径均关闭 Body。
 
-新增 [gateway_snapshot_test.go](../../../internal/loadgen/gateway_snapshot_test.go) 七个顶层测试、53 项叶子检查：
+新增 [gateway_snapshot_test.go](../../internal/loadgen/gateway_snapshot_test.go) 七个顶层测试、53 项叶子检查：
 
 - 合法空闲、忙碌、满额停止及清空停止；允许附加字段和 application/json 的合法 charset 参数。
 - 四个字段逐个缺失/null、未知版本、错误类型、小数整数、溢出、非法计数关系，以及空响应、非法 JSON、null/数组和尾随第二份 JSON 均拒绝，错误返回零 GatewayState。
@@ -1476,7 +1476,7 @@ Validate 要求 Endpoint 由 url.Parse 成功解析，Scheme 为 http 或 https�
 
 开发者实现符合设计，生产逻辑无需修改。配置、nil 参数和已结束的父 context 均前置拒绝；查询成功的状态使用每轮独立副本，失败保留原错误，子 context 在交付前取消。等待可由父取消中断，未引入内部 goroutine 或持续增长的样本 slice。
 
-新增 [gateway_sampling_test.go](../../../internal/loadgen/gateway_sampling_test.go) 八个顶层测试、27 项叶子检查：
+新增 [gateway_sampling_test.go](../../internal/loadgen/gateway_sampling_test.go) 八个顶层测试、27 项叶子检查：
 
 - HTTP/HTTPS/IPv6 地址及九类非法配置；配置校验失败、nil 依赖和启动前取消/过期均零请求、零交付。
 - 虚拟时间串行五次尝试，查询耗时分别为 40/230/300/10/10ms，含传输失败、子期限和格式错误；每次交付耗时 20ms、间隔 100ms。首轮立即开始，后续精确在上次查询结束后 120ms 开始，无补发或请求重叠；Duration 只包含查询时间，序号连续，失败后继续。
@@ -1572,7 +1572,7 @@ func WriteGatewaySampleJSON(w io.Writer, sample GatewaySample) error
 
 开发者实现符合设计，生产代码无需修改。状态与错误恰好一个非 nil，时间非零、耗时/序号非负及状态范围均在输出前校验；私有 DTO 独立复制状态，UTC 转换不修改原输入，查询错误通过 errorText 保留。
 
-新增 [gateway_sample_json_test.go](../../../internal/loadgen/gateway_sample_json_test.go) 七个顶层测试、29 项叶子检查：
+新增 [gateway_sample_json_test.go](../../internal/loadgen/gateway_sample_json_test.go) 七个顶层测试、29 项叶子检查：
 
 - 精确字段集合、v1 版本、非零序号、UTC、纳秒时间、零活动/false/null，以及满额停止状态；原样本时间、状态指针和值保持不变。
 - 空文本错误、取消、期限和含中文/引号/换行的组合错误均可成功写出，state 为 null，错误换行被转义，每次恰好一条带换行的 JSON 记录。
@@ -1661,7 +1661,7 @@ func RunGatewaySamplingToFile(
 
 开发者实现符合设计，生产代码无需修改。前置校验先于独占创建，文件创建后立即登记关闭 defer；成功写出后才增加分类计数，原始采样/输出/关闭错误分别保留，关闭错误通过具名返回值与采样错误合并。
 
-新增 [gateway_recording_test.go](../../../internal/loadgen/gateway_recording_test.go) 五个顶层测试、19 项叶子检查：
+新增 [gateway_recording_test.go](../../internal/loadgen/gateway_recording_test.go) 五个顶层测试、19 项叶子检查：
 
 - nil 依赖、非法配置、空白/空/stdout 路径及启动前取消/过期均零报告、零请求，临时输出目录保持空。
 - 已有文件、目录、指向现有文件的符号链接及悬空链接全部拒绝，保留旧内容与链接；父目录不存在时不创建父目录，错误保留 os.ErrExist/os.ErrNotExist 链。
@@ -1774,7 +1774,7 @@ stop_reason 使用如下优先级（判断错误本身，不看字符串）：
 
 开发者实现符合设计，生产代码无需修改。计数按非负、成功数不大于总数、失败数等于差值校验，避免直接相加溢出；三类错误分别输出，停止原因按约定优先级分类。有效的错误报告写出成功时返回 nil。
 
-新增 [gateway_recording_json_test.go](../../../internal/loadgen/gateway_recording_json_test.go) 七个顶层测试、40 项叶子检查：
+新增 [gateway_recording_json_test.go](../../internal/loadgen/gateway_recording_json_test.go) 七个顶层测试、40 项叶子检查：
 
 - 精确字段、清单 v1、配置单位、UTC/纳秒、路径原文、null 和缩进/结尾换行；编码不修改原报告。
 - 12 种错误组合验证 returned、取消、期限、其他采样错误、输出错误的分类与优先级；错误文本恰好是“context canceled”但不具备相应类型时仍分类为 sampling_error。空错误文本、多行错误及三类错误同时出现均完整保留，关闭错误不改变循环停止原因。
@@ -1865,7 +1865,7 @@ ManifestSaved=true 不能取代 Recording.OutputErr/CloseErr：可能成功保�
 
 ### 实现与验收（2026-10-01）
 
-开发者实现 [RunGatewayRecording](../../../internal/loadgen/gateway_recording.go)，本轮审查未发现需要修改的生产逻辑。助手新增 [文件编排测试](../../../internal/loadgen/gateway_recording_run_test.go)，共 5 个顶层测试、23 项叶子检查：
+开发者实现 [RunGatewayRecording](../../internal/loadgen/gateway_recording.go)，本轮审查未发现需要修改的生产逻辑。助手新增 [文件编排测试](../../internal/loadgen/gateway_recording_run_test.go)，共 5 个顶层测试、23 项叶子检查：
 
 - 前置拒绝 10 项：nil context/client、无效 URL/间隔/查询期限、空目录/空白目录/标准输出占位、已取消/已到期。均返回零结果，不查询、不在测试输出父目录中创建产物。
 - 路径保护 6 项：已有空目录、含旧样本与清单的目录、普通文件、目录链接、悬空链接、缺少父目录。均不进入查询，旧内容与链接保持不变，不自动创建父目录。
@@ -1947,7 +1947,7 @@ func parseSamplerConfig(args []string) (samplerConfig, error)
 
 ### 初审与行为验证（2026-10-01，待包名修正）
 
-参数绑定、共享校验、错误时零配置返回和路径保持符合约定。助手新增 [config_test.go](../../../cmd/gateway-sampler/config_test.go)，暂时与当前实现使用相同的 package gateway_sampler，以便独立验证解析行为：4 个顶层测试、45 项叶子检查，通过 `go test -race ./cmd/gateway-sampler -count=1 -timeout=30s -json`（1.474s）。
+参数绑定、共享校验、错误时零配置返回和路径保持符合约定。助手新增 [config_test.go](../../cmd/gateway-sampler/config_test.go)，暂时与当前实现使用相同的 package gateway_sampler，以便独立验证解析行为：4 个顶层测试、45 项叶子检查，通过 `go test -race ./cmd/gateway-sampler -count=1 -timeout=30s -json`（1.474s）。
 
 覆盖 9 项默认值/覆盖值/时间独立性/路径保持检查、28 项非法输入、4 项必填与帮助、4 项文件系统无副作用检查。已有目录和普通文件在解析时不被拒绝或修改，缺少父目录时也不创建文件；这些可用性判断仍交给实际运行层。
 
@@ -2065,7 +2065,7 @@ func main()
 
 ### 实现与验收（2026-10-01）
 
-开发者实现 [run.go](../../../cmd/gateway-sampler/run.go) 和 [main.go](../../../cmd/gateway-sampler/main.go)，本轮未修改生产逻辑。助手新增 [运行与判定测试](../../../cmd/gateway-sampler/run_test.go) 和 [真实进程测试](../../../cmd/gateway-sampler/process_test.go)，共 6 个顶层测试、50 项叶子检查：
+开发者实现 [run.go](../../cmd/gateway-sampler/run.go) 和 [main.go](../../cmd/gateway-sampler/main.go)，本轮未修改生产逻辑。助手新增 [运行与判定测试](../../cmd/gateway-sampler/run_test.go) 和 [真实进程测试](../../cmd/gateway-sampler/process_test.go)，共 6 个顶层测试、50 项叶子检查：
 
 - 结果判定 22 项：完整/混合观测、未启动、样本写入/关闭、清单保存及多种保存错误组合、父取消/期限/自定义原因、缺失停止原因、异常核心返回及零有效样本。核对原始错误链保留、结果未被修改，保存错误与到期同时出现不能放行。这些是构造报告的判定测试，不是真实磁盘故障注入。
 - 真实 HTTP 运行 8 项：有效快照、混合成功/503、全失败、单次查询超时后恢复、整体到期时存在在途请求、父取消、父期限及自定义父原因。逐行核对 JSONL 序号、状态/错误互斥和清单计数，比较返回报告与落盘事实；有效快照包含 active=0、stopping=true，不将其误判为查询失败。采样尝试可能在到达服务器前取消，不要求失败尝试数等于服务端收到的请求数。
@@ -2076,12 +2076,12 @@ func main()
 
 先运行采样命令包的判定与 HTTP 测试通过，再加入真实进程检查，运行 `go test -race ./cmd/gateway-sampler ./internal/loadgen ./cmd/loadgen -count=1 -timeout=120s -json`：采样命令包 10 个顶层测试、95 项叶子检查通过（9.105s）；loadgen 包 81 个顶层测试、341 项叶子检查通过（6.639s）；负载命令包 8 个顶层测试、62 项叶子检查通过（5.416s）。共 498 项检查通过，无跳过或数据竞争报告。
 
-[命令说明](../../command.md)已补充构建、运行、参数与退出含义。命令现可独立运行；正式负载实验尚未接入采样，也尚未取得活动会话曲线、观测覆盖结果或新增容量结论。真实磁盘写入/关闭故障依然未注入，不将纯判定矩阵表述为磁盘故障验收；文件收尾也不承诺严格退出期限或原子发布。
+[命令说明](../command.md)已补充构建、运行、参数与退出含义。命令现可独立运行；正式负载实验尚未接入采样，也尚未取得活动会话曲线、观测覆盖结果或新增容量结论。真实磁盘写入/关闭故障依然未注入，不将纯判定矩阵表述为磁盘故障验收；文件收尾也不承诺严格退出期限或原子发布。
 
 
 ## 第八步之十一：负载与 Gateway 采样联合实验（2026-10-01，已完成）
 
-见 [EXP-005-03 执行前方案](../../experiments/gateway-observation-baseline.md)。沿用 1/2/4 场各三批和原 Worker/Gateway 条件，每批独立采样 10 秒，先验证有效零活动样本再发负载，等待采样正常到期后核对清单、JSONL、负载窗口与退出码。预先固定 500ms 的相邻有效观测间隔上限，仅用于本轮采样覆盖检查。
+见 [EXP-005-03 执行前方案](../experiments/gateway-observation-baseline.md)。沿用 1/2/4 场各三批和原 Worker/Gateway 条件，每批独立采样 10 秒，先验证有效零活动样本再发负载，等待采样正常到期后核对清单、JSONL、负载窗口与退出码。预先固定 500ms 的相邻有效观测间隔上限，仅用于本轮采样覆盖检查。
 
 本步由助手编写实验编排、分析与离线测试，开发者暂不修改业务代码。新增八个 Python 测试方法及原六个报告兼容性测试通过，正式运行尚待执行。所有尝试保留，样本不足不会补零或静默排除；没有稳定容量、连续峰值或精确清理耗时结论。
 
@@ -2090,4 +2090,4 @@ func main()
 
 在已提交的执行方案与脚本版本 1c67120 上运行，无业务代码修改，九个正式负载及对应采样进程全部退出 0。21/21 场完成，889 条有效查询、失败 0，其中 435 条完整位于负载窗口内；九批均观测到与计划 N 一致的峰值及前后零活动状态，最大相邻有效观测间隔 106.543ms，低于预先指定的 500ms 覆盖检查上限。负载返回后首个零活动样本延迟 2.901–99.412ms，不等于实际清理时间。
 
-原始记录共 60 份文件，57 份原始产物、126 份源码、运行与分析脚本哈希均核对一致。完整参数、结果、尾部/排期指标及边界见 [EXP-005-03](../../experiments/gateway-observation-baseline.md)。本轮为独立观测基线，不是优化 A/B；下一步补 Worker 处理名额占用与等待，随后再讨论加压和稳定容量标准。
+原始记录共 60 份文件，57 份原始产物、126 份源码、运行与分析脚本哈希均核对一致。完整参数、结果、尾部/排期指标及边界见 [EXP-005-03](../experiments/gateway-observation-baseline.md)。本轮为独立观测基线，不是优化 A/B；下一步补 Worker 处理名额占用与等待，随后再讨论加压和稳定容量标准。

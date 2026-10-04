@@ -2,7 +2,7 @@
 
 Date: 2026-09-22
 Status: 历史改造前对照完成；该次测量时尾部等待辅助函数尚未接入。后续改造结果见[尾部期限验收](tail-timeout.md)。
-Related: [尾部期限设计](../worklog/designs/2026-09-22-tail-timeout.md)
+Related: [尾部期限设计](../designs/2026-09-22-tail-timeout.md)
 
 ## 问题与条件
 

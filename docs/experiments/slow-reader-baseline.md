@@ -2,7 +2,7 @@
 
 Date: 2026-09-22
 Status: 历史改造前基线已完成；该次测量时 writeResult 尚未接入 download。后续结果见[写回期限验收](result-write-timeout.md)。
-Related: [结果写回期限设计](../worklog/designs/2026-09-22-result-write-timeout.md)
+Related: [结果写回期限设计](../designs/2026-09-22-result-write-timeout.md)
 
 ## 问题与实验条件
 
