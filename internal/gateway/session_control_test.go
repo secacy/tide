@@ -72,9 +72,9 @@ func TestSessionControlPreCanceledRequests(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				s := newTestResumableSession(t, identityTestMaterial())
-				now := resumeTestTime()
+				now := time.Now()
 				s.resume.detach(1, now)
-				startTestSessionControl(t, s, func() time.Time { return now })
+				startTestSessionControl(t, s, time.Now)
 				ctx, cancel := context.WithCancel(context.Background())
 				cancel()
 				result := callTestSessionControl(s, ctx, tc.kind)
@@ -97,9 +97,9 @@ func TestSessionControlRejectsCanceledDeliveredCommands(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				s := newTestResumableSession(t, identityTestMaterial())
-				now := resumeTestTime()
+				now := time.Now()
 				s.resume.detach(1, now)
-				startTestSessionControl(t, s, func() time.Time { return now })
+				startTestSessionControl(t, s, time.Now)
 				ctx, cancel := context.WithCancel(context.Background())
 				cancel()
 				// 直接交付，独立检查协调者的取消校验，绕过 submit 的预检查。
@@ -125,8 +125,7 @@ func TestSessionControlRejectsCanceledDeliveredCommands(t *testing.T) {
 func TestSessionControlLifecycleAndUnknownCommand(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := newTestResumableSession(t, identityTestMaterial())
-		now := resumeTestTime()
-		startTestSessionControl(t, s, func() time.Time { return now })
+		startTestSessionControl(t, s, time.Now)
 		ctx := context.Background()
 		if generation, err := s.requestResume(ctx); generation != 0 || !errors.Is(err, errResumeAlreadyAttached) {
 			t.Fatalf("initial resume = (%d, %v)", generation, err)
@@ -172,9 +171,9 @@ func TestSessionControlLifecycleAndUnknownCommand(t *testing.T) {
 func TestSessionControlConcurrentResumeHasOneWinner(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := newTestResumableSession(t, identityTestMaterial())
-		now := resumeTestTime()
+		now := time.Now()
 		s.resume.detach(1, now)
-		startTestSessionControl(t, s, func() time.Time { return now })
+		startTestSessionControl(t, s, time.Now)
 		start := make(chan struct{})
 		results := make(chan sessionControlResult, 32)
 		for range 32 {
@@ -204,15 +203,20 @@ func TestSessionControlCancellationAfterProcessingCheckKeepsResult(t *testing.T)
 		t.Run(which, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				s := newTestResumableSession(t, identityTestMaterial())
-				now := resumeTestTime()
+				now := time.Now()
 				s.resume.detach(1, now)
 				entered, release := make(chan struct{}), make(chan struct{})
-				var gateOnce, releaseOnce sync.Once
+				var releaseOnce sync.Once
+				clockCalls := 0 // 仅控制循环访问；首次调用用于启动期安排 Timer。
 				unblock := func() { releaseOnce.Do(func() { close(release) }) }
 				defer unblock()
 				cancelLifecycle := startTestSessionControl(t, s, func() time.Time {
-					gateOnce.Do(func() { close(entered); <-release })
-					return now.Add(time.Second)
+					clockCalls++
+					if clockCalls == 2 { // 第二次调用属于已接收的 resume 命令。
+						close(entered)
+						<-release
+					}
+					return time.Now()
 				})
 				ctx, cancelRequest := context.WithCancel(context.Background())
 				defer cancelRequest()
@@ -251,14 +255,13 @@ func TestSessionControlCancellationAfterProcessingCheckKeepsResult(t *testing.T)
 func TestSessionControlCancelWhileWaitingToDeliver(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := newTestResumableSession(t, identityTestMaterial())
-		now := resumeTestTime()
 		entered, release := make(chan struct{}), make(chan struct{})
 		var gateOnce, releaseOnce sync.Once
 		unblock := func() { releaseOnce.Do(func() { close(release) }) }
 		defer unblock()
 		startTestSessionControl(t, s, func() time.Time {
 			gateOnce.Do(func() { close(entered); <-release })
-			return now
+			return time.Now()
 		})
 		first := make(chan sessionControlResult, 1)
 		go func() { first <- callTestSessionControl(s, context.Background(), controlDetach) }()
@@ -314,9 +317,9 @@ func TestSessionControlConcurrentShutdownReturnsAllCallers(t *testing.T) {
 		t.Run(cause, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				s := newTestResumableSession(t, identityTestMaterial())
-				now := resumeTestTime()
+				now := time.Now()
 				s.resume.detach(1, now)
-				cancel := startTestSessionControl(t, s, func() time.Time { return now })
+				cancel := startTestSessionControl(t, s, time.Now)
 				start := make(chan struct{})
 				resumes := make(chan sessionControlResult, 32)
 				closes := make(chan error, 8)
@@ -360,7 +363,7 @@ func TestSessionControlConcurrentShutdownReturnsAllCallers(t *testing.T) {
 func TestSessionControlLifecycleCancellationAlone(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := newTestResumableSession(t, identityTestMaterial())
-		cancel := startTestSessionControl(t, s, resumeTestTime)
+		cancel := startTestSessionControl(t, s, time.Now)
 		cancel()
 		<-s.controlDone
 		assertResumeState(t, s.resume, resumeClosed, 1, time.Time{})
@@ -373,11 +376,28 @@ func TestSessionControlLifecycleCancellationAlone(t *testing.T) {
 func TestSessionControlExpiredResumeRepliesBeforeExit(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := newTestResumableSession(t, identityTestMaterial())
-		now := resumeTestTime()
+		now := time.Now()
 		s.resume.detach(1, now)
-		startTestSessionControl(t, s, func() time.Time { return now.Add(10 * time.Second) })
-		if generation, err := s.requestResume(context.Background()); generation != 0 || !errors.Is(err, errResumeExpired) {
-			t.Fatalf("expiry result lost to loop exit: (%d, %v)", generation, err)
+		entered, release := make(chan struct{}), make(chan struct{})
+		var releaseOnce sync.Once
+		unblock := func() { releaseOnce.Do(func() { close(release) }) }
+		defer unblock()
+		clockCalls := 0
+		startTestSessionControl(t, s, func() time.Time {
+			clockCalls++
+			if clockCalls == 2 { // 在 resume 已交付后暂停，Timer 通知尚不能被处理。
+				close(entered)
+				<-release
+			}
+			return time.Now()
+		})
+		result := make(chan sessionControlResult, 1)
+		go func() { result <- callTestSessionControl(s, context.Background(), controlResume) }()
+		<-entered
+		time.Sleep(10 * time.Second) // synctest 虚拟时间：推进到真实的业务截止时间。
+		unblock()
+		if got := <-result; got.generation != 0 || !errors.Is(got.err, errResumeExpired) {
+			t.Fatalf("expiry result lost to loop exit: %+v", got)
 		}
 		<-s.controlDone
 		assertResumeState(t, s.resume, resumeClosed, 1, time.Time{})
@@ -388,8 +408,8 @@ func TestSessionControlGenerationExhaustionCanStillClose(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := newTestResumableSession(t, identityTestMaterial())
 		s.resume.generation = math.MaxUint64
-		s.resume.detach(math.MaxUint64, resumeTestTime())
-		startTestSessionControl(t, s, resumeTestTime)
+		s.resume.detach(math.MaxUint64, time.Now())
+		startTestSessionControl(t, s, time.Now)
 		if generation, err := s.requestResume(context.Background()); generation != 0 || !errors.Is(err, errResumeGenerationExhausted) {
 			t.Fatalf("exhausted generation = (%d, %v)", generation, err)
 		}

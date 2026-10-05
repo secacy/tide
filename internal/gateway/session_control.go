@@ -35,9 +35,11 @@ type sessionControlResult struct {
 
 // runControl 由生命周期拥有者恰好启动一次，串行处理控制命令。
 // ctx 属于逻辑会话生命周期，不能绑定任意一条客户端连接。
-// now 在处理命令时取当前时间，生产传 time.Now；不得阻塞。
+// now 获取当前时间，生产传 time.Now；须与 Timer 时钟一致推进且不得阻塞。
 // ctx 和 now 必须非 nil。循环退出前关闭恢复资格，再关闭 controlDone。
-// 本步不操作网络、注册表或准入，也没有自动到期计时器。
+// 本步不操作网络、注册表或准入。
+// detached 状态下由控制循环独占恢复期限 Timer；
+// Timer 仅负责唤醒，实际过期判断仍由 resumeState 完成。
 func (s *resumableSession) runControl(ctx context.Context, now func() time.Time) {
 	if ctx == nil {
 		panic("gateway: nil session control context")
@@ -46,15 +48,65 @@ func (s *resumableSession) runControl(ctx context.Context, now func() time.Time)
 		panic("gateway: nil session control clock")
 	}
 
+	var expiryTimer *time.Timer  // 当前恢复期限的 Timer，由控制循环独占。
+	var expiryC <-chan time.Time // 当前监听来源；nil 表示禁用到期分支。
+
+	// stopExpiryTimer 停止并丢弃当前恢复期限 Timer。
+	// 允许重复调用；不关闭 Timer.C，也不阻塞读取旧 channel。
+	stopExpiryTimer := func() {
+		if expiryTimer != nil {
+			expiryTimer.Stop()
+		}
+
+		expiryTimer = nil
+		expiryC = nil
+	}
+
+	// armExpiryTimer 根据当前 detached 状态已有的绝对截止时间
+	// 安排一次唤醒。它不会修改 expiresAt，也不会延长恢复窗口。
+	armExpiryTimer := func() {
+		stopExpiryTimer()
+
+		if s.resume.phase != resumeDetached {
+			return
+		}
+
+		remaining := max(s.resume.expiresAt.Sub(now()), 0)
+
+		expiryTimer = time.NewTimer(remaining)
+		expiryC = expiryTimer.C
+	}
+
 	defer func() {
+		stopExpiryTimer()
 		s.resume.close()
 		close(s.controlDone)
 	}()
+
+	// 支持控制循环启动前已经处于 detached 的情况。
+	if s.resume.phase == resumeDetached {
+		armExpiryTimer()
+	}
 
 	for {
 		select {
 		case <-ctx.Done():
 			return
+
+		case <-expiryC:
+			// Timer 只负责唤醒。收到通知后先丢弃当前 Timer，
+			// 再根据当前状态和当前绝对截止时间重新判断。
+			stopExpiryTimer()
+
+			if s.resume.expire(now()) {
+				return
+			}
+
+			// 理论上正常 Timer 不应早于期限触发，但仍保留重新安排
+			// 逻辑，以当前 expiresAt 为唯一判断依据。
+			if s.resume.phase == resumeDetached {
+				armExpiryTimer()
+			}
 
 		case cmd := <-s.commands:
 			// 命令已经被接收，因此从这里开始，无论发生什么，
@@ -78,6 +130,12 @@ func (s *resumableSession) runControl(ctx context.Context, now func() time.Time)
 			case controlResume:
 				generation, err := s.resume.resume(now())
 
+				if err == nil {
+					// 成功恢复后已经不再 detached，
+					// 当前恢复期限 Timer 必须停止。
+					stopExpiryTimer()
+				}
+
 				cmd.reply <- sessionControlResult{
 					generation: generation,
 					err:        err,
@@ -94,6 +152,12 @@ func (s *resumableSession) runControl(ctx context.Context, now func() time.Time)
 					cmd.generation,
 					now(),
 				)
+
+				// 只有真正从 attached -> detached 时才创建新 Timer。
+				// 旧代次和重复 detach 不得重置恢复期限。
+				if detached {
+					armExpiryTimer()
+				}
 
 				cmd.reply <- sessionControlResult{
 					detached: detached,
