@@ -209,7 +209,7 @@ runCoordinator 返回值约定：显式 controlClose 返回 nil；逻辑 ctx 或
 
 ## 内部协调组合验收（2026-10-06）
 
-开发者完成 [session_upload.go](../../internal/gateway/session_upload.go) 和 [session_control.go](../../internal/gateway/session_control.go)。评审确认输入资格校验、有界接管、select 派发、发送成功释放及半关闭/终止的分工符合本步约定，核心逻辑无需修改。助手补充 submitControl 注释，修正两处遗留指导占位注释与一个注释笔误，执行 gofmt，并新增 [session_upload_test.go](../../internal/gateway/session_upload_test.go)。
+开发者完成 [session_upload.go](../../internal/gateway/session_worker.go) 和 [session_control.go](../../internal/gateway/session_control.go)。评审确认输入资格校验、有界接管、select 派发、发送成功释放及半关闭/终止的分工符合本步约定，核心逻辑无需修改。助手补充 submitControl 注释，修正两处遗留指导占位注释与一个注释笔误，执行 gofmt，并新增 [session_upload_test.go](../../internal/gateway/session_worker_test.go)。
 
 本步能力目标是“发送阻塞时，逻辑会话仍可处理控制事件并保持输入所有权”。主体测试启动实际 runWithUpload/runCoordinator，仅 Worker I/O 使用可控替身。为准确覆盖尚未交付的任务及损坏的内部结果，两组测试直接启动实际 runCoordinator，刻意不启动真实 uploader，由测试方管理 RPC 清理/一次性任务结果。这些组不冒充运行入口的资源收尾验收。交付后等待回复的两组则使用命令接收夹具，只验证提交契约。
 

@@ -6,7 +6,9 @@ import (
 	"time"
 )
 
-// ErrTailTimeout 表示输入结束后，未能在预算内完成结果转发。
+// ErrTailTimeout 表示合法输入结束后，未能在尾部预算内完成当前路径的等待。
+// v1 路径等待结果转发结束；恢复协调路径等待 Worker 正常完成，
+// 完成后的客户端交付由独立的结果保留期限约束。
 var ErrTailTimeout = errors.New("tail timeout")
 
 // waitSessionEvent 等待会话退出事件。

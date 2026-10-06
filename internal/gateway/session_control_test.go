@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -198,6 +199,14 @@ func TestSessionControlConcurrentResumeHasOneWinner(t *testing.T) {
 	})
 }
 
+// controlCheckedContext 为请求的 Err 检查提供同步点，不依赖时钟调用次数。
+type controlCheckedContext struct {
+	context.Context
+	check func() error
+}
+
+func (c *controlCheckedContext) Err() error { return c.check() }
+
 func TestSessionControlCancellationAfterProcessingCheckKeepsResult(t *testing.T) {
 	for _, which := range []string{"request", "lifecycle"} {
 		t.Run(which, func(t *testing.T) {
@@ -207,22 +216,23 @@ func TestSessionControlCancellationAfterProcessingCheckKeepsResult(t *testing.T)
 				s.resume.detach(1, now)
 				entered, release := make(chan struct{}), make(chan struct{})
 				var releaseOnce sync.Once
-				clockCalls := 0 // 仅控制循环访问；首次调用用于启动期安排 Timer。
 				unblock := func() { releaseOnce.Do(func() { close(release) }) }
 				defer unblock()
-				cancelLifecycle := startTestSessionControl(t, s, func() time.Time {
-					clockCalls++
-					if clockCalls == 2 { // 第二次调用属于已接收的 resume 命令。
+				cancelLifecycle := startTestSessionControl(t, s, time.Now)
+				requestCtx, cancelRequest := context.WithCancel(context.Background())
+				defer cancelRequest()
+				var checks atomic.Int32
+				ctx := &controlCheckedContext{Context: requestCtx, check: func() error {
+					err := requestCtx.Err()
+					if checks.Add(1) == 2 { // 交付前一次，协调者处理请求前一次。
 						close(entered)
 						<-release
 					}
-					return time.Now()
-				})
-				ctx, cancelRequest := context.WithCancel(context.Background())
-				defer cancelRequest()
+					return err // 返回检查时取得的值，模拟检查完成后取消。
+				}}
 				result := make(chan sessionControlResult, 1)
 				go func() { result <- callTestSessionControl(s, ctx, controlResume) }()
-				<-entered // 已收到命令并通过取消检查，暂停在测试时钟中。
+				<-entered // 已交付命令并取得本次 Err 检查值，暂停在请求检查同步点。
 				if which == "request" {
 					cancelRequest()
 				} else {
@@ -382,17 +392,17 @@ func TestSessionControlExpiredResumeRepliesBeforeExit(t *testing.T) {
 		var releaseOnce sync.Once
 		unblock := func() { releaseOnce.Do(func() { close(release) }) }
 		defer unblock()
-		clockCalls := 0
-		startTestSessionControl(t, s, func() time.Time {
-			clockCalls++
-			if clockCalls == 2 { // 在 resume 已交付后暂停，Timer 通知尚不能被处理。
+		startTestSessionControl(t, s, time.Now)
+		var checks atomic.Int32
+		ctx := &controlCheckedContext{Context: context.Background(), check: func() error {
+			if checks.Add(1) == 2 { // 已交付、通过期限检查，尚未推进 resume。
 				close(entered)
 				<-release
 			}
-			return time.Now()
-		})
+			return nil
+		}}
 		result := make(chan sessionControlResult, 1)
-		go func() { result <- callTestSessionControl(s, context.Background(), controlResume) }()
+		go func() { result <- callTestSessionControl(s, ctx, controlResume) }()
 		<-entered
 		time.Sleep(10 * time.Second) // synctest 虚拟时间：推进到真实的业务截止时间。
 		unblock()

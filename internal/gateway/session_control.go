@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"errors"
+	"io"
 	"time"
 )
 
@@ -50,13 +51,13 @@ func (s *resumableSession) runControl(ctx context.Context, now func() time.Time)
 	_ = s.runCoordinator(ctx, now, nil)
 }
 
-// runCoordinator 是唯一状态循环，串行处理控制命令、输入与上传结果。
-// upload=nil 时保留已有纯控制行为，并拒绝音频/end 操作。
-// 退出时停止 Timer、关闭恢复资格并关闭 controlDone；不在循环内等待 I/O 退出。
+// runCoordinator 串行拥有连接恢复、输入、Worker 事件与结果保留状态。
+// worker=nil 保留纯控制行为；退出时关闭恢复资格与 controlDone。
+// 不在循环内等待 I/O 任务退出，收尾等待由 runWithWorker 完成。
 func (s *resumableSession) runCoordinator(
 	ctx context.Context,
 	now func() time.Time,
-	upload *sessionUpload,
+	worker *sessionWorker,
 ) error {
 	if ctx == nil {
 		panic("gateway: nil session control context")
@@ -65,183 +66,475 @@ func (s *resumableSession) runCoordinator(
 		panic("gateway: nil session control clock")
 	}
 
-	var expiryTimer *time.Timer
-	var expiryC <-chan time.Time
+	var wakeTimer *time.Timer
+	var wakeC <-chan time.Time
 
-	// stopExpiryTimer 停止并丢弃当前恢复期限 Timer。
-	// 允许重复调用；不关闭 Timer.C，也不阻塞读取旧 channel。
-	stopExpiryTimer := func() {
-		if expiryTimer != nil {
-			expiryTimer.Stop()
-		}
+	var tailDeadline time.Time
+	var statusDeadline time.Time
+	var retentionDeadline time.Time
 
-		expiryTimer = nil
-		expiryC = nil
+	var recvDone <-chan struct{}
+	var recvEvents <-chan workerReceiveEvent
+
+	if worker != nil {
+		recvDone = worker.receiver.done
+		recvEvents = worker.receiver.events
 	}
 
-	// armExpiryTimer 根据 detached 状态已有的绝对截止时间安排一次唤醒。
-	// 不修改 expiresAt，也不延长恢复窗口。
-	armExpiryTimer := func() {
-		stopExpiryTimer()
+	// stopWakeTimer 停止唤醒计时器并禁用其 select 分支，可以重复调用。
+	stopWakeTimer := func() {
+		if wakeTimer != nil {
+			wakeTimer.Stop()
+		}
 
-		if s.resume.phase != resumeDetached {
+		wakeTimer = nil
+		wakeC = nil
+	}
+
+	// nextDeadline 选择当前阶段适用的最早绝对期限；没有期限时返回 false。
+	nextDeadline := func() (time.Time, bool) {
+		var deadline time.Time
+		var have bool
+
+		consider := func(candidate time.Time) {
+			if candidate.IsZero() {
+				return
+			}
+
+			if !have || candidate.Before(deadline) {
+				deadline = candidate
+				have = true
+			}
+		}
+
+		if s.resume.phase == resumeDetached {
+			consider(s.resume.expiresAt)
+		}
+
+		if worker != nil {
+			switch worker.phase {
+			case workerRunning:
+				consider(tailDeadline)
+				consider(statusDeadline)
+
+			case workerRetaining:
+				consider(retentionDeadline)
+			}
+		}
+
+		return deadline, have
+	}
+
+	// armWakeTimer 按已有绝对期限安排唤醒，不改变任何业务截止时间。
+	armWakeTimer := func() {
+		stopWakeTimer()
+
+		deadline, ok := nextDeadline()
+		if !ok {
 			return
 		}
 
-		remaining := max(s.resume.expiresAt.Sub(now()), 0)
+		delay := deadline.Sub(now())
+		if delay < 0 {
+			delay = 0
+		}
 
-		expiryTimer = time.NewTimer(remaining)
-		expiryC = expiryTimer.C
+		wakeTimer = time.NewTimer(delay)
+		wakeC = wakeTimer.C
+	}
+
+	// deadlineKind 标识到期原因，仅选中恢复期限时需要推进 resumeState。
+	type deadlineKind uint8
+
+	const (
+		deadlineResume deadlineKind = iota
+		deadlineTail
+		deadlineStatus
+		deadlineRetention
+	)
+
+	// deadlineCandidate 将绝对时间与到期时应报告的原因关联。
+	type deadlineCandidate struct {
+		at   time.Time    // 绝对截止时间；零值表示尚未建立期限。
+		kind deadlineKind // 期限类别。
+		err  error        // 该期限最早到期时的退出原因。
+	}
+
+	// 先选择当前适用期限中绝对时间最早的一个。
+	// 截止时间相同时，由 consider 的调用顺序决定优先级。
+	checkExpired := func(at time.Time) error {
+		var selected deadlineCandidate
+		var have bool
+
+		consider := func(candidate deadlineCandidate) {
+			if candidate.at.IsZero() {
+				return
+			}
+
+			if !have || candidate.at.Before(selected.at) {
+				selected = candidate
+				have = true
+			}
+		}
+
+		if s.resume.phase == resumeDetached {
+			consider(deadlineCandidate{
+				at:   s.resume.expiresAt,
+				kind: deadlineResume,
+				err:  errResumeExpired,
+			})
+		}
+
+		if worker != nil {
+			switch worker.phase {
+			case workerRunning:
+				consider(deadlineCandidate{
+					at:   tailDeadline,
+					kind: deadlineTail,
+					err:  ErrTailTimeout,
+				})
+
+				consider(deadlineCandidate{
+					at:   statusDeadline,
+					kind: deadlineStatus,
+					err:  errWorkerStatusTimeout,
+				})
+
+			case workerRetaining:
+				consider(deadlineCandidate{
+					at:   retentionDeadline,
+					kind: deadlineRetention,
+					err:  errResultRetentionExpired,
+				})
+			}
+		}
+
+		if !have || at.Before(selected.at) {
+			return nil
+		}
+
+		// 只有恢复期限最终胜出时才修改 resumeState。
+		if selected.kind == deadlineResume {
+			if !s.resume.expire(at) {
+				return nil
+			}
+		}
+
+		return selected.err
+	}
+
+	// 所有会推进协调状态的事件在提交状态变化前都经过这里。
+	// retaining 阶段忽略为释放已完成 RPC 而产生的内部取消。
+	stopCause := func() error {
+		at := now()
+
+		if cause := context.Cause(ctx); cause != nil {
+			return cause
+		}
+
+		if worker != nil &&
+			worker.phase == workerRunning {
+			if cause := context.Cause(worker.config.rpcCtx); cause != nil {
+				return cause
+			}
+		}
+
+		return checkExpired(at)
 	}
 
 	defer func() {
-		stopExpiryTimer()
+		stopWakeTimer()
 		s.resume.close()
 		close(s.controlDone)
 	}()
 
 	if s.resume.phase == resumeDetached {
-		armExpiryTimer()
+		armWakeTimer()
 	}
 
-	phase := uploadIdle
+	uploadPhase := uploadIdle
+
 	var pending workerUploadCommand
 
+	// Recv EOF 和 CloseSend 成功可能以任意顺序被协调者观察。
+	var recvEOF bool
+
+	// enterRetaining 在正常接收 EOF 和成功半关闭均成立后调用。
+	// 固定一次结果保留期限，释放原 RPC；协调者继续处理连接恢复。
+	enterRetaining := func() {
+		if worker.phase == workerRetaining {
+			return
+		}
+
+		worker.phase = workerRetaining
+
+		tailDeadline = time.Time{}
+		statusDeadline = time.Time{}
+
+		// 结果保留期限从 Worker 双向正常完成这一刻开始，
+		// 后续 detach/resume 不改变这个绝对截止时间。
+		retentionDeadline = now().Add(
+			worker.config.resultRetentionTimeout,
+		)
+
+		recvDone = nil
+		recvEvents = nil
+
+		// Worker 已经正常完成。取消原 RPC 只用于释放资源，
+		// retaining 阶段不再把这个取消解释为业务失败。
+		worker.config.cancelRPC(nil)
+
+		armWakeTimer()
+	}
+
 	for {
-		// 已知逻辑会话或原 Worker RPC 已终止时，
-		// 不再从缓冲准备新的上传任务。
-		if cause := context.Cause(ctx); cause != nil {
-			return cause
+		if err := stopCause(); err != nil {
+			return err
 		}
 
-		if upload != nil {
-			if cause := context.Cause(upload.config.rpcCtx); cause != nil {
-				return cause
-			}
-		}
+		// 一个时刻最多准备一个上传操作。
+		if worker != nil &&
+			worker.phase == workerRunning &&
+			uploadPhase == uploadIdle {
 
-		// 只有没有未完成上传操作时才能取下一块。
-		// take 仅借出队首，不释放槽位或字节预算。
-		if upload != nil && phase == uploadIdle {
-			if chunk, ok := upload.input.take(); ok {
+			if chunk, ok := worker.input.take(); ok {
 				pending = workerUploadCommand{
 					kind:  workerUploadAudio,
 					chunk: chunk,
 				}
-				phase = uploadPending
 
-			} else if upload.input.inputDrained() {
-				// 所有已接纳音频均已 complete，而且已经接纳 end。
-				// CloseSend 也通过 uploader 串行执行。
+				uploadPhase = uploadPending
+
+			} else if worker.input.inputDrained() {
+				// 所有已接纳音频都已经成功 Send 后，
+				// dispatchedBytes 应与最终接纳位置完全一致。
+				if worker.dispatchedBytes != worker.input.input.nextOffset {
+					panic("gateway: drained input has undispatched audio")
+				}
+
 				pending = workerUploadCommand{
 					kind: workerUploadCloseSend,
 				}
-				phase = uploadPending
+
+				uploadPhase = uploadPending
 			}
 		}
 
-		// nil channel 的 select case 永远不会就绪。
-		// 因而仅在正确 phase 启用任务交付或结果处理。
 		var jobs chan<- workerUploadCommand
-		var results <-chan workerUploadResult
+		var uploadResults <-chan workerUploadResult
 		var rpcDone <-chan struct{}
 
-		if upload != nil {
-			rpcDone = upload.config.rpcCtx.Done()
+		if worker != nil {
+			if worker.phase == workerRunning {
+				rpcDone = worker.config.rpcCtx.Done()
+			}
 
-			switch phase {
+			switch uploadPhase {
 			case uploadPending:
-				jobs = upload.uploader.jobs
+				jobs = worker.uploader.jobs
 
 			case uploadWaiting:
-				results = upload.uploader.results
+				uploadResults = worker.uploader.results
 			}
 		}
 
 		select {
 		case <-ctx.Done():
-			return context.Cause(ctx)
+			if err := stopCause(); err != nil {
+				return err
+			}
+
+			panic("gateway: session context done without cause")
 
 		case <-rpcDone:
-			return context.Cause(upload.config.rpcCtx)
-
-		case <-expiryC:
-			// Timer 只负责唤醒；期限仍以 resumeState 的绝对时间为准。
-			stopExpiryTimer()
-
-			if s.resume.expire(now()) {
-				return errResumeExpired
+			if err := stopCause(); err != nil {
+				return err
 			}
 
-			if s.resume.phase == resumeDetached {
-				armExpiryTimer()
+			panic("gateway: worker RPC done without cause")
+
+		case <-wakeC:
+			stopWakeTimer()
+
+			if err := stopCause(); err != nil {
+				return err
 			}
+
+			armWakeTimer()
 
 		case jobs <- pending:
-			// 到这里 uploader 已真正接收任务。
-			// 同一个 pending 不得再次交付。
-			phase = uploadWaiting
-
-			// coordinator 不再额外持有 payload 引用；
-			// kind/offset 仍留下，用于匹配唯一结果。
-			pending.chunk.data = nil
-
-		case result := <-results:
-			// 当前只有一个已交付但未处理的任务，
-			// 返回结果必须严格匹配该任务。
-			if result.kind != pending.kind ||
-				result.offset != pending.chunk.offset {
-				return errWorkerUploadResultMismatch
-			}
-
-			// 上传失败不 complete、不重试，也不继续安排 CloseSend。
-			if result.err != nil {
-				return result.err
-			}
-
-			switch result.kind {
+			// 从 send case 被选中的这一刻开始，任务已经真实交给
+			// uploader。之后即使立即观察到取消，也不能撤销这个事实。
+			switch pending.kind {
 			case workerUploadAudio:
-				// 只有匹配的 Send 成功结果才能真正释放 buffer 预算。
-				if err := upload.input.complete(result.offset); err != nil {
-					return err
+				if pending.chunk.offset != worker.dispatchedBytes {
+					return errWorkerUploadResultMismatch
 				}
 
-				pending = workerUploadCommand{}
-				phase = uploadIdle
+				end := pending.chunk.offset +
+					uint64(len(pending.chunk.data))
+
+				if end < pending.chunk.offset {
+					panic("gateway: dispatched audio offset overflow")
+				}
+
+				// Worker 可能在 Send 返回之前就报告这段音频的进度。
+				worker.dispatchedBytes = end
 
 			case workerUploadCloseSend:
-				// 半关闭成功只表示不会再发送 Worker 请求。
-				// RPC 和协调者继续存在，响应方向仍可能产生尾部结果。
-				pending = workerUploadCommand{}
-				phase = uploadHalfClosed
 
 			default:
 				return errWorkerUploadResultMismatch
 			}
 
-		case cmd := <-s.commands:
-			// 命令已经被接收；从这里开始必须恰好回复一次。
+			uploadPhase = uploadWaiting
 
-			// select 可能在取消和命令同时就绪时选择命令，
-			// 因此接收后先重新检查逻辑会话生命周期。
-			if cause := context.Cause(ctx); cause != nil {
+			// uploader 已取得命令中的 slice。
+			// audioInputBuffer 仍持有队首，直到 Send 成功 complete。
+			pending.chunk.data = nil
+
+			if err := stopCause(); err != nil {
+				return err
+			}
+
+		case result := <-uploadResults:
+			if err := stopCause(); err != nil {
+				return err
+			}
+
+			if result.kind != pending.kind ||
+				result.offset != pending.chunk.offset {
+				return errWorkerUploadResultMismatch
+			}
+
+			if result.err != nil {
+				if !errors.Is(result.err, io.EOF) {
+					return result.err
+				}
+
+				// grpc Send 返回 EOF 不能证明当前任务成功。
+				// 当前任务不 complete，也不继续上传，等待 Recv
+				// 给出真正的 Worker RPC 终态。
+				pending = workerUploadCommand{}
+				uploadPhase = uploadAwaitingStatus
+
+				// 如果 Recv EOF 已经更早被观察到，则真实接收终态
+				// 已经明确，不需要再等待 status deadline。
+				if recvEOF {
+					return errWorkerEndedEarly
+				}
+
+				if statusDeadline.IsZero() {
+					statusDeadline = now().Add(
+						worker.config.statusTimeout,
+					)
+				}
+
+				armWakeTimer()
+				continue
+			}
+
+			switch result.kind {
+			case workerUploadAudio:
+				// 音频只有在 Send 明确成功以后才能释放 buffer。
+				if err := worker.input.complete(result.offset); err != nil {
+					return err
+				}
+
+				pending = workerUploadCommand{}
+				uploadPhase = uploadIdle
+
+			case workerUploadCloseSend:
+				pending = workerUploadCommand{}
+				uploadPhase = uploadHalfClosed
+
+				// Recv EOF 可能比 CloseSend 成功更早被观察。
+				if recvEOF {
+					enterRetaining()
+				}
+
+			default:
+				return errWorkerUploadResultMismatch
+			}
+
+		case event := <-recvEvents:
+			if err := stopCause(); err != nil {
+				return err
+			}
+
+			switch event.kind {
+			case workerReceiveResult:
+				// 序号只在结果真正进入有界缓冲后产生。
+				if _, err := worker.results.append(
+					event.segmentID,
+					event.text,
+					event.isFinal,
+				); err != nil {
+					return err
+				}
+
+			case workerReceiveProgress:
+				if err := worker.acknowledgeProgress(
+					event.processedBytes,
+				); err != nil {
+					return err
+				}
+
+			default:
+				return errInvalidWorkerResponse
+			}
+
+		case <-recvDone:
+			// 正常 EOF 不能越过已经发生的逻辑取消、
+			// RPC 取消或更早的绝对期限。
+			if err := stopCause(); err != nil {
+				return err
+			}
+
+			// done 是关闭型 channel，只能消费一次。
+			recvDone = nil
+			recvEvents = nil
+
+			// receiver 保证先写 err，再关闭 done。
+			if worker.receiver.err != nil {
+				return worker.receiver.err
+			}
+
+			recvEOF = true
+
+			switch uploadPhase {
+			case uploadHalfClosed:
+				enterRetaining()
+
+			case uploadWaiting:
+				// 只有已经真实交付出去的 CloseSend 可以允许
+				// Recv EOF 先于它的成功结果被协调者观察。
+				if pending.kind != workerUploadCloseSend {
+					return errWorkerEndedEarly
+				}
+
+			case uploadAwaitingStatus:
+				// 上传方向已经以 EOF 停止，没有取得正常任务结果。
+				return errWorkerEndedEarly
+
+			case uploadIdle, uploadPending:
+				// CloseSend 尚未成功完成。
+				return errWorkerEndedEarly
+
+			default:
+				return errWorkerEndedEarly
+			}
+
+		case cmd := <-s.commands:
+			// 命令已经被协调者取得，因此无论随后发现什么停止原因，
+			// 都必须先给提交方唯一回复。
+			if err := stopCause(); err != nil {
 				cmd.reply <- sessionControlResult{
 					err: errResumeClosed,
 				}
-				return cause
+				return err
 			}
 
-			// 带上传资源时，同样重新检查原 Worker RPC。
-			if upload != nil {
-				if cause := context.Cause(upload.config.rpcCtx); cause != nil {
-					cmd.reply <- sessionControlResult{
-						err: errResumeClosed,
-					}
-					return cause
-				}
-			}
-
-			// 请求自己的取消只取消本次请求，不终止其他有效会话操作。
 			if err := cmd.ctx.Err(); err != nil {
 				cmd.reply <- sessionControlResult{
 					err: err,
@@ -253,24 +546,22 @@ func (s *resumableSession) runCoordinator(
 			case controlResume:
 				generation, err := s.resume.resume(now())
 
-				if err == nil {
-					// 成功恢复后已经不再 detached。
-					stopExpiryTimer()
-				}
-
 				cmd.reply <- sessionControlResult{
 					generation: generation,
 					err:        err,
 				}
 
-				// resume 自己检查绝对恢复期限。
-				// 若发现已过期，会推进到 closed。
 				if s.resume.phase == resumeClosed {
 					if err != nil {
 						return err
 					}
+
 					return errResumeExpired
 				}
+
+				// resume 成功会移除恢复期限，但不能移动 tail/status/
+				// retention 的绝对截止时间。
+				armWakeTimer()
 
 			case controlDetach:
 				detached := s.resume.detach(
@@ -278,14 +569,13 @@ func (s *resumableSession) runCoordinator(
 					now(),
 				)
 
-				// 只有真正 attached -> detached 才建立新 Timer。
-				// 旧代次或重复 detach 不得重置恢复期限。
-				if detached {
-					armExpiryTimer()
-				}
-
 				cmd.reply <- sessionControlResult{
 					detached: detached,
+				}
+
+				// 只有真实 attached -> detached 才产生新的恢复窗口。
+				if detached {
+					armWakeTimer()
 				}
 
 			case controlClose:
@@ -296,15 +586,14 @@ func (s *resumableSession) runCoordinator(
 				return nil
 
 			case controlAudio:
-				if upload == nil {
+				if worker == nil {
 					cmd.reply <- sessionControlResult{
-						err: errSessionUploadUnavailable,
+						err: errSessionWorkerUnavailable,
 					}
 					continue
 				}
 
-				// 必须先验证连接资格，再检查音频是否重复。
-				// 历史重发不能绕过连接代次隔离。
+				// 历史重发也必须先通过当前连接资格和代次检查。
 				if s.resume.phase != resumeAttached {
 					cmd.reply <- sessionControlResult{
 						err: errSessionNotAttached,
@@ -312,7 +601,6 @@ func (s *resumableSession) runCoordinator(
 					continue
 				}
 
-				// 当前代次校验与音频接纳由同一协调者连续执行。
 				if cmd.generation != s.resume.generation {
 					cmd.reply <- sessionControlResult{
 						err: errSessionGenerationMismatch,
@@ -320,28 +608,73 @@ func (s *resumableSession) runCoordinator(
 					continue
 				}
 
-				accepted, err := upload.input.offer(
-					cmd.offset,
-					cmd.payload,
+				if uploadPhase == uploadAwaitingStatus {
+					// 等待 Worker 最终状态期间，只接受完整历史重发。
+					// 其他范围错误或新音频统一拒绝，不能覆盖真实 RPC 终态。
+					kind, err := worker.input.input.classifyAudio(
+						cmd.offset,
+						uint64(len(cmd.payload)),
+					)
+
+					if err == nil && kind == audioChunkDuplicate {
+						cmd.reply <- sessionControlResult{
+							accepted:   false,
+							nextOffset: worker.input.input.nextOffset,
+						}
+						continue
+					}
+
+					cmd.reply <- sessionControlResult{
+						err: errWorkerInputStopped,
+					}
+					continue
+				}
+
+				inputStopped :=
+					worker.phase == workerRetaining ||
+						uploadPhase == uploadHalfClosed
+
+				var (
+					accepted bool
+					err      error
 				)
+
+				if inputStopped {
+					accepted, err = worker.offerHistoricalAudio(
+						cmd.offset,
+						cmd.payload,
+					)
+				} else {
+					accepted, err = worker.offerAudio(
+						cmd.offset,
+						cmd.payload,
+					)
+				}
+
 				if err != nil {
-					// 当前合法代次的范围错误、输入错误或容量耗尽
-					// 属于不可恢复输入错误：先回复，再结束协调路径。
 					cmd.reply <- sessionControlResult{
 						err: err,
 					}
+
+					// 输入已经停止时的新音频只拒绝本次请求。
+					if errors.Is(err, errWorkerInputStopped) {
+						continue
+					}
+
+					// 正常运行路径中的范围、容量和 backlog 错误
+					// 属于当前逻辑会话的不可恢复输入错误。
 					return err
 				}
 
 				cmd.reply <- sessionControlResult{
 					accepted:   accepted,
-					nextOffset: upload.input.input.nextOffset,
+					nextOffset: worker.input.input.nextOffset,
 				}
 
 			case controlEnd:
-				if upload == nil {
+				if worker == nil {
 					cmd.reply <- sessionControlResult{
-						err: errSessionUploadUnavailable,
+						err: errSessionWorkerUnavailable,
 					}
 					continue
 				}
@@ -353,7 +686,6 @@ func (s *resumableSession) runCoordinator(
 					continue
 				}
 
-				// end 同样必须来自当前有效连接代次。
 				if cmd.generation != s.resume.generation {
 					cmd.reply <- sessionControlResult{
 						err: errSessionGenerationMismatch,
@@ -361,7 +693,72 @@ func (s *resumableSession) runCoordinator(
 					continue
 				}
 
-				accepted, err := upload.input.acceptEnd(cmd.offset)
+				if uploadPhase == uploadAwaitingStatus {
+					// 如果原 end 已经存在，只允许完全相同的重复 end。
+					// acceptEnd 的错误路径不修改 inputState；不匹配的
+					// end 在这里转换成 InputStopped，不结束协调循环。
+					if worker.input.input.ended {
+						accepted, err := worker.input.acceptEnd(
+							cmd.offset,
+						)
+
+						if err == nil && !accepted {
+							cmd.reply <- sessionControlResult{
+								accepted:   false,
+								nextOffset: worker.input.input.nextOffset,
+							}
+							continue
+						}
+
+						if err == nil && accepted {
+							panic("gateway: accepted end while awaiting worker status")
+						}
+					}
+
+					cmd.reply <- sessionControlResult{
+						err: errWorkerInputStopped,
+					}
+					continue
+				}
+
+				inputStopped :=
+					worker.phase == workerRetaining ||
+						uploadPhase == uploadHalfClosed
+
+				if inputStopped {
+					// Worker 输入已经停止后不能首次建立 end。
+					if !worker.input.input.ended {
+						cmd.reply <- sessionControlResult{
+							err: errWorkerInputStopped,
+						}
+						continue
+					}
+
+					// 已经接纳过 end 时仍沿用 inputState 的幂等规则。
+					accepted, err := worker.input.acceptEnd(
+						cmd.offset,
+					)
+					if err != nil {
+						cmd.reply <- sessionControlResult{
+							err: err,
+						}
+						return err
+					}
+
+					if accepted {
+						panic("gateway: accepted end after worker input stopped")
+					}
+
+					cmd.reply <- sessionControlResult{
+						accepted:   false,
+						nextOffset: worker.input.input.nextOffset,
+					}
+					continue
+				}
+
+				accepted, err := worker.input.acceptEnd(
+					cmd.offset,
+				)
 				if err != nil {
 					cmd.reply <- sessionControlResult{
 						err: err,
@@ -369,9 +766,17 @@ func (s *resumableSession) runCoordinator(
 					return err
 				}
 
+				// tail deadline 只由首次合法 end 建立一次。
+				if accepted && tailDeadline.IsZero() {
+					tailDeadline = now().Add(
+						worker.config.tailTimeout,
+					)
+					armWakeTimer()
+				}
+
 				cmd.reply <- sessionControlResult{
 					accepted:   accepted,
-					nextOffset: upload.input.input.nextOffset,
+					nextOffset: worker.input.input.nextOffset,
 				}
 
 			default:

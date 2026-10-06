@@ -14,11 +14,11 @@ import (
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 )
 
-// uploadCoordinatorFixture 运行真正的协调入口；测试仅控制 Worker 的 I/O。
+// workerCoordinatorFixture 运行真正的协调入口；测试仅控制 Worker 的 I/O。
 // err 在 finished 关闭后读取；可变会话/缓冲字段只在同步边界之后断言。
-type uploadCoordinatorFixture struct {
+type workerCoordinatorFixture struct {
 	session    *resumableSession
-	upload     *sessionUpload
+	worker     *sessionWorker
 	lifeCtx    context.Context
 	cancelLife context.CancelCauseFunc
 	rpcCtx     context.Context
@@ -26,27 +26,37 @@ type uploadCoordinatorFixture struct {
 	finished   chan struct{}
 	err        error
 	started    bool
+	now        func() time.Time // 默认真实/虚拟时钟；允许测试在提交状态前建立同步点。
 }
 
-// newUploadCoordinatorFixture 创建同一逻辑生命周期下的 RPC，不启动后台任务。
+// newWorkerCoordinatorFixture 创建同一逻辑生命周期下的 RPC，不启动后台任务。
 // build 提供可取消的 stream；默认发送期限长于 10 秒恢复窗口。
-func newUploadCoordinatorFixture(t *testing.T, maxBytes uint64, maxChunks int, build func(context.Context) workerStream) *uploadCoordinatorFixture {
+func newWorkerCoordinatorFixture(t *testing.T, maxBytes uint64, maxChunks int, build func(context.Context) workerStream) *workerCoordinatorFixture {
 	t.Helper()
 	lifeCtx, cancelLife := context.WithCancelCause(context.Background())
 	rpcCtx, cancelRPC := context.WithCancelCause(lifeCtx)
-	upload, err := newSessionUpload(sessionUploadConfig{
-		rpcCtx: rpcCtx, cancelRPC: cancelRPC, stream: build(rpcCtx),
-		sendTimeout: time.Minute, maxAudioBytes: maxBytes, maxAudioChunks: maxChunks,
+	stream := build(rpcCtx)
+	if testStream, ok := stream.(*uploadTestStream); ok && testStream.recv == nil {
+		testStream.recv = func() (*asrv1.StreamingRecognizeResponse, error) {
+			<-rpcCtx.Done()
+			return nil, context.Cause(rpcCtx)
+		}
+	}
+	upload, err := newSessionWorker(sessionWorkerConfig{
+		rpcCtx: rpcCtx, cancelRPC: cancelRPC, stream: stream,
+		sendTimeout: time.Minute, tailTimeout: time.Minute, statusTimeout: time.Second,
+		resultRetentionTimeout: time.Minute, maxAudioBytes: maxBytes, maxAudioChunks: maxChunks,
+		maxResultBytes: 1024, maxResults: 16,
 	})
 	if err != nil {
 		cancelLife(nil)
 		cancelRPC(nil)
 		t.Fatal(err)
 	}
-	f := &uploadCoordinatorFixture{
-		session: newTestResumableSession(t, identityTestMaterial()), upload: upload,
+	f := &workerCoordinatorFixture{
+		session: newTestResumableSession(t, identityTestMaterial()), worker: upload,
 		lifeCtx: lifeCtx, cancelLife: cancelLife, rpcCtx: rpcCtx, cancelRPC: cancelRPC,
-		finished: make(chan struct{}),
+		finished: make(chan struct{}), now: time.Now,
 	}
 	t.Cleanup(func() {
 		cancelLife(nil)
@@ -58,33 +68,41 @@ func newUploadCoordinatorFixture(t *testing.T, maxBytes uint64, maxChunks int, b
 	return f
 }
 
-func (f *uploadCoordinatorFixture) start() {
+func (f *workerCoordinatorFixture) start() {
 	f.started = true
 	go func() {
-		f.err = f.session.runWithUpload(f.lifeCtx, time.Now, f.upload)
+		f.err = f.session.runWithWorker(f.lifeCtx, f.now, f.worker)
 		close(f.finished)
 	}()
 }
 
 // assertFinishedAtCurrentTime 不等待未来期限，避免掩盖迟到的清理。
-func (f *uploadCoordinatorFixture) assertFinishedAtCurrentTime(t *testing.T, want error) {
+func (f *workerCoordinatorFixture) assertFinishedAtCurrentTime(t *testing.T, want error) {
 	t.Helper()
 	synctest.Wait()
 	select {
 	case <-f.finished:
 	default:
-		t.Fatal("runWithUpload has not finished at the expected stage")
+		t.Fatal("runWithWorker has not finished at the expected stage")
 	}
 	if !errors.Is(f.err, want) {
-		t.Fatalf("runWithUpload error = %v, want %v", f.err, want)
+		t.Fatalf("runWithWorker error = %v, want %v", f.err, want)
 	}
 	select {
-	case <-f.upload.uploader.done:
+	case <-f.worker.uploader.done:
 	default:
 		t.Fatal("runner returned before uploader exited")
 	}
-	if f.upload.input != nil {
+	if f.worker.input != nil {
 		t.Fatal("runner retained the input buffer after upload cleanup")
+	}
+	select {
+	case <-f.worker.receiver.done:
+	default:
+		t.Fatal("runner returned before receiver exited")
+	}
+	if f.worker.results != nil {
+		t.Fatal("runner retained results after both I/O tasks exited")
 	}
 	assertResumeState(t, f.session.resume, resumeClosed, f.session.resume.generation, time.Time{})
 }
@@ -96,14 +114,16 @@ func assertCoordinatorInput(t *testing.T, accepted bool, next uint64, err error,
 	}
 }
 
-func TestSessionUploadConstruction(t *testing.T) {
+func TestSessionWorkerConstruction(t *testing.T) {
 	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
-	config := sessionUploadConfig{rpcCtx: ctx, cancelRPC: cancel, stream: &uploadTestStream{}, sendTimeout: time.Second, maxAudioBytes: 4, maxAudioChunks: 2}
+	config := sessionWorkerConfig{rpcCtx: ctx, cancelRPC: cancel, stream: &uploadTestStream{}, sendTimeout: time.Second,
+		tailTimeout: time.Minute, statusTimeout: time.Second, resultRetentionTimeout: time.Minute,
+		maxAudioBytes: 4, maxAudioChunks: 2, maxResultBytes: 1024, maxResults: 16}
 	for _, name := range []string{"nil_context", "nil_cancel", "nil_stream", "zero_timeout", "negative_timeout", "zero_bytes", "zero_chunks", "negative_chunks"} {
 		t.Run(name, func(t *testing.T) {
 			cfg := config
-			want := errInvalidSessionUploadConfig
+			want := errInvalidSessionWorkerConfig
 			switch name {
 			case "nil_context":
 				cfg.rpcCtx = nil
@@ -122,18 +142,18 @@ func TestSessionUploadConstruction(t *testing.T) {
 			case "negative_chunks":
 				cfg.maxAudioChunks, want = -1, errInvalidAudioBufferLimits
 			}
-			u, err := newSessionUpload(cfg)
+			u, err := newSessionWorker(cfg)
 			if u != nil || !errors.Is(err, want) || context.Cause(ctx) != nil {
 				t.Fatalf("invalid construction = (%v, %v), RPC cause=%v", u, err, context.Cause(ctx))
 			}
 		})
 	}
 	t.Run("independent_without_startup", func(t *testing.T) {
-		a, err := newSessionUpload(config)
+		a, err := newSessionWorker(config)
 		if err != nil {
 			t.Fatal(err)
 		}
-		b, err := newSessionUpload(config)
+		b, err := newSessionWorker(config)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -153,12 +173,12 @@ func TestSessionUploadConstruction(t *testing.T) {
 	})
 }
 
-func TestSessionUploadInvalidStartup(t *testing.T) {
+func TestSessionWorkerInvalidStartup(t *testing.T) {
 	for _, name := range []string{"nil_lifecycle", "nil_clock", "nil_upload"} {
 		t.Run(name, func(t *testing.T) {
-			f := newUploadCoordinatorFixture(t, 4, 2, func(context.Context) workerStream { return &uploadTestStream{} })
+			f := newWorkerCoordinatorFixture(t, 4, 2, func(context.Context) workerStream { return &uploadTestStream{} })
 			var ctx context.Context = f.lifeCtx
-			now, upload := time.Now, f.upload
+			now, upload := time.Now, f.worker
 			switch name {
 			case "nil_lifecycle":
 				ctx = nil
@@ -172,26 +192,26 @@ func TestSessionUploadInvalidStartup(t *testing.T) {
 					t.Fatal("invalid startup did not panic")
 				}
 				select {
-				case <-f.upload.uploader.done:
+				case <-f.worker.uploader.done:
 					t.Fatal("invalid startup started the uploader")
-				case f.upload.uploader.jobs <- workerUploadCommand{}:
+				case f.worker.uploader.jobs <- workerUploadCommand{}:
 					t.Fatal("invalid startup started the uploader")
 				default:
 				}
 			}()
-			_ = f.session.runWithUpload(ctx, now, upload)
+			_ = f.session.runWithWorker(ctx, now, upload)
 		})
 	}
 }
 
-func TestSessionUploadPureControlRejectsInput(t *testing.T) {
+func TestSessionWorkerPureControlRejectsInput(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		s := newTestResumableSession(t, identityTestMaterial())
 		startTestSessionControl(t, s, time.Now)
 		a, n, err := s.requestAudio(context.Background(), 1, 0, []byte("a"))
-		assertCoordinatorInput(t, a, n, err, false, 0, errSessionUploadUnavailable)
+		assertCoordinatorInput(t, a, n, err, false, 0, errSessionWorkerUnavailable)
 		a, n, err = s.requestEnd(context.Background(), 1, 0)
-		assertCoordinatorInput(t, a, n, err, false, 0, errSessionUploadUnavailable)
+		assertCoordinatorInput(t, a, n, err, false, 0, errSessionWorkerUnavailable)
 		if detached, err := s.reportDetach(context.Background(), 1); !detached || err != nil {
 			t.Fatalf("input rejection changed control availability: (%v, %v)", detached, err)
 		}
@@ -201,15 +221,16 @@ func TestSessionUploadPureControlRejectsInput(t *testing.T) {
 	})
 }
 
-func TestSessionUploadFIFOAndHalfClosePreserveRPC(t *testing.T) {
+func TestSessionWorkerFIFOAndHalfClosePreserveRPC(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		entered, release, halfClosed := make(chan struct{}), make(chan struct{}), make(chan struct{})
 		var once sync.Once
 		unblock := func() { once.Do(func() { close(release) }) }
 		defer unblock()
 		operations := make(chan string, 8)
-		first := true // 唯一 uploader 访问。
-		f := newUploadCoordinatorFixture(t, 16, 4, func(ctx context.Context) workerStream {
+		first := true         // 唯一 uploader 访问。
+		tailReturned := false // 唯一 receiver 访问。
+		f := newWorkerCoordinatorFixture(t, 16, 4, func(ctx context.Context) workerStream {
 			return &uploadTestStream{
 				send: func(req *asrv1.StreamingRecognizeRequest) error {
 					if first {
@@ -226,10 +247,17 @@ func TestSessionUploadFIFOAndHalfClosePreserveRPC(t *testing.T) {
 				},
 				closeSend: func() error { operations <- "close"; close(halfClosed); return nil },
 				recv: func() (*asrv1.StreamingRecognizeResponse, error) {
-					if err := context.Cause(ctx); err != nil {
-						return nil, err
+					if !tailReturned {
+						select {
+						case <-halfClosed:
+							tailReturned = true
+							return &asrv1.StreamingRecognizeResponse{Text: "tail"}, nil
+						case <-ctx.Done():
+							return nil, context.Cause(ctx)
+						}
 					}
-					return &asrv1.StreamingRecognizeResponse{Text: "tail"}, nil
+					<-ctx.Done()
+					return nil, context.Cause(ctx)
 				},
 			}
 		})
@@ -264,9 +292,10 @@ func TestSessionUploadFIFOAndHalfClosePreserveRPC(t *testing.T) {
 		assertCoordinatorInput(t, a, n, err, false, 6, nil)
 		a, n, err = f.session.requestAudio(context.Background(), 1, 2, []byte("cde"))
 		assertCoordinatorInput(t, a, n, err, false, 6, nil)
-		tail, err := f.upload.config.stream.Recv() // 替身只验证 RPC 仍可接收，不是网络恢复验收。
-		if err != nil || tail.Text != "tail" {
-			t.Fatalf("tail = (%v, %v)", tail, err)
+		synctest.Wait()
+		tail, ok, err := f.worker.results.peekAfter(0) // 由真正 receiver 交给协调者保存。
+		if err != nil || !ok || tail.text != "tail" {
+			t.Fatalf("tail = (%v, %v, %v)", tail, ok, err)
 		}
 		if err := f.session.requestClose(context.Background()); err != nil {
 			t.Fatal(err)
@@ -282,7 +311,7 @@ func TestSessionUploadFIFOAndHalfClosePreserveRPC(t *testing.T) {
 	})
 }
 
-func TestSessionUploadBlockedSendAllowsResumeAndFencesOldInput(t *testing.T) {
+func TestSessionWorkerBlockedSendAllowsResumeAndFencesOldInput(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		entered, release, halfClosed := make(chan struct{}), make(chan struct{}), make(chan struct{})
 		var once sync.Once
@@ -290,7 +319,7 @@ func TestSessionUploadBlockedSendAllowsResumeAndFencesOldInput(t *testing.T) {
 		defer unblock()
 		sent := make(chan string, 4)
 		first := true
-		f := newUploadCoordinatorFixture(t, 4, 2, func(ctx context.Context) workerStream {
+		f := newWorkerCoordinatorFixture(t, 4, 2, func(ctx context.Context) workerStream {
 			return &uploadTestStream{
 				send: func(req *asrv1.StreamingRecognizeRequest) error {
 					if first {
@@ -355,7 +384,7 @@ func TestSessionUploadBlockedSendAllowsResumeAndFencesOldInput(t *testing.T) {
 	})
 }
 
-func TestSessionUploadDetachedAcceptedInputStillDrains(t *testing.T) {
+func TestSessionWorkerDetachedAcceptedInputStillDrains(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		entered, release, halfClosed := make(chan struct{}), make(chan struct{}), make(chan struct{})
 		var once sync.Once
@@ -363,7 +392,7 @@ func TestSessionUploadDetachedAcceptedInputStillDrains(t *testing.T) {
 		defer unblock()
 		sent := make(chan string, 3)
 		first := true
-		f := newUploadCoordinatorFixture(t, 4, 2, func(ctx context.Context) workerStream {
+		f := newWorkerCoordinatorFixture(t, 4, 2, func(ctx context.Context) workerStream {
 			return &uploadTestStream{
 				send: func(req *asrv1.StreamingRecognizeRequest) error {
 					if first {
@@ -410,7 +439,7 @@ func TestSessionUploadDetachedAcceptedInputStillDrains(t *testing.T) {
 	})
 }
 
-func TestSessionUploadControlExitPrecedesActualCleanup(t *testing.T) {
+func TestSessionWorkerControlExitPrecedesActualCleanup(t *testing.T) {
 	for _, name := range []string{"explicit_close", "lifecycle_cancel", "rpc_cancel"} {
 		t.Run(name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
@@ -418,7 +447,7 @@ func TestSessionUploadControlExitPrecedesActualCleanup(t *testing.T) {
 				var once sync.Once
 				unblock := func() { once.Do(func() { close(release) }) }
 				defer unblock()
-				f := newUploadCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
+				f := newWorkerCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
 					return &uploadTestStream{send: func(*asrv1.StreamingRecognizeRequest) error {
 						close(entered)
 						<-ctx.Done()
@@ -427,7 +456,7 @@ func TestSessionUploadControlExitPrecedesActualCleanup(t *testing.T) {
 						return nil // 取消原因必须覆盖底层 nil。
 					}}
 				})
-				buffer := f.upload.input
+				buffer := f.worker.input
 				f.start()
 				a, n, err := f.session.requestAudio(context.Background(), 1, 0, []byte("ab"))
 				assertCoordinatorInput(t, a, n, err, true, 2, nil)
@@ -458,11 +487,11 @@ func TestSessionUploadControlExitPrecedesActualCleanup(t *testing.T) {
 				default:
 				}
 				select {
-				case <-f.upload.uploader.done:
+				case <-f.worker.uploader.done:
 					t.Fatal("uploader exited before Send returned")
 				default:
 				}
-				if f.upload.input != buffer || buffer.retainedBytes != 2 || !buffer.inFlight {
+				if f.worker.input != buffer || buffer.retainedBytes != 2 || !buffer.inFlight {
 					t.Fatal("buffer released before actual upload exit")
 				}
 				unblock()
@@ -470,13 +499,13 @@ func TestSessionUploadControlExitPrecedesActualCleanup(t *testing.T) {
 				if buffer.count != 1 || buffer.input.nextOffset != 2 {
 					t.Fatal("canceled send incorrectly completed input")
 				}
-				assertTestWorkerUploadResult(t, <-f.upload.uploader.results, workerUploadAudio, 0, context.Cause(f.rpcCtx))
+				assertTestWorkerUploadResult(t, <-f.worker.uploader.results, workerUploadAudio, 0, context.Cause(f.rpcCtx))
 			})
 		})
 	}
 }
 
-func TestSessionUploadExpiryCancelsBlockedSend(t *testing.T) {
+func TestSessionWorkerExpiryCancelsBlockedSend(t *testing.T) {
 	for _, initial := range []bool{false, true} {
 		name := "detach_command"
 		if initial {
@@ -485,10 +514,10 @@ func TestSessionUploadExpiryCancelsBlockedSend(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				entered := make(chan struct{})
-				f := newUploadCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
+				f := newWorkerCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
 					return &uploadTestStream{send: func(*asrv1.StreamingRecognizeRequest) error { close(entered); <-ctx.Done(); return io.EOF }}
 				})
-				buffer := f.upload.input
+				buffer := f.worker.input
 				if initial {
 					if ok, err := buffer.offer(0, []byte("ab")); !ok || err != nil {
 						t.Fatal(err)
@@ -518,7 +547,7 @@ func TestSessionUploadExpiryCancelsBlockedSend(t *testing.T) {
 	}
 }
 
-func TestSessionUploadSendTimeoutWaitsForUnderlyingReturn(t *testing.T) {
+func TestSessionWorkerSendTimeoutWaitsForUnderlyingReturn(t *testing.T) {
 	for _, name := range []string{"send_returns_nil", "send_returns_eof"} {
 		t.Run(name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
@@ -527,7 +556,7 @@ func TestSessionUploadSendTimeoutWaitsForUnderlyingReturn(t *testing.T) {
 				var once sync.Once
 				unblock := func() { once.Do(func() { close(release) }) }
 				defer unblock()
-				f := newUploadCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
+				f := newWorkerCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
 					return &uploadTestStream{send: func(*asrv1.StreamingRecognizeRequest) error {
 						close(entered)
 						<-ctx.Done()
@@ -541,8 +570,8 @@ func TestSessionUploadSendTimeoutWaitsForUnderlyingReturn(t *testing.T) {
 						return nil
 					}}
 				})
-				f.upload.config.sendTimeout = time.Second
-				buffer := f.upload.input
+				f.worker.config.sendTimeout = time.Second
+				buffer := f.worker.input
 				f.start()
 				a, n, err := f.session.requestAudio(context.Background(), 1, 0, []byte("ab"))
 				assertCoordinatorInput(t, a, n, err, true, 2, nil)
@@ -559,7 +588,7 @@ func TestSessionUploadSendTimeoutWaitsForUnderlyingReturn(t *testing.T) {
 					t.Fatal("runner returned before Send cleanup")
 				default:
 				}
-				if f.upload.input != buffer || len(f.upload.uploader.results) != 0 {
+				if f.worker.input != buffer || len(f.worker.uploader.results) != 0 {
 					t.Fatal("premature buffer release or upload result")
 				}
 				time.Sleep(10 * time.Millisecond)
@@ -568,13 +597,13 @@ func TestSessionUploadSendTimeoutWaitsForUnderlyingReturn(t *testing.T) {
 				if buffer.count != 1 || buffer.input.nextOffset != 2 {
 					t.Fatal("timed-out input was completed")
 				}
-				assertTestWorkerUploadResult(t, <-f.upload.uploader.results, workerUploadAudio, 0, ErrWorkerSendTimeout)
+				assertTestWorkerUploadResult(t, <-f.worker.uploader.results, workerUploadAudio, 0, ErrWorkerSendTimeout)
 			})
 		})
 	}
 }
 
-func TestSessionUploadInputFailuresReplyThenTerminate(t *testing.T) {
+func TestSessionWorkerInputFailuresReplyThenTerminate(t *testing.T) {
 	for _, name := range []string{"empty", "gap", "overlap", "overflow", "wrong_end", "new_after_end", "byte_budget", "slot_budget"} {
 		t.Run(name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
@@ -586,10 +615,10 @@ func TestSessionUploadInputFailuresReplyThenTerminate(t *testing.T) {
 					maxChunks = 1
 				}
 				entered := make(chan struct{})
-				f := newUploadCoordinatorFixture(t, maxBytes, maxChunks, func(ctx context.Context) workerStream {
+				f := newWorkerCoordinatorFixture(t, maxBytes, maxChunks, func(ctx context.Context) workerStream {
 					return &uploadTestStream{send: func(*asrv1.StreamingRecognizeRequest) error { close(entered); <-ctx.Done(); return nil }}
 				})
-				buffer := f.upload.input
+				buffer := f.worker.input
 				f.start()
 				a, n, err := f.session.requestAudio(context.Background(), 1, 0, []byte("ab"))
 				assertCoordinatorInput(t, a, n, err, true, 2, nil)
@@ -633,34 +662,40 @@ func TestSessionUploadInputFailuresReplyThenTerminate(t *testing.T) {
 	}
 }
 
-func TestSessionUploadIOFailuresRemainOperationErrors(t *testing.T) {
+func TestSessionWorkerIOFailuresAndStatusWait(t *testing.T) {
 	for _, name := range []string{"send_eof", "send_error", "half_close_error"} {
 		t.Run(name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				want := errors.New("controlled worker failure")
 				if name == "send_eof" {
-					want = io.EOF
+					want = errWorkerStatusTimeout
 				}
 				operations := make(chan string, 3)
-				f := newUploadCoordinatorFixture(t, 2, 1, func(context.Context) workerStream {
+				f := newWorkerCoordinatorFixture(t, 2, 1, func(context.Context) workerStream {
 					return &uploadTestStream{
 						send: func(*asrv1.StreamingRecognizeRequest) error {
 							operations <- "send"
 							if name == "half_close_error" {
 								return nil
 							}
+							if name == "send_eof" {
+								return io.EOF
+							}
 							return want
 						},
 						closeSend: func() error { operations <- "close"; return want },
 					}
 				})
-				buffer := f.upload.input
+				buffer := f.worker.input
 				f.start()
 				a, n, err := f.session.requestAudio(context.Background(), 1, 0, []byte("ab"))
 				assertCoordinatorInput(t, a, n, err, true, 2, nil) // 接纳成功不等于发送成功。
 				if name == "half_close_error" {
 					a, n, err = f.session.requestEnd(context.Background(), 1, 2)
 					assertCoordinatorInput(t, a, n, err, true, 2, nil)
+				}
+				if name == "send_eof" {
+					time.Sleep(time.Second)
 				}
 				f.assertFinishedAtCurrentTime(t, want)
 				wantOps, wantCount := 1, 1
@@ -675,7 +710,7 @@ func TestSessionUploadIOFailuresRemainOperationErrors(t *testing.T) {
 	}
 }
 
-func TestSessionUploadCanceledInputDoesNotMutate(t *testing.T) {
+func TestSessionWorkerCanceledInputDoesNotMutate(t *testing.T) {
 	for _, kind := range []sessionControlKind{controlAudio, controlEnd} {
 		for _, direct := range []bool{false, true} {
 			name := "audio"
@@ -691,7 +726,7 @@ func TestSessionUploadCanceledInputDoesNotMutate(t *testing.T) {
 				synctest.Test(t, func(t *testing.T) {
 					halfClosed := make(chan struct{})
 					operations := make(chan string, 3)
-					f := newUploadCoordinatorFixture(t, 2, 1, func(context.Context) workerStream {
+					f := newWorkerCoordinatorFixture(t, 2, 1, func(context.Context) workerStream {
 						return &uploadTestStream{
 							send:      func(*asrv1.StreamingRecognizeRequest) error { operations <- "send"; return nil },
 							closeSend: func() error { operations <- "close"; close(halfClosed); return nil },
@@ -730,7 +765,7 @@ func TestSessionUploadCanceledInputDoesNotMutate(t *testing.T) {
 	}
 }
 
-func TestSessionUploadDeliveredCallerWaitsForReplyAfterCancel(t *testing.T) {
+func TestSessionWorkerDeliveredCallerWaitsForReplyAfterCancel(t *testing.T) {
 	for _, kind := range []sessionControlKind{controlAudio, controlEnd} {
 		name := "audio"
 		if kind == controlEnd {
@@ -772,15 +807,15 @@ func TestSessionUploadDeliveredCallerWaitsForReplyAfterCancel(t *testing.T) {
 	}
 }
 
-func TestSessionUploadPendingDeliveryKeepsControlResponsive(t *testing.T) {
+func TestSessionWorkerPendingDeliveryKeepsControlResponsive(t *testing.T) {
 	for _, name := range []string{"explicit_close", "lifecycle_cancel"} {
 		t.Run(name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
-				f := newUploadCoordinatorFixture(t, 2, 1, func(context.Context) workerStream { return &uploadTestStream{} })
+				f := newWorkerCoordinatorFixture(t, 2, 1, func(context.Context) workerStream { return &uploadTestStream{} })
 				// 刻意不启动 uploader，使 jobs 没有接收者，精确覆盖 pending 阶段。
-				// 调用真正 runCoordinator；本夹具负责取消 RPC，不使用 runWithUpload 收尾。
+				// 调用真正 runCoordinator；本夹具负责取消 RPC，不使用 runWithWorker 收尾。
 				returned := make(chan error, 1)
-				go func() { returned <- f.session.runCoordinator(f.lifeCtx, time.Now, f.upload) }()
+				go func() { returned <- f.session.runCoordinator(f.lifeCtx, time.Now, f.worker) }()
 				a, n, err := f.session.requestAudio(context.Background(), 1, 0, []byte("ab"))
 				assertCoordinatorInput(t, a, n, err, true, 2, nil)
 				if d, err := f.session.reportDetach(context.Background(), 1); !d || err != nil {
@@ -801,7 +836,7 @@ func TestSessionUploadPendingDeliveryKeepsControlResponsive(t *testing.T) {
 				if got := <-returned; !errors.Is(got, want) {
 					t.Fatalf("pending exit = %v", got)
 				}
-				if !f.upload.input.inFlight || f.upload.input.retainedBytes != 2 || len(f.upload.uploader.results) != 0 {
+				if !f.worker.input.inFlight || f.worker.input.retainedBytes != 2 || len(f.worker.uploader.results) != 0 {
 					t.Fatal("pending task released budget or fabricated a result")
 				}
 			})
@@ -809,28 +844,28 @@ func TestSessionUploadPendingDeliveryKeepsControlResponsive(t *testing.T) {
 	}
 }
 
-func TestSessionUploadMismatchedResultDoesNotComplete(t *testing.T) {
+func TestSessionWorkerMismatchedResultDoesNotComplete(t *testing.T) {
 	for _, name := range []string{"wrong_kind", "wrong_offset"} {
 		t.Run(name, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
-				f := newUploadCoordinatorFixture(t, 2, 1, func(context.Context) workerStream { return &uploadTestStream{} })
+				f := newWorkerCoordinatorFixture(t, 2, 1, func(context.Context) workerStream { return &uploadTestStream{} })
 				// 用一次性通道替身注入损坏的内部结果，不调用真实 Worker I/O。
 				returned := make(chan error, 1)
-				go func() { returned <- f.session.runCoordinator(f.lifeCtx, time.Now, f.upload) }()
+				go func() { returned <- f.session.runCoordinator(f.lifeCtx, time.Now, f.worker) }()
 				a, n, err := f.session.requestAudio(context.Background(), 1, 0, []byte("ab"))
 				assertCoordinatorInput(t, a, n, err, true, 2, nil)
-				job := <-f.upload.uploader.jobs
+				job := <-f.worker.uploader.jobs
 				result := workerUploadResult{kind: job.kind, offset: job.chunk.offset}
 				if name == "wrong_kind" {
 					result.kind = workerUploadCloseSend
 				} else {
 					result.offset++
 				}
-				f.upload.uploader.results <- result
+				f.worker.uploader.results <- result
 				if got := <-returned; !errors.Is(got, errWorkerUploadResultMismatch) {
 					t.Fatalf("mismatch = %v", got)
 				}
-				if !f.upload.input.inFlight || f.upload.input.count != 1 || f.upload.input.retainedBytes != 2 {
+				if !f.worker.input.inFlight || f.worker.input.count != 1 || f.worker.input.retainedBytes != 2 {
 					t.Fatal("bad result released budget")
 				}
 			})
@@ -838,7 +873,7 @@ func TestSessionUploadMismatchedResultDoesNotComplete(t *testing.T) {
 	}
 }
 
-func TestSessionUploadSuccessfulCompletionMakesBudgetReusable(t *testing.T) {
+func TestSessionWorkerSuccessfulCompletionMakesBudgetReusable(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		entered, release, halfClosed := make(chan struct{}), make(chan struct{}), make(chan struct{})
 		var once sync.Once
@@ -846,7 +881,7 @@ func TestSessionUploadSuccessfulCompletionMakesBudgetReusable(t *testing.T) {
 		defer unblock()
 		sent := make(chan string, 3)
 		first := true
-		f := newUploadCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
+		f := newWorkerCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
 			return &uploadTestStream{
 				send: func(req *asrv1.StreamingRecognizeRequest) error {
 					if first {
@@ -887,10 +922,10 @@ func TestSessionUploadSuccessfulCompletionMakesBudgetReusable(t *testing.T) {
 	})
 }
 
-func TestSessionUploadConcurrentReplayHasOneAcceptance(t *testing.T) {
+func TestSessionWorkerConcurrentReplayHasOneAcceptance(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		entered := make(chan struct{})
-		f := newUploadCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
+		f := newWorkerCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
 			return &uploadTestStream{send: func(*asrv1.StreamingRecognizeRequest) error { close(entered); <-ctx.Done(); return nil }}
 		})
 		f.start()
@@ -925,14 +960,14 @@ func TestSessionUploadConcurrentReplayHasOneAcceptance(t *testing.T) {
 	})
 }
 
-func TestSessionUploadDifferentSessionsRemainIndependent(t *testing.T) {
+func TestSessionWorkerDifferentSessionsRemainIndependent(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		blocked := make(chan struct{})
-		a := newUploadCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
+		a := newWorkerCoordinatorFixture(t, 2, 1, func(ctx context.Context) workerStream {
 			return &uploadTestStream{send: func(*asrv1.StreamingRecognizeRequest) error { close(blocked); <-ctx.Done(); return nil }}
 		})
 		halfClosed := make(chan struct{})
-		b := newUploadCoordinatorFixture(t, 2, 1, func(context.Context) workerStream {
+		b := newWorkerCoordinatorFixture(t, 2, 1, func(context.Context) workerStream {
 			return &uploadTestStream{send: func(*asrv1.StreamingRecognizeRequest) error { return nil }, closeSend: func() error { close(halfClosed); return nil }}
 		})
 		a.start()
