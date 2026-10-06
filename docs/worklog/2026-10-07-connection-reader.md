@@ -1,6 +1,6 @@
 # 第六阶段：固定连接输入读取与网络结果确认
 
-日期：2026-10-07。状态：实现指导，尚未实现或验收。源码依据 `2dc690a`。核心代码由开发者完成，助手负责评审、测试和记录。
+日期：2026-10-07。状态：固定连接 reader 及真实网络输入/结果 ACK 组合已验收；候选连接安装与共同清理尚未接入。设计源码依据 `2dc690a`；以下保留实现前方案，实际验收见文末。核心代码由开发者完成，助手负责评审、测试和记录。
 
 ## 能力目标与顺序调整
 
@@ -148,3 +148,38 @@ stopCause/helper 可参照 resultWriter 的实现和错误优先级。不要让 
 这一轮真实网络测试是固定连接双向组合证据，不是候选连接原子恢复、音频 ACK 或端到端重连验收。不会把测试数量当作恢复耗时/恢复率。
 
 下一组把真实 reader/writer 纳入连接附着对象。尤其注意 coder/websocket v1.8.15 的 CloseNow 仍会等待内部 goroutine，不能在会话协调循环同步调用；关闭和等待必须由明确拥有者完成。writerResultsComplete 不应取消仍在读 ACK 的 reader；整个连接清理完成和 controlDone 必须分开。
+
+## 实现与验收（2026-10-07）
+
+开发者完成 [输入解析](../../internal/wsprotocol/input_v2.go)、[控制消息定义](../../internal/wsprotocol/protocol.go)和 [connectionReader](../../internal/gateway/connection_reader.go)。评审未发现需要修改的核心逻辑；助手补充注释、gofmt 和测试，未代为改动业务或并发控制。
+
+实际 reader 固定连接与 generation，同步 Read/解码/提交命令，接纳完成后才读取下一条；合法 end、重复 end、历史重发及旧/重复 ACK 均不会提前结束读取。消息上限在首次 Read 前设置，超限用 errors.Is(websocket.ErrMessageTooBig) 分类。逻辑取消、连接取消及控制结束按既定顺序判定，传输关闭不视为问诊完成。reader 本身没有关闭连接、取消 RPC 或修改附着状态的权力。
+
+### 验证范围与结果
+
+新增 [协议测试](../../internal/wsprotocol/input_v2_test.go)、[reader 受控测试](../../internal/gateway/connection_reader_test.go)和 [真实网络组合测试](../../internal/gateway/connection_reader_websocket_test.go)。新增共 **15 个顶层、122 个叶级场景全部通过**，其中 **8 个真实 WebSocket 场景全部通过**。
+
+- 解析覆盖 uint64 零/最大值、超过 JavaScript 精确数字范围的位置、大端头、非空借用负载、必需字段、十进制字符串、溢出、多个 JSON 值、扩展字段与后值覆盖；保留 v1 end 输出格式。
+- 受控测试覆盖构造无副作用、Read 前/成功后/失败后停止原因优先级、消息/协议错误、三类旧代命令隔离、ACK 超前、音频范围及容量错误。复用已结束借用期的消息切片后，Worker 仍收到会话接管的原始音频副本；重复输入只上传一次。
+- 真实组合运行现有 uploader、receiver、协调者、writer 和新 reader。客户端发送两次相同 `ab` 及 end 后历史重发，Worker **实际 Send 1 次、负载 2 字节**，未混入 8 字节头。结果缓冲设置为 **1 槽、6 字节**，三次结果连续使用同一预算，网络 ACK 均释放条目及字节占用。
+- 客户端通过真实连接收到两个中途更新及一个尾部结果；end 后仍可 ACK，writer 正常返回后 reader 仍可接纳尾部 ACK 和重复 ACK。另验证完整消息恰好 9 字节可接受、头部计入超限、控制消息超限、连接/逻辑取消解除真实 Read、对端正常关闭分类和网络 ACK 超前拒绝。
+- 测试拥有者显式取消/关闭连接并等待 reader/writer；逻辑会话关闭后等待 runWithWorker 返回，确认 Worker 任务已退出、输入/结果缓冲引用已释放。这里仍是测试夹具的所有权，不是生产连接管理已经完成。
+
+最终相关回归命令：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race ./internal/gateway ./internal/wsprotocol \
+  -run '^Test(V2Input|ConnectionReader|ResultWriterTask|ResultWriterWebSocket|SequencedResultMessage|ResultWrite|SessionProgressIntegration|SessionAudioBacklogFailure|ResumeState|SessionIdentity|SessionRegistry|SessionControl|AudioInput|WorkerUploader|SessionWorker|ResultBuffer|WorkerReceiver|SessionResults|DecodeWorkerResponse|SendWithTimeout|ResumableSession)' \
+  -count=1 -timeout=45s -json
+```
+
+共 **198 个顶层、591 个叶级场景，其中 590 通过、0 失败、1 显式实验跳过**；含父测试共 693 项 pass，无数据竞争报告。跳过的是仍需显式开启的 TestResultWriteTimeoutExperiment。本机原始输出 `/private/tmp/tide-connection-reader-accepted.jsonl`；该临时文件未纳入 Git，以上命令可重跑对应检查。没有重新开展性能实验，测试数量和包耗时不作为恢复率、延迟或容量收益。
+
+### 首次验证与退出语义说明
+
+第一轮非网络测试全部通过。首次完整网络运行在 audio_header_counts 用例中，助手误用包含 synctest.Wait 的 assertControlAlive，导致真实时钟测试 panic（goroutine is not in a bubble）。已改为同步提交零 ACK，证明协调者仍可接受命令；这是测试夹具问题，没有修改核心实现。修正后新测试和最终相关回归全部通过；首次失败保留于 `/private/tmp/tide-connection-reader-first.jsonl`。
+
+音频缺口、溢出、容量或 end 不一致等会让协调者按已有策略终止。它可能先回复命令再关闭 controlDone，reader 恢复执行时已能观察到关闭。此时遵循现有停止优先级，reader 可返回 readerStopped/errResumeClosed，而不是 readerCommandFailed/原始错误；如果控制尚未退出，则保留命令错误。**整场故障原因由 runWithWorker 的返回值保留**，本次逐项验证该身份，没有只检查 reader 是否结束。后续连接拥有者必须以会话终态作为最终故障依据，不能用 reader 的“控制已结束”覆盖原始故障，也不能在这里重新 detach 一个已终止会话。
+
+当前仍无候选连接原子安装、实际握手、音频接纳确认、统一终态输出、v2 空闲/静默断网检测、双层准入或客户端有限重放。本步证明固定连接上双向数据及网络结果确认能组合工作；下一步将这些真实任务纳入连接附着对象的启动、停止和清理，并接入同一协调者的候选安装及旧代事件隔离。
