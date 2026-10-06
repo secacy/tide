@@ -24,6 +24,20 @@ go test ./internal/gateway -run '^TestGatewaySelectorNilContract$' -count=1
 
 当前没有基于 build tags 或 `testing.Short()` 的完整单元/集成分层。`make test-fast` 只是两个明确的包，`go test -short ./...` 不会自动跳过所有网络和进程测试。默认测试也包含短时保护探测，不能仅凭文件名中的 `experiment` 判断它是否运行。
 
+## 恢复内部组件与协调验收
+
+第六阶段内部恢复状态、身份、注册表、控制/期限、音频输入与上传协调可以单独验证：
+
+```sh
+go test -race ./internal/gateway \
+  -run '^Test(SessionUpload|WorkerUploader|SendWithTimeout|AudioInputBuffer|AudioInputState|SessionControl|ResumableSession|SessionRegistry|ResumeState|SessionIdentity)' \
+  -count=1 -timeout=45s
+```
+
+`session_upload_test.go` 主要运行实际 runWithUpload/runCoordinator，以可控 Worker I/O 验证阻塞期间控制响应、代次隔离、输入预算和清理等待。待交付与损坏结果场景直接运行协调循环；提交后回复契约使用一次性接收夹具。testing/synctest 推进虚拟时间，channel 建立事件同步，不能用虚拟时间替代可变字段的同步。
+
+这是内部正确性验收，没有真实 WebSocket 连接恢复或性能测量；全链路需要后续网络/故障实验。当前证据与范围见[协调验收记录](worklog/2026-10-06-session-upload-coordination.md#内部协调组合验收2026-10-06)。
+
 ## 显式实验
 
 以下十二个实验使用环境变量开启，变量等于 `1` 时才运行。默认回归前应确保这些变量未启用；`make test` 和 `make test-race` 沿用调用方环境。

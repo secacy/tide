@@ -1,6 +1,6 @@
 # 第六阶段：逻辑会话内部的音频接纳与上传协调
 
-日期：2026-10-06。状态：实现指导，等待开发者编码与助手验收。依据 `b0d7f35`、[上传任务验收](2026-10-05-worker-uploader.md)和[资源所有权约定](2026-10-05-session-resource-ownership.md)。本步开始把已有部件接入同一个会话控制循环，不代表真实 WebSocket 恢复已经接通。
+日期：2026-10-06。状态：开发者实现已通过内部协调组合验收；Worker 接收与真实 WebSocket 恢复尚未接入。依据 `b0d7f35`、[上传任务验收](2026-10-05-worker-uploader.md)和[资源所有权约定](2026-10-05-session-resource-ownership.md)。以下保留实现指导，实际验收见文末。
 
 ## 要解决的问题与方案取舍
 
@@ -206,3 +206,43 @@ runCoordinator 返回值约定：显式 controlClose 返回 nil；逻辑 ctx 或
 | 原有行为回归 | 纯控制模式、交付后唯一回复、代次隔离、绝对恢复期限及边界竞争规则保持成立 |
 
 本步验证完成后，下一步接入唯一 Worker 接收任务与有界结果保留，并补齐双向完成/错误裁决及尾部期限；随后才能把这些组件用于真实连接恢复。既有 v1 网络路径继续承担当前运行行为。
+
+## 内部协调组合验收（2026-10-06）
+
+开发者完成 [session_upload.go](../../internal/gateway/session_upload.go) 和 [session_control.go](../../internal/gateway/session_control.go)。评审确认输入资格校验、有界接管、select 派发、发送成功释放及半关闭/终止的分工符合本步约定，核心逻辑无需修改。助手补充 submitControl 注释，修正两处遗留指导占位注释与一个注释笔误，执行 gofmt，并新增 [session_upload_test.go](../../internal/gateway/session_upload_test.go)。
+
+本步能力目标是“发送阻塞时，逻辑会话仍可处理控制事件并保持输入所有权”。主体测试启动实际 runWithUpload/runCoordinator，仅 Worker I/O 使用可控替身。为准确覆盖尚未交付的任务及损坏的内部结果，两组测试直接启动实际 runCoordinator，刻意不启动真实 uploader，由测试方管理 RPC 清理/一次性任务结果。这些组不冒充运行入口的资源收尾验收。交付后等待回复的两组则使用命令接收夹具，只验证提交契约。
+
+执行最终验证：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race ./internal/gateway \
+  -run '^Test(SessionUpload|WorkerUploader|SendWithTimeout|AudioInputBuffer|AudioInputState|SessionControl|ResumableSession|SessionRegistry|ResumeState|SessionIdentity)' \
+  -count=1 -timeout=45s -json
+```
+
+新增 **18 个顶层测试、47 个叶级场景**，含父测试共 58 项。与已有相关测试合计 **97 个顶层、259 个叶级场景**，含父测试共 308 项，最终全部通过，无失败、跳过或数据竞争报告。包耗时 4.383 秒，仅为测试运行耗时。
+
+| 行为 | 本轮证据 |
+| --- | --- |
+| 输入接管与 FIFO | 接纳 2/3/1 字节三块到位置 6；入口回复后复用第一块原切片仍发送原始 ab；最终 Worker 操作恰为 ab/cde/f/CloseSend，无重复发送或提前半关闭 |
+| 发送阻塞时恢复 | ab 发送暂停，实际协调者仍完成 detach，在虚拟 3 秒内恢复为代次 2，接纳新块 c；旧代历史块、新块及 end 均被拒绝；最终只发送 ab/c，旧 t=10 恢复期限不结束新代次 |
+| 断开后继续处理已接纳数据 | 已接纳音频和 end 后 detach；即使没有连接，仍按 FIFO 发送并半关闭，之后可恢复并获得重复 end 确认 |
+| 待交付也能处理控制 | jobs 无接收者时，实际协调者仍可处理 detach/resume、明确关闭或取消；在途块继续占预算，不伪造上传结果 |
+| 并发完整重放 | 32 个同位置请求中恰好 1 个新增接纳、31 个重复确认；均返回连续位置 2，一个阻塞 Send，无逐请求上传任务 |
+| 双预算与非法输入 | 空块、缺口、部分重叠、位置溢出、错误 end、新输入越过 end、字节满额、槽位满额共八组均先回复原错误再终止，失败输入不推进连续位置；取消在途发送不 complete |
+| 预算复用 | 两字节/一槽预算被 ab 占满时完整重放仍可确认；Send 成功且协调者处理结果后，cd 才能接纳；最终发送 ab/cd，一次半关闭 |
+| 控制退出与资源退出 | 明确 close、逻辑取消、RPC 取消三组：requestClose/controlDone 可以先结束；Send 仍持数据时 input 保留、运行函数未返回；测试放行 Send 后才退出并解除 input 引用，最后一个取消结果仍可发布 |
+| 恢复到期与发送超时 | 发送阻塞的命令 detach/初始 detached 两组，在虚拟 10 秒期限触发 errResumeExpired；单次 Send 虚拟 1 秒触发 ErrWorkerSendTimeout，底层额外收尾 10ms 期间运行入口仍等待，两种底层 nil/EOF 均保留取消原因 |
+| 半关闭与错误 | 正常半关闭不取消 RPC、不结束协调者，重复 end 不再半关闭；替身仍可返回尾部。发送 EOF/错误及自定义 CloseSend 错误均保留操作错误、不重试，不作为最终 ASR 状态证据 |
+| 请求取消与内部交接 | 接纳前取消不修改音频或 end；已经交付的调用方不因取消放弃唯一回复；错误结果类型/offset 不释放预算 |
+| 会话隔离与回归 | 一场发送阻塞或关闭不妨碍另一场发送/半关闭，不取消另一场 RPC；已有纯控制、绝对期限和竞争场景共同通过 |
+
+首次组合运行发现助手超时夹具的一个同步问题：在阶段断言中读取 upload.input，之后虚拟时间推进使运行任务清空该指针，二者缺少显式同步顺序。已在替身 Send 的收尾段增加 channel 放行，建立“断言完成 → Send 返回 → uploader.done → 清空缓冲”的先后关系；最终重新执行相关测试通过。修正没有改动核心逻辑。虚拟时间本身不能替代共享状态的同步边界。
+
+本地临时日志：已有部件基线 `/private/tmp/tide-session-upload-baseline-2026-10-06.jsonl`、首次组合 `/private/tmp/tide-session-upload-first-2026-10-06.jsonl`、最终 `/private/tmp/tide-session-upload-final-2026-10-06.jsonl`。它们是本地复核日志，可能被清理，不作为永久实验归档。
+
+边界：本轮没有运行真实 gRPC/WebSocket 断线实验，未测量生产控制延迟、恢复耗时或高并发容量。没有 Worker 接收任务及最终结果裁决、结果确认/有界保留、候选连接原子安装、完整注册表/准入清理或终态通知。现有 v1 入口未调用本组件，正常半关闭后的内部协调者仍等待明确关闭/取消/恢复到期，不能据此宣称第六阶段完成。
+
+按开发者确认的[开发协作方式](../development.md)，下一轮以可验收能力组织：当前已完成内部输入协调；接下来依次补 Worker 接收与有界结果保留、双向完成和错误裁决及尾部期限、真实连接交接与恢复协议。组合部件后安排端到端恢复验证，不以连续增加独立部件替代业务能力验收。
