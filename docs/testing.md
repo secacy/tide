@@ -26,11 +26,11 @@ go test ./internal/gateway -run '^TestGatewaySelectorNilContract$' -count=1
 
 ## 恢复内部组件与协调验收
 
-第六阶段内部恢复状态、身份、注册表、控制/期限、音频输入与上传协调可以单独验证：
+第六阶段内部恢复状态、身份、注册表、控制/期限、音频输入与上传协调，以及 Worker 接收任务可以单独验证：
 
 ```sh
 go test -race ./internal/gateway \
-  -run '^Test(ResultBuffer|SessionUpload|WorkerUploader|SendWithTimeout|AudioInputBuffer|AudioInputState|SessionControl|ResumableSession|SessionRegistry|ResumeState|SessionIdentity)' \
+  -run '^Test(WorkerReceiver|DecodeWorkerResponse|ResultBuffer|SessionUpload|WorkerUploader|SendWithTimeout|AudioInputBuffer|AudioInputState|SessionControl|ResumableSession|SessionRegistry|ResumeState|SessionIdentity)' \
   -count=1 -timeout=45s
 ```
 
@@ -39,6 +39,8 @@ go test -race ./internal/gateway \
 这是内部正确性验收，没有真实 WebSocket 连接恢复或性能测量；全链路需要后续网络/故障实验。当前证据与范围见[协调验收记录](worklog/2026-10-06-session-upload-coordination.md#内部协调组合验收2026-10-06)。
 
 `result_buffer_test.go` 串行验证结果序号、字符串副本、累计确认、读取游标和双预算；环形复用与线性队列对照，确认清理/槽位复用不改变已借出的只读值。它没有 Worker 或客户端确认接入，证据见[结果缓冲验收](worklog/2026-10-06-result-retention.md#结果缓冲验收2026-10-06)。
+
+`worker_receiver_test.go` 验证 Worker 响应解析、唯一读取的事件顺序、无缓冲交接、取消及终态发布，并用真实接收任务和 `resultBuffer` 组成受控夹具；没有接入生产协调者或真实 WebSocket 恢复，见[接收任务验收](worklog/2026-10-06-worker-receiver.md#接收任务验收2026-10-06)。
 
 ## 显式实验
 

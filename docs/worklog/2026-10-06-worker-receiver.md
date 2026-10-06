@@ -1,6 +1,6 @@
 # 第六阶段：唯一 Worker 接收任务与有序事件交接
 
-日期：2026-10-06。状态：实现指导，等待开发者编码与助手验收。依据 `0350ff2`、[结果缓冲验收](2026-10-06-result-retention.md#结果缓冲验收2026-10-06)和[内部输入协调验收](2026-10-06-session-upload-coordination.md#内部协调组合验收2026-10-06)。核心仍由开发者实现，助手负责测试。
+日期：2026-10-06。状态：接收任务独立及部件组合验收通过，生产协调接入待实现。依据 `0350ff2`、[结果缓冲验收](2026-10-06-result-retention.md#结果缓冲验收2026-10-06)和[内部输入协调验收](2026-10-06-session-upload-coordination.md#内部协调组合验收2026-10-06)。核心由开发者实现，助手负责测试。
 
 ## 能力目标与两次编码的范围
 
@@ -145,4 +145,16 @@ err 的初始 nil 不能被当作“已经成功”。读取前必须先等待/�
 4. 尾部期限从合法 end 起计算，断开、恢复和重复 end 不重置；普通问诊等待响应不能直接套用这条期限。
 5. Worker 计算完成与客户端结果交付完成分别处理。正常 EOF 后仍有未确认结果时，要保留投递/恢复所需数据和有界终态信息，不能直接把 resultBuffer 清空当作整场完成。
 
-本次仅更新指导和 Milestones，没有新增核心实现或测试结果。网络恢复、客户端应用确认与完整资源清理仍需后续端到端验收。
+## 接收任务验收（2026-10-06）
+
+开发者完成 `workerReceiver`，助手补充错误哨兵及零值注释、编写 [接收任务测试](../../internal/gateway/worker_receiver_test.go)。新增 8 个顶层测试、23 个叶级场景；与结果缓冲、内部输入/上传及恢复状态等相关部件合计 116 个顶层、329 个叶级场景（含父测试共 389 项）通过定向 race，无失败或跳过。运行命令：
+
+```sh
+go test -race ./internal/gateway \
+  -run '^Test(WorkerReceiver|DecodeWorkerResponse|ResultBuffer|SessionUpload|WorkerUploader|SendWithTimeout|AudioInputBuffer|AudioInputState|SessionControl|ResumableSession|SessionRegistry|ResumeState|SessionIdentity)' \
+  -count=1 -timeout=45s
+```
+
+测试确认文本、进度与片段定稿按 Worker 顺序交接，普通事件无缓冲，未交付前不会启动下一次 Recv；EOF、读取错误、非法响应和取消分别发布终态。取消时若底层 Recv 仍在收尾，`done` 保持未关闭，直到底层真实返回；没有事件消费者时，等待交付也可因取消退出。夹具让真实接收任务将结果依序写入 `resultBuffer`，进度不占结果序号；缓冲满时由夹具取消原 RPC 并等待接收任务退出。
+
+这些是独立任务与部件组合的正确性结果，没有正式负载、性能数据，也没有把 receiver 接入生产 `runCoordinator`。原 RPC 的取消与双向终态判定仍由下一轮协调者负责；客户端确认、真实连接恢复和端到端资源清理尚待实现与验证。
