@@ -1,6 +1,6 @@
 # 第六阶段：固定连接的结果写任务
 
-日期：2026-10-06。状态：实现指导，等待开发者编码。依据 `ba81c7e` 的结果投递与累计确认验收。本轮核心由开发者实现，助手负责受控 I/O、真实 WebSocket 组合测试和文档维护。
+日期：2026-10-06。状态：固定连接结果写任务及受控/真实 WebSocket 组合已验收；连接交接与完整恢复入口待接入。依据 `ba81c7e` 的结果投递与累计确认验收。本轮核心由开发者实现，助手负责受控 I/O、真实 WebSocket 组合测试和文档维护。
 
 ## 当前目标与后续顺序
 
@@ -141,3 +141,44 @@ writerResultsComplete 仅说明需要发送的识别结果已处理完毕，不�
 - 保持原 v1 线格式与相关恢复部件回归。本轮尚无网络 ACK 读取、候选连接安装或自动重连，不产生恢复率/耗时结论。
 
 本次仅记录实现方案，没有修改运行代码或新增测试结果。
+
+## 首轮实现评审与组合测试（2026-10-06）
+
+开发者已完成 resultWriter、单次限时 Write、固定连接/代次和 SequencedResultMessage。助手将旧测试中重名的 newResultWriter 辅助函数改为 newLegacyResultWriteFixture，迁移四份测试文件的调用，并补充两个退出辅助方法注释；核心逻辑没有代为修改。新增 [受控写任务测试](../../internal/gateway/result_writer_task_test.go)、[真实 WebSocket 组合测试](../../internal/gateway/result_writer_websocket_test.go)和 [线格式测试](../../internal/wsprotocol/result_v2_test.go)。
+
+新增 **17 个顶层、41 个叶级场景：40 通过、1 失败**。包含既有恢复部件、旧写入/进度/积压链路的定向 race 运行共 **183 顶层、469 叶级：467 通过、1 失败、1 显式实验跳过**，未报告数据竞争。跳过的是需显式环境变量开启的 TestResultWriteTimeoutExperiment；已有 TestResultWriteSlowReader 在本次匹配范围内执行，但该次运行不替代正式负载实验或新增容量结论。
+
+已通过的组合行为包括：
+
+- 真实 receiver 的更新经 runWithWorker、resultWriter 和真实 WebSocket 到客户端，保持 seq/同片段 partial→final/尾部顺序，内部进度不发给客户端。
+- 最大 uint64 序号通过实际 WebSocket 以十进制字符串精确传输，v1 结果线格式保持原样。
+- 第一条 Write 阻塞时不提前写第二条；协调者能接纳先到 ACK。空结果计算完成返回 lastSeq=0，写完仍未确认的结果在内部恢复后可重放。
+- 写任务在无结果时等待；尾部正常完成不关闭逻辑会话或连接。成功报告提交时连接取消，独立 controlCtx 仍能报告事实；旧代迟到成功报告不清新代授权。
+- 底层错误、写超时、父取消及父期限保留正确来源；每条建立独立期限；实际 Write 尚未返回时不发布任务退出。失败写不报告成功，不清理授权或重试下一条。
+- 真实 WebSocket 的正常通路 2 场景及退出通路 3 场景均通过；阻塞底层 Write 在期限/父取消后真正返回，测试连接拥有者明确终止并等待 Worker 清理。
+
+唯一核心失败为 **TestResultWriterTaskIdleStopPriority**：空结果等待处的 select 在多个通道同时就绪时，直接返回所选分支的原因，绕过 stopCause 的固定优先级。最终运行的 32 次受控竞争中，17 次返回较低优先级的连接原因或 errResumeClosed。这里的 32 次和 17 次仅是竞争测试观察，不是恢复性能指标。
+
+修正建议：空闲 select 的所有分支只负责唤醒，统一回到循环顶部调用 stopCause；不在各分支直接构造退出结果。这样无论 changed、连接取消、逻辑取消或 controlDone 哪一个分支被选中，已就绪的停止状态都按 controlCtx → 连接 ctx → controlDone 判定，且先检查停止再申请新授权。核心由开发者修改，修正后复验，不提前标记验收通过或提交整体实现。
+
+首次助手测试使用 Err 作为同步点时，没有考虑 Go 1.26 的 context.Cause 会先调用 Err，导致两个测试把取消注入得过早；已按实际检查顺序及 Write 完成标记修正。这两项不是核心失败。真实网络测试首次被默认沙箱禁止监听本机端口；取得本机测试执行许可后已完成上述五个网络场景，未将沙箱限制当作产品故障。
+
+最终本机测试命令（相关包完整编译，运行限定范围）：
+
+```sh
+go test -race ./internal/gateway ./internal/wsprotocol \
+  -run '^Test(ResultWriterTask|ResultWriterWebSocket|SequencedResultMessage|ResultWrite|SessionProgressIntegration|SessionAudioBacklogFailure|ResumeState|SessionIdentity|SessionRegistry|SessionControl|AudioInput|WorkerUploader|SessionWorker|ResultBuffer|WorkerReceiver|SessionResults|DecodeWorkerResponse|SendWithTimeout|ResumableSession)' \
+  -count=1 -timeout=45s
+```
+
+首轮评审时仍无网络 ACK 读取、候选连接原子安装、自动重连或终态投递/确认；不能标记完整恢复能力完成。当时保留待修的优先级检查，所有本步变更暂未提交；优先级问题已在下述复验中修正。
+
+## 固定连接结果写任务验收（2026-10-06）
+
+开发者将空结果等待的四个 select 分支统一改为仅唤醒，随后回到循环顶部 stopCause 判定。逻辑会话取消、连接取消与 controlDone 同时就绪时，停止原因不再取决于 select 的随机选择。原失败的 TestResultWriterTaskIdleStopPriority 在 32 次受控竞争中全部通过；助手没有代为修改核心逻辑。
+
+使用首轮相同命令复验：新增 **17 个顶层、41 个叶级场景全部通过**；相关两包合计 **183 个顶层、469 个叶级场景，其中 468 通过、0 失败、1 显式实验跳过**，含父测试共 560 项 pass，未报告数据竞争。跳过仍为 TestResultWriteTimeoutExperiment。首次失败及测试夹具修正保留在上节，不将此前失败改写为首次即通过。
+
+本步实际组合了 Worker 接收任务、有界结果存储、授权/成功报告和固定连接 writer，客户端通过真实 WebSocket 收到连续序号、同片段更新及尾部结果；五个真实网络场景全部通过。受控检查还验证提前 ACK、单条在途、旧代回调隔离、取消后成功报告、超时分类以及等到底层 Write 真正返回。正常结果发送完成保持逻辑会话及连接供后续终态流程使用。
+
+当前连接的启动、取消、关闭与清理由测试夹具显式负责，runWithWorker 尚未统一拥有连接读写任务。网络 ACK、候选连接安装、握手/双层准入、终态协议和客户端有限重放仍待接入。下一步完成连接交接与读写共同监督，将本步的固定连接写任务纳入实际所有权；随后推进控制/终态输出、入口与端到端恢复验证。没有新增恢复率、恢复耗时或容量结论。

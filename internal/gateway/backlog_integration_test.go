@@ -49,7 +49,7 @@ func TestAudioBacklogConfig(t *testing.T) {
 // TestSessionAudioBacklogFailure 检查完整 run 保留超限原因和已读账目，
 // 不发送超限块，并等待被取消的下载操作退出；应用本身仍可继续运行。
 func TestSessionAudioBacklogFailure(t *testing.T) {
-	s, client, _ := newResultWriter(t, 2*time.Second, false)
+	s, client, _ := newLegacyResultWriteFixture(t, 2*time.Second, false)
 	worker := &heldProgressClient{ready: make(chan *heldProgressStream, 1)}
 	s.pool = singleWorkerPool(t, worker)
 	s.startTimeout, s.inputIdleTimeout, s.workerSendTimeout, s.tailTimeout = 3*time.Second, 3*time.Second, 3*time.Second, 3*time.Second

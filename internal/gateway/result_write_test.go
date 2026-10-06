@@ -60,9 +60,9 @@ func (l *resultWriteGateListener) Accept() (net.Conn, error) {
 	return &resultWriteGateConn{Conn: c, gate: l.gate}, nil
 }
 
-// newResultWriter 建立真实 WebSocket；返回后由测试串行调用服务端 writeResult。
+// newLegacyResultWriteFixture 建立真实 WebSocket；返回后由测试串行调用服务端 writeResult。
 // handler 保持存活直至测试清理，避免其 defer 提前关闭连接。
-func newResultWriter(t *testing.T, timeout time.Duration, blocked bool) (*session, *websocket.Conn, *resultWriteGate) {
+func newLegacyResultWriteFixture(t *testing.T, timeout time.Duration, blocked bool) (*session, *websocket.Conn, *resultWriteGate) {
 	t.Helper()
 	gate := &resultWriteGate{started: make(chan struct{}), closed: make(chan struct{})}
 	ready := make(chan *session, 1)
@@ -159,7 +159,7 @@ func TestResultWriteParentAlreadyDone(t *testing.T) {
 
 // TestResultWriteSuccessAndFreshDeadline 验证两条结果在各自预算内写入，不共用整段会话期限。
 func TestResultWriteSuccessAndFreshDeadline(t *testing.T) {
-	s, client, _ := newResultWriter(t, 200*time.Millisecond, false)
+	s, client, _ := newLegacyResultWriteFixture(t, 200*time.Millisecond, false)
 	if s.resultWriteExpired() {
 		t.Fatal("no write reported expired")
 	}
@@ -198,7 +198,7 @@ func TestResultWriteBlockedCancellation(t *testing.T) {
 			budget = time.Hour
 		}
 		t.Run(name, func(t *testing.T) {
-			s, _, gate := newResultWriter(t, budget, true)
+			s, _, gate := newLegacyResultWriteFixture(t, budget, true)
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			done := make(chan error, 1)
@@ -261,7 +261,7 @@ func TestResultWriteBlockedCancellation(t *testing.T) {
 
 // TestResultWriteClosedConnection 保留已关闭连接的写入错误，不将其归入超时。
 func TestResultWriteClosedConnection(t *testing.T) {
-	s, _, _ := newResultWriter(t, time.Second, false)
+	s, _, _ := newLegacyResultWriteFixture(t, time.Second, false)
 	_ = s.ws.CloseNow()
 	err := s.writeResult(context.Background(), wsprotocol.ResultMessage{Text: "after close"})
 	if err == nil || errors.Is(err, ErrResultWriteTimeout) || s.resultWriteExpired() {

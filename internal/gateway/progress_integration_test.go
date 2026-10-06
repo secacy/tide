@@ -164,7 +164,7 @@ func TestSessionProgressIntegration(t *testing.T) {
 			name = "overflow_before_send"
 		}
 		t.Run(name, func(t *testing.T) {
-			s, client, _ := newResultWriter(t, 2*time.Second, false)
+			s, client, _ := newLegacyResultWriteFixture(t, 2*time.Second, false)
 			worker := &heldProgressClient{ready: make(chan *heldProgressStream, 1)}
 			s.pool = singleWorkerPool(t, worker)
 			s.startTimeout, s.inputIdleTimeout, s.workerSendTimeout, s.tailTimeout = 3*time.Second, 3*time.Second, 3*time.Second, 3*time.Second

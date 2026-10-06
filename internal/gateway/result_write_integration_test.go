@@ -40,7 +40,7 @@ func TestResultWriteTimeoutConfig(t *testing.T) {
 // TestResultWriteSessionTimeout 使用受控底层写入，验证完整 run 返回独立超时原因。
 // 与优先级单元测试配合，避免只凭连接断开猜测退出分类。
 func TestResultWriteSessionTimeout(t *testing.T) {
-	s, client, gate := newResultWriter(t, 75*time.Millisecond, true)
+	s, client, gate := newLegacyResultWriteFixture(t, 75*time.Millisecond, true)
 	w := &slowReaderWorker{exit: make(chan tailWorkerExit, 1)}
 	s.pool = singleWorkerPool(t, newBaselineTCPWorkerClient(t, w))
 	s.startTimeout, s.inputIdleTimeout, s.workerSendTimeout, s.tailTimeout = time.Second, time.Second, time.Second, time.Second
