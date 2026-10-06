@@ -123,12 +123,12 @@ func TestSessionControlResumeStopsOldExpiry(t *testing.T) {
 		startTestSessionControl(t, s, time.Now)
 		synctest.Wait()
 		time.Sleep(9 * time.Second)
-		if generation, err := s.requestResume(context.Background()); generation != 2 || err != nil {
+		if generation, err := s.requestResume(context.Background(), 0); generation != 2 || err != nil {
 			t.Fatalf("resume before expiry = (%d, %v)", generation, err)
 		}
 		time.Sleep(21 * time.Second)
 		assertControlAlive(t, s)
-		if generation, err := s.requestResume(context.Background()); generation != 0 || !errors.Is(err, errResumeAlreadyAttached) {
+		if generation, err := s.requestResume(context.Background(), 0); generation != 0 || !errors.Is(err, errResumeAlreadyAttached) {
 			t.Fatalf("resumed connection no longer attached: (%d, %v)", generation, err)
 		}
 		if err := s.requestClose(context.Background()); err != nil {
@@ -145,7 +145,7 @@ func TestSessionControlNewDetachUsesNewExpiry(t *testing.T) {
 		startTestSessionControl(t, s, time.Now)
 		synctest.Wait()
 		time.Sleep(3 * time.Second)
-		if generation, err := s.requestResume(context.Background()); generation != 2 || err != nil {
+		if generation, err := s.requestResume(context.Background(), 0); generation != 2 || err != nil {
 			t.Fatalf("resume = (%d, %v)", generation, err)
 		}
 		time.Sleep(2 * time.Second)
@@ -224,7 +224,7 @@ func TestSessionControlGenerationExhaustionKeepsExpiry(t *testing.T) {
 		startTestSessionControl(t, s, time.Now)
 		synctest.Wait()
 		time.Sleep(9 * time.Second)
-		if generation, err := s.requestResume(context.Background()); generation != 0 || !errors.Is(err, errResumeGenerationExhausted) {
+		if generation, err := s.requestResume(context.Background(), 0); generation != 0 || !errors.Is(err, errResumeGenerationExhausted) {
 			t.Fatalf("exhausted generation = (%d, %v)", generation, err)
 		}
 		assertControlAlive(t, s)

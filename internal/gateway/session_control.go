@@ -13,11 +13,14 @@ var errInvalidSessionControlCommand = errors.New("invalid session control comman
 type sessionControlKind uint8
 
 const (
-	controlResume sessionControlKind = iota // 尝试恢复连接，成功返回新代次。
-	controlDetach                           // 报告某代次连接断开。
-	controlClose                            // 结束恢复资格并退出控制循环。
-	controlAudio                            // 接纳当前代次的一块音频。
-	controlEnd                              // 接纳当前代次的输入终点。
+	controlResume        sessionControlKind = iota // 尝试恢复连接，成功返回新代次。
+	controlDetach                                  // 报告某代次连接断开。
+	controlClose                                   // 结束恢复资格并退出控制循环。
+	controlAudio                                   // 接纳当前代次的一块音频。
+	controlEnd                                     // 接纳当前代次的输入终点。
+	controlTakeResult                              // 取出下一条结果并建立当前代写入授权。
+	controlResultWritten                           // 报告当前代已授权结果写入成功，不释放保留结果。
+	controlResultAck                               // 接纳客户端累计应用确认，释放已确认前缀。
 )
 
 // sessionControlCommand 表示一次不可复用的内部控制请求。
@@ -28,16 +31,20 @@ type sessionControlCommand struct {
 	reply      chan<- sessionControlResult // 独立、容量为 1，循环只发送一次。
 	offset     uint64                      // audio 的起点，end 的最终接纳位置；控制命令忽略。
 	payload    []byte                      // 仅 audio 使用；从请求开始到回复前只读，调用方不得修改。
+	resultSeq  uint64                      // resume 的客户端已应用位置；written/ack 的结果序号。其他命令忽略。
 }
 
 // sessionControlResult 是某次控制操作的确定结果。
 // 零代次用于失败或非恢复操作；detached=false,nil 表示无需改变状态。
 type sessionControlResult struct {
-	generation uint64 // resume 成功时的新连接代次。
-	detached   bool   // detach 是否实际将当前连接改为断开保留。
-	err        error  // 状态错误、请求取消或控制循环终止原因。
-	accepted   bool   // 本次是否新接纳；完整重发或重复 end 为 false。
-	nextOffset uint64 // 回复时 Gateway 已连续接纳的位置，不代表 Worker 处理位置。
+	generation uint64      // resume 成功时的新连接代次。
+	detached   bool        // detach 是否实际将当前连接改为断开保留。
+	err        error       // 状态错误、请求取消或控制循环终止原因。
+	accepted   bool        // 本次是否新接纳；完整重发或重复 end 为 false。
+	nextOffset uint64      // 回复时 Gateway 已连续接纳的位置，不代表 Worker 处理位置。
+	offer      resultOffer // take 成功时的快照，available 可以为 false。
+	handled    bool        // written 是否接纳了当前代的匹配报告。
+	advanced   bool        // ACK 是否使累计确认前进；重复/旧 ACK 为 false。
 }
 
 // runControl 由生命周期拥有者恰好启动一次，串行处理控制命令。
@@ -245,6 +252,12 @@ func (s *resumableSession) runCoordinator(
 	defer func() {
 		stopWakeTimer()
 		s.resume.close()
+
+		// 最终退出只关闭当前通知，不再创建下一代 channel。
+		if worker != nil && worker.delivery.changed != nil {
+			close(worker.delivery.changed)
+		}
+
 		close(s.controlDone)
 	}()
 
@@ -271,8 +284,7 @@ func (s *resumableSession) runCoordinator(
 		tailDeadline = time.Time{}
 		statusDeadline = time.Time{}
 
-		// 结果保留期限从 Worker 双向正常完成这一刻开始，
-		// 后续 detach/resume 不改变这个绝对截止时间。
+		// 从 Worker 双向正常完成时建立固定期限，detach/resume 不续期。
 		retentionDeadline = now().Add(
 			worker.config.resultRetentionTimeout,
 		)
@@ -280,9 +292,12 @@ func (s *resumableSession) runCoordinator(
 		recvDone = nil
 		recvEvents = nil
 
-		// Worker 已经正常完成。取消原 RPC 只用于释放资源，
-		// retaining 阶段不再把这个取消解释为业务失败。
+		// 释放已正常完成的 RPC；retaining 不再把这次取消判为业务失败。
 		worker.config.cancelRPC(nil)
+
+		// 即使没有新结果，写任务也必须知道 Worker 已经完成，
+		// 从而进入后续终态投递流程。
+		worker.notifyResultChange()
 
 		armWakeTimer()
 	}
@@ -464,7 +479,7 @@ func (s *resumableSession) runCoordinator(
 
 			switch event.kind {
 			case workerReceiveResult:
-				// 序号只在结果真正进入有界缓冲后产生。
+				// 只有保存成功才消耗结果序号。
 				if _, err := worker.results.append(
 					event.segmentID,
 					event.text,
@@ -472,6 +487,9 @@ func (s *resumableSession) runCoordinator(
 				); err != nil {
 					return err
 				}
+
+				// 正在等待“下一条结果”的写任务需要重新查询。
+				worker.notifyResultChange()
 
 			case workerReceiveProgress:
 				if err := worker.acknowledgeProgress(
@@ -544,24 +562,77 @@ func (s *resumableSession) runCoordinator(
 
 			switch cmd.kind {
 			case controlResume:
-				generation, err := s.resume.resume(now())
-
-				cmd.reply <- sessionControlResult{
-					generation: generation,
-					err:        err,
+				// 纯控制模式没有任何结果状态。
+				if worker == nil && cmd.resultSeq != 0 {
+					cmd.reply <- sessionControlResult{
+						err: errSessionWorkerUnavailable,
+					}
+					continue
 				}
 
-				if s.resume.phase == resumeClosed {
-					if err != nil {
+				// 只有 detached 状态才有资格真正恢复。
+				// 在切换 generation 之前先验证客户端声明的位置，
+				// 这样错误声明不会夺得新的连接代次。
+				if worker != nil &&
+					s.resume.phase == resumeDetached {
+
+					if cmd.resultSeq < worker.results.ackedSeq {
+						cmd.reply <- sessionControlResult{
+							err: errResultReplayGap,
+						}
+						continue
+					}
+
+					if cmd.resultSeq > worker.delivery.offeredSeq {
+						cmd.reply <- sessionControlResult{
+							err: errResultAckAhead,
+						}
+						continue
+					}
+				}
+
+				generation, err := s.resume.resume(now())
+				if err != nil {
+					cmd.reply <- sessionControlResult{
+						err: err,
+					}
+
+					// resumeState 可能因为绝对恢复期限到达而自行关闭。
+					if s.resume.phase == resumeClosed {
 						return err
 					}
 
-					return errResumeExpired
+					continue
 				}
 
-				// resume 成功会移除恢复期限，但不能移动 tail/status/
-				// retention 的绝对截止时间。
+				if worker != nil {
+					// 前面的范围检查已经保证：
+					//
+					// ackedSeq <= appliedSeq <= offeredSeq <= lastSeq
+					//
+					// 因而这里不应再出现正常协议错误。
+					if _, err := worker.acknowledgeResult(
+						cmd.resultSeq,
+					); err != nil {
+						cmd.reply <- sessionControlResult{
+							err: err,
+						}
+						return err
+					}
+
+					// 新代从客户端已经确认的位置重新开始。
+					worker.resetResultDelivery()
+
+					// ACK 接纳、代次切换和游标重置作为一个协调事务
+					// 完成以后再统一通知。
+					worker.notifyResultChange()
+				}
+
 				armWakeTimer()
+
+				cmd.reply <- sessionControlResult{
+					generation: generation,
+				}
 
 			case controlDetach:
 				detached := s.resume.detach(
@@ -569,11 +640,17 @@ func (s *resumableSession) runCoordinator(
 					now(),
 				)
 
+				if detached && worker != nil {
+					// 旧代 inFlight 授权不能进入下一代。
+					// offeredSeq 保留，因为客户端可能已经应用但 ACK 丢失。
+					worker.resetResultDelivery()
+					worker.notifyResultChange()
+				}
+
 				cmd.reply <- sessionControlResult{
 					detached: detached,
 				}
 
-				// 只有真实 attached -> detached 才产生新的恢复窗口。
 				if detached {
 					armWakeTimer()
 				}
@@ -779,6 +856,120 @@ func (s *resumableSession) runCoordinator(
 					nextOffset: worker.input.input.nextOffset,
 				}
 
+			case controlTakeResult:
+				if worker == nil {
+					cmd.reply <- sessionControlResult{
+						err: errSessionWorkerUnavailable,
+					}
+					continue
+				}
+
+				if s.resume.phase != resumeAttached {
+					cmd.reply <- sessionControlResult{
+						err: errSessionNotAttached,
+					}
+					continue
+				}
+
+				if cmd.generation != s.resume.generation {
+					cmd.reply <- sessionControlResult{
+						err: errSessionGenerationMismatch,
+					}
+					continue
+				}
+
+				offer, err := worker.offerResult()
+				if err != nil {
+					// in-flight 冲突和读取位置错误只拒绝本次操作，
+					// 不改变会话生命周期。
+					cmd.reply <- sessionControlResult{
+						err: err,
+					}
+					continue
+				}
+
+				cmd.reply <- sessionControlResult{
+					offer: offer,
+				}
+
+			case controlResultWritten:
+				if worker == nil {
+					cmd.reply <- sessionControlResult{
+						err: errSessionWorkerUnavailable,
+					}
+					continue
+				}
+
+				// 写成功回调属于某个具体连接代。
+				// 旧代或者已经 detach 的迟到回调必须直接忽略，
+				// 不能碰当前代的 inFlightSeq。
+				if s.resume.phase != resumeAttached ||
+					cmd.generation != s.resume.generation {
+					cmd.reply <- sessionControlResult{
+						handled: false,
+					}
+					continue
+				}
+
+				if err := worker.completeResultWrite(
+					cmd.resultSeq,
+				); err != nil {
+					cmd.reply <- sessionControlResult{
+						err: err,
+					}
+					continue
+				}
+
+				// inFlight 已经释放，下一条结果现在可能可以授权。
+				worker.notifyResultChange()
+
+				cmd.reply <- sessionControlResult{
+					handled: true,
+				}
+
+			case controlResultAck:
+				if worker == nil {
+					cmd.reply <- sessionControlResult{
+						err: errSessionWorkerUnavailable,
+					}
+					continue
+				}
+
+				if s.resume.phase != resumeAttached {
+					cmd.reply <- sessionControlResult{
+						err: errSessionNotAttached,
+					}
+					continue
+				}
+
+				if cmd.generation != s.resume.generation {
+					cmd.reply <- sessionControlResult{
+						err: errSessionGenerationMismatch,
+					}
+					continue
+				}
+
+				advanced, err := worker.acknowledgeResult(
+					cmd.resultSeq,
+				)
+				if err != nil {
+					// ACK 超过 offeredSeq 只拒绝本次声明，
+					// 不能因此结束整个 Worker 会话。
+					cmd.reply <- sessionControlResult{
+						err: err,
+					}
+					continue
+				}
+
+				if advanced {
+					// ACK 可能推进 cursor，也会释放 resultBuffer 预算。
+					worker.notifyResultChange()
+				}
+
+				cmd.reply <- sessionControlResult{
+					advanced: advanced,
+				}
+
 			default:
 				cmd.reply <- sessionControlResult{
 					err: errInvalidSessionControlCommand,
@@ -840,16 +1031,6 @@ func (s *resumableSession) submitControl(
 		kind:       kind,
 		generation: generation,
 	})
-}
-
-// requestResume 请求恢复；成功返回新代次，失败返回零和原因。
-// 成功后即使 ctx 已取消，调用方也必须负责该代次的连接交接或断开报告。
-func (s *resumableSession) requestResume(ctx context.Context) (uint64, error) {
-	result := s.submitControl(ctx, controlResume, 0)
-	if result.err != nil {
-		return 0, result.err
-	}
-	return result.generation, nil
 }
 
 // reportDetach 报告指定代次断开，false,nil 表示旧代次或重复通知被忽略。

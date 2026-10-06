@@ -63,9 +63,11 @@ type sessionWorker struct {
 	results         *resultBuffer       // 协调者独占；整个协调路径结束后清理。
 	uploader        *workerUploader     // 唯一 Send/CloseSend 任务。
 	receiver        *workerReceiver     // 唯一 Recv 任务。
+	delivery        resultDeliveryState // 只由 runCoordinator 修改。offeredSeq 跨连接代次保留，其余字段描述当前代投递状态。
 	phase           sessionWorkerPhase  // 计算成功只推进一次到 retaining。
 	dispatchedBytes uint64              // 已交付 uploader 的音频末端，可能仍在 Send 中。
 	processedBytes  uint64              // Worker 合法累计处理位置。
+
 }
 
 // newSessionWorker 校验 RPC、四项正期限及两组缓冲预算，创建资源但不启动任务。
@@ -104,7 +106,12 @@ func newSessionWorker(config sessionWorkerConfig) (*sessionWorker, error) {
 		results:  results,
 		uploader: newWorkerUploader(),
 		receiver: newWorkerReceiver(),
-		phase:    workerRunning,
+
+		delivery: resultDeliveryState{
+			changed: make(chan struct{}),
+		},
+
+		phase: workerRunning,
 	}, nil
 }
 

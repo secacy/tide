@@ -215,7 +215,7 @@ func TestSessionWorkerPureControlRejectsInput(t *testing.T) {
 		if detached, err := s.reportDetach(context.Background(), 1); !detached || err != nil {
 			t.Fatalf("input rejection changed control availability: (%v, %v)", detached, err)
 		}
-		if g, err := s.requestResume(context.Background()); g != 2 || err != nil {
+		if g, err := s.requestResume(context.Background(), 0); g != 2 || err != nil {
 			t.Fatalf("resume = (%d, %v)", g, err)
 		}
 	})
@@ -349,7 +349,7 @@ func TestSessionWorkerBlockedSendAllowsResumeAndFencesOldInput(t *testing.T) {
 		a, n, err = f.session.requestEnd(context.Background(), 1, 2)
 		assertCoordinatorInput(t, a, n, err, false, 0, errSessionNotAttached)
 		time.Sleep(3 * time.Second) // 虚拟时间：在原恢复窗口内恢复。
-		if g, err := f.session.requestResume(context.Background()); g != 2 || err != nil {
+		if g, err := f.session.requestResume(context.Background(), 0); g != 2 || err != nil {
 			t.Fatalf("resume during Send = (%d, %v)", g, err)
 		}
 		for _, input := range []struct {
@@ -427,7 +427,7 @@ func TestSessionWorkerDetachedAcceptedInputStillDrains(t *testing.T) {
 		if context.Cause(f.rpcCtx) != nil || len(sent) != 2 || <-sent != "ab" || <-sent != "c" {
 			t.Fatal("detached input was canceled, reordered or lost")
 		}
-		if g, err := f.session.requestResume(context.Background()); g != 2 || err != nil {
+		if g, err := f.session.requestResume(context.Background(), 0); g != 2 || err != nil {
 			t.Fatalf("resume = (%d, %v)", g, err)
 		}
 		a, n, err = f.session.requestEnd(context.Background(), 2, 3)
@@ -821,7 +821,7 @@ func TestSessionWorkerPendingDeliveryKeepsControlResponsive(t *testing.T) {
 				if d, err := f.session.reportDetach(context.Background(), 1); !d || err != nil {
 					t.Fatalf("pending detach = (%v, %v)", d, err)
 				}
-				if g, err := f.session.requestResume(context.Background()); g != 2 || err != nil {
+				if g, err := f.session.requestResume(context.Background(), 0); g != 2 || err != nil {
 					t.Fatalf("pending resume = (%d, %v)", g, err)
 				}
 				var want error

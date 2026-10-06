@@ -28,7 +28,7 @@ func startTestSessionControl(t *testing.T, s *resumableSession, now func() time.
 func callTestSessionControl(s *resumableSession, ctx context.Context, kind sessionControlKind) sessionControlResult {
 	switch kind {
 	case controlResume:
-		generation, err := s.requestResume(ctx)
+		generation, err := s.requestResume(ctx, 0)
 		return sessionControlResult{generation: generation, err: err}
 	case controlDetach:
 		detached, err := s.reportDetach(ctx, 1)
@@ -56,7 +56,7 @@ func TestSessionControlUndeliveredRequestDeadline(t *testing.T) {
 		s := newTestResumableSession(t, identityTestMaterial())
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		generation, err := s.requestResume(ctx)
+		generation, err := s.requestResume(ctx, 0)
 		if generation != 0 || !errors.Is(err, context.DeadlineExceeded) {
 			t.Fatalf("undelivered request = (%d, %v)", generation, err)
 		}
@@ -82,7 +82,7 @@ func TestSessionControlPreCanceledRequests(t *testing.T) {
 				if !errors.Is(result.err, context.Canceled) || result.generation != 0 || result.detached {
 					t.Fatalf("pre-canceled result = %+v", result)
 				}
-				if generation, err := s.requestResume(context.Background()); generation != 2 || err != nil {
+				if generation, err := s.requestResume(context.Background(), 0); generation != 2 || err != nil {
 					t.Fatalf("canceled request changed state: (%d, %v)", generation, err)
 				}
 			})
@@ -109,7 +109,7 @@ func TestSessionControlRejectsCanceledDeliveredCommands(t *testing.T) {
 				if result := <-reply; !errors.Is(result.err, context.Canceled) || result.generation != 0 || result.detached {
 					t.Fatalf("delivered canceled result = %+v", result)
 				}
-				if generation, err := s.requestResume(context.Background()); generation != 2 || err != nil {
+				if generation, err := s.requestResume(context.Background(), 0); generation != 2 || err != nil {
 					t.Fatalf("loop did not remain usable: (%d, %v)", generation, err)
 				}
 				if err := s.requestClose(context.Background()); err != nil {
@@ -128,7 +128,7 @@ func TestSessionControlLifecycleAndUnknownCommand(t *testing.T) {
 		s := newTestResumableSession(t, identityTestMaterial())
 		startTestSessionControl(t, s, time.Now)
 		ctx := context.Background()
-		if generation, err := s.requestResume(ctx); generation != 0 || !errors.Is(err, errResumeAlreadyAttached) {
+		if generation, err := s.requestResume(ctx, 0); generation != 0 || !errors.Is(err, errResumeAlreadyAttached) {
 			t.Fatalf("initial resume = (%d, %v)", generation, err)
 		}
 		if result := s.submitControl(ctx, sessionControlKind(255), 0); !errors.Is(result.err, errInvalidSessionControlCommand) {
@@ -144,7 +144,7 @@ func TestSessionControlLifecycleAndUnknownCommand(t *testing.T) {
 			if detached, err := s.reportDetach(ctx, generation); detached || err != nil {
 				t.Fatal("duplicate detach must be ignored")
 			}
-			if next, err := s.requestResume(ctx); next != generation+1 || err != nil {
+			if next, err := s.requestResume(ctx, 0); next != generation+1 || err != nil {
 				t.Fatalf("resume = (%d, %v)", next, err)
 			}
 			if detached, err := s.reportDetach(ctx, generation); detached || err != nil {
@@ -155,7 +155,7 @@ func TestSessionControlLifecycleAndUnknownCommand(t *testing.T) {
 			t.Fatal(err)
 		}
 		assertResumeState(t, s.resume, resumeClosed, 3, time.Time{})
-		if generation, err := s.requestResume(ctx); generation != 0 || !errors.Is(err, errResumeClosed) {
+		if generation, err := s.requestResume(ctx, 0); generation != 0 || !errors.Is(err, errResumeClosed) {
 			t.Fatalf("resume closed = (%d, %v)", generation, err)
 		}
 		if detached, err := s.reportDetach(ctx, 3); detached || !errors.Is(err, errResumeClosed) {
@@ -289,7 +289,7 @@ func TestSessionControlCancelWhileWaitingToDeliver(t *testing.T) {
 		if got := <-first; !got.detached || got.err != nil {
 			t.Fatalf("first command = %+v", got)
 		}
-		if generation, err := s.requestResume(context.Background()); generation != 2 || err != nil {
+		if generation, err := s.requestResume(context.Background(), 0); generation != 2 || err != nil {
 			t.Fatalf("undelivered request changed state: (%d, %v)", generation, err)
 		}
 	})
@@ -377,7 +377,7 @@ func TestSessionControlLifecycleCancellationAlone(t *testing.T) {
 		cancel()
 		<-s.controlDone
 		assertResumeState(t, s.resume, resumeClosed, 1, time.Time{})
-		if generation, err := s.requestResume(context.Background()); generation != 0 || !errors.Is(err, errResumeClosed) {
+		if generation, err := s.requestResume(context.Background(), 0); generation != 0 || !errors.Is(err, errResumeClosed) {
 			t.Fatalf("resume stopped loop = (%d, %v)", generation, err)
 		}
 	})
@@ -420,7 +420,7 @@ func TestSessionControlGenerationExhaustionCanStillClose(t *testing.T) {
 		s.resume.generation = math.MaxUint64
 		s.resume.detach(math.MaxUint64, time.Now())
 		startTestSessionControl(t, s, time.Now)
-		if generation, err := s.requestResume(context.Background()); generation != 0 || !errors.Is(err, errResumeGenerationExhausted) {
+		if generation, err := s.requestResume(context.Background(), 0); generation != 0 || !errors.Is(err, errResumeGenerationExhausted) {
 			t.Fatalf("exhausted generation = (%d, %v)", generation, err)
 		}
 		if err := s.requestClose(context.Background()); err != nil {

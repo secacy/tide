@@ -111,7 +111,7 @@ func TestSessionWorkerDuplexDetachedResultsAndEarlyProgress(t *testing.T) {
 				t.Fatalf("retained result %d = (%+v,%v,%v)", i, got, ok, err)
 			}
 		}
-		if generation, err := f.session.requestResume(context.Background()); generation != 2 || err != nil {
+		if generation, err := f.session.requestResume(context.Background(), 0); generation != 2 || err != nil {
 			t.Fatalf("resume = (%d,%v)", generation, err)
 		}
 		a, n, err = f.session.requestAudio(context.Background(), 2, 0, []byte("ab"))
@@ -373,7 +373,7 @@ func TestSessionWorkerDuplexTailDeadlineDoesNotMove(t *testing.T) {
 			t.Fatalf("detach = (%v,%v)", d, err)
 		}
 		time.Sleep(time.Second)
-		if g, err := f.session.requestResume(context.Background()); g != 2 || err != nil {
+		if g, err := f.session.requestResume(context.Background(), 0); g != 2 || err != nil {
 			t.Fatalf("resume = (%d,%v)", g, err)
 		}
 		feed <- workerReadStep{response: &asrv1.StreamingRecognizeResponse{Progress: &asrv1.AudioProgress{}}}
@@ -414,7 +414,7 @@ func TestSessionWorkerDuplexRetentionBounds(t *testing.T) {
 					time.Sleep(2 * time.Second)
 					assertControlAlive(t, f.session) // 原 tailTimeout 已经过期但不限制结果保留。
 					if name == "resume_does_not_extend" {
-						if g, err := f.session.requestResume(context.Background()); g != 2 || err != nil {
+						if g, err := f.session.requestResume(context.Background(), 0); g != 2 || err != nil {
 							t.Fatalf("resume retained session = (%d,%v)", g, err)
 						}
 						a, n, err = f.session.requestEnd(context.Background(), 2, 0)
@@ -656,7 +656,7 @@ func TestSessionWorkerDuplexStatusDeadlineDoesNotMove(t *testing.T) {
 			t.Fatalf("detach = (%v,%v)", d, err)
 		}
 		time.Sleep(time.Second)
-		if g, err := f.session.requestResume(context.Background()); g != 2 || err != nil {
+		if g, err := f.session.requestResume(context.Background(), 0); g != 2 || err != nil {
 			t.Fatalf("resume = (%d,%v)", g, err)
 		}
 		a, n, err = f.session.requestAudio(context.Background(), 2, 0, []byte("a"))
