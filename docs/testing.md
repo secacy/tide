@@ -30,13 +30,15 @@ go test ./internal/gateway -run '^TestGatewaySelectorNilContract$' -count=1
 
 ```sh
 go test -race ./internal/gateway \
-  -run '^Test(SessionUpload|WorkerUploader|SendWithTimeout|AudioInputBuffer|AudioInputState|SessionControl|ResumableSession|SessionRegistry|ResumeState|SessionIdentity)' \
+  -run '^Test(ResultBuffer|SessionUpload|WorkerUploader|SendWithTimeout|AudioInputBuffer|AudioInputState|SessionControl|ResumableSession|SessionRegistry|ResumeState|SessionIdentity)' \
   -count=1 -timeout=45s
 ```
 
 `session_upload_test.go` 主要运行实际 runWithUpload/runCoordinator，以可控 Worker I/O 验证阻塞期间控制响应、代次隔离、输入预算和清理等待。待交付与损坏结果场景直接运行协调循环；提交后回复契约使用一次性接收夹具。testing/synctest 推进虚拟时间，channel 建立事件同步，不能用虚拟时间替代可变字段的同步。
 
 这是内部正确性验收，没有真实 WebSocket 连接恢复或性能测量；全链路需要后续网络/故障实验。当前证据与范围见[协调验收记录](worklog/2026-10-06-session-upload-coordination.md#内部协调组合验收2026-10-06)。
+
+`result_buffer_test.go` 串行验证结果序号、字符串副本、累计确认、读取游标和双预算；环形复用与线性队列对照，确认清理/槽位复用不改变已借出的只读值。它没有 Worker 或客户端确认接入，证据见[结果缓冲验收](worklog/2026-10-06-result-retention.md#结果缓冲验收2026-10-06)。
 
 ## 显式实验
 
