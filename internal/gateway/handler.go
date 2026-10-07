@@ -20,6 +20,7 @@ type Config struct {
 	TailTimeout          time.Duration // 限制协调者观察到合法 end 后，等待剩余结果转发和 Worker 响应流结束的时间
 	ResultWriteTimeout   time.Duration // 限制单条结果的 WebSocket Write 等待
 	MaxPendingAudioBytes int64         // 限制单会话未确认处理的音频字节数。0 表示关闭，正值启用，负值无效。
+	V2                   *V2Config     // 非 nil 时显式启用可恢复实验入口；New 复制配置。
 }
 
 // Gateway 把 WebSocket 音频流桥接到 gRPC Worker。
@@ -28,7 +29,10 @@ type Gateway struct {
 	pool WorkerSelector // 本 Gateway 的会话共享同一选择器。
 	cfg  Config
 
-	tracker *sessionTracker // 跟踪本 Gateway 已接纳但尚未完成清理的会话。用于停止接入以及等待所有会话退出。
+	tracker  *sessionTracker  // 跟踪本 Gateway 已接纳但尚未完成清理的会话。用于停止接入以及等待所有会话退出。
+	gate     *entryGate       // 独立握手预算及共同停服提交边界，与 v1 共用 tracker。
+	registry *sessionRegistry // 仅定位 v2 逻辑会话，清理和恢复资格由运行器管理。
+	v2       *V2Config        // 私有归一化配置；nil 表示入口禁用。
 }
 
 const (
@@ -87,11 +91,29 @@ func New(ctx context.Context, pool WorkerSelector, cfg Config) (*Gateway, error)
 	if cfg.MaxPendingAudioBytes < 0 {
 		return nil, fmt.Errorf("max pending audio bytes is invalid")
 	}
+	v2, err := normalizeV2Config(cfg.V2, cfg.MaxMessageBytes)
+	if err != nil {
+		return nil, err
+	}
+	tracker := newSessionTracker(cfg.MaxSessions)
+	handshakeLimit := defaultMaxHandshakes
+	if v2 != nil {
+		handshakeLimit = v2.MaxHandshakes
+	}
+	gate, err := newEntryGate(tracker, handshakeLimit)
+	if err != nil {
+		return nil, err
+	}
+	// 运行中仅使用私有 v2 副本，不保留调用者的可变指针。
+	cfg.V2 = nil
 	return &Gateway{
-		ctx:     ctx,
-		pool:    pool,
-		cfg:     cfg,
-		tracker: newSessionTracker(cfg.MaxSessions),
+		ctx:      ctx,
+		pool:     pool,
+		cfg:      cfg,
+		tracker:  tracker,
+		gate:     gate,
+		registry: newSessionRegistry(),
+		v2:       v2,
 	}, nil
 }
 
@@ -143,12 +165,12 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 // StopAccepting 停止本 Gateway 接纳新会话。
 // 允许重复调用，不会主动取消已有会话。
 func (g *Gateway) StopAccepting() {
-	g.tracker.stopAccepting()
+	g.gate.stopAccepting()
 }
 
 // Wait 等待本 Gateway 停止接入且所有会话完成清理。
 // 调用方应先调用 StopAccepting。
 // ctx 只控制本次等待；取消等待不会取消已有会话。
 func (g *Gateway) Wait(ctx context.Context) error {
-	return g.tracker.wait(ctx)
+	return g.gate.wait(ctx)
 }

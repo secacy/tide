@@ -17,7 +17,8 @@ type sessionTracker struct {
 	mu sync.Mutex
 
 	// active 表示已成功登记、但尚未完成清理的会话数量。
-	// 包括连接升级、等待 start、识别和收尾阶段。
+	// v1 包括升级前占位；v2 从合法 start 后占位，并覆盖断线保留。
+	// 两者均在实际清理后归还，不包括 v2 临时握手。
 	active int
 
 	// stopping 表示已经永久停止接纳新会话。

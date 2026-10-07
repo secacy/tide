@@ -983,55 +983,45 @@ func (s *resumableSession) runCoordinator(
 					attachment.stop(cause)
 				}
 
-				// 构造期间可能已经发生逻辑取消或绝对期限到达。
-				if err := stopCause(); err != nil {
-					discardAttachment(err)
-
-					cmd.reply <- sessionControlResult{
-						err: errResumeClosed,
+				// 准备不接管 socket；最终状态提交与 Gateway 停服互斥。
+				// 请求拒绝不终止原会话，业务到期/逻辑取消/不变量失败才终止。
+				var terminalErr error
+				commit := func() error {
+					// 取得 gate 锁后必须重新检查绝对期限和原 RPC/逻辑取消。
+					if cause := stopCause(); cause != nil {
+						terminalErr = cause
+						return errResumeClosed
 					}
-
-					return err
+					if err := cmd.ctx.Err(); err != nil {
+						return err
+					}
+					// 同一协调段内已验证范围；失败属于内部不变量错误。
+					if _, err := worker.acknowledgeResult(cmd.resultSeq); err != nil {
+						terminalErr = err
+						return err
+					}
+					*s.resume = probe
+					worker.resetResultDelivery()
+					worker.notifyOutputChange()
+					connections.current = attachment
+					connections.outputComplete = false
+					connections.lastSeq = 0
+					return nil
 				}
-
-				// 命令在交付 coordinator 后仍可能在预构造期间被调用方取消。
-				// 此时还没有接管 candidate。
-				if err := cmd.ctx.Err(); err != nil {
+				if s.entryGate != nil {
+					err = s.entryGate.withCommit(cmd.ctx, commit)
+				} else {
+					// nil 仅保留内部部件模式，公开会话始终绑定共享 gate。
+					err = commit()
+				}
+				if err != nil {
 					discardAttachment(err)
-
-					cmd.reply <- sessionControlResult{
-						err: err,
+					cmd.reply <- sessionControlResult{err: err}
+					if terminalErr != nil {
+						return terminalErr
 					}
 					continue
 				}
-
-				// 范围已经在同一个协调段内验证过，因此这里不应产生普通协议错误。
-				// 一旦失败说明内部不变量破坏；正式 generation 尚未提交，
-				// candidate 仍由调用者拥有。
-				if _, err := worker.acknowledgeResult(
-					cmd.resultSeq,
-				); err != nil {
-					discardAttachment(err)
-
-					cmd.reply <- sessionControlResult{
-						err: err,
-					}
-
-					return err
-				}
-
-				// 从这里开始提交恢复事务。
-				//
-				// 不再次调用 resume(now)，而是直接提交刚才验证成功的副本；
-				// 避免一次恢复在两个 now() 之间产生不同结果。
-				*s.resume = probe
-
-				worker.resetResultDelivery()
-				worker.notifyOutputChange()
-
-				connections.current = attachment
-				connections.outputComplete = false
-				connections.lastSeq = 0
 
 				// 安装 current 是候选清理责任的转移点。
 				// 之后即使 cmd.ctx 立即取消，调用者也不能再关闭 candidate。

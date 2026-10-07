@@ -4,7 +4,8 @@ package gateway
 // 返回值不引用内部可变数据，取出后不会随 Gateway 运行而变化。
 type GatewaySnapshot struct {
 	// ActiveSessions 是已接纳但尚未完成清理的会话数。
-	// 包括连接升级、等待 start、识别和收尾阶段。
+	// v1 包括升级前占位与等待 start；v2 从合法 start 后占位，
+	// 包括断线保留和清理阶段，不包括临时握手。两版共享总上限。
 	ActiveSessions int
 
 	// MaxSessions 是实际采用的会话接纳上限，已包含默认值处理。

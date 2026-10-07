@@ -109,6 +109,8 @@ func routes(wsGateway *gateway.Gateway) http.Handler {
 
 	// 一个 WebSocket Connection 对应一个音频 Session，并在 Gateway 内部进一步对应一个 gRPC bidi stream
 	mux.Handle("/v1/asr", wsGateway)
+	// 显式启用实验配置后可新建/接回逻辑会话；禁用时返回 404。
+	mux.HandleFunc("/v2/asr", wsGateway.ServeV2HTTP)
 
 	// 查询 Gateway 当前会话状态，不占用会话名额。
 	mux.HandleFunc("GET /debug/gateway", gatewaySnapshotHandler(wsGateway))

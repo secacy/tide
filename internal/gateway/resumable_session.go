@@ -14,6 +14,7 @@ type resumableSession struct {
 	resume      *resumeState               // 连接附着状态和恢复期限。
 	commands    chan sessionControlCommand // 无缓冲，向唯一协调者提交命令。
 	controlDone chan struct{}              // 控制循环退出时关闭。
+	entryGate   *entryGate                 // 公开入口在发布前绑定；nil 仅用于内部部件模式。
 }
 
 // newResumableSession 组合身份与恢复状态。

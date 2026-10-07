@@ -33,7 +33,9 @@ func parseGatewayConfig(args []string) (gatewayConfig, error) {
 	}
 	workerAddrs := strings.Join(cfg.WorkerAddrs, ",")
 	var workerWeights string
+	var enableV2 bool
 	fs := flag.NewFlagSet("gateway", flag.ContinueOnError)
+	fs.BoolVar(&enableV2, "enable-v2", false, "enable the experimental resumable /v2/asr endpoint")
 	fs.Int64Var(
 		&cfg.Gateway.MaxPendingAudioBytes,
 		"max-pending-audio-bytes",
@@ -101,5 +103,8 @@ func parseGatewayConfig(args []string) (gatewayConfig, error) {
 	}
 
 	cfg.WorkerAddrs = addrs
+	if enableV2 {
+		cfg.Gateway.V2 = &gateway.V2Config{}
+	}
 	return cfg, nil
 }
