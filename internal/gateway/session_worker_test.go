@@ -45,6 +45,7 @@ func newWorkerCoordinatorFixture(t *testing.T, maxBytes uint64, maxChunks int, b
 	upload, err := newSessionWorker(sessionWorkerConfig{
 		rpcCtx: rpcCtx, cancelRPC: cancelRPC, stream: stream,
 		sendTimeout: time.Minute, tailTimeout: time.Minute, statusTimeout: time.Second,
+		inputProgressTimeout:   time.Hour,
 		resultRetentionTimeout: time.Minute, maxAudioBytes: maxBytes, maxAudioChunks: maxChunks,
 		maxResultBytes: 1024, maxResults: 16,
 	})
@@ -118,7 +119,8 @@ func TestSessionWorkerConstruction(t *testing.T) {
 	ctx, cancel := context.WithCancelCause(context.Background())
 	defer cancel(nil)
 	config := sessionWorkerConfig{rpcCtx: ctx, cancelRPC: cancel, stream: &uploadTestStream{}, sendTimeout: time.Second,
-		tailTimeout: time.Minute, statusTimeout: time.Second, resultRetentionTimeout: time.Minute,
+		inputProgressTimeout: time.Hour,
+		tailTimeout:          time.Minute, statusTimeout: time.Second, resultRetentionTimeout: time.Minute,
 		maxAudioBytes: 4, maxAudioChunks: 2, maxResultBytes: 1024, maxResults: 16}
 	for _, name := range []string{"nil_context", "nil_cancel", "nil_stream", "zero_timeout", "negative_timeout", "zero_bytes", "zero_chunks", "negative_chunks"} {
 		t.Run(name, func(t *testing.T) {

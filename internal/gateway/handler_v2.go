@@ -175,7 +175,8 @@ func (g *Gateway) prepareV2Worker(entryCtx context.Context) (*sessionWorker, err
 	worker, err := newSessionWorker(sessionWorkerConfig{
 		rpcCtx: rpcCtx, cancelRPC: cancelRPC, stream: stream,
 		sendTimeout: g.cfg.WorkerSendTimeout, tailTimeout: g.cfg.TailTimeout,
-		statusTimeout: g.v2.WorkerStatusTimeout, resultRetentionTimeout: g.v2.ResultRetentionTimeout,
+		inputProgressTimeout: g.v2.InputProgressTimeout,
+		statusTimeout:        g.v2.WorkerStatusTimeout, resultRetentionTimeout: g.v2.ResultRetentionTimeout,
 		maxAudioBytes: g.v2.MaxAudioBytes, maxAudioChunks: g.v2.MaxAudioChunks,
 		maxResultBytes: g.v2.MaxResultBytes, maxResults: g.v2.MaxResults,
 		maxPendingAudioBytes: uint64(g.cfg.MaxPendingAudioBytes),

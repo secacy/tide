@@ -10,7 +10,8 @@ import (
 type V2Config struct {
 	MaxHandshakes          int           // 尚未交接或完成失败清理的临时连接上限。
 	EntryTimeout           time.Duration // 整次入口操作的提交预算，不重置各步骤的总期限。
-	ResumeWindow           time.Duration // 实际断开后允许接回原会话的窗口。
+	InputProgressTimeout   time.Duration // attached 且未 end 时等待新音频接纳；0 默认 30 秒，ACK/重复音频不刷新。
+	ResumeWindow           time.Duration // 普通断开从观察时刻计时；输入超时从原输入截止点计时。
 	ResultRetentionTimeout time.Duration // Worker 正常完成后的固定结果保留期限。
 	WorkerStatusTimeout    time.Duration // 上传 EOF 后等待 Recv 真实终态的期限。
 	MaxAudioBytes          uint64        // 含在途块的音频存储预算。
@@ -36,7 +37,7 @@ func normalizeV2Config(input *V2Config, maxMessageBytes int64) (*V2Config, error
 			return nil, fmt.Errorf("v2 count limit is invalid")
 		}
 	}
-	for _, d := range []time.Duration{c.EntryTimeout, c.ResumeWindow, c.ResultRetentionTimeout, c.WorkerStatusTimeout} {
+	for _, d := range []time.Duration{c.EntryTimeout, c.InputProgressTimeout, c.ResumeWindow, c.ResultRetentionTimeout, c.WorkerStatusTimeout} {
 		if d < 0 {
 			return nil, fmt.Errorf("v2 timeout is invalid")
 		}
@@ -46,6 +47,9 @@ func normalizeV2Config(input *V2Config, maxMessageBytes int64) (*V2Config, error
 	}
 	if c.EntryTimeout == 0 {
 		c.EntryTimeout = 10 * time.Second
+	}
+	if c.InputProgressTimeout == 0 {
+		c.InputProgressTimeout = 30 * time.Second
 	}
 	if c.ResumeWindow == 0 {
 		c.ResumeWindow = 10 * time.Second

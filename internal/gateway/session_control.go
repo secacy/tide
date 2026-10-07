@@ -88,6 +88,7 @@ func (s *resumableSession) runCoordinator(
 	var tailDeadline time.Time
 	var statusDeadline time.Time
 	var retentionDeadline time.Time
+	var inputDeadline time.Time // 当前代等待新音频的绝对期限；零值禁用，由协调者独占。
 
 	var recvDone <-chan struct{}
 	var recvEvents <-chan workerReceiveEvent
@@ -107,136 +108,110 @@ func (s *resumableSession) runCoordinator(
 		wakeC = nil
 	}
 
-	// nextDeadline 选择当前阶段适用的最早绝对期限；没有期限时返回 false。
-	nextDeadline := func() (time.Time, bool) {
-		var deadline time.Time
-		var have bool
-
-		consider := func(candidate time.Time) {
-			if candidate.IsZero() {
-				return
-			}
-
-			if !have || candidate.Before(deadline) {
-				deadline = candidate
-				have = true
+	// detachGenerationAt 提交断开，at 决定恢复窗口起点。
+	// 不重排 Timer、不关闭 socket、不等待任务；重复/旧代断开不续期。
+	detachGenerationAt := func(generation uint64, cause error, at time.Time) bool {
+		detached := s.resume.detach(generation, at)
+		if detached {
+			inputDeadline = time.Time{}
+			if worker != nil {
+				worker.resetResultDelivery()
+				worker.notifyOutputChange()
 			}
 		}
-
-		if s.resume.phase == resumeDetached {
-			consider(s.resume.expiresAt)
+		if connections != nil && connections.current != nil &&
+			connections.current.generation == generation &&
+			(detached || s.resume.phase == resumeDetached) {
+			connections.current.stop(cause)
 		}
-
-		if worker != nil {
-			switch worker.phase {
-			case workerRunning:
-				consider(tailDeadline)
-				consider(statusDeadline)
-
-			case workerRetaining:
-				consider(retentionDeadline)
-			}
-		}
-
-		return deadline, have
+		return detached
 	}
 
-	// armWakeTimer 按已有绝对期限安排唤醒，不改变任何业务截止时间。
-	armWakeTimer := func() {
-		stopWakeTimer()
-
-		deadline, ok := nextDeadline()
-		if !ok {
-			return
-		}
-
-		delay := deadline.Sub(now())
-		if delay < 0 {
-			delay = 0
-		}
-
-		wakeTimer = time.NewTimer(delay)
-		wakeC = wakeTimer.C
+	// inputProgressActive 排除纯部件、输入已结束以及等待 Worker 状态的阶段。
+	inputProgressActive := func() bool {
+		return connections != nil && worker != nil &&
+			worker.phase == workerRunning && s.resume.phase == resumeAttached &&
+			!worker.input.input.ended && statusDeadline.IsZero()
 	}
 
-	// deadlineKind 标识到期原因，仅选中恢复期限时需要推进 resumeState。
+	// deadlineKind 描述到期后需要执行的迁移；输入进展只 detach，其余终止整场。
 	type deadlineKind uint8
-
 	const (
 		deadlineResume deadlineKind = iota
 		deadlineTail
 		deadlineStatus
 		deadlineRetention
+		deadlineInputProgress
 	)
-
-	// deadlineCandidate 将绝对时间与到期时应报告的原因关联。
 	type deadlineCandidate struct {
-		at   time.Time    // 绝对截止时间；零值表示尚未建立期限。
-		kind deadlineKind // 期限类别。
-		err  error        // 该期限最早到期时的退出原因。
+		at   time.Time    // 绝对截止时间，零值不参与选择。
+		kind deadlineKind // 到期迁移类别。
+		err  error        // 终态原因或本代停止原因。
 	}
 
-	// 先选择当前适用期限中绝对时间最早的一个。
-	// 截止时间相同时，由 consider 的调用顺序决定优先级。
-	checkExpired := func(at time.Time) error {
+	// nextDeadline 统一为唤醒和期限处理选择最早适用期限。
+	// 同时到期保留既有终态优先级，输入进展排在最后。
+	nextDeadline := func() (deadlineCandidate, bool) {
 		var selected deadlineCandidate
 		var have bool
-
 		consider := func(candidate deadlineCandidate) {
-			if candidate.at.IsZero() {
-				return
-			}
-
-			if !have || candidate.at.Before(selected.at) {
-				selected = candidate
-				have = true
+			if !candidate.at.IsZero() && (!have || candidate.at.Before(selected.at)) {
+				selected, have = candidate, true
 			}
 		}
-
 		if s.resume.phase == resumeDetached {
-			consider(deadlineCandidate{
-				at:   s.resume.expiresAt,
-				kind: deadlineResume,
-				err:  errResumeExpired,
-			})
+			consider(deadlineCandidate{s.resume.expiresAt, deadlineResume, errResumeExpired})
 		}
-
 		if worker != nil {
 			switch worker.phase {
 			case workerRunning:
-				consider(deadlineCandidate{
-					at:   tailDeadline,
-					kind: deadlineTail,
-					err:  ErrTailTimeout,
-				})
-
-				consider(deadlineCandidate{
-					at:   statusDeadline,
-					kind: deadlineStatus,
-					err:  errWorkerStatusTimeout,
-				})
-
+				consider(deadlineCandidate{tailDeadline, deadlineTail, ErrTailTimeout})
+				consider(deadlineCandidate{statusDeadline, deadlineStatus, errWorkerStatusTimeout})
 			case workerRetaining:
-				consider(deadlineCandidate{
-					at:   retentionDeadline,
-					kind: deadlineRetention,
-					err:  errResultRetentionExpired,
-				})
+				consider(deadlineCandidate{retentionDeadline, deadlineRetention, errResultRetentionExpired})
 			}
 		}
-
-		if !have || at.Before(selected.at) {
-			return nil
+		if inputProgressActive() {
+			consider(deadlineCandidate{inputDeadline, deadlineInputProgress, ErrInputProgressTimeout})
 		}
+		return selected, have
+	}
 
-		// 只有恢复期限最终胜出时才修改 resumeState。
-		if selected.kind == deadlineResume {
-			if !s.resume.expire(at) {
+	// armWakeTimer 只安排唤醒，不重建业务预算。
+	armWakeTimer := func() {
+		stopWakeTimer()
+		deadline, ok := nextDeadline()
+		if !ok {
+			return
+		}
+		delay := deadline.at.Sub(now())
+		if delay < 0 {
+			delay = 0
+		}
+		wakeTimer = time.NewTimer(delay)
+		wakeC = wakeTimer.C
+	}
+
+	// checkExpired 用同一个观察时刻处理到期迁移。
+	// 输入超时以原期限建立恢复窗口，迟到观察可能同时耗尽该窗口。
+	checkExpired := func(at time.Time) error {
+		for {
+			selected, have := nextDeadline()
+			if !have || at.Before(selected.at) {
 				return nil
 			}
+			if selected.kind == deadlineInputProgress {
+				if !detachGenerationAt(s.resume.generation, selected.err, selected.at) {
+					panic("gateway: active input deadline could not detach")
+				}
+				armWakeTimer()
+				continue
+			}
+			if selected.kind == deadlineResume && !s.resume.expire(at) {
+				return nil
+			}
+			return selected.err
 		}
-
-		return selected.err
 	}
 
 	// 所有会推进协调状态的事件在提交状态变化前都经过这里。
@@ -270,9 +245,10 @@ func (s *resumableSession) runCoordinator(
 		close(s.controlDone)
 	}()
 
-	if s.resume.phase == resumeDetached {
-		armWakeTimer()
+	if inputProgressActive() {
+		inputDeadline = now().Add(worker.config.inputProgressTimeout)
 	}
+	armWakeTimer()
 
 	uploadPhase := uploadIdle
 
@@ -289,6 +265,7 @@ func (s *resumableSession) runCoordinator(
 		}
 
 		worker.phase = workerRetaining
+		inputDeadline = time.Time{}
 
 		tailDeadline = time.Time{}
 		statusDeadline = time.Time{}
@@ -311,38 +288,12 @@ func (s *resumableSession) runCoordinator(
 		armWakeTimer()
 	}
 
-	// detachGeneration 统一提交有效断开、重置投递与安排本代停止。
-	// 重复/旧代通知不续期；stop 不执行阻塞连接清理。
-	detachGeneration := func(
-		generation uint64,
-		cause error,
-	) bool {
-		detached := s.resume.detach(
-			generation,
-			now(),
-		)
-
-		if detached && worker != nil {
-			worker.resetResultDelivery()
-			worker.notifyOutputChange()
-		}
-
-		if connections != nil &&
-			connections.current != nil &&
-			connections.current.generation == generation {
-
-			// 有效 detach 或已经处于同代 detached 时都可以安全重复 stop。
-			// stop 不执行阻塞清理。
-			if detached || s.resume.phase == resumeDetached {
-				connections.current.stop(cause)
-			}
-		}
-
+	// detachGeneration 用当前观察时刻处理普通断开，并安排固定恢复期限。
+	detachGeneration := func(generation uint64, cause error) bool {
+		detached := detachGenerationAt(generation, cause, now())
 		if detached {
-			// resume.detach 已经建立绝对恢复期限。
 			armWakeTimer()
 		}
-
 		return detached
 	}
 
@@ -658,6 +609,7 @@ func (s *resumableSession) runCoordinator(
 				// 给出真正的 Worker RPC 终态。
 				pending = workerUploadCommand{}
 				uploadPhase = uploadAwaitingStatus
+				inputDeadline = time.Time{}
 
 				// 如果 Recv EOF 已经更早被观察到，则真实接收终态
 				// 已经明确，不需要再等待 status deadline。
@@ -1006,6 +958,9 @@ func (s *resumableSession) runCoordinator(
 					connections.current = attachment
 					connections.outputComplete = false
 					connections.lastSeq = 0
+					if inputProgressActive() {
+						inputDeadline = now().Add(worker.config.inputProgressTimeout)
+					}
 					return nil
 				}
 				if s.entryGate != nil {
@@ -1165,6 +1120,10 @@ func (s *resumableSession) runCoordinator(
 				}
 
 				if accepted {
+					if inputProgressActive() {
+						inputDeadline = now().Add(worker.config.inputProgressTimeout)
+						armWakeTimer()
+					}
 					worker.notifyOutputChange()
 				}
 
@@ -1266,6 +1225,10 @@ func (s *resumableSession) runCoordinator(
 						err: err,
 					}
 					return err
+				}
+
+				if accepted {
+					inputDeadline = time.Time{}
 				}
 
 				// tail deadline 只由首次合法 end 建立一次。

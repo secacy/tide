@@ -8,6 +8,7 @@ import (
 )
 
 var (
+	ErrInputProgressTimeout       = errors.New("input progress timeout")              // 当前连接无新音频进展；先 detach，保留有限恢复机会。
 	errInvalidSessionWorkerConfig = errors.New("invalid session worker config")       // Worker RPC、期限或必要资源配置非法。
 	errInvalidWorkerProgress      = errors.New("invalid worker progress")             // Worker 报告的累计处理位置非法，例如倒退或超过已经实际交付给uploader 的音频位置。
 	errWorkerEndedEarly           = errors.New("worker ended before input completed") // Worker 接收方向在完整合法输入完成之前正常 EOF。
@@ -27,6 +28,7 @@ type sessionWorkerConfig struct {
 	cancelRPC              context.CancelCauseFunc // 仅取消该 RPC，不关闭共享 ClientConn。
 	stream                 workerStream            // 有效且响应原 RPC 取消的双向流。
 	sendTimeout            time.Duration           // 单次 Send 期限，必须为正。
+	inputProgressTimeout   time.Duration           // 真实连接模式的输入进展期限，必须为正；纯部件模式不计时。
 	tailTimeout            time.Duration           // 首次合法 end 到 Worker 完成的预算，必须为正。
 	statusTimeout          time.Duration           // Send/CloseSend 返回 EOF 后等待 Recv 终态的预算，必须为正。
 	resultRetentionTimeout time.Duration           // Worker 正常完成后的结果保留预算，必须为正。
@@ -72,7 +74,7 @@ type sessionWorker struct {
 
 }
 
-// newSessionWorker 校验 RPC、四项正期限及两组缓冲预算，创建资源但不启动任务。
+// newSessionWorker 校验 RPC、五项正期限及两组缓冲预算，创建资源但不启动任务。
 // 失败返回 nil；保留音频/结果预算错误的 errors.Is 身份。
 // 构造不转移 RPC 清理责任；只有 runWithWorker 启动后接管。
 func newSessionWorker(config sessionWorkerConfig) (*sessionWorker, error) {
@@ -80,6 +82,7 @@ func newSessionWorker(config sessionWorkerConfig) (*sessionWorker, error) {
 		config.cancelRPC == nil ||
 		config.stream == nil ||
 		config.sendTimeout <= 0 ||
+		config.inputProgressTimeout <= 0 ||
 		config.tailTimeout <= 0 ||
 		config.statusTimeout <= 0 ||
 		config.resultRetentionTimeout <= 0 {
