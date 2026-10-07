@@ -4,6 +4,7 @@ type MessageType string
 
 const (
 	MessageTypeStart        MessageType = "start"
+	MessageTypeResume       MessageType = "resume"
 	MessageTypeReady        MessageType = "ready"
 	MessageTypeEnd          MessageType = "end"
 	MessageTypeResult       MessageType = "result"
