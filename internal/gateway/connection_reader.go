@@ -243,6 +243,11 @@ func (r *connectionReader) run(
 			// advanced=false 是合法的旧/重复累计确认。
 			_ = advanced
 
+		case wsprotocol.V2InputCompletedAck:
+			if err := r.config.session.requestCompletionAck(ctx, r.config.generation, input.Offset, input.Seq); err != nil {
+				return r.classifyCommandError(ctx, err)
+			}
+
 		default:
 			panic("gateway: decoded invalid v2 input kind")
 		}

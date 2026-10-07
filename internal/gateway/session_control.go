@@ -23,32 +23,35 @@ const (
 	controlResultAck                                  // 接纳客户端累计应用确认，释放已确认前缀。
 	controlResumeConnection                           // 同一提交中接纳恢复位置、切换代次并安装候选连接。
 	controlConnectionReady                            // 查询当前 attached 代次的只读 ready 快照。
+	controlCompletion                                 // 取得固定完成范围并授权本代发送。
+	controlCompletionAck                              // 接纳整场确认，结束协调循环。
 )
 
 // sessionControlCommand 表示一次不可复用的内部控制请求。
 type sessionControlCommand struct {
 	kind       sessionControlKind          // 本次操作。
 	ctx        context.Context             // 请求取消信号，仅在处理前检查。
-	generation uint64                      // detach/audio/end/ready 及结果操作的固定连接代次。
+	generation uint64                      // detach/audio/end/ready、完成与结果操作的固定连接代次。
 	reply      chan<- sessionControlResult // 独立、容量为 1，循环只发送一次。
-	offset     uint64                      // audio 的起点，end 的最终接纳位置；控制命令忽略。
+	offset     uint64                      // audio 起点、end/completed_ack 最终位置。
 	payload    []byte                      // 仅 audio 使用；从请求开始到回复前只读，调用方不得修改。
-	resultSeq  uint64                      // resume 的客户端已应用位置；written/ack 的结果序号。其他命令忽略。
+	resultSeq  uint64                      // resume 已应用位置，written/ack 序号，completed_ack 最后序号。
 	candidate  *connectionCandidate        // 仅 controlResumeConnection 使用；命令成功以前仍由提交者负责关闭。
 }
 
 // sessionControlResult 是某次控制操作的确定结果。
 // 零代次用于失败或非恢复操作；detached=false,nil 表示无需改变状态。
 type sessionControlResult struct {
-	generation uint64          // resume 成功时的新连接代次。
-	detached   bool            // detach 是否实际将当前连接改为断开保留。
-	err        error           // 状态错误、请求取消或控制循环终止原因。
-	accepted   bool            // 本次是否新接纳；完整重发或重复 end 为 false。
-	nextOffset uint64          // 回复时 Gateway 已连续接纳的位置，不代表 Worker 处理位置。
-	offer      resultOffer     // take 成功时的快照，available 可以为 false。
-	handled    bool            // written 是否接纳了当前代的匹配报告。
-	advanced   bool            // ACK 是否使累计确认前进；重复/旧 ACK 为 false。
-	ready      connectionReady // ready 命令成功时的一致值快照，不产生结果写入授权。
+	generation uint64             // resume 成功时的新连接代次。
+	detached   bool               // detach 是否实际将当前连接改为断开保留。
+	err        error              // 状态错误、请求取消或控制循环终止原因。
+	accepted   bool               // 本次是否新接纳；完整重发或重复 end 为 false。
+	nextOffset uint64             // 回复时 Gateway 已连续接纳的位置，不代表 Worker 处理位置。
+	offer      resultOffer        // take 成功时的快照，available 可以为 false。
+	handled    bool               // written 是否接纳了当前代的匹配报告。
+	advanced   bool               // ACK 是否使累计确认前进；重复/旧 ACK 为 false。
+	ready      connectionReady    // ready 命令成功时的一致值快照，不产生结果写入授权。
+	completion completionSnapshot // completion 命令成功时的固定范围。
 }
 
 // runControl 由生命周期拥有者恰好启动一次，串行处理控制命令。
@@ -422,7 +425,7 @@ func (s *resumableSession) runCoordinator(
 
 		case connectionWriterTask:
 			switch event.writer.kind {
-			case writerResultsComplete:
+			case writerResultsComplete, writerCompletionSent:
 				connections.outputComplete = true
 				connections.lastSeq = event.writer.lastSeq
 				return nil
@@ -1361,6 +1364,31 @@ func (s *resumableSession) runCoordinator(
 
 				cmd.reply <- sessionControlResult{
 					handled: true,
+				}
+
+			case controlCompletion, controlCompletionAck:
+				if worker == nil {
+					cmd.reply <- sessionControlResult{err: errSessionWorkerUnavailable}
+					continue
+				}
+				if s.resume.phase != resumeAttached {
+					cmd.reply <- sessionControlResult{err: errSessionNotAttached}
+					continue
+				}
+				if cmd.generation != s.resume.generation {
+					cmd.reply <- sessionControlResult{err: errSessionGenerationMismatch}
+					continue
+				}
+				if cmd.kind == controlCompletion {
+					snapshot, err := worker.offerCompletion(cmd.generation)
+					cmd.reply <- sessionControlResult{completion: snapshot, err: err}
+					continue
+				}
+				err := worker.acknowledgeCompletion(cmd.generation, cmd.offset, cmd.resultSeq)
+				cmd.reply <- sessionControlResult{err: err}
+				if err == nil {
+					// 回复表示业务确认已提交；外层仍须等待实际 I/O 和连接清理。
+					return nil
 				}
 
 			case controlResultAck:

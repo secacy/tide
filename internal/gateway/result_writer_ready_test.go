@@ -76,6 +76,8 @@ func TestResultWriterReadyPrecedesExistingResults(t *testing.T) {
 			}
 			if tag.Type == wsprotocol.MessageTypeAudioAck {
 				decodeAudioAckMessage(t, typ, data, 1, 2, true)
+			} else if tag.Type == wsprotocol.MessageTypeCompleted {
+				decodeCompletionMessage(t, typ, data, 1, 2, 2)
 			} else {
 				decodeWriterMessage(t, typ, data)
 			}
@@ -112,8 +114,9 @@ func TestResultWriterReadyPrecedesExistingResults(t *testing.T) {
 			}
 		}
 		feed <- workerReadStep{err: io.EOF}
-		run.assertExit(t, writerResultsComplete, 2, nil)
-		if calls.Load() != 4 {
+		run.assertExit(t, writerCompletionSent, 2, nil)
+		decodeCompletionMessage(t, websocket.MessageText, <-messages, 1, 2, 2)
+		if calls.Load() != 5 {
 			t.Fatal("ready or cumulative ACK repeated within one generation")
 		}
 		closeDeliveryFixture(t, f)

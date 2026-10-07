@@ -45,12 +45,13 @@ const (
 	writerStopped                                     // 生命周期取消、控制结束或本代附着资格已失效。
 	writerWriteFailed                                 // 实际 WebSocket Write 出错或达到单次期限。
 	writerControlFailed                               // 命令/编码等内部错误，不能一律解释为断网。
+	writerCompletionSent                              // 本代 completed 已写成功，仍等待客户端确认。
 )
 
 // resultWriterExit 在 run 返回时交给连接拥有者，不等同于整场会话终态。
 type resultWriterExit struct {
 	kind    resultWriterExitKind
-	lastSeq uint64 // 仅 writerResultsComplete 有效；允许正常计算没有任何结果时为 0。
+	lastSeq uint64 // 两种正常输出完成时有效；无识别结果为 0。
 	err     error  // 完成时 nil；其他退出必须带原因，保留 errors.Is 身份。
 }
 
@@ -191,6 +192,9 @@ func (w *resultWriter) runLoop(ctx context.Context, lastInput *inputAcceptance) 
 		}
 
 		if offer.workerCompleted {
+			if lastInput != nil {
+				return w.sendCompletion(ctx)
+			}
 			return resultWriterExit{
 				kind:    writerResultsComplete,
 				lastSeq: offer.lastSeq,
@@ -209,7 +213,39 @@ func (w *resultWriter) runLoop(ctx context.Context, lastInput *inputAcceptance) 
 	}
 }
 
-// writeMessage 同步写入已经编码的一条连接文本消息（ready、audio_ack 或 result）。
+// sendCompletion 在本代结果全部写完后取得授权并限时写正常完成通知。
+// ctx 属于连接；不关闭连接、不等待客户端确认、不创建额外任务。
+func (w *resultWriter) sendCompletion(ctx context.Context) resultWriterExit {
+	if cause := w.stopCause(ctx); cause != nil {
+		return w.stoppedExit(cause)
+	}
+	snapshot, err := w.config.session.requestCompletion(ctx, w.config.generation)
+	if err != nil {
+		return w.classifyControlError(ctx, err)
+	}
+	if cause := w.stopCause(ctx); cause != nil {
+		return w.stoppedExit(cause)
+	}
+	data, err := json.Marshal(wsprotocol.CompletedMessage{
+		Type: wsprotocol.MessageTypeCompleted, Generation: w.config.generation,
+		FinalOffset: snapshot.finalOffset, LastSeq: snapshot.lastSeq,
+	})
+	if err != nil {
+		return w.controlExit(fmt.Errorf("marshal session completion: %w", err))
+	}
+	if cause := w.stopCause(ctx); cause != nil {
+		return w.stoppedExit(cause)
+	}
+	if err := w.writeMessage(ctx, data); err != nil {
+		if cause := w.stopCause(ctx); cause != nil {
+			return w.stoppedExit(cause)
+		}
+		return resultWriterExit{kind: writerWriteFailed, err: err}
+	}
+	return resultWriterExit{kind: writerCompletionSent, lastSeq: snapshot.lastSeq}
+}
+
+// writeMessage 同步写入已经编码的一条连接文本消息。
 // 每次建立独立期限，返回前读取该期限的状态，再取消计时资源。
 // 父 ctx 取消优先，其次本次超时 ErrResultWriteTimeout，最后保留 Write 原始错误。
 // 不启动另一个 goroutine 竞速超时；须等实际 Write 返回才结束调用。

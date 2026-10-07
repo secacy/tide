@@ -20,7 +20,7 @@ var (
 // 协调者返回后，外层运行器接续读取 current 并等待最终清理。
 type sessionConnections struct {
 	current        *connectionAttachment // 包含正在退出的旧连接。
-	outputComplete bool                  // 当前代 writer 已正常发完结果。
+	outputComplete bool                  // 当前代 writer 正常结束输出；不代表整场确认。
 	lastSeq        uint64                // 完成时的末尾序号，不等于已确认位置。
 }
 

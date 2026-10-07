@@ -175,7 +175,8 @@ func TestAudioAcceptanceAckCoalescesAndServesBorrowedResult(t *testing.T) {
 			t.Fatal("intermediate input states were queued instead of coalesced")
 		}
 		feed <- workerReadStep{err: io.EOF}
-		run.assertExit(t, writerResultsComplete, 2, nil)
+		run.assertExit(t, writerCompletionSent, 2, nil)
+		decodeCompletionMessage(t, websocket.MessageText, <-messages, 1, 6, 2)
 		closeDeliveryFixture(t, f)
 	})
 }
@@ -229,8 +230,9 @@ func TestAudioAcceptanceAckEmptyEndBeforeCompletion(t *testing.T) {
 		assertCoordinatorInput(t, a, n, err, true, 0, nil)
 		synctest.Wait()
 		feed <- workerReadStep{err: io.EOF}
-		run.assertExit(t, writerResultsComplete, 0, nil)
+		run.assertExit(t, writerCompletionSent, 0, nil)
 		decodeAudioAckMessage(t, websocket.MessageText, <-messages, 1, 0, true)
+		decodeCompletionMessage(t, websocket.MessageText, <-messages, 1, 0, 0)
 		if len(messages) != 0 {
 			t.Fatal("empty completion produced duplicate ACK")
 		}

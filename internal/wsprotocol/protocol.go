@@ -3,13 +3,15 @@ package wsprotocol
 type MessageType string
 
 const (
-	MessageTypeStart     MessageType = "start"
-	MessageTypeReady     MessageType = "ready"
-	MessageTypeEnd       MessageType = "end"
-	MessageTypeResult    MessageType = "result"
-	MessageTypeResultAck MessageType = "result_ack"
-	MessageTypeError     MessageType = "error"
-	MessageTypeAudioAck  MessageType = "audio_ack"
+	MessageTypeStart        MessageType = "start"
+	MessageTypeReady        MessageType = "ready"
+	MessageTypeEnd          MessageType = "end"
+	MessageTypeResult       MessageType = "result"
+	MessageTypeResultAck    MessageType = "result_ack"
+	MessageTypeError        MessageType = "error"
+	MessageTypeAudioAck     MessageType = "audio_ack"
+	MessageTypeCompleted    MessageType = "completed"
+	MessageTypeCompletedAck MessageType = "completed_ack"
 )
 
 // StartMessage 在音频开始发送前发送

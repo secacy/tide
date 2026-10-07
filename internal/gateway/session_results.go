@@ -117,11 +117,12 @@ func (w *sessionWorker) acknowledgeResult(seq uint64) (bool, error) {
 }
 
 // resetResultDelivery 在有效断开或成功恢复时重置本代写入状态。
-// cursor 回到当前 ackedSeq，inFlightSeq 清零；offeredSeq 跨代次保留。
+// cursor 回到当前 ackedSeq，inFlightSeq 和完成通知授权清零；offeredSeq 跨代次保留。
 // 只撤销本代授权元数据，旧写任务持有值的释放仍由该任务负责。
 func (w *sessionWorker) resetResultDelivery() {
 	w.delivery.cursor = w.results.ackedSeq
 	w.delivery.inFlightSeq = 0
+	w.completion.offeredGeneration = 0
 }
 
 // notifyOutputChange 在已提交输入接纳或结果变化后关闭旧通知，并创建新通道。

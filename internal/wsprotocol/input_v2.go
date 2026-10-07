@@ -17,18 +17,19 @@ var ErrInvalidV2Input = errors.New("invalid v2 input")
 type V2InputKind uint8
 
 const (
-	V2InputInvalid   V2InputKind = iota
-	V2InputAudio                 // 二进制音频，含起始字节位置和非空负载。
-	V2InputEnd                   // 输入最终位置；不代表识别或连接结束。
-	V2InputResultAck             // 客户端已连续应用的结果位置。
+	V2InputInvalid      V2InputKind = iota
+	V2InputAudio                    // 二进制音频，含起始字节位置和非空负载。
+	V2InputEnd                      // 输入最终位置；不代表识别或连接结束。
+	V2InputResultAck                // 客户端已连续应用的结果位置。
+	V2InputCompletedAck             // 客户端整场确认，包含最终音频位置和最后结果序号。
 )
 
 // V2Input 是一条已完成线格式校验的消息，不代表业务已接纳。
 type V2Input struct {
 	Kind    V2InputKind // 指定下面哪些字段有效。
-	Offset  uint64      // audio 的起点或 end 的最终位置。
+	Offset  uint64      // audio 起点或 end/completed_ack 最终位置。
 	Payload []byte      // 仅 audio；借用原数据，不得修改。
-	Seq     uint64      // 仅 result_ack；累计已应用位置。
+	Seq     uint64      // result_ack 已应用位置，completed_ack 最后序号。
 }
 
 // v2ControlEnvelope 保留原始 type，以区分字段缺失、null 和非字符串。
@@ -62,7 +63,7 @@ func DecodeV2Audio(data []byte) (V2Input, error) {
 	}, nil
 }
 
-// DecodeV2Control 解码一个完整文本消息；只接受 end/result_ack。
+// DecodeV2Control 解码一个完整文本消息；接受 end/result_ack/completed_ack。
 // data 必须只有一个 JSON 对象；位置必须是可解析为 uint64 的十进制字符串。
 // 未知字段忽略，同名字段沿用 encoding/json 的后值覆盖规则。
 func DecodeV2Control(data []byte) (V2Input, error) {
@@ -87,6 +88,8 @@ func DecodeV2Control(data []byte) (V2Input, error) {
 
 	case MessageTypeResultAck:
 		return decodeV2ResultAck(raw)
+	case MessageTypeCompletedAck:
+		return decodeV2CompletedAck(raw)
 
 	default:
 		return V2Input{}, fmt.Errorf(

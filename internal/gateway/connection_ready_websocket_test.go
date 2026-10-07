@@ -96,7 +96,8 @@ func TestConnectionReadyWebSocketResumeAfterEndWithAppliedResults(t *testing.T) 
 	if uploads.Load() != 1 || halfCloses.Load() != 1 {
 		t.Fatal("recovery repeated original Worker input or CloseSend", uploads.Load(), halfCloses.Load())
 	}
-	if err := f.session.requestClose(ctx); err != nil {
+	readCompletionNetwork(t, ctx, client2, 2, 2, 2)
+	if err := client2.Write(ctx, websocket.MessageText, []byte(`{"type":"completed_ack","finalOffset":"2","lastSeq":"2"}`)); err != nil {
 		t.Fatal(err)
 	}
 	select {
@@ -104,7 +105,7 @@ func TestConnectionReadyWebSocketResumeAfterEndWithAppliedResults(t *testing.T) 
 	case <-ctx.Done():
 		t.Fatal("managed cleanup did not finish")
 	}
-	if f.err != nil || f.worker.input != nil || f.worker.results != nil || server1.closes.Load() != 1 || server2.closes.Load() != 1 {
+	if !f.worker.completion.acknowledged || f.err != nil || f.worker.input != nil || f.worker.results != nil || server1.closes.Load() != 1 || server2.closes.Load() != 1 {
 		t.Fatal("recovered retaining session did not release owned resources", f.err)
 	}
 }

@@ -148,7 +148,8 @@ func TestConnectionAttachmentWebSocketResumeOriginalWorker(t *testing.T) {
 		t.Fatal("normal Worker completion not observed")
 	}
 	writeManagedInput(t, ctx, client2, server2, websocket.MessageText, []byte(`{"type":"result_ack","seq":"2"}`), 6)
-	if err := f.session.requestClose(ctx); err != nil {
+	readCompletionNetwork(t, ctx, client2, 2, 4, 2)
+	if err := client2.Write(ctx, websocket.MessageText, []byte(`{"type":"completed_ack","finalOffset":"4","lastSeq":"2"}`)); err != nil {
 		t.Fatal(err)
 	}
 	select {
@@ -156,7 +157,7 @@ func TestConnectionAttachmentWebSocketResumeOriginalWorker(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal("managed runner cleanup did not finish")
 	}
-	if f.err != nil || f.session.resume != originalResume || server1.closes.Load() != 1 || server2.closes.Load() != 1 || f.worker.input != nil || f.worker.results != nil {
+	if !f.worker.completion.acknowledged || f.err != nil || f.session.resume != originalResume || server1.closes.Load() != 1 || server2.closes.Load() != 1 || f.worker.input != nil || f.worker.results != nil {
 		t.Fatal("final owned resources or outcome incorrect", f.err)
 	}
 	select {

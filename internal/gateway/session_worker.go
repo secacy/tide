@@ -65,6 +65,7 @@ type sessionWorker struct {
 	uploader        *workerUploader     // 唯一 Send/CloseSend 任务。
 	receiver        *workerReceiver     // 唯一 Recv 任务。
 	delivery        resultDeliveryState // 只由 runCoordinator 修改。offeredSeq 跨连接代次保留，其余字段描述当前代投递状态。
+	completion      completionState     // 协调者独占；正常完成发送授权与整场确认事实。
 	phase           sessionWorkerPhase  // 计算成功只推进一次到 retaining。
 	dispatchedBytes uint64              // 已交付 uploader 的音频末端，可能仍在 Send 中。
 	processedBytes  uint64              // Worker 合法累计处理位置。
