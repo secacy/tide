@@ -1,6 +1,6 @@
 # 第六阶段：先发送 ready，再投递结果
 
-日期：2026-10-07。状态：设计与实现指导，等待开发者实现；没有新增运行或测试成果。
+日期：2026-10-07。状态：已实现并验收 ready 在先的内部连接输出；公开握手与客户端恢复仍待接入。设计和最终验收分别记录如下。
 
 ## 能力目标与当前位置
 
@@ -129,3 +129,38 @@ func (w *resultWriter) runWithReady(ctx context.Context) resultWriterExit
 - 旧组件测试继续只测结果部件；managed connection 的测试必须显式消费并检查 ready，不能不分消息类型地跳过首帧来凑通过。
 
 验收关注消息顺序、位置正确性与失败后的资源/数据归属。不以新增测试数包装成恢复耗时或业务吞吐改进；尚未完成公开握手、持续音频确认、整场完成确认或客户端自动恢复。
+
+## 实现评审与验收（2026-10-07）
+
+开发者新增 ReadyMessage、connectionReady 值快照及查询命令，在现有 writer 中以 runWithReady 先同步写 ready，再进入原结果循环；attachment 的唯一 writer goroutine 使用新入口。助手核对实际代码，没有发现需要开发者修正的核心问题；补齐控制命令/回复及写方法注释、格式，编写测试并适配已有 managed 网络测试。未代改核心业务或并发逻辑。
+
+### 已验证的行为
+
+- 线格式中 0、1、2^53+1 和 MaxUint64 保持精确字符串，false/0 字段不省略。首次、正常输入/end、结果在途授权、累计确认、Worker retaining 和恢复后的快照字段正确；先前取得的值不会随会话变化。查询不修改交付授权、保留结果、代次或期限；无 Worker、detached、错误/零代次、请求取消、关闭和到期均拒绝且返回零值。
+- 在真正 receiver 已保存两条结果之后启动 writer，首条仍为 ready；受控阻塞其 Write 时 offeredSeq/inFlightSeq/cursor 均为 0，协调者仍能处理 audio/end 和新的快照查询。ready 写成功后结果才按 seq=1、2 投递，本代仅发送一次 ready。
+- ready 的传输失败、写期限、连接取消、逻辑取消、控制结束、启动前取消或附着资格失效不会进入结果循环。仍有效的逻辑会话保留原结果且没有取得结果授权。Write 被取消/到期但实际仍未返回时，任务不提前报告退出；迟到的 nil 返回也不当作成功。
+- 在实际 managed 运行器中，前两代先后 ready 传输失败或超时：安装已成功的新代次不会回滚，两条连接各由拥有者关闭一次，原 Worker 及原结果保留。第 3 代先 ready，再交付相同的 seq=1 原结果，最后共同清理。
+- 受控 ready Write 保持阻塞时，合法 end 与 Worker EOF 仍推进到 retaining，固定 100ms 保留期限正常触发。controlDone 关闭并实际调用 socket 清理，但运行器仍等待 Write 返回，缓冲和原结果不提前释放；解除阻塞后以 errResultRetentionExpired 返回。100ms 是虚拟时钟下的测试配置，不是实测恢复或资源释放耗时。
+
+### 真实网络组合
+
+已有两项真实 WebSocket 测试明确消费并校验 ready，没有盲目跳过首帧：原 Worker 保留/音频去重/结果重放场景中，两代先后 ready；第 2 代的 nextOffset=2、ackedResultSeq=0，随后仍为原 seq=1。协议违规场景在 ready 后输入非法 end，仍结束整场并清理。
+
+新增第三项真实网络场景：同一 Worker 接纳 `ab`、合法 end、两条识别结果及正常 EOF；客户端断开后经内部候选命令以 appliedSeq=1 恢复。第 2 代的首帧 ready 保持 ID/token 不变、generation=2、nextOffset=2、inputEnded=true、ackedResultSeq=1，紧随其后只有尚未确认的原 seq=2 尾部。重复 end 不产生额外 CloseSend；原 Worker 的音频 Send 和 CloseSend 均恰好 1 次。最终两条 socket 各关闭一次，运行器返回前任务和缓冲清理完成。
+
+以上测试调用可信内部候选入口，没有公开 start/resume 握手或自动重连客户端；Worker 为受控替身，WebSocket/TCP 为真实本机连接。不将正确性证据包装为真实 ASR 质量、恢复率、恢复耗时或容量结论。
+
+### 验证记录
+
+第一轮新增受控测试通过；补齐期限组合与网络场景后，统一执行：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race ./internal/gateway ./internal/wsprotocol \
+  -run '^Test(ConnectionAttachment|SessionConnections|ConnectionReady|ReadyMessage|SessionReady|ResultWriterReady|V2Input|ConnectionReader|ResultWriterTask|ResultWriterWebSocket|SequencedResultMessage|ResultWrite|SessionProgressIntegration|SessionAudioBacklogFailure|ResumeState|SessionIdentity|SessionRegistry|SessionControl|AudioInput|WorkerUploader|SessionWorker|ResultBuffer|WorkerReceiver|SessionResults|DecodeWorkerResponse|SendWithTimeout|ResumableSession)' \
+  -count=1 -timeout=45s -json
+```
+
+本步新增 **9 个顶层/27 个叶级场景全部通过**；相关两包为 **223 个顶层/668 个叶级：667 通过、0 失败、1 显式实验跳过**，未报告数据竞争。跳过 TestResultWriteTimeoutExperiment（需显式开启）；上轮已有网络测试此次实际复验并通过。本机原始输出 `/private/tmp/tide-ready-unit-review.jsonl`、`/private/tmp/tide-ready-accepted.jsonl` 为临时验证记录，未纳入 Git。
+
+本步接受的能力是 ready 在结果授权/投递之前完成输出，以及失败后保留既有所有权、期限和恢复数据规则。后续仍需在唯一输出任务中接持续音频接纳确认和整场终态投递/确认，再组合公开握手、注册表/准入退出所有权、v2 空闲保护及客户端有限重放。

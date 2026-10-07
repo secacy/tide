@@ -172,7 +172,7 @@ func (w *resultWriter) run(ctx context.Context) resultWriterExit {
 	}
 }
 
-// writeMessage 同步写入已经编码的一条文本消息。
+// writeMessage 同步写入已经编码的一条连接文本消息（ready 或 result）。
 // 每次建立独立期限，返回前读取该期限的状态，再取消计时资源。
 // 父 ctx 取消优先，其次本次超时 ErrResultWriteTimeout，最后保留 Write 原始错误。
 // 不启动另一个 goroutine 竞速超时；须等实际 Write 返回才结束调用。
@@ -268,4 +268,71 @@ func (w *resultWriter) classifyControlError(
 	}
 
 	return w.controlExit(err)
+}
+
+// runWithReady 是已接管连接唯一写任务的入口，只运行一次。
+// ctx 属于本代连接，继承逻辑会话生命周期。
+// 先发送 ready，成功后同步进入已有结果循环。
+// 不启动额外 goroutine，不关闭连接或自行 detach。
+func (w *resultWriter) runWithReady(ctx context.Context) resultWriterExit {
+	if ctx == nil {
+		panic("gateway: nil result writer context")
+	}
+
+	if cause := w.stopCause(ctx); cause != nil {
+		return w.stoppedExit(cause)
+	}
+
+	ready, err := w.config.session.requestConnectionReady(
+		ctx,
+		w.config.generation,
+	)
+	if err != nil {
+		return w.classifyControlError(ctx, err)
+	}
+
+	// 快照命令已经完成，但连接可能在此时失去资格。
+	// 不能在已经观察到停止以后继续写 ready。
+	if cause := w.stopCause(ctx); cause != nil {
+		return w.stoppedExit(cause)
+	}
+
+	message := wsprotocol.ReadyMessage{
+		Type:           wsprotocol.MessageTypeReady,
+		SessionID:      ready.sessionID,
+		ResumeToken:    ready.resumeToken,
+		Generation:     ready.generation,
+		NextOffset:     ready.nextOffset,
+		InputEnded:     ready.inputEnded,
+		AckedResultSeq: ready.ackedResultSeq,
+	}
+
+	data, err := json.Marshal(message)
+	if err != nil {
+		// 不要把 message 或 token 放进错误文本。
+		return w.controlExit(
+			fmt.Errorf("marshal ready message: %w", err),
+		)
+	}
+
+	// 编码本身不修改状态，但编码期间生命周期仍可能结束。
+	if cause := w.stopCause(ctx); cause != nil {
+		return w.stoppedExit(cause)
+	}
+
+	if err := w.writeMessage(ctx, data); err != nil {
+		// 生命周期停止优先于网络错误分类，与普通 result Write 一致。
+		if cause := w.stopCause(ctx); cause != nil {
+			return w.stoppedExit(cause)
+		}
+
+		return resultWriterExit{
+			kind: writerWriteFailed,
+			err:  err,
+		}
+	}
+
+	// ready 已经同步写成功。
+	// run 的第一步会再次检查停止状态，然后才 requestResult。
+	return w.run(ctx)
 }

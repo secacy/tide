@@ -98,6 +98,7 @@ func TestConnectionAttachmentWebSocketResumeOriginalWorker(t *testing.T) {
 	originalResume := f.session.resume // 构造约定保持 resume 指针不变，提交应覆盖其值。
 	startManagedFixture(t, f, server1)
 	waitManagedRead(t, ctx, server1, 1)
+	readConnectionReadyNetwork(t, ctx, client1, f, 1, 0, 0, false)
 	writeManagedInput(t, ctx, client1, server1, websocket.MessageBinary, readerAudioFrame(0, "ab"), 2)
 	writeManagedInput(t, ctx, client1, server1, websocket.MessageBinary, readerAudioFrame(0, "ab"), 3)
 	sendWriterNetworkStep(t, ctx, feed, workerReadStep{response: &asrv1.StreamingRecognizeResponse{SegmentId: "s", Text: "first"}})
@@ -121,6 +122,7 @@ func TestConnectionAttachmentWebSocketResumeOriginalWorker(t *testing.T) {
 	}
 	cancelHandshake() // 接纳之后取消请求，不能取消已经转交的连接。
 	waitManagedRead(t, ctx, server2, 1)
+	readConnectionReadyNetwork(t, ctx, client2, f, 2, 2, 0, false)
 	readSequencedNetworkResult(t, ctx, client2, first)
 	writeManagedInput(t, ctx, client2, server2, websocket.MessageText, []byte(`{"type":"result_ack","seq":"1"}`), 2)
 	writeManagedInput(t, ctx, client2, server2, websocket.MessageBinary, readerAudioFrame(0, "ab"), 3)
@@ -169,6 +171,7 @@ func TestConnectionAttachmentWebSocketProtocolFailureTerminates(t *testing.T) {
 	f, _ := newDuplexWorkerFixture(t, nil, nil)
 	startManagedFixture(t, f, server)
 	waitManagedRead(t, ctx, server, 1)
+	readConnectionReadyNetwork(t, ctx, client, f, 1, 0, 0, false)
 	if err := client.Write(ctx, websocket.MessageText, []byte(`{"type":"end"}`)); err != nil {
 		t.Fatal(err)
 	}

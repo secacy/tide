@@ -4,10 +4,11 @@ type MessageType string
 
 const (
 	MessageTypeStart     MessageType = "start"
+	MessageTypeReady     MessageType = "ready"
 	MessageTypeEnd       MessageType = "end"
 	MessageTypeResult    MessageType = "result"
-	MessageTypeError     MessageType = "error"
 	MessageTypeResultAck MessageType = "result_ack"
+	MessageTypeError     MessageType = "error"
 )
 
 // StartMessage 在音频开始发送前发送

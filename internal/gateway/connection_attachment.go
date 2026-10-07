@@ -196,7 +196,7 @@ func (a *connectionAttachment) run() {
 	}()
 
 	go func() {
-		exit := a.writer.run(a.ctx)
+		exit := a.writer.runWithReady(a.ctx)
 
 		a.events <- connectionEvent{
 			generation: a.generation,
