@@ -187,11 +187,11 @@ func v2RequireIdle(t *testing.T, f *v2EntryFixture) {
 	}
 }
 
-func v2ExpectError(t *testing.T, f *v2EntryFixture, c *websocket.Conn, text string) {
+func v2ExpectError(t *testing.T, f *v2EntryFixture, c *websocket.Conn, code wsprotocol.V2ErrorCode, text string) {
 	t.Helper()
-	var msg wsprotocol.ErrorMessage
+	var msg wsprotocol.V2ErrorMessage
 	v2ReadJSON(t, f.ctx, c, &msg)
-	if msg.Type != wsprotocol.MessageTypeError || msg.Message != text {
+	if msg.Type != wsprotocol.MessageTypeError || msg.Code != code || msg.Message != text {
 		t.Fatalf("unexpected error: %+v", msg)
 	}
 	f.waitReturn(t)
@@ -227,7 +227,7 @@ func TestV2EntryNetworkLifecycle(t *testing.T) {
 				// 第二场新建不能消耗第二个逻辑名额或选择另一个 Worker。
 				other := f.dial(t, "/v2/asr")
 				v2WriteJSON(t, f.ctx, other, wsprotocol.StartMessage{Type: wsprotocol.MessageTypeStart, Version: "v2"})
-				v2ExpectError(t, f, other, "session limit exceeded")
+				v2ExpectError(t, f, other, wsprotocol.V2ErrorSessionLimit, "session limit exceeded")
 				_ = c.CloseNow()
 				// 未完成旧连接收割时是明确 busy；每次重试是一条新连接。
 				for {
@@ -235,7 +235,7 @@ func TestV2EntryNetworkLifecycle(t *testing.T) {
 					v2WriteJSON(t, f.ctx, c, wsprotocol.ResumeMessage{Type: wsprotocol.MessageTypeResume, Version: "v2", SessionID: ready.SessionID, ResumeToken: ready.ResumeToken, AppliedSeq: 0})
 					var raw json.RawMessage
 					v2ReadJSON(t, f.ctx, c, &raw)
-					var tag wsprotocol.ErrorMessage
+					var tag wsprotocol.V2ErrorMessage
 					if err := json.Unmarshal(raw, &tag); err != nil {
 						t.Fatal(err)
 					}
@@ -251,7 +251,7 @@ func TestV2EntryNetworkLifecycle(t *testing.T) {
 						ready = resumed
 						break
 					}
-					if tag.Type != wsprotocol.MessageTypeError || tag.Message != "session busy" {
+					if tag.Type != wsprotocol.MessageTypeError || tag.Code != wsprotocol.V2ErrorSessionBusy || tag.Message != "session busy" {
 						t.Fatalf("resume rejected: %s", raw)
 					}
 					_ = c.CloseNow()
@@ -294,7 +294,11 @@ func TestV2EntryBadHandshakeAndAuthentication(t *testing.T) {
 			if err := c.Write(f.ctx, websocket.MessageText, []byte(tc.message)); err != nil {
 				t.Fatal(err)
 			}
-			v2ExpectError(t, f, c, tc.want)
+			code := wsprotocol.V2ErrorInvalidHandshake
+			if tc.name == "unknown_id" {
+				code = wsprotocol.V2ErrorResumeUnavailable
+			}
+			v2ExpectError(t, f, c, code, tc.want)
 			v2RequireIdle(t, f)
 			if f.pool.picks.Load() != 0 || backend.calls.Load() != 0 {
 				t.Fatal("bad request started a Worker")
@@ -312,9 +316,11 @@ func TestV2EntryBadHandshakeAndAuthentication(t *testing.T) {
 			f.waitReturn(t)
 			s, _ := f.g.registry.lookup(ready.SessionID)
 			want, token, applied := "session busy", ready.ResumeToken, uint64(0)
+			code := wsprotocol.V2ErrorSessionBusy
 			if mode == "wrong_token" {
 				token = strings.Repeat("x", resumeTokenLength)
 				want = "resume unavailable"
+				code = wsprotocol.V2ErrorResumeUnavailable
 			}
 			if mode == "ack_ahead" || mode == "expired" {
 				_ = c.CloseNow()
@@ -327,23 +333,25 @@ func TestV2EntryBadHandshakeAndAuthentication(t *testing.T) {
 					}
 					v2RequireIdle(t, f)
 					want = "resume unavailable"
+					code = wsprotocol.V2ErrorResumeUnavailable
 				} else {
 					applied, want = 1, "invalid resume position"
+					code = wsprotocol.V2ErrorInvalidResumePosition
 					// 等到后续候选不再 busy，再断言范围拒绝。
 				}
 			}
 			for {
 				next := f.dial(t, "/v2/asr")
 				v2WriteJSON(t, f.ctx, next, wsprotocol.ResumeMessage{Type: wsprotocol.MessageTypeResume, Version: "v2", SessionID: ready.SessionID, ResumeToken: token, AppliedSeq: applied})
-				var msg wsprotocol.ErrorMessage
+				var msg wsprotocol.V2ErrorMessage
 				v2ReadJSON(t, f.ctx, next, &msg)
 				f.waitReturn(t)
-				if mode == "ack_ahead" && msg.Message == "session busy" {
+				if mode == "ack_ahead" && msg.Code == wsprotocol.V2ErrorSessionBusy {
 					_ = next.CloseNow()
 					time.Sleep(time.Millisecond)
 					continue
 				}
-				if msg.Type != wsprotocol.MessageTypeError || msg.Message != want {
+				if msg.Type != wsprotocol.MessageTypeError || msg.Code != code || msg.Message != want {
 					t.Fatalf("got %+v want %s", msg, want)
 				}
 				break
@@ -441,10 +449,12 @@ func TestV2EntryOpenCancellationAndFailure(t *testing.T) {
 				f.waitReturn(t)
 			} else {
 				want := "worker unavailable"
+				code := wsprotocol.V2ErrorWorkerUnavailable
 				if mode == "entry_timeout" {
 					want = "entry timeout"
+					code = wsprotocol.V2ErrorEntryTimeout
 				}
-				v2ExpectError(t, f, c, want)
+				v2ExpectError(t, f, c, code, want)
 			}
 			v2RequireIdle(t, f)
 			if rpcCtx.Err() == nil || f.pool.picks.Load() != 1 {
@@ -495,7 +505,7 @@ func TestV2EntrySharedV1Budget(t *testing.T) {
 			} else {
 				next := f.dial(t, "/v2/asr")
 				v2WriteJSON(t, f.ctx, next, wsprotocol.StartMessage{Type: wsprotocol.MessageTypeStart, Version: "v2"})
-				v2ExpectError(t, f, next, "session limit exceeded")
+				v2ExpectError(t, f, next, wsprotocol.V2ErrorSessionLimit, "session limit exceeded")
 			}
 			if f.pool.picks.Load() != 1 || f.g.Snapshot().ActiveSessions != 1 {
 				t.Fatal("mixed versions exceeded logical budget")
@@ -535,7 +545,7 @@ func TestV2EntryUpgradeAndProtocolFailures(t *testing.T) {
 					if err := c.Write(f.ctx, websocket.MessageBinary, []byte("audio")); err != nil {
 						t.Fatal(err)
 					}
-					v2ExpectError(t, f, c, "invalid handshake")
+					v2ExpectError(t, f, c, wsprotocol.V2ErrorInvalidHandshake, "invalid handshake")
 				} else {
 					_ = c.Write(f.ctx, websocket.MessageText, []byte(strings.Repeat("x", 256)))
 					_, _, err := c.Read(f.ctx)

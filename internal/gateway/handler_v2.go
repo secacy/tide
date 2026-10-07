@@ -46,7 +46,7 @@ func (g *Gateway) ServeV2HTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := g.gate.tryEnterHandshake(); err != nil {
-		http.Error(w, v2EntryErrorText(err), http.StatusServiceUnavailable)
+		writeV2EntryHTTPError(w, err)
 		return
 	}
 	defer g.gate.leaveHandshake()
@@ -59,8 +59,15 @@ func (g *Gateway) ServeV2HTTP(w http.ResponseWriter, r *http.Request) {
 		cancelEntry()
 		cancelBase(nil)
 	}()
-	if entryCtx.Err() != nil || g.ctx.Err() != nil {
-		http.Error(w, "service is stopping", http.StatusServiceUnavailable)
+	if g.ctx.Err() != nil {
+		writeV2EntryHTTPError(w, errGatewayStopping)
+		return
+	}
+	if r.Context().Err() != nil {
+		return
+	}
+	if cause := context.Cause(entryCtx); cause != nil {
+		writeV2EntryHTTPError(w, cause)
 		return
 	}
 
@@ -94,7 +101,7 @@ func (g *Gateway) ServeV2HTTP(w http.ResponseWriter, r *http.Request) {
 		// 仅未交接的入口写失败提示；期限已到仍有独立的有界收尾预算。
 		if g.ctx.Err() == nil && r.Context().Err() == nil && websocket.CloseStatus(err) == -1 {
 			writeCtx, cancel := context.WithTimeout(g.ctx, g.cfg.ResultWriteTimeout)
-			data, _ := json.Marshal(wsprotocol.ErrorMessage{Type: wsprotocol.MessageTypeError, Message: v2EntryErrorText(err)})
+			data, _ := json.Marshal(v2EntryError(err))
 			_ = conn.Write(writeCtx, websocket.MessageText, data)
 			cancel()
 		}
@@ -204,31 +211,4 @@ func (g *Gateway) runV2Session(s *resumableSession, worker *sessionWorker, initi
 	_ = s.runWithConnection(g.ctx, time.Now, worker, initial)
 	g.registry.remove(s.identity.id, s)
 	g.tracker.leave()
-}
-
-// v2EntryErrorText 将内部原因映射为固定公开文本，不包含报文、凭据或后端错误。
-// 这是实验入口分类，后续客户端重试协议再收敛为机器可读错误码。
-func v2EntryErrorText(err error) string {
-	switch {
-	case errors.Is(err, errGatewayStopping):
-		return "service is stopping"
-	case errors.Is(err, errHandshakeLimit):
-		return "handshake limit exceeded"
-	case errors.Is(err, errSessionLimit):
-		return "session limit exceeded"
-	case errors.Is(err, ErrHandshakeTimeout), errors.Is(err, context.DeadlineExceeded):
-		return "entry timeout"
-	case errors.Is(err, wsprotocol.ErrInvalidV2Handshake), errors.Is(err, websocket.ErrMessageTooBig):
-		return "invalid handshake"
-	case errors.Is(err, errResumeUnavailable), errors.Is(err, errResumeClosed), errors.Is(err, errResumeExpired), errors.Is(err, errResumeGenerationExhausted):
-		return "resume unavailable"
-	case errors.Is(err, errResumeAlreadyAttached), errors.Is(err, errConnectionRetiring):
-		return "session busy"
-	case errors.Is(err, errResultReplayGap), errors.Is(err, errResultAckAhead):
-		return "invalid resume position"
-	case errors.Is(err, errV2WorkerUnavailable):
-		return "worker unavailable"
-	default:
-		return "internal error"
-	}
 }

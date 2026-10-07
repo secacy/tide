@@ -73,7 +73,7 @@ func TestInputProgressPublicNetwork(t *testing.T) {
 				var raw json.RawMessage
 				v2ReadJSON(t, f.ctx, c, &raw)
 				f.waitReturn(t)
-				var tag wsprotocol.ErrorMessage
+				var tag wsprotocol.V2ErrorMessage
 				if err := json.Unmarshal(raw, &tag); err != nil {
 					t.Fatal(err)
 				}
@@ -88,7 +88,7 @@ func TestInputProgressPublicNetwork(t *testing.T) {
 					ready = resumed
 					break
 				}
-				if tag.Type != wsprotocol.MessageTypeError || tag.Message != "session busy" {
+				if tag.Type != wsprotocol.MessageTypeError || tag.Code != wsprotocol.V2ErrorSessionBusy || tag.Message != "session busy" {
 					t.Fatal(string(raw))
 				}
 				_ = c.CloseNow()

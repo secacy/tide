@@ -1,6 +1,6 @@
 # 第六阶段：v2 入口错误与客户端判断边界
 
-日期：2026-10-07。状态：方案与实现指导，待开发者实现；本轮仅核对代码并维护文档，尚无新增实现或测试成果。
+日期：2026-10-07（设计）；2026-10-08（实现与验收）。状态：开发者明确委托助手实现；稳定入口错误码及公开接线已验收，客户端判断与自动恢复仍待实现。下文保留设计依据，末尾记录验收结果。
 
 ## 能力目标与当前位置
 
@@ -121,3 +121,36 @@ writeV2EntryHTTPError 设置 `Content-Type: application/json; charset=utf-8`，�
 - 原有 v1 错误格式、公开恢复和完成闭环回归。
 
 初始 ready 丢失后的自动重试、completed 记录与 ACK 丢失的客户端决策，将在客户端实现时用故障注入验收。本步的协议与服务端测试通过后，只能标记错误分类接通，不能记作自动恢复能力或恢复成功率。
+
+## 实现与验收（2026-10-08）
+
+按明确委托完成已有错误类型/映射骨架，接通 handler 并补注释与测试。新增 [error_v2.go](../../internal/wsprotocol/error_v2.go) 的 11 类 V2ErrorCode；[entry_error_v2.go](../../internal/gateway/entry_error_v2.go) 统一固定 code/message，显式建流错误优先于通用 DeadlineExceeded。HTTP 拒绝返回 503 JSON；尚未交接的 WebSocket 失败沿用独立有界写入预算。升级前请求取消直接返回，与 Gateway 取消的 service_stopping 分类分开。
+
+删除旧文本映射，结果缺口独立返回 replay_gap，位置超前仍返回 invalid_resume_position。已有公开入口/输入进展网络测试迁移为同时检查 code 与 message，正常交接、恢复、尾部结果及 completed_ack 清理继续走原拥有者。
+
+新增 [entry_error_v2_test.go](../../internal/gateway/entry_error_v2_test.go)、[entry_error_v2_websocket_test.go](../../internal/gateway/entry_error_v2_websocket_test.go) 和 [error_v2_test.go](../../internal/wsprotocol/error_v2_test.go)，验证如下：
+
+| 证据 | 结果与范围 |
+| --- | --- |
+| 18 个内部原因，各直接及包装路径 | 36 叶级全通过；覆盖 11 个公开类别及统一恢复不可用分支，未知错误/包装详情不进入固定响应 |
+| 4 类明确入口错误同时包含 DeadlineExceeded | 优先保持各入口类别，Worker 下游超时不误报 entry_timeout |
+| HTTP 格式、满额/停止/两种取消、写入失败 | 8 叶级全通过；503 的 Content-Type 与三字段 JSON 正确，请求取消不写停服提示，失败写入不追加响应或泄漏名额 |
+| v2 错误线格式与 v1 兼容 | 2 叶级全通过；v2 固定 type/code/message，v1 仍仅 type/message |
+| 真实 HTTP 升级拒绝 | 握手满额和停服两个网络场景均得到 503 JSON，不启动 Worker |
+| 真实 WebSocket + TCP gRPC 的认证拒绝 | 缺失会话与错误 token 的响应逐字相同；两次拒绝后原连接仍上传 ab 并完成，Pick=1、RPC=1 |
+| 真实 WebSocket + TCP gRPC 的非法恢复位置 | replay_gap 与 invalid_resume_position 各一场；正确位置重试仍 generation=2、nextOffset=2、ackedResultSeq=1，身份不变，Pick=1、RPC=1，后端只收到 ab、cd，确认后注册与计数归零 |
+| 真实 WebSocket 的建流失败 | 下游 DeadlineExceeded 与不透明后端错误均返回 worker_unavailable，不公开原错误；失败启动 RPC 与名额归零。此处 gRPC 建流由可控替身提供 |
+| 真实 WebSocket 对端在建流失败回复前关闭 | 服务端退出并取消失败 RPC，临时握手/逻辑计数和注册归零；不要求对端收到应用错误帧，也不推断底层 Write 是否曾被本机缓冲接纳 |
+
+新测试共 12 顶层 / 58 叶级，包括 8 个新增真实 HTTP/WebSocket 网络场景，其中 3 个经过真实 TCP gRPC 的认证/非法位置组合。测试数量表示已覆盖行为，不是业务恢复成功率。
+
+验证记录：
+
+- 首轮受控分类与 HTTP 测试：5 顶层 / 48 叶级全通过。
+- 加入线格式、网络组合及既有公开入口/输入进展回归的定向运行：19 顶层 / 80 叶级全通过，其中本步新增 58 叶级。以上均一次通过，无需修正失败断言或生产逻辑。
+- 最终全项目 `go test -race -p 1 ./... -count=1 -timeout=90s -json`：636 顶层 / 2401 叶级，2389 通过、0 失败、12 既有显式实验跳过，无数据竞争报告。本步新增 58 叶级全部通过。叶级计数不重复计入带子测试的父项。
+- 环境变量为 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off`；定向原始 JSON 临时记录 `/private/tmp/tide-entry-errors-focused.jsonl`，最终完整记录 `/private/tmp/tide-entry-errors-all.jsonl`。可按命令和源码复现，包耗时不作为业务指标。
+
+这一步提供自动恢复所需的稳定入口判断依据。消息超限/读取超时仍可能仅关闭连接；成功交接后的运行中终止尚无新增错误帧。原有协调者/期限回归继续验证候选失败不获得连接、不同代次隔离及实际清理；本步没有改变服务器恢复截止点。
+
+首次 ready 丢失、完成事实记录与 ACK 丢失的客户端决策仍只是上述契约，尚无客户端故障注入证据；start 幂等和清理后终态查询未实现。下一步进入存活客户端的有限音频重放、连续结果应用与有总预算的自动重连，再按故障种类开展实验。公开 v2 实验开关仍默认关闭。
