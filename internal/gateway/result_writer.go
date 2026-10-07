@@ -75,6 +75,14 @@ func newResultWriter(config resultWriterConfig) (*resultWriter, error) {
 // 连接拥有者还须在 controlDone 关闭时取消本代 ctx，并负责关闭连接和等待读写任务。
 // 正常结果发送结束仍保留连接，后续终态投递/确认由连接输出流程继续完成。
 func (w *resultWriter) run(ctx context.Context) resultWriterExit {
+	return w.runLoop(ctx, nil)
+}
+
+// runLoop 串行发送输入累计确认和已经授权的结果。
+// lastInput 仅由当前写任务访问；非 nil 时初值来自已成功写出的 ready，
+// nil 保留独立结果部件入口的行为。生产附着始终通过 runWithReady 启用确认。
+// ctx 为本代连接生命周期；结果写成功仍使用 controlCtx 汇报。
+func (w *resultWriter) runLoop(ctx context.Context, lastInput *inputAcceptance) resultWriterExit {
 	if ctx == nil {
 		panic("gateway: nil result writer context")
 	}
@@ -95,6 +103,35 @@ func (w *resultWriter) run(ctx context.Context) resultWriterExit {
 		// requestResult 可能已经建立 inFlight 授权。
 		// 此后发现连接停止时不能自行撤销授权；
 		// 连接拥有者会通过 detach/close 完成代次清理。
+		if cause := w.stopCause(ctx); cause != nil {
+			return w.stoppedExit(cause)
+		}
+
+		if lastInput != nil && *lastInput != offer.input {
+			message := wsprotocol.AudioAckMessage{
+				Type:       wsprotocol.MessageTypeAudioAck,
+				Generation: w.config.generation,
+				NextOffset: offer.input.nextOffset,
+				InputEnded: offer.input.inputEnded,
+			}
+			data, err := json.Marshal(message)
+			if err != nil {
+				return w.controlExit(fmt.Errorf("marshal audio acknowledgement: %w", err))
+			}
+			if cause := w.stopCause(ctx); cause != nil {
+				return w.stoppedExit(cause)
+			}
+			if err := w.writeMessage(ctx, data); err != nil {
+				if cause := w.stopCause(ctx); cause != nil {
+					return w.stoppedExit(cause)
+				}
+				return resultWriterExit{kind: writerWriteFailed, err: err}
+			}
+			// 只记录本次实际写出的快照；Write 期间的新输入留给下一轮。
+			// 本次 offer 可能已经借出结果，不能在 ACK 后直接 continue。
+			*lastInput = offer.input
+		}
+
 		if cause := w.stopCause(ctx); cause != nil {
 			return w.stoppedExit(cause)
 		}
@@ -172,7 +209,7 @@ func (w *resultWriter) run(ctx context.Context) resultWriterExit {
 	}
 }
 
-// writeMessage 同步写入已经编码的一条连接文本消息（ready 或 result）。
+// writeMessage 同步写入已经编码的一条连接文本消息（ready、audio_ack 或 result）。
 // 每次建立独立期限，返回前读取该期限的状态，再取消计时资源。
 // 父 ctx 取消优先，其次本次超时 ErrResultWriteTimeout，最后保留 Write 原始错误。
 // 不启动另一个 goroutine 竞速超时；须等实际 Write 返回才结束调用。
@@ -209,7 +246,7 @@ func (w *resultWriter) writeMessage(ctx context.Context, data []byte) error {
 	}
 
 	if err != nil {
-		return fmt.Errorf("write result message: %w", err)
+		return fmt.Errorf("write connection message: %w", err)
 	}
 
 	return nil
@@ -272,7 +309,7 @@ func (w *resultWriter) classifyControlError(
 
 // runWithReady 是已接管连接唯一写任务的入口，只运行一次。
 // ctx 属于本代连接，继承逻辑会话生命周期。
-// 先发送 ready，成功后同步进入已有结果循环。
+// 先发送 ready，成功后同步进入累计输入确认和结果循环。
 // 不启动额外 goroutine，不关闭连接或自行 detach。
 func (w *resultWriter) runWithReady(ctx context.Context) resultWriterExit {
 	if ctx == nil {
@@ -333,6 +370,7 @@ func (w *resultWriter) runWithReady(ctx context.Context) resultWriterExit {
 	}
 
 	// ready 已经同步写成功。
-	// run 的第一步会再次检查停止状态，然后才 requestResult。
-	return w.run(ctx)
+	// 用真正发出的 ready 初始化本代输入确认；不能重新查询后跳过未发送变化。
+	lastInput := inputAcceptance{nextOffset: ready.nextOffset, inputEnded: ready.inputEnded}
+	return w.runLoop(ctx, &lastInput)
 }

@@ -23,6 +23,16 @@ func readConnectionReadyNetwork(t *testing.T, ctx context.Context, client *webso
 	assertReadyMessage(t, decodeReadyMessage(t, typ, data), f, generation, offset, acked, ended)
 }
 
+// readAudioAckNetwork 消费并检查预期累计确认，不跳过其他应用消息。
+func readAudioAckNetwork(t *testing.T, ctx context.Context, client *websocket.Conn, generation, offset uint64, ended bool) {
+	t.Helper()
+	typ, data, err := client.Read(ctx)
+	if err != nil {
+		t.Fatal("read audio ACK", err)
+	}
+	decodeAudioAckMessage(t, typ, data, generation, offset, ended)
+}
+
 func TestConnectionReadyWebSocketResumeAfterEndWithAppliedResults(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -41,7 +51,9 @@ func TestConnectionReadyWebSocketResumeAfterEndWithAppliedResults(t *testing.T) 
 	waitManagedRead(t, ctx, server1, 1)
 	readConnectionReadyNetwork(t, ctx, client1, f, 1, 0, 0, false)
 	writeManagedInput(t, ctx, client1, server1, websocket.MessageBinary, readerAudioFrame(0, "ab"), 2)
+	readAudioAckNetwork(t, ctx, client1, 1, 2, false)
 	writeManagedInput(t, ctx, client1, server1, websocket.MessageText, []byte(`{"type":"end","finalOffset":"2"}`), 3)
+	readAudioAckNetwork(t, ctx, client1, 1, 2, true)
 	select {
 	case <-f.worker.uploader.done:
 	case <-ctx.Done():

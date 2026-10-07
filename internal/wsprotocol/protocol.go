@@ -9,6 +9,7 @@ const (
 	MessageTypeResult    MessageType = "result"
 	MessageTypeResultAck MessageType = "result_ack"
 	MessageTypeError     MessageType = "error"
+	MessageTypeAudioAck  MessageType = "audio_ack"
 )
 
 // StartMessage 在音频开始发送前发送

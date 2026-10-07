@@ -100,6 +100,7 @@ func TestConnectionAttachmentWebSocketResumeOriginalWorker(t *testing.T) {
 	waitManagedRead(t, ctx, server1, 1)
 	readConnectionReadyNetwork(t, ctx, client1, f, 1, 0, 0, false)
 	writeManagedInput(t, ctx, client1, server1, websocket.MessageBinary, readerAudioFrame(0, "ab"), 2)
+	readAudioAckNetwork(t, ctx, client1, 1, 2, false)
 	writeManagedInput(t, ctx, client1, server1, websocket.MessageBinary, readerAudioFrame(0, "ab"), 3)
 	sendWriterNetworkStep(t, ctx, feed, workerReadStep{response: &asrv1.StreamingRecognizeResponse{SegmentId: "s", Text: "first"}})
 	first := wsprotocol.SequencedResultMessage{Type: wsprotocol.MessageTypeResult, Seq: 1, SegmentID: "s", Text: "first"}
@@ -127,7 +128,9 @@ func TestConnectionAttachmentWebSocketResumeOriginalWorker(t *testing.T) {
 	writeManagedInput(t, ctx, client2, server2, websocket.MessageText, []byte(`{"type":"result_ack","seq":"1"}`), 2)
 	writeManagedInput(t, ctx, client2, server2, websocket.MessageBinary, readerAudioFrame(0, "ab"), 3)
 	writeManagedInput(t, ctx, client2, server2, websocket.MessageBinary, readerAudioFrame(2, "cd"), 4)
+	readAudioAckNetwork(t, ctx, client2, 2, 4, false)
 	writeManagedInput(t, ctx, client2, server2, websocket.MessageText, []byte(`{"type":"end","finalOffset":"4"}`), 5)
+	readAudioAckNetwork(t, ctx, client2, 2, 4, true)
 	select {
 	case <-f.worker.uploader.done:
 	case <-ctx.Done():

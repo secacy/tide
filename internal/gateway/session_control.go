@@ -303,7 +303,7 @@ func (s *resumableSession) runCoordinator(
 
 		// 即使没有新结果，写任务也必须知道 Worker 已经完成，
 		// 从而进入后续终态投递流程。
-		worker.notifyResultChange()
+		worker.notifyOutputChange()
 
 		armWakeTimer()
 	}
@@ -321,7 +321,7 @@ func (s *resumableSession) runCoordinator(
 
 		if detached && worker != nil {
 			worker.resetResultDelivery()
-			worker.notifyResultChange()
+			worker.notifyOutputChange()
 		}
 
 		if connections != nil &&
@@ -712,7 +712,7 @@ func (s *resumableSession) runCoordinator(
 				}
 
 				// 正在等待“下一条结果”的写任务需要重新查询。
-				worker.notifyResultChange()
+				worker.notifyOutputChange()
 
 			case workerReceiveProgress:
 				if err := worker.acknowledgeProgress(
@@ -855,7 +855,7 @@ func (s *resumableSession) runCoordinator(
 
 					// ACK 接纳、代次切换和游标重置作为一个协调事务
 					// 完成以后再统一通知。
-					worker.notifyResultChange()
+					worker.notifyOutputChange()
 				}
 
 				armWakeTimer()
@@ -1024,7 +1024,7 @@ func (s *resumableSession) runCoordinator(
 				*s.resume = probe
 
 				worker.resetResultDelivery()
-				worker.notifyResultChange()
+				worker.notifyOutputChange()
 
 				connections.current = attachment
 				connections.outputComplete = false
@@ -1171,6 +1171,10 @@ func (s *resumableSession) runCoordinator(
 					return err
 				}
 
+				if accepted {
+					worker.notifyOutputChange()
+				}
+
 				cmd.reply <- sessionControlResult{
 					accepted:   accepted,
 					nextOffset: worker.input.input.nextOffset,
@@ -1279,6 +1283,10 @@ func (s *resumableSession) runCoordinator(
 					armWakeTimer()
 				}
 
+				if accepted {
+					worker.notifyOutputChange()
+				}
+
 				cmd.reply <- sessionControlResult{
 					accepted:   accepted,
 					nextOffset: worker.input.input.nextOffset,
@@ -1349,7 +1357,7 @@ func (s *resumableSession) runCoordinator(
 				}
 
 				// inFlight 已经释放，下一条结果现在可能可以授权。
-				worker.notifyResultChange()
+				worker.notifyOutputChange()
 
 				cmd.reply <- sessionControlResult{
 					handled: true,
@@ -1391,7 +1399,7 @@ func (s *resumableSession) runCoordinator(
 
 				if advanced {
 					// ACK 可能推进 cursor，也会释放 resultBuffer 预算。
-					worker.notifyResultChange()
+					worker.notifyOutputChange()
 				}
 
 				cmd.reply <- sessionControlResult{

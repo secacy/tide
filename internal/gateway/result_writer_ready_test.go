@@ -68,7 +68,17 @@ func TestResultWriterReadyPrecedesExistingResults(t *testing.T) {
 					return context.Cause(ctx)
 				}
 			}
-			decodeWriterMessage(t, typ, data)
+			var tag struct {
+				Type wsprotocol.MessageType `json:"type"`
+			}
+			if err := json.Unmarshal(data, &tag); err != nil {
+				t.Error(err)
+			}
+			if tag.Type == wsprotocol.MessageTypeAudioAck {
+				decodeAudioAckMessage(t, typ, data, 1, 2, true)
+			} else {
+				decodeWriterMessage(t, typ, data)
+			}
 			return nil
 		}), time.Second)
 		ctx, cancel := context.WithCancelCause(f.lifeCtx)
@@ -94,6 +104,7 @@ func TestResultWriterReadyPrecedesExistingResults(t *testing.T) {
 		assertReadyMessage(t, ready, f, 1, 0, 0, false)
 		unblock()
 		synctest.Wait()
+		decodeAudioAckMessage(t, websocket.MessageText, <-messages, 1, 2, true)
 		for seq := uint64(1); seq <= 2; seq++ {
 			result := decodeWriterMessage(t, websocket.MessageText, <-messages)
 			if result.Seq != seq {
@@ -102,8 +113,8 @@ func TestResultWriterReadyPrecedesExistingResults(t *testing.T) {
 		}
 		feed <- workerReadStep{err: io.EOF}
 		run.assertExit(t, writerResultsComplete, 2, nil)
-		if calls.Load() != 3 {
-			t.Fatal("ready repeated within one generation")
+		if calls.Load() != 4 {
+			t.Fatal("ready or cumulative ACK repeated within one generation")
 		}
 		closeDeliveryFixture(t, f)
 	})

@@ -17,12 +17,13 @@ type resultDeliveryState struct {
 	offeredSeq  uint64        // 跨代次保留：曾授权交给内部写任务的最大连续序号。
 	cursor      uint64        // 当前代已写成功或已获应用确认的位置；下一次从此处读取。
 	inFlightSeq uint64        // 当前代已借出且未报告写成功的序号；0 表示没有。
-	changed     chan struct{} // 协调者独占关闭/替换；调用方仅等待。
+	changed     chan struct{} // 输入接纳或结果状态变化通知；协调者独占关闭/替换，调用方仅等待。
 }
 
 // resultOffer 是一次取结果操作的值快照。
 // available=true 时同时建立唯一写入授权，调用方负责写入或报告连接失效。
 // 字符串只读，确认释放缓冲后已经取得的值仍可使用。
+// input 与 changed 同时取得；没有结果时也可用于发送累计输入确认。
 type resultOffer struct {
 	result          retainedResult  // available=true 时有效；否则为零值。
 	available       bool            // 本次是否实际取得并授权了一条结果。
@@ -30,6 +31,7 @@ type resultOffer struct {
 	lastSeq         uint64          // 快照时最后已保存的结果序号。
 	ackedSeq        uint64          // 快照时已接纳的累计应用确认。
 	changed         <-chan struct{} // 一次性状态变化通知；唤醒后重新查询。
+	input           inputAcceptance // 本次查询时的输入接纳状态。
 }
 
 // offerResult 读取并授权 cursor 后紧邻的一条结果。
@@ -47,6 +49,10 @@ func (w *sessionWorker) offerResult() (resultOffer, error) {
 	}
 
 	offer := resultOffer{
+		input: inputAcceptance{
+			nextOffset: w.input.input.nextOffset,
+			inputEnded: w.input.input.ended,
+		},
 		workerCompleted: w.phase == workerRetaining,
 		lastSeq:         w.results.lastSeq,
 		ackedSeq:        w.results.ackedSeq,
@@ -118,9 +124,9 @@ func (w *sessionWorker) resetResultDelivery() {
 	w.delivery.inFlightSeq = 0
 }
 
-// notifyResultChange 关闭旧通知并创建新的未关闭通道，唤醒已有观察者。
+// notifyOutputChange 在已提交输入接纳或结果变化后关闭旧通知，并创建新通道。
 // 只能在协调者运行期间调用；最终退出关闭当前通道且不再替换。
-func (w *sessionWorker) notifyResultChange() {
+func (w *sessionWorker) notifyOutputChange() {
 	if w.delivery.changed == nil {
 		panic("gateway: nil result change channel")
 	}

@@ -1,6 +1,6 @@
 # 第六阶段：持续音频接纳确认
 
-日期：2026-10-07。状态：设计与实现指导，等待开发者实现；本步没有新增运行或测试结果。
+日期：2026-10-07。状态：累计音频接纳确认已实现并通过本步组合验收；终态协议、公开握手和客户端有限重放仍待接入。设计与最终实现记录分别列出。
 
 ## 能力目标与后续路线
 
@@ -143,3 +143,40 @@ ACK 写成功仅更新写任务本地的 lastInput，不代表客户端已消费
 6. 真实 WebSocket 组合：ready → 音频 → audio_ack；与 result 交错时结果序号完整有序；end 被确认；断开后两代 ready 和未确认结果重放正确。确认期间仍遵守写期限和共同清理。
 
 本步可记录的是正确性行为、累计确认是否合并及应用层是否新增确认队列。客户端缓存尚未实现，也没有性能实验，不报告缓存下降比例、恢复耗时或吞吐提升。后续若引入按时间/字节阈值合并，必须设置最大确认等待并单独验证客户端重放预算。
+
+## 实现与验收（2026-10-07）
+
+开发者已写好 AudioAckMessage、inputAcceptance 及 resultOffer.input 字段，随后明确委托助手完成本步。助手在已有草稿上补齐 offerResult 输入快照、输出变化通知和成功输入通知；抽取唯一 runLoop，在 ready 成功后以其真实已发送位置初始化局部 lastInput，串行发送累计 ACK 和本次授权结果。ACK 写成功只推进局部状态；失败交由已有代次清理，结果成功报告规则保持。没有引入逐块 ACK 队列、新写任务或新定时器。
+
+助手新增 [确认组合测试](../../internal/gateway/audio_acceptance_ack_test.go) 和 [线格式测试](../../internal/wsprotocol/audio_ack_v2_test.go)，适配已有 ready/真实 managed 网络测试，明确检查新 ACK 而非跳过未知帧。首轮受控测试通过，补充 managed 退出等待后统一执行相关组合回归。
+
+### 正确性证据
+
+- 0、1、2^53+1、MaxUint64 线格式精确、零位置/false 不省略。无结果的 offer 也包含输入值快照；新音频和首次 end 关闭旧通知，历史重发和重复 end 不通知。旧值快照不随输入变化。
+- ready 是首帧，初始位置不重复 ACK；没有识别结果时，新音频独立产生 nextOffset=2 的确认，随后相同位置的合法 end 产生 inputEnded=true，重复请求不额外产生消息。
+- **受控合并与结果交错**：阻塞 ACK(nextOffset=2) 时，协调者继续接纳到 4、6 以及合法 end。解除阻塞后输出顺序为 ACK(2,false) → 原 seq=1 结果 → ACK(6,true) → 原 seq=2 结果，三个后续状态变化合并为一条确认，中间位置没有排队。已有结果授权跨过一次 ACK 写入，随后正确完成；未无限追发 ACK 或重新借出结果。这是固定受控条件下的行为证据，不是平均确认频率或吞吐实验。
+- **不漏唤醒**：受控暂停在空快照查询返回、等待 select 求值前，提交新音频后再允许等待；旧通知关闭使 writer 立即重新查询并输出最新位置。阻塞 ready/ACK 期间变化也由已发送旧快照和下一轮查询覆盖。
+- 空音频、合法 end、无识别结果的正常完成，在 writerResultsComplete 返回前输出 offset=0/inputEnded=true。
+- **失败后仍可恢复**：传输失败、单次写超时及本代 detach 三种 managed 场景中，ACK 前已授权的 seq=1 不假报写成功，代次清理撤销 inFlight；原 Worker、接纳位置和结果保留。第 2 代先 ready(nextOffset=2) 再原 seq=1 结果，不额外重复确认 ready 已覆盖的位置。两条已接管 socket 最终各关闭一次。
+- 取消/超时但实际 ACK Write 未返回时，写任务仍等待、局部 lastInput 不推进、不假报结果成功。整场逻辑取消的 managed 场景中，controlDone 关闭、原 RPC 取消及 socket CloseNow 已发生，但运行器继续等待 Write，input/results 不提前释放；解除受控阻塞后才返回原取消原因并完成清理。
+
+### 真实网络范围
+
+三项已有真实 WebSocket 场景已适配并复验。其中两连接/同一原 Worker 场景在没有 Worker 文本输出前先验证 audio_ack；第 2 代新音频与 end 分别得到本代位置和 inputEnded=true，之后 seq=2 尾部及结果 ACK 继续正确。原流只收到 `ab`、`cd` 两次音频，历史重发不额外发送。
+
+输入 end 后恢复场景明确读取第 1 代的 audio_ack(2,false) 和 audio_ack(2,true)，然后返回结果；以 appliedSeq=1 接入第 2 代时，ready 已含 ended=true 和音频位置 2，紧邻其后仍只有未确认的 seq=2 尾部。原 Worker 的 Send/CloseSend 各 1 次，最终两条连接各关闭一次。协议违规整场失败的已有网络测试也通过。
+
+测试为真实本机 WebSocket/TCP 与受控 Worker，候选仍由内部入口接管；没有公开客户端自动重连、ACK 丢失率实验或真实 ASR。
+
+### 验证记录与限制
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race ./internal/gateway ./internal/wsprotocol \
+  -run '^Test(AudioAcceptanceAck|AudioAckMessage|ConnectionAttachment|SessionConnections|ConnectionReady|ReadyMessage|SessionReady|ResultWriterReady|V2Input|ConnectionReader|ResultWriterTask|ResultWriterWebSocket|SequencedResultMessage|ResultWrite|SessionProgressIntegration|SessionAudioBacklogFailure|ResumeState|SessionIdentity|SessionRegistry|SessionControl|AudioInput|WorkerUploader|SessionWorker|ResultBuffer|WorkerReceiver|SessionResults|DecodeWorkerResponse|SendWithTimeout|ResumableSession)' \
+  -count=1 -timeout=45s -json
+```
+
+本步新增 **9 顶层/15 叶级全部通过**；相关两包 **232 顶层/683 叶级：682 通过、0 失败、1 显式实验跳过**，未报告数据竞争。跳过仍为需显式开启的 TestResultWriteTimeoutExperiment。本机原始记录 `/private/tmp/tide-audio-ack-first.jsonl` 和 `/private/tmp/tide-audio-ack-accepted.jsonl` 为临时输出，未跟踪。
+
+本步建立了网关持续反馈音频接纳位置的能力，并验证状态合并、结果交错和失败清理。客户端有限缓存尚未实现，不能报告实际缓存下降；没有新增恢复耗时、恢复率、真实 ASR 或稳定容量结果。下一步设计整场正常终态的投递、客户端确认及恢复后的重复通知，再接公开入口与客户端恢复。
