@@ -3,6 +3,7 @@ package gateway
 import (
 	"context"
 	"errors"
+	"net"
 	"time"
 )
 
@@ -130,31 +131,18 @@ func (s *resumableSession) runWithWorker(ctx context.Context, now func() time.Ti
 		panic("gateway: nil session worker")
 	}
 
-	go worker.uploader.run(
-		worker.config.rpcCtx,
-		worker.config.cancelRPC,
-		worker.config.stream,
-		worker.config.sendTimeout,
+	worker.startIO()
+
+	err := s.runCoordinator(
+		ctx,
+		now,
+		worker,
+		nil,
 	)
 
-	go worker.receiver.run(
-		worker.config.rpcCtx,
-		worker.config.stream,
-	)
-
-	err := s.runCoordinator(ctx, now, worker)
-
-	// coordinator 已经停止安排新 I/O。
-	// 必须先取消 RPC，再等待可能阻塞在 Send/Recv 中的任务。
-	worker.config.cancelRPC(err)
-
-	<-worker.uploader.done
-	<-worker.receiver.done
-
-	// I/O 任务退出后才可以解除应用缓冲引用；
-	// uploader/receiver 此前可能仍持有其中数据。
-	worker.input = nil
-	worker.results = nil
+	worker.stopIO(err)
+	worker.waitIO()
+	worker.releaseBuffers()
 
 	return err
 }
@@ -231,4 +219,133 @@ func (w *sessionWorker) offerHistoricalAudio(
 	}
 
 	return w.input.offer(offset, payload)
+}
+
+// startIO 由唯一运行器调用一次，启动原 Worker 的上传与接收任务。
+// 两个任务共享原 RPC 生命周期，不绑定某条 WebSocket。
+func (w *sessionWorker) startIO() {
+	go w.uploader.run(
+		w.config.rpcCtx,
+		w.config.cancelRPC,
+		w.config.stream,
+		w.config.sendTimeout,
+	)
+
+	go w.receiver.run(
+		w.config.rpcCtx,
+		w.config.stream,
+	)
+}
+
+// stopIO 取消原 RPC，保留 cause；不关闭共享 ClientConn 或等待任务。
+func (w *sessionWorker) stopIO(cause error) {
+	w.config.cancelRPC(cause)
+}
+
+// waitIO 等待已经启动的上传和接收任务实际返回；调用者须先通知取消。
+func (w *sessionWorker) waitIO() {
+	<-w.uploader.done
+	<-w.receiver.done
+}
+
+// releaseBuffers 在所有仍可能使用数据的 Worker/连接任务退出后解除缓冲引用。
+func (w *sessionWorker) releaseBuffers() {
+	w.input = nil
+	w.results = nil
+}
+
+// runWithConnection 运行一场带实际连接所有权的逻辑会话。
+// 必须用于未启动、初始 attached/generation=1 的 session；参数均已构造有效。
+// 进入运行即接管原 Worker 与 initial；即使 ctx 已取消，也执行统一清理。
+// 返回前等待全部已接管任务，并释放会话缓冲；返回值保留整场原因。
+func (s *resumableSession) runWithConnection(
+	ctx context.Context,
+	now func() time.Time,
+	worker *sessionWorker,
+	initial *connectionCandidate,
+) error {
+	if ctx == nil {
+		panic("gateway: nil session context")
+	}
+	if now == nil {
+		panic("gateway: nil time source")
+	}
+	if worker == nil {
+		panic("gateway: nil session worker")
+	}
+	if initial == nil {
+		panic("gateway: nil initial connection candidate")
+	}
+
+	if err := validateConnectionCandidate(initial); err != nil {
+		panic("gateway: invalid initial connection candidate")
+	}
+
+	// 本入口只接受尚未运行、初始已经 attached 的 generation 1。
+	if s.resume.phase != resumeAttached ||
+		s.resume.generation != 1 {
+		panic("gateway: invalid initial session attachment state")
+	}
+
+	initialAttachment, err := newConnectionAttachment(
+		s,
+		ctx,
+		s.resume.generation,
+		initial,
+	)
+	if err != nil {
+		// runWithConnection 一旦被调用就接管 initial 和 Worker。
+		// 即使正式任务尚未启动，也必须完成资源释放。
+		worker.stopIO(err)
+
+		closeErr := initial.conn.CloseNow()
+		if errors.Is(closeErr, net.ErrClosed) {
+			closeErr = nil
+		}
+
+		worker.releaseBuffers()
+
+		return errors.Join(err, closeErr)
+	}
+
+	connections := &sessionConnections{
+		current: initialAttachment,
+	}
+
+	worker.startIO()
+	go initialAttachment.run()
+
+	err = s.runCoordinator(
+		ctx,
+		now,
+		worker,
+		connections,
+	)
+
+	// 先同时发出所有停止信号，再开始任何等待。
+	worker.stopIO(err)
+
+	current := connections.current
+	if current != nil {
+		current.stop(err)
+	}
+
+	worker.waitIO()
+
+	var closeErr error
+
+	if current != nil {
+		<-current.done
+		closeErr = current.closeErr
+	}
+
+	// reader/writer/Worker 都已经真正退出以后，
+	// 才解除会话缓冲引用。
+	worker.releaseBuffers()
+
+	if closeErr != nil {
+		err = errors.Join(err, closeErr)
+	}
+
+	return err
 }

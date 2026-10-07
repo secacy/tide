@@ -815,7 +815,7 @@ func TestSessionWorkerPendingDeliveryKeepsControlResponsive(t *testing.T) {
 				// 刻意不启动 uploader，使 jobs 没有接收者，精确覆盖 pending 阶段。
 				// 调用真正 runCoordinator；本夹具负责取消 RPC，不使用 runWithWorker 收尾。
 				returned := make(chan error, 1)
-				go func() { returned <- f.session.runCoordinator(f.lifeCtx, time.Now, f.worker) }()
+				go func() { returned <- f.session.runCoordinator(f.lifeCtx, time.Now, f.worker, nil) }()
 				a, n, err := f.session.requestAudio(context.Background(), 1, 0, []byte("ab"))
 				assertCoordinatorInput(t, a, n, err, true, 2, nil)
 				if d, err := f.session.reportDetach(context.Background(), 1); !d || err != nil {
@@ -851,7 +851,7 @@ func TestSessionWorkerMismatchedResultDoesNotComplete(t *testing.T) {
 				f := newWorkerCoordinatorFixture(t, 2, 1, func(context.Context) workerStream { return &uploadTestStream{} })
 				// 用一次性通道替身注入损坏的内部结果，不调用真实 Worker I/O。
 				returned := make(chan error, 1)
-				go func() { returned <- f.session.runCoordinator(f.lifeCtx, time.Now, f.worker) }()
+				go func() { returned <- f.session.runCoordinator(f.lifeCtx, time.Now, f.worker, nil) }()
 				a, n, err := f.session.requestAudio(context.Background(), 1, 0, []byte("ab"))
 				assertCoordinatorInput(t, a, n, err, true, 2, nil)
 				job := <-f.worker.uploader.jobs

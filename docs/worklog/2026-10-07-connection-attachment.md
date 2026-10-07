@@ -1,6 +1,6 @@
 # 第六阶段：连接附着、候选交接与共同清理
 
-日期：2026-10-07。状态：实现指导，尚未实现或验收。依据 `488f1bd` 的 reader/writer 与[资源所有权约定](2026-10-05-session-resource-ownership.md)。开发者实现核心代码，助手负责评审、测试与记录。
+日期：2026-10-07。状态：候选连接内部原子交接、连接任务共同清理及真实双连接组合已验收；公开恢复入口尚未接入。依据 `488f1bd` 的 reader/writer 与[资源所有权约定](2026-10-05-session-resource-ownership.md)。下文保留实现前方案和首轮失败，修正及最终验收见文末。开发者实现核心代码，助手负责评审、测试与记录。
 
 ## 本步能力与边界
 
@@ -237,4 +237,63 @@ func (s *resumableSession) requestResumeConnection(ctx context.Context,
 - 两条真实 WebSocket 接到同一个原 Worker：窗口内恢复，未确认结果重放、已接纳音频重发去重、尾部仍完整；测试调用内部安装命令，明确尚无网络握手/自动重连。
 - 循环多次断开/附着时，已接管连接的同时存活数不超过 1，实际关闭次数与成功接管数一致；最后 reader/writer/Worker 均退出。计数属于受控条件下正确性证据，不包装为稳定容量或生产恢复耗时。
 
-本次仅形成方案和进度记录，没有新增运行能力或测试成果。
+设计提出时仅形成方案和进度记录，没有新增运行能力或测试成果。
+
+## 首轮实现评审（2026-10-07，待修）
+
+开发者新增 [connectionAttachment](../../internal/gateway/connection_attachment.go)、[连接管理入口](../../internal/gateway/session_connections.go)，并在 [sessionControl](../../internal/gateway/session_control.go) 和 [sessionWorker](../../internal/gateway/session_worker.go) 接入事件、候选恢复及整场清理。助手按前置约定适配旧测试中两处 runCoordinator 调用，新增 [受控测试](../../internal/gateway/connection_attachment_test.go) 和 [真实双连接测试](../../internal/gateway/connection_attachment_websocket_test.go)，未代改核心业务或并发代码。
+
+### 必须修正：预演修改了正式状态
+
+恢复路径使用 `probe := s.resume`，复制的是 `*resumeState` 指针。`probe.resume(now())` 因而直接把正式状态推进到 attached/下一代并清除恢复期限，在候选尚未安装、最终取消及期限检查之前就发生了业务提交。
+
+两个受控测试确实失败：
+
+- TestSessionConnectionsCanceledCandidateDoesNotCommit：在候选预构造后的最终请求取消检查处取消请求。调用正确返回取消错误、候选没有启动或被关闭，但正式状态已经成为 attached/generation=2，原恢复截止时间消失；应保持原 detached/generation=1 和截止时间。
+- TestSessionConnectionsPreparationCannotEraseExpiry：预演时还在窗口内，最终期限检查处受控 now 达到原截止时间。候选错误地被接纳为第 2 代，会话继续运行；应拒绝候选、保持其由提交者拥有，并以 errResumeExpired 结束运行器。
+
+修正建议：两处 probe 都使用值副本 `probe := *s.resume`；预演调用作用于局部值，最终成功提交使用 `*s.resume = probe`。这样也符合 resumableSession 构造约定：resume 指针保持不变，协调者修改其指向的值。不要在预构造之前推进正式状态，也不要在拒绝后另做补偿恢复，以免遗漏其他字段。
+
+上述测试在现有命令取消检查和 now 边界注入条件，不改动核心实现；受控时钟用于验证“处理时检查期限”而非实际网络恢复耗时。网络成功路径通过并不能替代这两个拒绝路径的原子性证明。
+
+### 已通过的证据与限制
+
+本步新增共 **14 个顶层、48 个叶级场景：46 通过、2 失败**。两个失败都归于上述指针别名；当前运行未报告数据竞争。已通过的范围包括：
+
+- 构造无 I/O/取消所有权副作用；关闭等待期间 attachment.done 不提前关闭；两个任务即使无人消费也能完成有界事件汇报。控制结束、启动前取消、重复关闭及真实清理错误身份已检查。
+- 旧连接 CloseNow 被受控阻塞时，恢复明确返回 retiring，原 Worker 未取消，重复 detach 不续期；requestClose 返回 controlDone 后运行器仍等待实际关闭，缓冲没有提前释放。
+- 无候选模式、仍 attached、恢复 ACK 超前/缺口等拒绝不接管 socket；正常 writer 返回保留 reader；已报告不可恢复错误不会因先 detach 或同时 done 而被丢弃，旧代事件被隔离。这些竞争用直接注入协调事件验证，未包装成真实网络故障注入实验。
+- **32 个并发候选仅 1 个接纳**；只有胜出候选启动 reader，最终仅关闭该候选。**8 次连续交接、9 条成功接管连接**各关闭一次，原 Worker 在断线期间保持运行。这是受控正确性证据，不是高并发容量或长期资源趋势结论。
+- **2 个真实 WebSocket 顶层场景通过**：两条连接经内部候选命令接到同一原 Worker，丢失 ACK 的结果按原序号重发；历史音频不重复发送，原流只收到 `ab` 和 `cd` 两次负载；尾部仍交付/确认。接纳后取消握手请求不影响已交接连接，运行器返回前两条已接管连接均实际关闭，Worker 与缓存清理完成。另一个真实场景验证应用协议错误结束整场并取消 Worker。
+
+首轮扩展回归（不含后来新增的两个并发/连续交接测试）命令：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race ./internal/gateway ./internal/wsprotocol \
+  -run '^Test(ConnectionAttachment|SessionConnections|V2Input|ConnectionReader|ResultWriterTask|ResultWriterWebSocket|SequencedResultMessage|ResultWrite|SessionProgressIntegration|SessionAudioBacklogFailure|ResumeState|SessionIdentity|SessionRegistry|SessionControl|AudioInput|WorkerUploader|SessionWorker|ResultBuffer|WorkerReceiver|SessionResults|DecodeWorkerResponse|SendWithTimeout|ResumableSession)' \
+  -count=1 -timeout=45s -json
+```
+
+该次为 **210 顶层/637 叶级，634 通过、2 失败、1 显式实验跳过**；跳过 TestResultWriteTimeoutExperiment，未报告 race。随后新增的 ConcurrentCandidates/RepeatedHandoff 两个顶层/叶级场景单独运行 race 通过。未把两次运行合并写成一次全量通过。
+
+本机原始记录：`/private/tmp/tide-attachment-review-first.jsonl`（首轮受控）、`/private/tmp/tide-attachment-network-review.jsonl`（两项网络）、`/private/tmp/tide-attachment-review.jsonl`（扩展回归）及 `/private/tmp/tide-attachment-contention-review.jsonl`（并发/连续交接）。临时文件未纳入 Git；修正后须使用上面的命令再次统一复验全部新增及相关场景。
+
+首轮结束时尚未提交或验收，保留失败测试等待开发者修正。公开握手、ready/音频接纳确认/终态输出、v2 空闲保护、双层准入及客户端自动恢复仍待后续实现；没有新增恢复率、恢复耗时或容量结论。
+
+## 修正与最终验收（2026-10-07）
+
+开发者将两处 `probe := s.resume` 修正为值副本 `probe := *s.resume`，最终提交改为 `*s.resume = probe`。恢复预演不会再修改正式附着状态、代次或截止时间；成功提交仍保持 resume 指针不变。助手核对实际实现，补齐新增类型/方法及 Worker 收尾 helper 的注释和格式，没有代改核心逻辑。
+
+原两个失败场景已通过：最终取消拒绝保留原 detached/代次/期限及候选所有权；预构造期间达到截止时间会拒绝候选，并使运行器以 errResumeExpired 退出。首轮失败保留于上节。
+
+依据原验收清单，助手进一步补充两项有实际组合意义的边界：
+
+- **关闭仍阻塞时自动到期**：虚拟时钟推进到恢复截止时间，controlDone 正常关闭，原 RPC 以 errResumeExpired 取消；运行器仍等待 CloseNow，缓冲不提前释放。解除关闭阻塞后运行器才返回，并确认只执行一次 socket 清理。
+- **代次耗尽拒绝候选**：初始化已经退休且 generation=MaxUint64 的合法控制状态，实际执行带候选命令；返回 errResumeGenerationExhausted，不接管候选、不续期或回绕，原 Worker 保持运行直到明确终止。这个边界通过协调者输入初始状态验证，没有进行海量实际交接。
+
+使用上节同一扩展命令，统一复验全部新增及相关测试：本步 **16 个顶层/50 个叶级场景全部通过**，包括两项真实 WebSocket 测试；相关两包共 **214 个顶层/641 个叶级，其中 640 通过、0 失败、1 显式实验跳过**，含父测试共 749 项 pass，未报告数据竞争。跳过仍为需显式开启的 TestResultWriteTimeoutExperiment；当前源码的完整原始输出为 `/private/tmp/tide-attachment-accepted.jsonl`，临时文件未纳入 Git。
+
+本步通过的实际能力：新 runWithConnection 和已有协调者共同持有原 Worker 与已安装的连接；临时断线取消/关闭本代连接，保留原 Worker 和数据状态；旧连接真正完成清理后，候选、恢复位置和新代次共同接纳。真实两连接组合中原流只接收 `ab`、`cd` 两次负载，未确认结果按相同序号重放，尾部仍可交付/确认；候选请求取消后已经接管的连接不受影响。最终返回等待连接关闭、reader/writer 及 Worker 退出，缓冲随后释放。
+
+仍不将这个能力标记为完整客户端恢复：测试通过内部命令提交候选，没有公开 start/resume 握手、ready、音频接纳确认、整场完成确认、v2 输入空闲/静默断网检测、连接与逻辑会话双层准入、注册表退出所有权及客户端有限重放。本步没有运行恢复率/耗时或容量实验。下一组实现统一连接输出（ready/音频接纳确认/结果/终态），再接握手、入口资源管理和客户端恢复验收。

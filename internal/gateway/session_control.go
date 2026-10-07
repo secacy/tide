@@ -13,14 +13,15 @@ var errInvalidSessionControlCommand = errors.New("invalid session control comman
 type sessionControlKind uint8
 
 const (
-	controlResume        sessionControlKind = iota // 尝试恢复连接，成功返回新代次。
-	controlDetach                                  // 报告某代次连接断开。
-	controlClose                                   // 结束恢复资格并退出控制循环。
-	controlAudio                                   // 接纳当前代次的一块音频。
-	controlEnd                                     // 接纳当前代次的输入终点。
-	controlTakeResult                              // 取出下一条结果并建立当前代写入授权。
-	controlResultWritten                           // 报告当前代已授权结果写入成功，不释放保留结果。
-	controlResultAck                               // 接纳客户端累计应用确认，释放已确认前缀。
+	controlResume           sessionControlKind = iota // 尝试恢复连接，成功返回新代次。
+	controlDetach                                     // 报告某代次连接断开。
+	controlClose                                      // 结束恢复资格并退出控制循环。
+	controlAudio                                      // 接纳当前代次的一块音频。
+	controlEnd                                        // 接纳当前代次的输入终点。
+	controlTakeResult                                 // 取出下一条结果并建立当前代写入授权。
+	controlResultWritten                              // 报告当前代已授权结果写入成功，不释放保留结果。
+	controlResultAck                                  // 接纳客户端累计应用确认，释放已确认前缀。
+	controlResumeConnection                           // 同一提交中接纳恢复位置、切换代次并安装候选连接。
 )
 
 // sessionControlCommand 表示一次不可复用的内部控制请求。
@@ -32,6 +33,7 @@ type sessionControlCommand struct {
 	offset     uint64                      // audio 的起点，end 的最终接纳位置；控制命令忽略。
 	payload    []byte                      // 仅 audio 使用；从请求开始到回复前只读，调用方不得修改。
 	resultSeq  uint64                      // resume 的客户端已应用位置；written/ack 的结果序号。其他命令忽略。
+	candidate  *connectionCandidate        // 仅 controlResumeConnection 使用；命令成功以前仍由提交者负责关闭。
 }
 
 // sessionControlResult 是某次控制操作的确定结果。
@@ -55,16 +57,18 @@ type sessionControlResult struct {
 // detached 状态下由控制循环独占恢复期限 Timer；
 // Timer 仅负责唤醒，实际过期判断仍由 resumeState 完成。
 func (s *resumableSession) runControl(ctx context.Context, now func() time.Time) {
-	_ = s.runCoordinator(ctx, now, nil)
+	_ = s.runCoordinator(ctx, now, nil, nil)
 }
 
 // runCoordinator 串行拥有连接恢复、输入、Worker 事件与结果保留状态。
 // worker=nil 保留纯控制行为；退出时关闭恢复资格与 controlDone。
-// 不在循环内等待 I/O 任务退出，收尾等待由 runWithWorker 完成。
+// connections=nil 为部件模式；非 nil 时管理固定连接事件与候选安装。
+// 不在循环内等待 I/O/CloseNow；收尾由外层运行器等待，controlDone 不代表资源释放。
 func (s *resumableSession) runCoordinator(
 	ctx context.Context,
 	now func() time.Time,
 	worker *sessionWorker,
+	connections *sessionConnections,
 ) error {
 	if ctx == nil {
 		panic("gateway: nil session control context")
@@ -302,6 +306,214 @@ func (s *resumableSession) runCoordinator(
 		armWakeTimer()
 	}
 
+	// detachGeneration 统一提交有效断开、重置投递与安排本代停止。
+	// 重复/旧代通知不续期；stop 不执行阻塞连接清理。
+	detachGeneration := func(
+		generation uint64,
+		cause error,
+	) bool {
+		detached := s.resume.detach(
+			generation,
+			now(),
+		)
+
+		if detached && worker != nil {
+			worker.resetResultDelivery()
+			worker.notifyResultChange()
+		}
+
+		if connections != nil &&
+			connections.current != nil &&
+			connections.current.generation == generation {
+
+			// 有效 detach 或已经处于同代 detached 时都可以安全重复 stop。
+			// stop 不执行阻塞清理。
+			if detached || s.resume.phase == resumeDetached {
+				connections.current.stop(cause)
+			}
+		}
+
+		if detached {
+			// resume.detach 已经建立绝对恢复期限。
+			armWakeTimer()
+		}
+
+		return detached
+	}
+
+	// handleConnectionEvent 在本协调循环中裁决固定代次的退出事实。
+	// 已报告的不可恢复错误在同代 detached 后仍有效，旧代事件忽略。
+	handleConnectionEvent := func(
+		event connectionEvent,
+	) error {
+		if connections == nil ||
+			connections.current == nil {
+			return nil
+		}
+
+		current := connections.current
+
+		// 退休连接或旧代事件不能修改后来安装的连接状态。
+		if event.generation != current.generation ||
+			event.generation != s.resume.generation {
+			return nil
+		}
+
+		handleTransportFailure := func(err error) error {
+			if err == nil {
+				return errInvalidConnectionEvent
+			}
+
+			if !recoverableConnectionFailure(err) {
+				return err
+			}
+
+			// 如果兄弟任务已经先完成 detach，本次调用返回 false，
+			// 因而不会重新建立恢复期限。
+			detachGeneration(
+				event.generation,
+				err,
+			)
+
+			return nil
+		}
+
+		taskStopExpected := func() bool {
+			if context.Cause(current.ctx) != nil {
+				return true
+			}
+
+			return s.resume.phase != resumeAttached
+		}
+
+		switch event.task {
+		case connectionReaderTask:
+			switch event.reader.kind {
+			case readerReadFailed:
+				return handleTransportFailure(
+					event.reader.err,
+				)
+
+			case readerProtocolFailed,
+				readerCommandFailed:
+				if event.reader.err == nil {
+					return errInvalidConnectionEvent
+				}
+
+				// 即使本代已经因为兄弟任务先进入 detached，
+				// 已经上报的协议/命令错误仍然必须终止整场会话。
+				return event.reader.err
+
+			case readerStopped:
+				if taskStopExpected() {
+					return nil
+				}
+
+				return errors.Join(
+					errUnexpectedConnectionStop,
+					event.reader.err,
+				)
+
+			default:
+				return errInvalidConnectionEvent
+			}
+
+		case connectionWriterTask:
+			switch event.writer.kind {
+			case writerResultsComplete:
+				connections.outputComplete = true
+				connections.lastSeq = event.writer.lastSeq
+				return nil
+
+			case writerWriteFailed:
+				return handleTransportFailure(
+					event.writer.err,
+				)
+
+			case writerControlFailed:
+				if event.writer.err == nil {
+					return errInvalidConnectionEvent
+				}
+
+				return event.writer.err
+
+			case writerStopped:
+				if taskStopExpected() {
+					return nil
+				}
+
+				return errors.Join(
+					errUnexpectedConnectionStop,
+					event.writer.err,
+				)
+
+			default:
+				return errInvalidConnectionEvent
+			}
+
+		default:
+			return errInvalidConnectionEvent
+		}
+	}
+
+	// drainCompletedConnection 仅在 current.done 已关闭后调用。
+	// 两个事件生产者均已退出；先排空残留错误，再检查关闭结果并解除 current。
+	drainCompletedConnection := func(
+		current *connectionAttachment,
+	) error {
+		for {
+			select {
+			case event := <-current.events:
+				if err := handleConnectionEvent(event); err != nil {
+					return err
+				}
+
+			default:
+				goto drained
+			}
+		}
+
+	drained:
+		// done 的关闭保证 CloseNow 已经返回，因此此时读取 closeErr 安全。
+		if current.closeErr != nil {
+			return current.closeErr
+		}
+
+		if connections.current == current {
+			connections.current = nil
+			connections.outputComplete = false
+			connections.lastSeq = 0
+		}
+
+		return nil
+	}
+
+	// reapCurrentConnection 非阻塞检查当前连接是否已经退休完毕。
+	// retiring=true 表示仍在关闭/等待，协调者绝不能阻塞等待。
+	reapCurrentConnection := func() (
+		retiring bool,
+		err error,
+	) {
+		if connections == nil ||
+			connections.current == nil {
+			return false, nil
+		}
+
+		current := connections.current
+
+		select {
+		case <-current.done:
+			if err := drainCompletedConnection(current); err != nil {
+				return false, err
+			}
+
+			return false, nil
+
+		default:
+			return true, nil
+		}
+	}
+
 	for {
 		if err := stopCause(); err != nil {
 			return err
@@ -338,6 +550,15 @@ func (s *resumableSession) runCoordinator(
 		var jobs chan<- workerUploadCommand
 		var uploadResults <-chan workerUploadResult
 		var rpcDone <-chan struct{}
+
+		var connectionEvents <-chan connectionEvent
+		var connectionDone <-chan struct{}
+
+		if connections != nil &&
+			connections.current != nil {
+			connectionEvents = connections.current.events
+			connectionDone = connections.current.done
+		}
 
 		if worker != nil {
 			if worker.phase == workerRunning {
@@ -562,6 +783,13 @@ func (s *resumableSession) runCoordinator(
 
 			switch cmd.kind {
 			case controlResume:
+				if connections != nil {
+					cmd.reply <- sessionControlResult{
+						err: errConnectionCandidateRequired,
+					}
+					continue
+				}
+
 				// 纯控制模式没有任何结果状态。
 				if worker == nil && cmd.resultSeq != 0 {
 					cmd.reply <- sessionControlResult{
@@ -634,25 +862,190 @@ func (s *resumableSession) runCoordinator(
 					generation: generation,
 				}
 
-			case controlDetach:
-				detached := s.resume.detach(
-					cmd.generation,
-					now(),
-				)
-
-				if detached && worker != nil {
-					// 旧代 inFlight 授权不能进入下一代。
-					// offeredSeq 保留，因为客户端可能已经应用但 ACK 丢失。
-					worker.resetResultDelivery()
-					worker.notifyResultChange()
+			case controlResumeConnection:
+				if connections == nil {
+					cmd.reply <- sessionControlResult{
+						err: errConnectionManagementUnavailable,
+					}
+					continue
 				}
+
+				if worker == nil {
+					cmd.reply <- sessionControlResult{
+						err: errSessionWorkerUnavailable,
+					}
+					continue
+				}
+
+				if err := validateConnectionCandidate(
+					cmd.candidate,
+				); err != nil {
+					cmd.reply <- sessionControlResult{
+						err: err,
+					}
+					continue
+				}
+
+				// 只有 detached 才允许恢复。
+				// 其他状态仍利用 resumeState 自己的规则产生规范错误。
+				if s.resume.phase != resumeDetached {
+					probe := *s.resume
+
+					_, err := probe.resume(now())
+					if err == nil {
+						panic("gateway: non-detached resume unexpectedly succeeded")
+					}
+
+					cmd.reply <- sessionControlResult{
+						err: err,
+					}
+
+					if probe.phase == resumeClosed {
+						return err
+					}
+
+					continue
+				}
+
+				// 旧连接必须已经真正完成 CloseNow + reader/writer 退出，
+				// 并且所有退出事件已经被处理以后，才允许接管新候选。
+				if connections.current != nil {
+					retiring, err := reapCurrentConnection()
+					if err != nil {
+						cmd.reply <- sessionControlResult{
+							err: err,
+						}
+						return err
+					}
+
+					if retiring {
+						cmd.reply <- sessionControlResult{
+							err: errConnectionRetiring,
+						}
+						continue
+					}
+				}
+
+				// 恢复位置必须在正式代次切换之前验证。
+				if cmd.resultSeq < worker.results.ackedSeq {
+					cmd.reply <- sessionControlResult{
+						err: errResultReplayGap,
+					}
+					continue
+				}
+
+				if cmd.resultSeq > worker.delivery.offeredSeq {
+					cmd.reply <- sessionControlResult{
+						err: errResultAckAhead,
+					}
+					continue
+				}
+
+				// 先在副本上完成期限、状态和 generation 溢出检查。
+				// 此时正式 resumeState 完全没有变化。
+				probe := *s.resume
+
+				generation, err := probe.resume(now())
+				if err != nil {
+					cmd.reply <- sessionControlResult{
+						err: err,
+					}
+
+					if probe.phase == resumeClosed {
+						// 到期/终止条件已经确定，正式协调循环也结束。
+						return err
+					}
+
+					continue
+				}
+
+				attachment, err := newConnectionAttachment(
+					s,
+					ctx,
+					generation,
+					cmd.candidate,
+				)
+				if err != nil {
+					cmd.reply <- sessionControlResult{
+						err: err,
+					}
+					continue
+				}
+
+				// attachment 还没安装，因此这里只能取消它创建的子 context。
+				// socket 的关闭责任仍属于候选提交者。
+				discardAttachment := func(cause error) {
+					attachment.stop(cause)
+				}
+
+				// 构造期间可能已经发生逻辑取消或绝对期限到达。
+				if err := stopCause(); err != nil {
+					discardAttachment(err)
+
+					cmd.reply <- sessionControlResult{
+						err: errResumeClosed,
+					}
+
+					return err
+				}
+
+				// 命令在交付 coordinator 后仍可能在预构造期间被调用方取消。
+				// 此时还没有接管 candidate。
+				if err := cmd.ctx.Err(); err != nil {
+					discardAttachment(err)
+
+					cmd.reply <- sessionControlResult{
+						err: err,
+					}
+					continue
+				}
+
+				// 范围已经在同一个协调段内验证过，因此这里不应产生普通协议错误。
+				// 一旦失败说明内部不变量破坏；正式 generation 尚未提交，
+				// candidate 仍由调用者拥有。
+				if _, err := worker.acknowledgeResult(
+					cmd.resultSeq,
+				); err != nil {
+					discardAttachment(err)
+
+					cmd.reply <- sessionControlResult{
+						err: err,
+					}
+
+					return err
+				}
+
+				// 从这里开始提交恢复事务。
+				//
+				// 不再次调用 resume(now)，而是直接提交刚才验证成功的副本；
+				// 避免一次恢复在两个 now() 之间产生不同结果。
+				*s.resume = probe
+
+				worker.resetResultDelivery()
+				worker.notifyResultChange()
+
+				connections.current = attachment
+				connections.outputComplete = false
+				connections.lastSeq = 0
+
+				// 安装 current 是候选清理责任的转移点。
+				// 之后即使 cmd.ctx 立即取消，调用者也不能再关闭 candidate。
+				go attachment.run()
+
+				armWakeTimer()
+
+				cmd.reply <- sessionControlResult{
+					generation: generation,
+				}
+
+			case controlDetach:
+				detached := detachGeneration(
+					cmd.generation,
+					context.Canceled,
+				)
 
 				cmd.reply <- sessionControlResult{
 					detached: detached,
-				}
-
-				if detached {
-					armWakeTimer()
 				}
 
 			case controlClose:
@@ -974,6 +1367,31 @@ func (s *resumableSession) runCoordinator(
 				cmd.reply <- sessionControlResult{
 					err: errInvalidSessionControlCommand,
 				}
+			}
+
+		case event := <-connectionEvents:
+			if err := stopCause(); err != nil {
+				return err
+			}
+
+			if err := handleConnectionEvent(event); err != nil {
+				return err
+			}
+
+		case <-connectionDone:
+			if err := stopCause(); err != nil {
+				return err
+			}
+
+			current := connections.current
+			if current == nil {
+				continue
+			}
+
+			// channel 之所以进入此 case，就是因为当前 attachment.done 已关闭。
+			// 先消费所有剩余任务事件，再判断 closeErr，最后才允许清掉 current。
+			if err := drainCompletedConnection(current); err != nil {
+				return err
 			}
 		}
 	}
