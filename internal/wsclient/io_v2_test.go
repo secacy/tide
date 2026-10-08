@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"sync"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -20,6 +19,7 @@ import (
 type controlledV2Connection struct {
 	reads  chan v2ReadEvent
 	writes chan *controlledV2Write
+	close  func() error // 可控制实际清理完成的屏障。
 }
 type controlledV2Write struct {
 	typ   websocket.MessageType
@@ -53,6 +53,14 @@ func (c *controlledV2Connection) Write(ctx context.Context, typ websocket.Messag
 		return err
 	}
 }
+func (c *controlledV2Connection) SetReadLimit(int64) {}
+func (c *controlledV2Connection) CloseNow() error {
+	if c.close != nil {
+		return c.close()
+	}
+	return nil
+}
+
 func (c *controlledV2Connection) send(message any) {
 	data, _ := json.Marshal(message)
 	c.reads <- v2ReadEvent{data: data}
@@ -75,30 +83,22 @@ func newV2CoordinatorFixture(t *testing.T, cfg V2Config, source io.ReadCloser) *
 	t.Helper()
 	cfg.URL = "ws://test"
 	c := v2TestClient(t, cfg)
-	state, err := newV2ClientState(c.cfg.MaxReplayBytes, c.cfg.MaxReplayChunks)
+	run, err := c.newV2Run(context.Background(), source)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := state.acceptReady(wsprotocol.ReadyMessage{Type: wsprotocol.MessageTypeReady, SessionID: "s", ResumeToken: "secret", Generation: 1}); err != nil {
+	ready := wsprotocol.ReadyMessage{Type: wsprotocol.MessageTypeReady, SessionID: "s", ResumeToken: "secret", Generation: 1}
+	if err := run.state.acceptReady(ready); err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithCancel(context.Background())
-	f := &v2CoordinatorFixture{conn: newControlledV2Connection(), state: state, cancel: cancel, done: make(chan v2CoordinatorOutcome, 1)}
+	f := &v2CoordinatorFixture{conn: newControlledV2Connection(), state: run.state, cancel: run.cancel, done: make(chan v2CoordinatorOutcome, 1)}
+	run.current = c.startV2Connection(run.ctx, f.conn, ready)
+	run.phase = v2Streaming
+	run.startCapture()
 	go func() {
-		var tasks sync.WaitGroup
-		receipts := make(chan v2WriteReceipt, 1)
-		ack, err := c.coordinateV2(ctx, source, f.conn, state, receipts, &tasks)
-		cancel()
-		_ = source.Close()
-		tasks.Wait()
-		select {
-		case r := <-receipts:
-			if r.kind == v2WriteCompletedAck && r.err == nil {
-				ack = true
-			}
-		default:
-		}
-		f.done <- v2CoordinatorOutcome{ack: ack, err: err}
+		err := run.coordinate()
+		err = errors.Join(err, run.cleanup())
+		f.done <- v2CoordinatorOutcome{ack: run.ackWritten, err: err}
 	}()
 	return f
 }
