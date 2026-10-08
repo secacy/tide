@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "scope": "tool behavior validation only; no formal recovery performance samples",
+  "base_commit": "882dab09043ffd7c33cc0fae5b54a4e9b9a7b40b",
+  "go_version": "go version go1.26.5 darwin/arm64",
+  "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race -p=1 ./... -count=1 -timeout=180s -json",
+  "full_leaf_counts": {
+    "pass": 2704,
+    "fail": 0,
+    "skip": 13
+  },
+  "new_leaf_counts": {
+    "pass": 38,
+    "fail": 0,
+    "skip": 1
+  },
+  "packages_with_terminal_states": 14,
+  "first_failure": "synthetic catch-up fixture expectation after changing result timestamps; formal 200ms threshold unchanged",
+  "source_sha256": {
+    "internal/gateway/client_resume_experiment_test.go": "6c962564d443212e71d9b9e1959920fff93a373c59c416418cad55ad482c84a1",
+    "internal/gateway/client_resume_harness_test.go": "d03e57cd57b61ac77a41447ae7a26c995cdeb0e21d327fc9992420575d1d71a9",
+    "internal/gateway/client_resume_observation_test.go": "c0be5be4766200ac27a99b3c8af010a143c3e567ae38995197303e88b96cde3f"
+  },
+  "artifact_sha256": {
+    "docs/experiments/results/client-resume-tool-validation-2026-10-09.jsonl": "ed52fdd793f84889617ec6af3fd61b678d4ba9e5dc548896bf83f0f82e52d254",
+    "docs/experiments/results/client-resume-tool-analysis-first-failure-2026-10-09.jsonl": "5d1c92e3bc17fb0441ec7e25ef4ef904e83be178a2ea7150d8b8da032dce2d42"
+  }
+}
