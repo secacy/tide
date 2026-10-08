@@ -1,6 +1,6 @@
 # 第六阶段：v2 客户端协调状态
 
-日期：2026-10-08。状态：设计与实现指导，等待开发者实现；本轮没有新增业务代码或测试结果。
+日期：2026-10-08。状态：开发者明确委托助手补齐骨架；协调状态与真实音频缓存已通过部件组合验收，v2 网络运行器与自动恢复待实现。下文保留设计依据，末尾记录实现和验收。
 
 ## 能力目标与当前位置
 
@@ -191,7 +191,7 @@ acceptCompleted 先检查绑定代次、Type=completed、消息 Generation，再
 
 ## 预先固定的验收场景
 
-开发者先实现一个状态文件，助手随后评审并完成测试。测试串行调用真实缓存与状态，不使用虚假网络成功来替代状态证明：
+原计划开发者实现一个状态文件，助手评审并完成测试；随后开发者明确委托助手完成本步。测试串行调用真实缓存与状态，不使用虚假网络成功来替代状态证明：
 
 1. 首次 ready 前已缓存 12 字节，但不能派发；合法 ready 建立身份后，授权到 8 时确认 12 被拒绝，缓存/状态完全不变。
 2. 授权音频后，尚无 Write 完成事件即可接纳合法 ACK；授权失败或只读取副本均不被误认为接纳。
@@ -203,4 +203,37 @@ acceptCompleted 先检查绑定代次、Type=completed、消息 Generation，再
 8. 完整输入/end 授权与结果位置一致才接纳 completed；无需先观察单独 audio_ack；不匹配的完成通知不得释放音频，重复一致通知幂等。
 9. 记录 completed 后模拟确认写失败/断开，完成事实仍存在，后续 ready 被拒绝；仅音频 ACK 或 detach 不会产生成功。
 
-上述是待验证判据，不是已通过结果。实现通过后记录覆盖和具体状态证据；真正的自动恢复成功率、缺口、重放范围及恢复耗时要等网络接线和故障实验。
+上述是预先固定的判据。实现及验证结果见下节；真正的自动恢复成功率、缺口、重放范围及恢复耗时要等网络接线和故障实验。
+
+## 实现与验收（2026-10-08）
+
+补齐 [client_state_v2.go](../../internal/wsclient/client_state_v2.go) 的现有骨架，组合真实 audioReplayBuffer，不引入另一份音频队列。全部服务端事实先校验身份/绑定代次、位置及 end/完成条件，再释放缓存和提交普通字段；错误使用固定哨兵，不包含恢复凭据或原消息。新增 [client_state_v2_test.go](../../internal/wsclient/client_state_v2_test.go)，以深拷贝同时检查状态与缓存拒绝原子性。
+
+状态对象仍由单一所有者调用：它不执行网络、业务结果回调或任务关闭。授权先于写调用完成；业务应用成功后由调用方提交 appliedSeq；完整 completed 的提交先于运行器发送确认。任务实际退出、本地 attempt ID 筛选和在途副本数量是后续运行器必须兑现的约束。
+
+| 验收证据 | 已验证行为与范围 |
+| --- | --- |
+| 缓存到 12、授权到 8，收到 ACK 12 | 拒绝且全部字段/缓存不变；合法 ACK 8 可在没有 Write 完成反馈时释放前两块，不产生整场成功 |
+| 确认 4、授权到 12，分别恢复到 4/8/12 | 发送游标正确回退或前进，累计授权仍为 12；位置 8 仅返回原第三块 ijkl，位置 12 不再返回音频；第 1 代可直接接受第 3 代 |
+| 非法身份/代次/应用位置/音频位置候选 | 缺口、原块中间、离线已缓存但未授权的 16 等位置均拒绝；拒绝后正确 ready 仍能接纳，同一缓存不被提前释放 |
+| 旧代、零代、未来代、当前已 detach，共 6 类事件各 4 种状态 | 24 叶级全通过；消息自带的新代 Generation 不能绕过旧任务绑定代次，旧 detach 不改变新代 |
+| end 未授权、恢复 end 终点不符、旧 false 快照 | 非法 end 事实在释放前拒绝；相同音频位置可单独推进 inputEnded，旧 ACK 不回退；恢复 ready 不允许回退该事实；新代按 ready 决定重发或跳过 end |
+| 结果序号 1、重复 1、同片段 final 更新 2 | 仅记录两次应用；只检查不提交时 appliedSeq 不变；跨连接重复 1 仍去重；结果跳号与提交跳号被拒绝 |
+| 完成前没有观察单独音频 ACK | 核对 finalOffset=12、lastSeq=2 和本地 end 授权后，成功记录 completed 并释放音频；错误末尾不释放任何缓存，一致重复通知幂等 |
+| 已记录完成且没有 completed_ack 成功反馈，随后 detach | completed 和 appliedSeq 保留；禁止重新 ready 或派发新音频/end；此处证明本地事实保留，没有运行真实确认写失败的网络场景 |
+| 8 字节/2 槽的完整本地路径 | 满额追加拒绝 → 授权/ACK → 第 3 代 ready 校准音频及结果 → 预算复用追加 [8,12) → end → 结果 2 → completed → detach，最终 ackedOffset=12、appliedSeq=2、保留槽位=0、completed=true |
+| 空输入与 uint64 上限 | 空输入在 ready 前/后封口均可完成；音频位置精确到达 MaxUint64，超出追加不改变状态；最大结果序号及代次不回绕 |
+
+验证使用以下命令，环境变量均为 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off`，实际运行添加 `-json` 保存临时原始记录：
+
+```sh
+go test -race ./internal/wsclient -run '^TestV2ClientState' -count=1 -timeout=30s
+go test -race ./internal/wsclient -run '^TestV2ClientState(ResumeInputEndRejection|MaximumAudioOffset)$' -count=1 -timeout=30s
+go test -race ./internal/wsclient -count=1 -timeout=60s
+```
+
+- 首轮 18 顶层/89 叶级全部通过；补充 end-ready 和最大音频位置两项测试后，新增边界 2 顶层/3 叶级全部通过；没有发生测试失败或需要修正的生产逻辑。
+- 最终状态测试合计 20 顶层/92 叶级全部通过。wsclient 包 race 回归 45 顶层/168 叶级全部通过，0 失败、0 跳过，无数据竞争报告；包含此前音频缓存和既有 v1 客户端真实回环 WebSocket 回归。本轮没有执行全项目回归。
+- 记录位于临时文件 `/private/tmp/tide-client-state-focused.jsonl`、`/private/tmp/tide-client-state-boundaries.jsonl`、`/private/tmp/tide-client-state-wsclient.jsonl`；可按源码和命令复现。叶级不重复计算有子测试的父项。
+
+上述证明本地协调规则及与音频缓存的组合正确性，不是 v2 网络自动恢复结果。单一所有者和受控调用顺序仍是使用前提，race 通过不表示部件支持并发调用。下一步接严格服务端消息解码与单连接正常端到端运行器，再加有限重试及真实断线恢复；采集源取消、结果回调退出、客户端资源总预算与恢复性能仍待接线验证。
