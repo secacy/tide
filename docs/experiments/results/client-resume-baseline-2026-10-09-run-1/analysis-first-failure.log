@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 287, in <module>
+    result = summarize(args.directory)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 254, in summarize
+    row = verify_report(report)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 168, in verify_report
+    require(row['seq'] == a['seq'] and row['audio_end'] == a['audio_end'] and stamp_ns(row['planned_at']) == planned
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 22, in require
+    raise ValueError(message)
+ValueError: saved result wait differs

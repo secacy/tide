@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 303, in <module>
+    result = summarize(args.directory)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 267, in summarize
+    row = verify_report(report)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 234, in verify_report
+    return dict(case=cfg['case'], business_completed=completed, criteria_met=acceptance, error_class=r['run_error_class'],
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: dict() got multiple values for keyword argument 'worker_bytes'

@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "source_sha256": "00de41e85e561c929ff047de7bbcf4e6b1b707a99ee35cd815ffe0376c573177",
+  "input_and_output_sha256": {
+    "manifest.json": "701555b4ac7f51b3d9672c9515b246148b1398574e1e82adafeb2f2a3acd5ed8",
+    "preregistration.md": "62fc159871f630f2ad050bf01cbf68382720f532b4b86ef1d17d5d6b14a737a6",
+    "go-events.jsonl": "d111b211a475b51c6199fadb50423181fbba64912c5d4e1885864da2243f3a2b",
+    "go-stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "wake.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reports.json": "4f0f76bf3be6e3cfc824d3c626a7f4f3f8f0210c000f36484ee8de8a6290a68e",
+    "summary.json": "d8d0875576c9609a1814782269337c64c67be9612a049dfd779d3dff70229254",
+    "analysis-first.py": "f08a60addf47492251fce5577f81490da0146cb8f83fbd069399a99d523320bc",
+    "analysis-first-stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "analysis-first-failure.log": "03b633ea9adafb32220154d364464b2234450e507b751c4ec8319975f4b084c1",
+    "analysis-second-failure.log": "b8ff72aaab68dcb37f1fc73fe63e74d1834cacda9cd673f55525d0a337476f40",
+    "collection-runner.py": "0ad0a71c0a759ae9b6088660c26bb628013b179ddd8fde03b674940f00e65ad3",
+    "analysis-validation.log": "0cab0caa33ad9346e481a276c362d419b8bdd5642b42fbf75dd3524dbdb0035e"
+  },
+  "reports_verified": 15,
+  "test_source_sha256": "66c8a83ba101a769f434eb33976769a59843b88d157f103a8cff2022ef7aa9c9",
+  "note": "Raw report verification, exact RFC3339Nano timing and independent byte/range recomputation; business and criteria counts separated"
+}

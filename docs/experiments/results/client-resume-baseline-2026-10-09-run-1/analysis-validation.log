@@ -1,0 +1,13 @@
+test_credentials_rejected (test_client_resume.ClientResumeAnalysisTest.test_credentials_rejected) ... ok
+test_false_completed_and_missing_failures_rejected (test_client_resume.ClientResumeAnalysisTest.test_false_completed_and_missing_failures_rejected) ... ok
+test_incomplete_round_not_replaced (test_client_resume.ClientResumeAnalysisTest.test_incomplete_round_not_replaced) ... ok
+test_long_log_fragments_reassemble (test_client_resume.ClientResumeAnalysisTest.test_long_log_fragments_reassemble) ... ok
+test_mutated_clock_difference_not_silently_ignored (test_client_resume.ClientResumeAnalysisTest.test_mutated_clock_difference_not_silently_ignored) ... ok
+test_mutated_evidence_rejected (test_client_resume.ClientResumeAnalysisTest.test_mutated_evidence_rejected) ... ok
+test_nanosecond_time_and_timezone (test_client_resume.ClientResumeAnalysisTest.test_nanosecond_time_and_timezone) ... ok
+test_pattern_corresponds_to_archived_worker (test_client_resume.ClientResumeAnalysisTest.test_pattern_corresponds_to_archived_worker) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.465s
+
+OK
