@@ -1,7 +1,7 @@
 # EXP-006-03：共享 Gateway 的恢复尝试次数对照
 
 Date: 2026-10-11
-Status: 设计与预登记完成；比较入口、工具验收及正式测量待完成。
+Status: 设计、比较入口及工具验收完成；正式非 race 测量待执行。
 Related: [设计与方案权衡](../worklog/2026-10-11-group-resume-budget-design.md)、[EXP-006-02](group-resume-baseline.md)、[Milestones](../MILESTONES.md)。
 
 ## Goal / Questions
@@ -101,11 +101,48 @@ Related: [设计与方案权衡](../worklog/2026-10-11-group-resume-budget-desig
 
 若增加次数支持等待开放，再独立设计 jitter 来比较请求分散；若仍失败，先从实际到达、拒绝、窗口和保留事实解释，不同时修改窗口/间隔/入口名额。
 
-## Tool plan / 执行前待完成
+## Tool plan / 实现前固定
 
 - 助手新增 EXP-006-03 显式入口和固定轮次，复用共享夹具；默认跳过正式实验。用缩短预算的真实网络 probe 验收两种配置，业务失败仍输出报告。
 - 采集/分析增加明确实验配置，独立核对以上顺序、条件和比较指标。保留 EXP-006-02 五次契约；八次报告不能通过旧基线身份的验证。
 - 覆盖历史兼容、次数/窗口/退避漂移、批次缺失重复、错误顺序、失败分母、资源时间口径及音频/结果反例。复核不覆盖初次产物。
 - 工具验收完成后补实际运行命令。正式运行一次构建、三轮，独占新输出目录，保存源码/工具/预登记/二进制/环境/原始事件/退出状态和 SHA256；独立复算并读回归档。
 
-本页尚无 EXP-006-03 实测结果。工具失败或环境中断保留首次尝试；若需要复测，另建完整目录并说明原因，不拼接不同版本、不同运行的批次。
+本页尚无 EXP-006-03 正式预算对照结果。工具失败或环境中断保留首次尝试；若需要复测，另建完整目录并说明原因，不拼接不同版本、不同运行的批次。
+
+## 工具验收与命令（2026-10-11）
+
+比较入口已接通，正式入口内部执行固定三轮，采集命令的 `--count` 是逻辑轮次；测试程序始终 `-test.count=1`，不会重复三轮变成九轮。报告保存 experiment、round、实际客户端/Gateway 条件，分析分别核对原 RPC 退出与整批空闲。
+
+真实非 race 的缩短版 probe 先一轮四批接通，再独立三轮验证交替顺序：三轮 12/12 批、96 场证据合格，72 完成、24 明确失败，5474 个资源样本且均自然清理。此处占位实际为 40ms/300ms、输入 800ms，**不是本页正式 500ms/2s 条件的结果**；详细条件、首次人工夹具失败和证据范围见[工具验收](../worklog/2026-10-11-group-resume-budget-design.md#工具实现与验收2026-10-11)。
+
+缩短场景的采集与测试：
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 GOCACHE=/private/tmp/tide-review-gocache \
+  GOPROXY=off GOSUMDB=off \
+  python3 docs/experiments/scripts/run_group_resume_budget.py \
+  --mode probe --count 3 --output /private/tmp/tide-group-budget-tools-new-run
+
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
+  -s docs/experiments/scripts -p 'test_group_resume*.py'
+```
+
+正式采集命令（本步未运行）：
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 GOCACHE=/private/tmp/tide-review-gocache \
+  GOPROXY=off GOSUMDB=off \
+  python3 docs/experiments/scripts/run_group_resume_budget.py \
+  --mode formal --count 3 --output /private/tmp/tide-group-budget-formal-new-run
+```
+
+独立复核写入另一个新目录，不覆盖初次分析：
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/summarize_group_resume_budget.py \
+  /private/tmp/tide-group-budget-formal-new-run \
+  --output /private/tmp/tide-group-budget-formal-new-run/reanalysis-1
+```
+
+`summary.json` 包含四条件、六对相邻比较及两个场景的总差值；无效或未知证据不输出确定收益。原始报告、逐场和请求桶 CSV、源码/产物/环境与分析摘要另存。归档移动后按原命令记录核对原采集路径，实际从新位置复核文件摘要；不要求原目录继续存在。

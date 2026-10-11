@@ -1,0 +1,60 @@
+F...F.......EE
+======================================================================
+ERROR: test_rpc_retention_does_not_depend_on_client_return (test_group_resume_budget.GroupResumeBudgetTest.test_rpc_retention_does_not_depend_on_client_return)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume_budget.py", line 145, in test_rpc_retention_does_not_depend_on_client_return
+    a=verify_budget_report(r,'probe')['sessions'][0]
+      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume_budget.py", line 48, in verify_budget_report
+    row = verify_report(r, mode, expected_config=cfg)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 232, in verify_report
+    cfg = verify_settings(r, mode, expected_config)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 103, in verify_settings
+    require(r['gateway_config'] == gateway, 'effective Gateway settings differ')
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 25, in require
+    raise ValueError(message)
+ValueError: effective Gateway settings differ
+
+======================================================================
+ERROR: test_success_and_eight_attempt_failure (test_group_resume_budget.GroupResumeBudgetTest.test_success_and_eight_attempt_failure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume_budget.py", line 126, in test_success_and_eight_attempt_failure
+    row=verify_budget_report(report(case,failed=failed),'probe')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume_budget.py", line 48, in verify_budget_report
+    row = verify_report(r, mode, expected_config=cfg)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 232, in verify_report
+    cfg = verify_settings(r, mode, expected_config)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 103, in verify_settings
+    require(r['gateway_config'] == gateway, 'effective Gateway settings differ')
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 25, in require
+    raise ValueError(message)
+ValueError: effective Gateway settings differ
+
+======================================================================
+FAIL: test_archive_relocation_and_reanalysis_are_identical (test_group_resume_budget.GroupResumeBudgetTest.test_archive_relocation_and_reanalysis_are_identical)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume_budget.py", line 233, in test_archive_relocation_and_reanalysis_are_identical
+    self.assertTrue(result['evidence_valid'],result['errors'])
+AssertionError: False is not true : ['report 0: effective Gateway settings differ', 'report 1: effective Gateway settings differ', 'report 2: effective Gateway settings differ', 'report 3: effective Gateway settings differ']
+
+======================================================================
+FAIL: test_fixed_denominator_and_pair_differences (test_group_resume_budget.GroupResumeBudgetTest.test_fixed_denominator_and_pair_differences)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume_budget.py", line 134, in test_fixed_denominator_and_pair_differences
+    self.assertTrue(result['evidence_valid'],result['errors'])
+AssertionError: False is not true : ['report 0: effective Gateway settings differ', 'report 1: effective Gateway settings differ', 'report 2: effective Gateway settings differ', 'report 3: effective Gateway settings differ', 'report 4: effective Gateway settings differ', 'report 5: effective Gateway settings differ', 'report 6: effective Gateway settings differ', 'report 7: effective Gateway settings differ', 'report 8: effective Gateway settings differ', 'report 9: effective Gateway settings differ', 'report 10: effective Gateway settings differ', 'report 11: effective Gateway settings differ']
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.432s
+
+FAILED (failures=2, errors=2)
+{"status": "build_failed", "planned_sessions": 32, "error": null}

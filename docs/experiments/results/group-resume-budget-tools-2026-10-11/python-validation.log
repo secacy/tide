@@ -1,0 +1,14 @@
+......................................................................................................{"status": "build_failed", "planned_sessions": 40, "error": null}
+{"status": "build_failed", "planned_sessions": 32, "error": null}
+BEGIN pair-1-round_robin
+......BEGIN pair-1-round_robin
+BEGIN pair-1-weighted_round_robin
+BEGIN pair-2-weighted_round_robin
+BEGIN pair-2-round_robin
+BEGIN pair-3-round_robin
+BEGIN pair-3-weighted_round_robin
+..................................
+----------------------------------------------------------------------
+Ran 142 tests in 13.816s
+
+OK

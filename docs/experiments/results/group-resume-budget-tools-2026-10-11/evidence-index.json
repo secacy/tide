@@ -1,0 +1,31 @@
+{
+  "version": 1,
+  "experiment": "EXP-006-03",
+  "mode": "probe",
+  "scope": "tool evidence subset, not complete collection or formal measurement",
+  "full_collection": "/private/tmp/tide-group-budget-tools-probe-2026-10-11-run-2",
+  "event_sha256": "a42e4dff6467f8a72390f95fd458173a5665ceadccfb9381a029e8604d8770b9",
+  "planned_sessions": 96,
+  "verified_batches": 12,
+  "samples": 5474,
+  "files_sha256": {
+    ".gitattributes": "78e182c1786bc84ac435e2fe8ac30086b5c25f6a4f71348a663506a84b3917a6",
+    "README.md": "db3f701e7ab5dad9f64eff59608a5033ce6cdfb4a5ab917e94a7b4348173ae76",
+    "analysis-manifest.json": "8eeaea68b2fa9bf1033af023a7c7a0a5138ab0d47b60e8dc70bdda748442d181",
+    "attempt-bins.csv": "7dd96c83b15fad741b327ee8b09c8dbb7027e8892cc20867f2d02849f0c36d3a",
+    "baseline-compatibility.log": "257dc61b7b2592b9e3013c4206acbbe1abc769fd979cacee6e343d95af689adf",
+    "first-synthetic-failure.log": "74170402ad7cb0ad05421155d89d8104a884fae44f59b24bf5ff635d1e527955",
+    "go-events.jsonl.gz": "e3ed976362336738f2758d8bb161e77e37d511c52bd6615502c7c96ca9397cc4",
+    "manifest.json": "1f2eab225af22ceb86b28d6a82d7f91269a36a11e87861ca3a00b9a19549f6f3",
+    "nonrace-guard-reanalysis.log": "769e79a333045e01584d203547beb1980b3ff69b4f227c75eb41d30b397f8252",
+    "one-round-collection.log": "e8722063980be4febce17cf723ff89efd51884f88146cd2d754867385b2f4b65",
+    "python-validation.log": "a0ae703767df873182210417913997693299cf288804244ac0047431dd8494eb",
+    "reanalysis.log": "769e79a333045e01584d203547beb1980b3ff69b4f227c75eb41d30b397f8252",
+    "relocation.log": "769e79a333045e01584d203547beb1980b3ff69b4f227c75eb41d30b397f8252",
+    "second-synthetic-failure.log": "0c14703cecbfee469a7c181220b390a73248ce97c819f1f82e0bec2df98f2b05",
+    "sessions.csv": "4f479faede1b97c61268fc4b99dfaedc83a53bc75587930f5a95b3a2f429bdb4",
+    "summary.json": "472263d4786a3f1df9d85f1bc2e2d96b9604053fb40220be50c0c7e64141eedb",
+    "three-round-collection.log": "eda3a72ddcdf209bf471902ab2ff06a433975877ef2703849a98ce65977427ad",
+    "validation.json": "59830952548bb0431a2a1fbf5e17ad8326d41e4bb8b4e794ef19a9ccf9c25395"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "scope": "correctness only; no performance claim",
+  "race_log": "/private/tmp/tide-group-budget-race-regression-2026-10-11.jsonl",
+  "race_log_sha256": "c8647528a9dd58ab1d2ba78be852a01ad16c4bfaf5aded3a2f87325a438ff9ec",
+  "packages": {
+    "github.com/secacy/tide-artisan/internal/gateway": {
+      "counts": {
+        "pass": 1052,
+        "skip": 16
+      },
+      "skipped": [
+        "TestSessionAdmissionExperiment",
+        "TestAudioBacklogComparisonExperiment",
+        "TestClientResumeBaselineExperiment",
+        "TestV2InstanceProcessHelper",
+        "TestGroupResumeBudgetExperiment",
+        "TestGroupResumeBaselineExperiment",
+        "TestProgressBacklogBaselineExperiment",
+        "TestProtectionCleanupExperiment",
+        "TestResultWriteTimeoutExperiment",
+        "TestSlowReaderBaselineExperiment",
+        "TestSlowWorkerBaselineExperiment",
+        "TestStalledWorkerExperiment",
+        "TestWorkerSendTimeoutExperiment",
+        "TestTailTimeoutExperiment",
+        "TestTailStallBaselineExperiment",
+        "TestWorkerPauseExperiment"
+      ]
+    },
+    "github.com/secacy/tide-artisan/internal/wsclient": {
+      "counts": {
+        "pass": 305
+      },
+      "skipped": []
+    }
+  },
+  "budget_targeted": {
+    "passed_leaves_per_round": 7,
+    "rounds": 3,
+    "passed_total": 21,
+    "formal_skips": 3
+  },
+  "python_methods": 142,
+  "reanalysis_four_outputs_identical": true,
+  "relocation_four_outputs_identical": true,
+  "historical_baseline_four_outputs_identical": true,
+  "nonrace_guard_four_outputs_identical": true
+}

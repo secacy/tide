@@ -1,0 +1,38 @@
+F...F........E
+======================================================================
+ERROR: test_success_and_eight_attempt_failure (test_group_resume_budget.GroupResumeBudgetTest.test_success_and_eight_attempt_failure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume_budget.py", line 127, in test_success_and_eight_attempt_failure
+    row=verify_budget_report(report(case,failed=failed),'probe')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume_budget.py", line 48, in verify_budget_report
+    row = verify_report(r, mode, expected_config=cfg)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 251, in verify_report
+    require(any(a['code'] == 'handshake_limit' and a['http_status'] == 503 and a['code_written'] for a in r['attempts']), 'real handshake rejection missing')
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 25, in require
+    raise ValueError(message)
+ValueError: real handshake rejection missing
+
+======================================================================
+FAIL: test_archive_relocation_and_reanalysis_are_identical (test_group_resume_budget.GroupResumeBudgetTest.test_archive_relocation_and_reanalysis_are_identical)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume_budget.py", line 234, in test_archive_relocation_and_reanalysis_are_identical
+    self.assertTrue(result['evidence_valid'],result['errors'])
+AssertionError: False is not true : ['report 0: real handshake rejection missing']
+
+======================================================================
+FAIL: test_fixed_denominator_and_pair_differences (test_group_resume_budget.GroupResumeBudgetTest.test_fixed_denominator_and_pair_differences)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume_budget.py", line 135, in test_fixed_denominator_and_pair_differences
+    self.assertTrue(result['evidence_valid'],result['errors'])
+AssertionError: False is not true : ['report 0: real handshake rejection missing', 'report 5: real handshake rejection missing', 'report 8: real handshake rejection missing']
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.585s
+
+FAILED (failures=2, errors=1)
+{"status": "build_failed", "planned_sessions": 32, "error": null}

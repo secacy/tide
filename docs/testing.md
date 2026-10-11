@@ -66,9 +66,23 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
 
 正式测量命令见 [EXP-006-02](experiments/group-resume-baseline.md#采集与独立复核)。采集脚本构建一次非 race 测试程序，保存源码快照、配置、环境和原始事件；分析独立检查位置/字节、失败分母及自然清理。默认 Go 回归仍跳过正式入口；不能把 `-race` 或 probe 输出当作正式测量。
 
+## 群体恢复的尝试次数比较工具
+
+```sh
+go test -race ./internal/gateway -run '^TestGroupResumeBudget' -count=3 -timeout=2m
+
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_group_resume_budget.py \
+  --mode probe --count 3 --output /private/tmp/tide-group-budget-tools-new-run
+
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
+  -s docs/experiments/scripts -p 'test_group_resume*.py'
+```
+
+新入口的逻辑轮次在程序内部执行，采集器固定 `test.count=1`；报告有独立实验标记及 round，分析按固定计划核对四条件、唯一槽位、相邻顺序、失败/未知分母和原 RPC 保留成本。probe 默认一轮，采集器可明确指定三轮；缩短条件不代表正式 500ms/2s 占位收益。旧 EXP-006-02 的五次契约保持不变。正式命令、固定条件及证据见 [EXP-006-03](experiments/group-resume-budget-comparison.md#工具验收与命令2026-10-11)。
+
 ## 显式实验
 
-以下十四个实验使用环境变量开启，变量等于 `1` 时才运行。默认回归前应确保这些变量未启用；`make test` 和 `make test-race` 沿用调用方环境。
+以下十五个实验使用环境变量开启，变量等于 `1` 时才运行。默认回归前应确保这些变量未启用；`make test` 和 `make test-race` 沿用调用方环境。
 
 | 测试名（均在 internal/gateway） | 环境变量 |
 | --- | --- |
@@ -86,6 +100,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
 | TestProtectionCleanupExperiment | TIDE_RUN_PROTECTION_CLEANUP |
 | TestClientResumeBaselineExperiment | TIDE_RUN_CLIENT_RESUME_EXPERIMENT |
 | TestGroupResumeBaselineExperiment | TIDE_RUN_GROUP_RESUME_EXPERIMENT |
+| TestGroupResumeBudgetExperiment | TIDE_RUN_GROUP_RESUME_BUDGET_EXPERIMENT |
 
 例如只执行尾部超时实验：
 

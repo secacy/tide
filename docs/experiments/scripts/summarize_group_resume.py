@@ -48,6 +48,10 @@ def group_pattern(identity, size):
 
 
 def extract(events, mode):
+    return extract_reports(events, ROOT_TEST[mode], MARKER[mode])
+
+
+def extract_reports(events, root_test, marker, *, validate_test=None):
     """按 Test 重组碎片，允许不同测试日志交错；只解析本模式的报告。"""
     buffers = defaultdict(str)
     for event in events:
@@ -61,13 +65,15 @@ def extract(events, mode):
     for test, text in buffers.items():
         cursor = 0
         while True:
-            index = text.find(MARKER[mode], cursor)
+            index = text.find(marker, cursor)
             if index < 0:
                 break
-            report, size = decoder.raw_decode(text[index + len(MARKER[mode]):])
-            require(test.startswith(ROOT_TEST[mode] + '/'), 'report belongs to another test')
+            report, size = decoder.raw_decode(text[index + len(marker):])
+            require(test.startswith(root_test + '/'), 'report belongs to another test')
+            if validate_test:
+                validate_test(test, report)
             reports.append(report)
-            cursor = index + len(MARKER[mode]) + size
+            cursor = index + len(marker) + size
     return sorted(reports, key=lambda r: stamp_ns(r['started_at']))
 
 
@@ -79,8 +85,8 @@ def distribution(values):
     return None if not values else dict(n=len(values), min=min(values), median=statistics.median(values), max=max(values))
 
 
-def verify_settings(r, mode):
-    cfg = configured(r['config']['case'], mode)
+def verify_settings(r, mode, expected_config=None):
+    cfg = configured(r['config']['case'], mode) if expected_config is None else expected_config
     require(r['version'] == 2 and r['config'] == cfg, 'report version or configured conditions differ')
     env = r['environment']
     require(env['transport'] == 'loopback_tcp' and env['topology'] == 'same_process', 'topology differs')
@@ -221,8 +227,9 @@ def verify_session(session, cfg, r):
                 remote_idle_after_return_ms=duration(r['natural_idle_at'], s['returned_at']))
 
 
-def verify_report(r, mode='formal'):
-    cfg = verify_settings(r, mode)
+def verify_report(r, mode='formal', *, expected_config=None):
+    # 新实验必须由独立的固定条件构造器传入预期值；旧入口仍严格匹配 EXP-006-02。
+    cfg = verify_settings(r, mode, expected_config)
     require(not r['tool_errors'] and not r['evidence_errors'] and not r['forced_cleanup'], 'report has invalid evidence or forced cleanup')
     require(r['picks'] == r['worker_calls'] == cfg['clients'], 'replacement RPC or Pick')
     require(len(r['sessions']) == cfg['clients'] and sorted(s['id'] for s in r['sessions']) == list(range(1, cfg['clients'] + 1)), 'planned session denominator or identity differs')
@@ -300,6 +307,11 @@ def verify_artifacts(root, manifest):
             manifest['planned_rounds'] in (1, 2, 3) and (manifest['mode'] != 'formal' or manifest['planned_rounds'] == 3), 'invalid collection manifest')
     require(manifest['order'] == (FORMAL if manifest['mode'] == 'formal' else PROBE) and
             manifest['planned_sessions'] == 8 * 5 * manifest['planned_rounds'], 'manifest denominator differs')
+    verify_archive_files(root, manifest)
+
+
+def verify_archive_files(root, manifest):
+    """复用文件完整性核对；实验身份、条件和分母由各入口分别验证。"""
     required = {'preregistration.md', 'build.log', 'go-events.jsonl', 'go-stderr.log', 'group-resume.test', 'git-status.txt'}
     require(required <= manifest['artifacts_sha256'].keys() and manifest['source_sha256'], 'required artifacts or source snapshot missing')
     for name, value in manifest['artifacts_sha256'].items():
