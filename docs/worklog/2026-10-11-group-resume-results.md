@@ -47,3 +47,5 @@ E 每批八场的恢复请求都聚集在 T0 的 0/100/300/700/1500ms 附近；�
 本轮没有对照验证 jitter，也没有真实弱网、模型或长时会话证据。下一步先预登记尝试次数对照：保持窗口、退避和负载不变，只改变次数，评估完成、请求成本和等待；再将请求分散作为独立对照。预算增加和随机退避解决的问题不同，同时调整会无法解释收益来源。
 
 [完整结果、时延口径与复核入口](../experiments/group-resume-baseline.md#results--follow-up)；[正式归档说明](../experiments/results/group-resume-baseline-2026-10-11-run-1/README.md)。
+
+后续已预登记 [EXP-006-03](../experiments/group-resume-budget-comparison.md)：同版本五次/八次、窗口与退避保持不变；选择依据与其他方案见[次数对照设计](2026-10-11-group-resume-budget-design.md)。该实验尚未执行，不能将候选预算的理论排期写成本轮实测收益。

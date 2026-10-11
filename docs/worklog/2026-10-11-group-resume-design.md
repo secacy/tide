@@ -144,3 +144,7 @@ macOS 正式采集使用脚本自有 caffeinate 进程，并记录是否提前�
 ## 正式基线完成（2026-10-11）
 
 [正式执行记录](2026-10-11-group-resume-results.md) 和 [EXP-006-02 结果](../experiments/group-resume-baseline.md#results--follow-up) 已完成：15 批 120 场全部保留，A/B/C 各 24/24、D 22/24、E 0/24 完整完成。D 两场在开放后竞争失败，E 全部约 1.51s 次数先于窗口耗尽；26 场失败 RPC 又保留约 8.49s，15 批均自然退出。完整源码/产物/原始事件归档已经读回复核，四类分析产物一致。未改变生产代码或当前退避，下一步先预登记尝试次数对照；jitter 仍是待验证方案。
+
+## 尝试次数对照已设计（2026-10-11）
+
+[后续设计与权衡](2026-10-11-group-resume-budget-design.md) 和 [EXP-006-03](../experiments/group-resume-budget-comparison.md) 已固定：MaxAttempts=5/8，窗口/退避/入口保持不变，500ms/2s 占位各三批、共 96 场。重新测量同版本对照，报告完成、请求、等待及实际原 RPC 退出，避免把失败返回更晚误写为远端释放更快。比较工具、probe 和正式测量尚待完成；本步只有设计，没有增加性能结果。
