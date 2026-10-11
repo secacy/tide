@@ -160,8 +160,14 @@ func (s *clientGatewaySource) Close() error {
 }
 
 func TestV2ClientGatewayRecovery(t *testing.T) {
-	for _, mode := range []string{"audio_and_result_ack_lost", "resume_ready_lost", "end_lost", "completed_lost"} {
-		t.Run(mode, func(t *testing.T) {
+	for _, name := range []string{"audio_and_result_ack_lost", "resume_ready_lost", "end_lost", "completed_lost", "jitter_resume_ready_lost"} {
+		t.Run(name, func(t *testing.T) {
+			mode := strings.TrimPrefix(name, "jitter_")
+			resume := &wsclient.V2ResumeConfig{MaxAttempts: 10, Window: 2 * time.Second}
+			if name == "jitter_resume_ready_lost" {
+				// 丢掉首个 resume ready，确保实际走过失败后的随机等待再接回原 RPC。
+				resume.Jitter, resume.JitterSeed = true, 202610110101
+			}
 			backend := &v2EntryBackend{}
 			f := newV2EntryFixture(t, newBaselineTCPWorkerClient(t, backend), Config{MaxSessions: 1, V2: &V2Config{ResumeWindow: 2 * time.Second, ResultRetentionTimeout: 2 * time.Second}})
 			proxy := newClientFaultProxy(t, f, mode)
@@ -194,7 +200,7 @@ func TestV2ClientGatewayRecovery(t *testing.T) {
 				close(proxy.allowResume)
 			}
 			var applied []uint64
-			c, err := wsclient.NewV2(wsclient.V2Config{URL: proxy.url, ChunkBytes: 4, Resume: &wsclient.V2ResumeConfig{MaxAttempts: 10, Window: 2 * time.Second}, OnResult: func(_ context.Context, r wsprotocol.SequencedResultMessage, _ time.Time) error {
+			c, err := wsclient.NewV2(wsclient.V2Config{URL: proxy.url, ChunkBytes: 4, Resume: resume, OnResult: func(_ context.Context, r wsprotocol.SequencedResultMessage, _ time.Time) error {
 				applied = append(applied, r.Seq)
 				return nil
 			}})

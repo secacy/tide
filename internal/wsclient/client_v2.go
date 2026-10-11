@@ -28,11 +28,14 @@ type V2Config struct {
 }
 
 // V2ResumeConfig 限制原会话的恢复；非 nil 显式启用，零字段使用默认值。
+// jitter 零值不写入 JSON，保持旧确定性实验的配置格式；开启后显式标记策略。
 type V2ResumeConfig struct {
 	MaxAttempts    int           // 默认 5；整场累计 resume Dial 次数，首次 start 不计。
 	Window         time.Duration // 默认 5s；每轮断线含清理、退避、握手的固定总预算。
-	InitialBackoff time.Duration // 默认 100ms；第一次恢复失败后的等待。
-	MaxBackoff     time.Duration // 默认 1s；指数退避上限，须 >= InitialBackoff。
+	InitialBackoff time.Duration // 默认 100ms；第一次恢复失败后的基础等待，随机化前。
+	MaxBackoff     time.Duration // 默认 1s；基础指数退避上限，须 >= InitialBackoff；jitter 后最多增加 50%。
+	Jitter         bool          `json:"Jitter,omitempty"`     // 默认关闭；开启后在基础间隔上下各 50% 范围内均匀抽样。
+	JitterSeed     uint64        `json:"JitterSeed,omitempty"` // 仅 Jitter=true 有效；0 为每 Run 自动选种子，非零用于复现实验。
 }
 
 // V2ResultHandler 按序同步应用结果，nil 返回后才提交并确认。
@@ -120,6 +123,13 @@ func NewV2(cfg V2Config) (*V2Client, error) {
 		}
 		if resume.MaxBackoff < resume.InitialBackoff {
 			return nil, errors.New("v2 max backoff must be at least initial backoff")
+		}
+		if !resume.Jitter && resume.JitterSeed != 0 {
+			return nil, errors.New("v2 jitter seed requires jitter")
+		}
+		const maxDuration = time.Duration(1<<63 - 1)
+		if resume.Jitter && resume.MaxBackoff > maxDuration-resume.MaxBackoff/2 {
+			return nil, errors.New("v2 jitter backoff overflows duration")
 		}
 		cfg.Resume = &resume
 	}

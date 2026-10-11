@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand/v2"
 	"net/http"
 	"sync"
 	"time"
@@ -50,8 +51,9 @@ type v2ClientRun struct {
 	sourceInput        <-chan v2SourceEvent // EOF 后置 nil，不重新启动采集。
 	recovery           v2RecoveryState
 	backoffUntil       time.Time
-	completionDeadline time.Time // 第一次 end 授权设置，跨连接固定。
-	finalDeadline      time.Time // Completed 后最终确认的固定总窗口。
+	backoffRand        *rand.Rand // 仅 jitter 启用时创建；本 Run 协调者独占，恢复成功不重新播种。
+	completionDeadline time.Time  // 第一次 end 授权设置，跨连接固定。
+	finalDeadline      time.Time  // Completed 后最终确认的固定总窗口。
 	resumed            int
 	ackWritten         bool // 实际 completed_ack Write 成功，不证明远端已处理。
 }
@@ -63,7 +65,16 @@ func (c *V2Client) newV2Run(ctx context.Context, source io.ReadCloser) (*v2Clien
 		return nil, err
 	}
 	runCtx, cancel := context.WithCancel(ctx)
-	return &v2ClientRun{client: c, ctx: runCtx, cancel: cancel, source: source, state: state, dial: func(ctx context.Context, url string) (v2ManagedConnection, *http.Response, error) {
+	var backoffRand *rand.Rand
+	if cfg := c.cfg.Resume; cfg != nil && cfg.Jitter {
+		seed := cfg.JitterSeed
+		if seed == 0 {
+			seed = rand.Uint64()
+		}
+		// 固定种子只复现调度序列，不用于会话身份或恢复凭据。
+		backoffRand = rand.New(rand.NewPCG(seed, seed^0x9e3779b97f4a7c15))
+	}
+	return &v2ClientRun{client: c, ctx: runCtx, cancel: cancel, source: source, state: state, backoffRand: backoffRand, dial: func(ctx context.Context, url string) (v2ManagedConnection, *http.Response, error) {
 		conn, response, err := websocket.Dial(ctx, url, nil)
 		if conn == nil {
 			return nil, response, err
@@ -137,22 +148,10 @@ func (r *v2ClientRun) recover(failure v2AttemptFailure) error {
 		r.phase = v2Closing
 	} else {
 		r.recovery.failures++
-		r.backoffUntil = time.Now().Add(v2BackoffDelay(*cfg, r.recovery.failures))
+		r.backoffUntil = time.Now().Add(r.resumeBackoffDelay(r.recovery.failures))
 		r.phase = v2Backoff
 	}
 	return nil
-}
-
-// v2BackoffDelay 按失败次数增长并封顶，先比较再乘二避免 duration 溢出。
-func v2BackoffDelay(cfg V2ResumeConfig, failures int) time.Duration {
-	delay := cfg.InitialBackoff
-	for i := 1; i < failures && delay < cfg.MaxBackoff; i++ {
-		if delay > cfg.MaxBackoff/2 {
-			return cfg.MaxBackoff
-		}
-		delay *= 2
-	}
-	return min(delay, cfg.MaxBackoff)
 }
 
 // dispatch 只在活动连接空闲时产生一个授权/副本，保持 ACK 与音频交替。

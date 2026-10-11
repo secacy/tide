@@ -1,7 +1,7 @@
 # EXP-006-04：共享 Gateway 的随机退避对照
 
 Date: 2026-10-11
-Status: 预登记；客户端、测试与工具待实现，正式测量未开始。
+Status: 预登记；客户端可选 jitter 及行为验收完成，群体工具待实现，正式测量未开始。
 Related: [方案与实现指引](../worklog/2026-10-11-group-resume-jitter-design.md)、[EXP-006-03](group-resume-budget-comparison.md)、[Milestones](../MILESTONES.md)。
 
 ## Goal / Questions

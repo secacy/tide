@@ -1,0 +1,67 @@
+{
+  "first-client-race.jsonl.xz": {
+    "raw_sha256": "e3fdfb601b9a75817a100a6356d77b73d5d40dc65a962d52d9b15c72f103f49e",
+    "compressed_sha256": "3ac3d95ed529c1459d6e778a1ae52df88d5d7ca8e11da0f49036b3813303a0e2",
+    "leaf_outcomes": {
+      "pass": 62,
+      "fail": 1
+    },
+    "package_outcomes": [
+      {
+        "Package": "github.com/secacy/tide-artisan/internal/wsclient",
+        "Action": "fail"
+      }
+    ]
+  },
+  "client-race.jsonl.xz": {
+    "raw_sha256": "32e470e1749551ea1a94416d884a7d007e327424ae5bd5784a0b25fb6bbd6b15",
+    "compressed_sha256": "6a8383462a710d93218e0b6019c69153b13a982a27751b18bec104de3359fac7",
+    "leaf_outcomes": {
+      "pass": 66
+    },
+    "package_outcomes": [
+      {
+        "Package": "github.com/secacy/tide-artisan/internal/wsclient",
+        "Action": "pass"
+      }
+    ]
+  },
+  "network-race.jsonl.xz": {
+    "raw_sha256": "ed09249ad8ef36c292c3cd3c1062bf45e596b1167df9cb13b6a6aaaaf575e675",
+    "compressed_sha256": "00feea38c07b27db43588c69b22fe23a4caff5dd9a37e9ac80db265d3cb19353",
+    "leaf_outcomes": {
+      "pass": 3
+    },
+    "package_outcomes": [
+      {
+        "Package": "github.com/secacy/tide-artisan/internal/gateway",
+        "Action": "pass"
+      }
+    ]
+  },
+  "related-race.jsonl.xz": {
+    "raw_sha256": "51ec47835b550bd6aec7f41d69b2cef95d6e46e3b1e274bcf22d7d8d4d2f551c",
+    "compressed_sha256": "8c31e0f1dbf31516dc5c6d0047908980ff9bf1dfcc4b73d636410eedd2ae8093",
+    "leaf_outcomes": {
+      "pass": 1384,
+      "skip": 16
+    },
+    "package_outcomes": [
+      {
+        "Package": "github.com/secacy/tide-artisan/internal/wsclient",
+        "Action": "pass"
+      },
+      {
+        "Package": "github.com/secacy/tide-artisan/internal/gateway",
+        "Action": "pass"
+      }
+    ]
+  },
+  "compatibility": {
+    "actual_probe_reports_verified": 5,
+    "jitter_config_and_client_counterexamples_rejected": 10,
+    "analyzer_changed": false
+  },
+  "base_commit": "143d1a4b19106034ec9f5c25eece011b32301fce",
+  "scope": "Client implementation validation, not formal jitter performance measurements; tests include uncommitted implementation on base_commit."
+}

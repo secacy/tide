@@ -44,6 +44,16 @@ go test -race ./internal/gateway \
 
 `worker_receiver_test.go` 验证 Worker 响应解析、唯一读取的事件顺序、无缓冲交接、取消及终态发布，并用真实接收任务和 `resultBuffer` 组成受控夹具；没有接入生产协调者或真实 WebSocket 恢复，见[接收任务验收](worklog/2026-10-06-worker-receiver.md#接收任务验收2026-10-06)。
 
+## 客户端可选随机退避
+
+```sh
+go test -race ./internal/wsclient -run '^TestV2Jitter' -count=3
+go test -race ./internal/gateway \
+  -run '^TestV2ClientGatewayRecovery$/^jitter_resume_ready_lost$' -count=3
+```
+
+客户端测试覆盖整数抽样/配置边界、独占随机状态、采集/取消、窗口和次数及跨次恢复语义；网络场景丢弃一次恢复 ready，核对再次接回原 RPC、音频结果完整和自然清理。这是正确性验收，尚未执行 [EXP-006-04](experiments/group-resume-jitter-comparison.md) 群体随机策略性能对照；工具待接通。
+
 ## 共享 Gateway 的群体恢复工具验收
 
 ```sh

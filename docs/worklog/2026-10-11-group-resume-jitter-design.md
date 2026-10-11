@@ -1,6 +1,6 @@
 # 群体恢复：jitter 设计与第一步实现指引
 
-日期：2026-10-11。关联 [次数对照结果](2026-10-11-group-resume-budget-results.md)、[EXP-006-04 预登记](../experiments/group-resume-jitter-comparison.md)。状态：设计完成，客户端实现、测试、工具及正式测量待完成。
+日期：2026-10-11。关联 [次数对照结果](2026-10-11-group-resume-budget-results.md)、[EXP-006-04 预登记](../experiments/group-resume-jitter-comparison.md)。状态：客户端可选 jitter 已实现并验收；群体比较工具及正式测量待完成。以下实现指引保留设计过程，实际实现与验证见文末。
 
 ## 问题与目标
 
@@ -98,3 +98,29 @@ coordinate 的旧连接退出分支仍设置 backoffUntil=time.Now()，保留首
 随后助手扩展 EXP-006-04 独立入口、采集和分析，保留 EXP-006-02/03 的确定性契约。工具保存每场实际配置、非零固定种子、算法标识、候选等待序列和真实代理请求；候选序列是代码推导，不标成实际等待或实际请求时间。代理事件仍是请求聚集、拒绝及接回的实测依据。
 
 最后按预登记运行同版本四条件各四批，再更新 Result。四轮是为让每个场景的先后顺序各占两轮、覆盖四组预定种子，不是根据有利结果补样本；不承诺完成率或延迟一定改善。本步只核对代码接入点、算术约束及文档链接，没有修改业务代码、运行新实验或产生 jitter 收益数据。
+
+## 客户端接入与验收（2026-10-11）
+
+开发者明确委托助手完成本步实现。`V2ResumeConfig` 新增 Jitter/JitterSeed、非法种子与时长溢出校验；`newV2Run` 创建独占 PCG；`client_v2_backoff.go` 分离基础指数计算和整数随机计算；recover 仅在进入下一次退避时抽样。原有首次立即、次数累计、固定窗口、采集和清理路径继续生效。默认五次及关闭 jitter 不变。
+
+兼容性检查发现原实验分析器严格比较实际 JSON 配置。新增字段使用 omitempty，关闭时保持原四字段格式，开启时显式输出 Jitter=true 和非零固定种子。未放宽旧分析规则；正式随机实验必须由新契约识别。自动种子仅属于运行时随机源，不宣称普通自动模式的报告包含可复现种子。
+
+验证基于 `143d1a4` 加本步实现，Go 1.26.5，命令使用 `GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off`：
+
+```sh
+go test -race ./internal/wsclient -run '^TestV2Jitter' -count=3 -json
+go test -race ./internal/gateway \
+  -run '^TestV2ClientGatewayRecovery$/^jitter_resume_ready_lost$' -count=3 -json
+go test -race ./internal/wsclient ./internal/gateway -count=1 -timeout=4m -json
+```
+
+- 客户端新增 22 个叶级用例，各三轮共 66 通过。覆盖零值/配置副本/最大安全间隔、抽样两端及中点/奇数纳秒/1ns、确定性序列、固定 PCG 序列、并发 Run 独立状态、首次不抽样、采集不重抽/不延长等待、取消、窗口先到与恰好同刻、次数先耗尽、恢复成功后的档位重置及随机序列继续。
+- 新增真实 WebSocket/Gateway/TCP gRPC 场景三轮通过：丢失第一份 resume ready，迫使客户端再次恢复；各轮原 Worker RPC 和 Pick 均为一，10 字节音频逐字完整、四条结果连续、完成确认写出，source 关闭一次且注册/会话自然空闲。这是正确性验收，测试使用十次/2s 预算，不是正式八次/5s 对照数据。
+- 最终两包 race 回归客户端 327、Gateway 1057，共 1384 叶级通过，16 默认跳过（15 显式实验及一个私有 helper），无失败或 race 报告。
+- 从最终回归日志重组实际五组默认关闭报告，未经修改的 EXP-006-02 分析器全部验证通过；分别在总配置和单场实际配置伪加 Jitter=true 的十个反例全部拒绝。没有运行业务性能对照或全项目测试。
+
+首次定向测试发现测试自身竞态：预算用例读取 backoffUntil 后等待下一次 Dial，协调器会在开始握手时清空该字段，虚拟时间同步不能代替未来写入的同步。修正为窗口退出后检查留存等待时间，次数场景通过实际 Dial 时刻及终态核对；生产逻辑未因此更改。首次失败日志保留。初次两包回归也通过，补 JSON 兼容性测试后对最终版本重新完成定向和两包回归。
+
+[压缩原始日志与摘要](../experiments/results/jitter-client-validation-2026-10-11/README.md) 包含首次失败、最终客户端/真实网络/两包回归，均解压读回并核对 SHA-256。它是测试证据子集，不是源码/二进制齐全的性能实验归档。
+
+当前可选策略已经接通。下一步由助手扩展 EXP-006-04 群体入口、逐场种子与候选序列报告、采集和独立分析，补工具反例及缩短 probe；工具验收后再执行预登记正式 16 批。暂无随机策略降低拒绝或改善转录等待的量化结论。
