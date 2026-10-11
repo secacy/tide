@@ -1,6 +1,6 @@
 # 第六阶段：实例异常的处理边界与验收设计
 
-日期：2026-10-11。状态：代码核对与验收设计完成；Worker 在线/离线保留期的真实网络受控故障已通过完整客户端验收，Gateway 及独立进程故障仍待验证。设计参照版本 `56e08ee`，测试基于 `bb72836`；本步不改变生产逻辑，也不新增性能结论。
+日期：2026-10-11。状态：代码核对与验收设计完成；Worker 在线/离线保留期、Gateway 受控停止及全新 Gateway 拒绝旧恢复均已通过完整客户端验收，独立进程故障仍待验证。设计参照版本 `56e08ee`，Worker 测试基于 `bb72836`，Gateway 测试基于 `4f37c11`；本步不改变生产逻辑，也不新增性能结论。
 
 ## 为什么进入这一步
 
@@ -102,3 +102,38 @@ GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
 ```
 
 本轮未修改生产代码。Worker 替身、Gateway 和客户端同处一个测试进程，gRPC Server 重启与新流处理已验证，操作系统进程强制退出尚未验证；多会话、真实 ASR、Gateway 状态丢失及故障耗时分布均不在这些测试的证据范围。退出原因与客户端音频范围诊断缺口继续保留。下一步验证 Gateway 受控停止、全新 Gateway 拒绝旧恢复及新场完成。
+
+## Gateway 受控停止与全新实例验收（2026-10-11）
+
+助手完成 [client_v2_gateway_failure_test.go](../../internal/gateway/client_v2_gateway_failure_test.go)，包含 `stopping_entry` 和 `fresh_instance` 两个完整客户端场景。采用同一真实 HTTP/WebSocket 入口和 URL，每次新 HTTP 请求进入时选择目标 Gateway；已有连接继续由原 Gateway 管理。与 WebSocket 代理转发错误相比，本轮让真实客户端直接处理停止入口的 HTTP 503，以及全新实例握手中的 `resume_unavailable`，不在夹具里制造错误码。
+
+首场仍使用八字节 `aabbccdd` 输入，第一条结果已应用、Worker 收到第二块后暂停，协调者查询确认 Gateway 连续接纳到 8 字节且没有 end。本轮直接查询接纳位置，没有观测客户端处理 audio_ack 的状态。测试调用原 Gateway 的 `StopAccepting()`、取消其独立会话 context 并等待 `Wait(ctx)`；Worker Server 保持运行，原 RPC 的阻塞由会话取消解除。随后确认 Worker handler 退出、原 Gateway 会话/握手/注册归零，且停止状态为 true。共享客户端连接的关闭留在夹具最终清理，不能解释本轮原 RPC 退出。
+
+第二次 HTTP 请求暂扣在入口、尚未进入 Gateway，使旧实例退出和目标切换时点确定；普通保留及发送预算为 30 秒，独立测试保护期限为 5 秒。暂扣屏障导致本轮一次恢复尝试，不外推到实际请求竞争或部署重启耗时。
+
+| 场景 | 恢复请求到达的位置 | 观测到的原场结果 | 独立新场 |
+| --- | --- | --- | --- |
+| stopping_entry | 保留在停止中的原 Gateway | HTTP 503 对应 `service_stopping`，Completed=false、AppliedSeq=1、一次恢复、零接回；停止入口也拒绝显式新场 | 切换到新 Gateway 后，在相同 URL 完整完成 |
+| fresh_instance | 全新的 Gateway 对象 | `resume_unavailable`，Completed=false、AppliedSeq=1、一次恢复、零接回；新 Gateway 的 Worker 选择/RPC 均没有因恢复请求增加 | 调用方在相同 URL 显式新建后完整完成 |
+
+新 Gateway 使用独立注册表、生命周期和 gRPC ClientConn，不共享旧会话状态。旧场音频源恰好关闭一次，第一条结果保留且没有额外应用；原 Gateway 只有一次 Worker 选择，旧流收到 8 字节、仅处理 4 字节，没有正常输入结束。拒绝旧恢复及停止入口的新场探测均未建立替代 RPC。
+
+显式新场发送不同的 `11223344`，实际处理 8 字节，结果序号 1、2、3 及对应文本独立、按序应用；尾部结果与 completed/completed_ack 闭环完成，源关闭一次。每个场景最终只观察到旧/新各一条 Worker RPC、原/新 Gateway 各一次 Worker 选择。两个 Gateway 的会话/握手/注册、Worker 活动流及固定入口 handler 均已归零；这些观测发生在测试兜底清理之前。
+
+### 验证记录与边界
+
+- 首次非 race 定向运行两个场景均通过，无首次失败样本。
+- 两个场景 race 各重复十轮，共 20 个场景通过、0 失败、0 跳过。
+- 相关两包最终 race 回归：Gateway 1012、wsclient 305 个叶级检查通过，合计 1317 通过、0 失败；Gateway 13 个显式实验默认跳过。本轮没有性能测量。
+
+可复现命令：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race ./internal/gateway -run '^TestV2ClientGatewayInstanceFailure$' -count=10 -timeout=90s
+
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race -p 1 ./internal/gateway ./internal/wsclient -count=1 -timeout=5m
+```
+
+生产代码未修改。这里验证的是 Gateway 对象的受控停止和固定入口切换到新对象；测试 HTTP 监听器一直存活，以便直接观察停止入口拒绝和新实例接入。没有在本轮执行 `cmd/gateway` 的 HTTP Shutdown、真实信号退出、监听器重启或进程强制终止，不能据此声称实际部署崩溃已经验收。下一步独立验证测试子进程被强制退出后的连接断开、存活对端收尾以及重启后新场完成，继续保留退出原因和音频范围诊断缺口。
