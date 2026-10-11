@@ -1,6 +1,6 @@
 # 第六阶段：实例异常的处理边界与验收设计
 
-日期：2026-10-11。状态：代码核对与验收设计完成；Worker 在线/离线保留期、Gateway 受控停止及全新 Gateway 拒绝旧恢复均已通过完整客户端验收，独立进程故障仍待验证。设计参照版本 `56e08ee`，Worker 测试基于 `bb72836`，Gateway 测试基于 `4f37c11`；本步不改变生产逻辑，也不新增性能结论。
+日期：2026-10-11。状态：代码核对与验收设计完成；Worker 在线/离线保留期、Gateway 受控停止、全新 Gateway 拒绝旧恢复，以及独立进程 SIGKILL/原地址重启均已通过当前测试范围的完整客户端验收。设计参照版本 `56e08ee`，Worker 测试基于 `bb72836`，Gateway 测试基于 `4f37c11`，进程测试基于 `40b26e9`；生产逻辑未修改，没有新增性能结论。下文分别保留各步当时的范围与待办。
 
 ## 为什么进入这一步
 
@@ -137,3 +137,42 @@ GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
 ```
 
 生产代码未修改。这里验证的是 Gateway 对象的受控停止和固定入口切换到新对象；测试 HTTP 监听器一直存活，以便直接观察停止入口拒绝和新实例接入。没有在本轮执行 `cmd/gateway` 的 HTTP Shutdown、真实信号退出、监听器重启或进程强制终止，不能据此声称实际部署崩溃已经验收。下一步独立验证测试子进程被强制退出后的连接断开、存活对端收尾以及重启后新场完成，继续保留退出原因和音频范围诊断缺口。
+
+## 独立进程 SIGKILL 与原地址重启验收（2026-10-11）
+
+助手完成 [client_v2_process_failure_test.go](../../internal/gateway/client_v2_process_failure_test.go)。Unix 测试二进制通过私有 helper 分别运行独立 Worker 和 Gateway 子进程；父测试只终止自己创建的进程，唯一 Cmd.Wait 任务取得退出状态，明确检查 Signaled/SIGKILL。子进程使用临时监听端口，重启进程重新绑定原地址，并检查其 PID 与原进程不同。
+
+选择私有 helper，是为了使用生产 Gateway、真实 TCP gRPC/WebSocket，同时固定 Worker 的处理位置和观察屏障；不要求为了测试修改 Gateway 命令的监听配置。相较直接启动现有命令，本轮不覆盖命令行解析或真实模型，但能验证真实进程退出对连接和原场状态的影响。父/子进程使用同一编译版本，race 运行时子进程也使用 race 二进制。子进程输出在唯一 Wait 结束后额外检查竞态/崩溃日志，避免 SIGKILL 的退出码掩盖已输出的错误。
+
+原场输入仍为 `aabbccdd` 八字节；首条结果已应用，代理观察到八字节 audio_ack 已成功转发，Worker 在第二块收到后暂停，实际只处理前四字节。子进程就绪和 Worker 故障前事实通过私有目录中的完整 JSON 记录发布，Gateway 存活状态通过测试专用 HTTP 查询观察；记录不含会话凭据。文件 rename 仅用于避免读到半条测试记录，不是持久恢复机制，也未测量记录写出成本。
+
+| 被终止的进程 | 存活对端的观察 | 重启后的行为 |
+| --- | --- | --- |
+| Worker | 原 Gateway 在未取消自身生命周期、未 StopAccepting 的情况下，关闭原场并撤销注册、归还名额，保持服务可用 | 新 Worker 进程在原地址就绪，共享 ClientConn 重新可用；原 Gateway 显式新场完整完成 |
+| Gateway | 原 Worker 服务保持运行，原 RPC 因远端进程消失解除阻塞并实际退出，活动流归零 | 新 Gateway 进程初始注册/名额/选择均为零；旧恢复被拒绝且选择仍为零，独立新场随后完整完成 |
+
+被杀 Worker 的 `worker-held.json` 只表示死亡前的八字节接收、四字节处理和一条活动 RPC，未把它当作死亡后的快照；测试确认其没有写出正常退出记录。Gateway 死亡后的清理只在存活 Worker 上观察，新 Gateway 的空注册表属于新进程初始状态，不能称为旧进程执行了清理。
+
+原场客户端在固定代理 URL 上发起一次原身份 resume；代理暂扣请求，直到存活端收尾或新 Gateway 已就绪后再放行。两类故障均得到 `resume_unavailable`，Completed=false、AppliedSeq=1、零成功接回，源关闭一次，没有额外结果应用或回退 start。一次尝试来自受控屏障，不表示真实部署中不会遇到拨号失败和多次重试。测试保护期限为 20 秒，客户端恢复窗口为 10 秒、服务端保留为 30 秒；这些是测试参数，不是恢复性能或生产承诺。
+
+独立新 Run 直连原业务地址：Worker 场景使用一直存活的 Gateway 入口，Gateway 场景使用原端口的新进程。发送不同的 `11223344` 八字节，实际处理全部输入，三条结果序号 1/2/3 按序独立应用，尾部结果及 completed/completed_ack 闭环完成，源关闭一次。原场的代理 URL 和后端目标地址在恢复尝试期间均未改变；显式新场不被统计为原场恢复。
+
+每场的新旧 RPC 分开计量。Worker 场景原 Gateway 总选择次数为二，新 Worker 的唯一 RPC 从零开始、实际处理八字节后退出；Gateway 场景新 Gateway 只有一次新场选择，存活 Worker 总 RPC 数为二，新旧音频与处理位置相互隔离。自然收尾在测试最终取消/关闭夹具前观察；替代子进程在验收完成后由自有清理任务终止并等待，不遗留后台进程。
+
+### 验证记录与边界
+
+- 首次非 race 运行 Worker/Gateway 两个进程场景均通过，没有首次失败样本。
+- 加入子进程错误日志检查后，两个场景 race 各重复五轮：10 个场景通过、0 失败、0 跳过；10 条旧 PID/SIGKILL/新 PID/原地址相同的观测与断言一致。
+- 相关两包 race 回归：Gateway 1014、wsclient 305 个叶级检查通过，共 1319 通过、0 失败；默认跳过 13 个显式实验及 1 个私有进程入口。该入口在父测试启动子进程时执行，不是未验证的业务场景。
+
+可复现命令：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race ./internal/gateway -run '^TestV2ClientInstanceProcessFailure$' -count=5 -timeout=2m
+
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race -p 1 ./internal/gateway ./internal/wsclient -count=1 -timeout=5m
+```
+
+运行环境为当前 macOS 本机，单会话、位置可控的测试 Worker，没有真实 ASR、群体负载、网络黑洞、跨实例迁移或故障耗时分布证据；命令启动、部署探针、发布滚动策略也不在 helper 的验证范围。生产逻辑未修改，本轮完成的是“原场明确失败、存活端收尾、原地址重启后独立新场可用”的进程异常边界，不是进程崩溃后的原场无损恢复。退出原因分类与客户端精确音频范围诊断仍保留缺口。下一步汇总当前恢复能力与失败边界，确定群体重连实验的范围、指标及退避策略。
