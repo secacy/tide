@@ -54,9 +54,21 @@ go test -race ./internal/gateway -run '^TestGroupResume' -count=3 -timeout=2m
 
 这是默认执行的行为测试，不运行 EXP-006-02 的正式 15 批测量。probe 使用较短输入、退避和保留期限，race 耗时及拒绝次数不作为正式性能数据。条件和剩余工作见[群体恢复工具验收](worklog/2026-10-11-group-resume-design.md#共享夹具与行为验收2026-10-11)。
 
+正式入口与采集/分析工具已接通。以下命令只做五批、40 场缩短版工具验收，输出目录必须不存在：
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_group_resume.py \
+  --mode probe --count 1 --output /private/tmp/tide-group-tools-new-run
+
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
+  -s docs/experiments/scripts -p 'test_group_resume.py' -v
+```
+
+正式测量命令见 [EXP-006-02](experiments/group-resume-baseline.md#采集与独立复核)。采集脚本构建一次非 race 测试程序，保存源码快照、配置、环境和原始事件；分析独立检查位置/字节、失败分母及自然清理。默认 Go 回归仍跳过正式入口；不能把 `-race` 或 probe 输出当作正式测量。
+
 ## 显式实验
 
-以下十二个实验使用环境变量开启，变量等于 `1` 时才运行。默认回归前应确保这些变量未启用；`make test` 和 `make test-race` 沿用调用方环境。
+以下十四个实验使用环境变量开启，变量等于 `1` 时才运行。默认回归前应确保这些变量未启用；`make test` 和 `make test-race` 沿用调用方环境。
 
 | 测试名（均在 internal/gateway） | 环境变量 |
 | --- | --- |
@@ -72,6 +84,8 @@ go test -race ./internal/gateway -run '^TestGroupResume' -count=3 -timeout=2m
 | TestAudioBacklogComparisonExperiment | TIDE_RUN_BACKLOG_COMPARISON |
 | TestResultWriteTimeoutExperiment | TIDE_RUN_RESULT_WRITE_TIMEOUT_EXPERIMENT |
 | TestProtectionCleanupExperiment | TIDE_RUN_PROTECTION_CLEANUP |
+| TestClientResumeBaselineExperiment | TIDE_RUN_CLIENT_RESUME_EXPERIMENT |
+| TestGroupResumeBaselineExperiment | TIDE_RUN_GROUP_RESUME_EXPERIMENT |
 
 例如只执行尾部超时实验：
 

@@ -1,0 +1,20 @@
+test_absent_result_is_null_not_zero (test_group_resume.GroupResumeAnalysisTest.test_absent_result_is_null_not_zero) ... ok
+test_bins_include_rejection_unknown_kind_and_empty_intervals (test_group_resume.GroupResumeAnalysisTest.test_bins_include_rejection_unknown_kind_and_empty_intervals) ... ok
+test_build_failure_preserves_manifest_and_does_not_run (test_group_resume.GroupResumeAnalysisTest.test_build_failure_preserves_manifest_and_does_not_run) ... ok
+test_collection_rejects_invalid_rounds_and_existing_output (test_group_resume.GroupResumeAnalysisTest.test_collection_rejects_invalid_rounds_and_existing_output) ... ok
+test_corrupt_archive_suppresses_metrics_even_when_rows_validate (test_group_resume.GroupResumeAnalysisTest.test_corrupt_archive_suppresses_metrics_even_when_rows_validate) ... ok
+test_distinct_input_and_embedded_identity (test_group_resume.GroupResumeAnalysisTest.test_distinct_input_and_embedded_identity) ... ok
+test_evidence_mutations_rejected (test_group_resume.GroupResumeAnalysisTest.test_evidence_mutations_rejected) ... ok
+test_fragmented_credentials_rejected (test_group_resume.GroupResumeAnalysisTest.test_fragmented_credentials_rejected) ... ok
+test_fragmented_interleaved_reports (test_group_resume.GroupResumeAnalysisTest.test_fragmented_interleaved_reports) ... ok
+test_fresh_result_excludes_replay_and_actual_vs_planned_wait (test_group_resume.GroupResumeAnalysisTest.test_fresh_result_excludes_replay_and_actual_vs_planned_wait) ... ok
+test_manifest_missing_hash_tamper_and_path_escape (test_group_resume.GroupResumeAnalysisTest.test_manifest_missing_hash_tamper_and_path_escape) ... ok
+test_missing_duplicate_batches_keep_fixed_denominator (test_group_resume.GroupResumeAnalysisTest.test_missing_duplicate_batches_keep_fixed_denominator) ... ok
+test_probe_cannot_be_formal (test_group_resume.GroupResumeAnalysisTest.test_probe_cannot_be_formal) ... ok
+test_synthetic_complete_and_failed_evidence (test_group_resume.GroupResumeAnalysisTest.test_synthetic_complete_and_failed_evidence) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.226s
+
+OK
+{"status": "build_failed", "planned_sessions": 40, "error": null}

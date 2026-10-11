@@ -53,7 +53,7 @@ func TestGroupResumeSharedGatewayProbe(t *testing.T) {
 				cfg.Busy = 200 * time.Millisecond
 				cfg.Resume.MaxAttempts = 2
 			}
-			report := groupResumeReport{Version: 1, Config: cfg, ToolErrors: []string{"probe did not return observations"}}
+			report := groupResumeReport{Version: 2, Config: cfg, ToolErrors: []string{"probe did not return observations"}}
 			defer logGroupProbe(t, &report) // Includes unexpected failure and setup Fatal.
 			report = runGroupResumeProbe(t, cfg)
 			requireGroupEvidence(t, report)

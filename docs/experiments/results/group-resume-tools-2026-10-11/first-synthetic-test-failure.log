@@ -1,0 +1,123 @@
+test_absent_result_is_null_not_zero (test_group_resume.GroupResumeAnalysisTest.test_absent_result_is_null_not_zero) ... ERROR
+test_bins_include_rejection_unknown_kind_and_empty_intervals (test_group_resume.GroupResumeAnalysisTest.test_bins_include_rejection_unknown_kind_and_empty_intervals) ... ERROR
+test_build_failure_preserves_manifest_and_does_not_run (test_group_resume.GroupResumeAnalysisTest.test_build_failure_preserves_manifest_and_does_not_run) ... ok
+test_collection_rejects_invalid_rounds_and_existing_output (test_group_resume.GroupResumeAnalysisTest.test_collection_rejects_invalid_rounds_and_existing_output) ... ok
+test_corrupt_archive_suppresses_metrics_even_when_rows_validate (test_group_resume.GroupResumeAnalysisTest.test_corrupt_archive_suppresses_metrics_even_when_rows_validate) ... FAIL
+test_distinct_input_and_embedded_identity (test_group_resume.GroupResumeAnalysisTest.test_distinct_input_and_embedded_identity) ... ok
+test_evidence_mutations_rejected (test_group_resume.GroupResumeAnalysisTest.test_evidence_mutations_rejected) ... ok
+test_fragmented_credentials_rejected (test_group_resume.GroupResumeAnalysisTest.test_fragmented_credentials_rejected) ... ok
+test_fragmented_interleaved_reports (test_group_resume.GroupResumeAnalysisTest.test_fragmented_interleaved_reports) ... ok
+test_fresh_result_excludes_replay_and_actual_vs_planned_wait (test_group_resume.GroupResumeAnalysisTest.test_fresh_result_excludes_replay_and_actual_vs_planned_wait) ... ERROR
+test_manifest_missing_hash_tamper_and_path_escape (test_group_resume.GroupResumeAnalysisTest.test_manifest_missing_hash_tamper_and_path_escape) ... ok
+test_missing_duplicate_batches_keep_fixed_denominator (test_group_resume.GroupResumeAnalysisTest.test_missing_duplicate_batches_keep_fixed_denominator) ... ok
+test_probe_cannot_be_formal (test_group_resume.GroupResumeAnalysisTest.test_probe_cannot_be_formal) ... ok
+test_synthetic_complete_and_failed_evidence (test_group_resume.GroupResumeAnalysisTest.test_synthetic_complete_and_failed_evidence) ... 
+  test_synthetic_complete_and_failed_evidence (test_group_resume.GroupResumeAnalysisTest.test_synthetic_complete_and_failed_evidence) (fault=False, failed=False) ... ERROR
+  test_synthetic_complete_and_failed_evidence (test_group_resume.GroupResumeAnalysisTest.test_synthetic_complete_and_failed_evidence) (fault=False, failed=True) ... ERROR
+  test_synthetic_complete_and_failed_evidence (test_group_resume.GroupResumeAnalysisTest.test_synthetic_complete_and_failed_evidence) (fault=True, failed=False) ... ERROR
+  test_synthetic_complete_and_failed_evidence (test_group_resume.GroupResumeAnalysisTest.test_synthetic_complete_and_failed_evidence) (fault=True, failed=True) ... ERROR
+
+======================================================================
+ERROR: test_absent_result_is_null_not_zero (test_group_resume.GroupResumeAnalysisTest.test_absent_result_is_null_not_zero)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume.py", line 185, in test_absent_result_is_null_not_zero
+    self.assertIsNone(verify_report(r, 'probe')['sessions'][0]['fresh_after_fault'])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 263, in verify_report
+    require(idle and stamp_ns(idle) == stamp_ns(r['natural_idle_at']), 'natural cleanup lacks zero-count observation')
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 25, in require
+    raise ValueError(message)
+ValueError: natural cleanup lacks zero-count observation
+
+======================================================================
+ERROR: test_bins_include_rejection_unknown_kind_and_empty_intervals (test_group_resume.GroupResumeAnalysisTest.test_bins_include_rejection_unknown_kind_and_empty_intervals)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume.py", line 164, in test_bins_include_rejection_unknown_kind_and_empty_intervals
+    row = verify_report(r, 'probe')
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 263, in verify_report
+    require(idle and stamp_ns(idle) == stamp_ns(r['natural_idle_at']), 'natural cleanup lacks zero-count observation')
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 25, in require
+    raise ValueError(message)
+ValueError: natural cleanup lacks zero-count observation
+
+======================================================================
+ERROR: test_fresh_result_excludes_replay_and_actual_vs_planned_wait (test_group_resume.GroupResumeAnalysisTest.test_fresh_result_excludes_replay_and_actual_vs_planned_wait)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume.py", line 170, in test_fresh_result_excludes_replay_and_actual_vs_planned_wait
+    row = verify_report(r, 'probe')['sessions'][0]
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 263, in verify_report
+    require(idle and stamp_ns(idle) == stamp_ns(r['natural_idle_at']), 'natural cleanup lacks zero-count observation')
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 25, in require
+    raise ValueError(message)
+ValueError: natural cleanup lacks zero-count observation
+
+======================================================================
+ERROR: test_synthetic_complete_and_failed_evidence (test_group_resume.GroupResumeAnalysisTest.test_synthetic_complete_and_failed_evidence) (fault=False, failed=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume.py", line 106, in test_synthetic_complete_and_failed_evidence
+    r = verify_report(fixture(fault, failed), 'probe')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 263, in verify_report
+    require(idle and stamp_ns(idle) == stamp_ns(r['natural_idle_at']), 'natural cleanup lacks zero-count observation')
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 25, in require
+    raise ValueError(message)
+ValueError: natural cleanup lacks zero-count observation
+
+======================================================================
+ERROR: test_synthetic_complete_and_failed_evidence (test_group_resume.GroupResumeAnalysisTest.test_synthetic_complete_and_failed_evidence) (fault=False, failed=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume.py", line 106, in test_synthetic_complete_and_failed_evidence
+    r = verify_report(fixture(fault, failed), 'probe')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 263, in verify_report
+    require(idle and stamp_ns(idle) == stamp_ns(r['natural_idle_at']), 'natural cleanup lacks zero-count observation')
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 25, in require
+    raise ValueError(message)
+ValueError: natural cleanup lacks zero-count observation
+
+======================================================================
+ERROR: test_synthetic_complete_and_failed_evidence (test_group_resume.GroupResumeAnalysisTest.test_synthetic_complete_and_failed_evidence) (fault=True, failed=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume.py", line 106, in test_synthetic_complete_and_failed_evidence
+    r = verify_report(fixture(fault, failed), 'probe')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 263, in verify_report
+    require(idle and stamp_ns(idle) == stamp_ns(r['natural_idle_at']), 'natural cleanup lacks zero-count observation')
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 25, in require
+    raise ValueError(message)
+ValueError: natural cleanup lacks zero-count observation
+
+======================================================================
+ERROR: test_synthetic_complete_and_failed_evidence (test_group_resume.GroupResumeAnalysisTest.test_synthetic_complete_and_failed_evidence) (fault=True, failed=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume.py", line 106, in test_synthetic_complete_and_failed_evidence
+    r = verify_report(fixture(fault, failed), 'probe')
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_group_resume.py", line 263, in verify_report
+    require(idle and stamp_ns(idle) == stamp_ns(r['natural_idle_at']), 'natural cleanup lacks zero-count observation')
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/summarize_client_resume.py", line 25, in require
+    raise ValueError(message)
+ValueError: natural cleanup lacks zero-count observation
+
+======================================================================
+FAIL: test_corrupt_archive_suppresses_metrics_even_when_rows_validate (test_group_resume.GroupResumeAnalysisTest.test_corrupt_archive_suppresses_metrics_even_when_rows_validate)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/can/src/golang/tide-personal/docs/experiments/scripts/test_group_resume.py", line 220, in test_corrupt_archive_suppresses_metrics_even_when_rows_validate
+    self.assertEqual(summary['verified_batches'], 1)
+AssertionError: 0 != 1
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.201s
+
+FAILED (failures=1, errors=7)
+{"status": "build_failed", "planned_sessions": 40, "error": null}

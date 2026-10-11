@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"runtime"
 	"slices"
 	"strconv"
 	"strings"
@@ -31,21 +32,21 @@ import (
 // groupResumeConfig 描述一次共享入口观察；probe 缩短输入和保护预算，正式条件另行固定。
 // BarrierChunk 在正常组也使用；Fault 决定屏障之后放行还是统一断线。
 type groupResumeConfig struct {
-	Case           string
-	Clients        int
-	MaxHandshakes  int
-	Chunks         int
-	ChunkBytes     int
-	BarrierChunk   int
-	Fault          bool
-	Busy           time.Duration
-	Processing     time.Duration
-	ServerWindow   time.Duration
-	RunTimeout     time.Duration
-	CleanupTimeout time.Duration
-	SamplePeriod   time.Duration
-	SyncLimit      time.Duration
-	Resume         wsclient.V2ResumeConfig
+	Case           string                  `json:"case"`
+	Clients        int                     `json:"clients"`
+	MaxHandshakes  int                     `json:"max_handshakes"`
+	Chunks         int                     `json:"chunks"`
+	ChunkBytes     int                     `json:"chunk_bytes"`
+	BarrierChunk   int                     `json:"barrier_chunk"`
+	Fault          bool                    `json:"fault"`
+	Busy           time.Duration           `json:"busy_ns"`
+	Processing     time.Duration           `json:"processing_ns"`
+	ServerWindow   time.Duration           `json:"server_window_ns"`
+	RunTimeout     time.Duration           `json:"run_timeout_ns"`
+	CleanupTimeout time.Duration           `json:"cleanup_timeout_ns"`
+	SamplePeriod   time.Duration           `json:"sample_period_ns"`
+	SyncLimit      time.Duration           `json:"sync_limit_ns"`
+	Resume         wsclient.V2ResumeConfig `json:"resume"`
 }
 
 // validate 在创建服务前限制输入规模、事件数量和观察期限，拒绝隐式无限预算。
@@ -65,45 +66,97 @@ func (c groupResumeConfig) validate() error {
 // groupResumeAttempt 不存身份或握手原文；ID 是输入实验编号，Connection 是该编号的代理请求序号。
 // ArrivedAt 是前端 HTTP 到达，不等同于实际 Dial 启动或 Gateway 接纳。
 type groupResumeAttempt struct {
-	ID, Connection      int
-	ArrivedAt           time.Time
-	Kind                string
-	BackendAt, ExitedAt *time.Time
-	HTTPStatus          int
-	Code                wsprotocol.V2ErrorCode
-	CodeWritten         bool
+	ID          int                    `json:"id"`
+	Connection  int                    `json:"connection"`
+	ArrivedAt   time.Time              `json:"arrived_at"`
+	Kind        string                 `json:"kind"`
+	BackendAt   *time.Time             `json:"backend_at"`
+	ExitedAt    *time.Time             `json:"exited_at"`
+	HTTPStatus  int                    `json:"http_status"`
+	Code        wsprotocol.V2ErrorCode `json:"code"`
+	CodeWritten bool                   `json:"code_written"`
 }
 
 type groupResumeSession struct {
-	ID            int
-	Started       bool
-	LastEntryCode wsprotocol.V2ErrorCode // 从 Run 返回错误中提取，不等同于代理 Write 成功。
-	Observation   resumeExperimentReport
+	ID            int                    `json:"id"`
+	Started       bool                   `json:"started"`
+	LastEntryCode wsprotocol.V2ErrorCode `json:"last_entry_code"` // 从 Run 错误中提取，不等同于代理 Write 成功。
+	Observation   resumeExperimentReport `json:"observation"`
+}
+
+// MarshalJSON 复用已有记录器，但不输出旧单会话实验的配置、派生指标和局部资源字段。
+// groupResumeReport.Config/GatewayConfig 与 observation.client_config 是本轮实际条件。
+func (s groupResumeSession) MarshalJSON() ([]byte, error) {
+	r := s.Observation
+	observation := struct {
+		InputSHA256   string                  `json:"input_sha256"`
+		StartedAt     time.Time               `json:"started_at"`
+		ReturnedAt    *time.Time              `json:"returned_at"`
+		ClientConfig  resumeClientSettings    `json:"client_config"`
+		RunResult     wsclient.V2RunResult    `json:"run_result"`
+		RunErrorClass string                  `json:"run_error_class"`
+		OuterDeadline bool                    `json:"outer_deadline"`
+		SourceReads   []resumeSourceRead      `json:"source_reads"`
+		SourceCloses  int                     `json:"source_closes"`
+		Frames        []resumeFrame           `json:"frames"`
+		Readies       []resumeReady           `json:"readies"`
+		Worker        resumeWorkerObservation `json:"worker"`
+		Applications  []resumeApplication     `json:"applications"`
+		ToolErrors    []string                `json:"tool_errors"`
+	}{r.InputSHA256, r.StartedAt, r.ReturnedAt, r.ClientConfig, r.RunResult, r.RunErrorClass, r.OuterDeadline, r.SourceReads, r.SourceCloses, r.Frames, r.Readies, r.Worker, r.Applications, r.ToolErrors}
+	return json.Marshal(struct {
+		ID            int                    `json:"id"`
+		Started       bool                   `json:"started"`
+		LastEntryCode wsprotocol.V2ErrorCode `json:"last_entry_code"`
+		Observation   any                    `json:"observation"`
+	}{s.ID, s.Started, s.LastEntryCode, observation})
+}
+
+// groupResumeEnvironment 保存实际执行条件，Race 来自构建约束，不能靠调用方声明覆盖。
+type groupResumeEnvironment struct {
+	GoVersion  string `json:"go_version"`
+	GOOS       string `json:"goos"`
+	GOARCH     string `json:"goarch"`
+	CPUs       int    `json:"cpus"`
+	GOMAXPROCS int    `json:"gomaxprocs"`
+	Race       bool   `json:"race"`
+	Transport  string `json:"transport"`
+	Topology   string `json:"topology"`
+}
+
+// groupResumeSample 各计数与运行时值依次读取，均落在 begin_at/at 之间。
+// Heap 是整个 Go 进程的观测值，不解释为单场内存或严格上界。
+type groupResumeSample struct {
+	resumeResourceSample
+	Goroutines int    `json:"goroutines"`
+	HeapAlloc  uint64 `json:"heap_alloc_bytes"`
+	HeapInuse  uint64 `json:"heap_inuse_bytes"`
 }
 
 // groupResumeReport 在业务失败时仍保留全体计划会话；资源快照沿用单会话观察的非原子口径。
-// 本步先输出原始行为事实，正式采集的 JSON 契约、运行时采样和分析在下一步接入。
+// version=2 固定群体实验输出；缺失时间为 null，未采到的时延不冒充零。
 type groupResumeReport struct {
-	Version         int
-	Config          groupResumeConfig
-	GatewayConfig   Config
-	StartedAt       time.Time
-	FaultAt         *time.Time
-	OccupiedAt      *time.Time
-	ReleasedAt      *time.Time
-	ReturnedAt      *time.Time
-	NaturalIdleAt   *time.Time
-	BarrierAt       []*time.Time
-	CloseStartedAt  []*time.Time
-	CloseFinishedAt []*time.Time
-	Attempts        []groupResumeAttempt
-	Samples         []resumeResourceSample
-	Sessions        []groupResumeSession
-	Picks           int
-	WorkerCalls     int
-	ForcedCleanup   bool
-	ToolErrors      []string
-	EvidenceErrors  []string
+	Version         int                    `json:"version"`
+	Config          groupResumeConfig      `json:"config"`
+	Environment     groupResumeEnvironment `json:"environment"`
+	GatewayConfig   Config                 `json:"gateway_config"`
+	StartedAt       time.Time              `json:"started_at"`
+	FaultAt         *time.Time             `json:"fault_at"`
+	OccupiedAt      *time.Time             `json:"occupied_at"`
+	ReleasedAt      *time.Time             `json:"released_at"`
+	ReturnedAt      *time.Time             `json:"returned_at"`
+	NaturalIdleAt   *time.Time             `json:"natural_idle_at"`
+	BarrierAt       []*time.Time           `json:"barrier_at"`
+	CloseStartedAt  []*time.Time           `json:"close_started_at"`
+	CloseFinishedAt []*time.Time           `json:"close_finished_at"`
+	Attempts        []groupResumeAttempt   `json:"attempts"`
+	Samples         []groupResumeSample    `json:"samples"`
+	Sessions        []groupResumeSession   `json:"sessions"`
+	Picks           int                    `json:"picks"`
+	WorkerCalls     int                    `json:"worker_calls"`
+	ForcedCleanup   bool                   `json:"forced_cleanup"`
+	ToolErrors      []string               `json:"tool_errors"`
+	EvidenceErrors  []string               `json:"evidence_errors"`
 }
 
 // groupPattern 的首八字节编码实验编号，其余内容按编号变化；不同输入不能互换。
@@ -192,6 +245,7 @@ func (s *groupWorkerStream) Send(msg *asrv1.StreamingRecognizeResponse) error {
 // mu 只保护报告与连接登记，不跨网络 I/O 或等待；生命期独立于客户端业务 context。
 type groupResumeHarness struct {
 	mu                         sync.Mutex
+	sampleMu                   sync.Mutex // 串行化定期与屏障采样，保持报告时间顺序；不参与业务 I/O。
 	report                     groupResumeReport
 	recorders                  []*resumeRecorder
 	cfg                        groupResumeConfig
@@ -231,7 +285,7 @@ func newGroupResumeHarness(t *testing.T, cfg groupResumeConfig) *groupResumeHarn
 	h := &groupResumeHarness{cfg: cfg, life: life, stop: stop, barrier: make(chan int, cfg.Clients), barrierRelease: make(chan struct{}),
 		initial: make([][2]*websocket.Conn, cfg.Clients), connections: make([]int, cfg.Clients), initialReady: make([]chan struct{}, cfg.Clients), holderDone: make([]chan struct{}, cfg.MaxHandshakes),
 		maxSamples: int((cfg.RunTimeout+cfg.CleanupTimeout+5*time.Second)/cfg.SamplePeriod) + 16}
-	h.report = groupResumeReport{Version: 1, Config: cfg, StartedAt: time.Now(), BarrierAt: make([]*time.Time, cfg.Clients), CloseStartedAt: make([]*time.Time, cfg.Clients), CloseFinishedAt: make([]*time.Time, cfg.Clients)}
+	h.report = groupResumeReport{Version: 2, Config: cfg, Environment: groupResumeEnvironment{runtime.Version(), runtime.GOOS, runtime.GOARCH, runtime.NumCPU(), runtime.GOMAXPROCS(0), groupResumeRaceEnabled, "loopback_tcp", "same_process"}, StartedAt: time.Now(), BarrierAt: make([]*time.Time, cfg.Clients), CloseStartedAt: make([]*time.Time, cfg.Clients), CloseFinishedAt: make([]*time.Time, cfg.Clients)}
 	for i := 0; i < cfg.Clients; i++ {
 		h.initialReady[i] = make(chan struct{})
 		c := resumeExperimentConfig{Case: cfg.Case, Chunks: cfg.Chunks, ChunkBytes: cfg.ChunkBytes, Resume: true}
@@ -251,6 +305,9 @@ func newGroupResumeHarness(t *testing.T, cfg groupResumeConfig) *groupResumeHarn
 		t.Fatal(err)
 	}
 	h.report.GatewayConfig = h.gateway.cfg
+	// New 将 v2 条件独立保存；报告补回实际归一化的副本，不能把 nil 解释为未启用。
+	v2Config := *h.gateway.v2
+	h.report.GatewayConfig.V2 = &v2Config
 	h.server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		h.gatewayActive.Add(1)
 		defer h.gatewayActive.Add(-1)
@@ -354,6 +411,11 @@ func (h *groupResumeHarness) serve(w http.ResponseWriter, req *http.Request) {
 	h.report.Attempts[index].BackendAt = resumeAt(time.Now())
 	h.mu.Unlock()
 	back, response, err := websocket.Dial(ctx, h.backendURL, nil)
+	if response != nil {
+		h.mu.Lock()
+		h.report.Attempts[index].HTTPStatus = response.StatusCode // 成功升级与拒绝均保留实际 HTTP 状态。
+		h.mu.Unlock()
+	}
 	if err != nil {
 		if response != nil {
 			defer response.Body.Close()
@@ -493,19 +555,25 @@ func (h *groupResumeHarness) serve(w http.ResponseWriter, req *http.Request) {
 
 // sample 依次读取组件计数，不宣称跨组件原子性；达到容量上限标记工具失败。
 func (h *groupResumeHarness) sample() resumeResourceSample {
+	h.sampleMu.Lock()
+	defer h.sampleMu.Unlock()
 	s := resumeResourceSample{BeginAt: time.Now(), Sessions: h.gateway.Snapshot().ActiveSessions, Handshakes: entryHandshakeCount(h.gateway.gate), WorkerActive: int(h.worker.active.Load()), GatewayHandlers: int(h.gatewayActive.Load()), ProxyHandlers: int(h.proxyActive.Load())}
 	h.gateway.registry.mu.Lock()
 	s.Registry = len(h.gateway.registry.entries)
 	h.gateway.registry.mu.Unlock()
 	s.At = time.Now()
+	var memory runtime.MemStats
+	runtime.ReadMemStats(&memory)
+	row := groupResumeSample{resumeResourceSample: s, Goroutines: runtime.NumGoroutine(), HeapAlloc: memory.HeapAlloc, HeapInuse: memory.HeapInuse}
+	row.At = time.Now()
 	h.mu.Lock()
 	if len(h.report.Samples) < h.maxSamples {
-		h.report.Samples = append(h.report.Samples, s)
+		h.report.Samples = append(h.report.Samples, row)
 	} else if len(h.report.ToolErrors) < 32 {
 		h.report.ToolErrors = append(h.report.ToolErrors, "sample recording limit exceeded")
 	}
 	h.mu.Unlock()
-	return s
+	return row.resumeResourceSample
 }
 
 // clientConfig 在已有位置结果回调前校验编号，单场应用记录有固定上限。
@@ -664,6 +732,7 @@ func (s *groupResumeSource) Read(data []byte) (int, error) {
 func runGroupResumeProbe(t *testing.T, cfg groupResumeConfig) groupResumeReport {
 	t.Helper()
 	h := newGroupResumeHarness(t, cfg)
+	h.report.StartedAt = time.Now() // 第一场业务启动的观察原点，不包含夹具构造。
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.RunTimeout)
 	defer cancel()
 	startupCtx, cancelStartup := context.WithTimeout(ctx, 10*time.Second)

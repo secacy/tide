@@ -96,6 +96,31 @@ Related: [恢复能力与方案选择](../worklog/2026-10-11-group-resume-design
 
 尚无正式测量。[共享夹具及行为验收](../worklog/2026-10-11-group-resume-design.md#共享夹具与行为验收2026-10-11) 已通过：八场共享原 Gateway，真实升级前握手拒绝传回客户端，成功场完整处理并复用原 RPC，两次尝试的缩短反例明确失败并自然清理。probe 使用 0.8 秒输入、40ms/200ms 占位与缩短预算，不能替代本预登记条件或视为正式容量/时延数据。
 
-下一步助手补正式采集入口、稳定输出/环境与源码记录及分析工具，再执行五组各三批非 race 测量。如发现预登记歧义，正式采集前修订并说明，不事后移动判据。
+正式采集入口、报告 v2、源码/环境快照及独立分析工具已接通，五批 40 场缩短版工具验收通过；仍无本预登记条件下的正式结果。详细证据见[采集与分析工具验收](../worklog/2026-10-11-group-resume-design.md#采集与分析工具验收2026-10-11)。下一步执行五组各三批非 race 测量；不为获得预期结论改变预算。
+
+## 采集与独立复核
+
+正式测量独占一个新目录，固定三轮 A/B/C/D/E、15 批 120 个计划会话，不与 race/其他负载同时运行：
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 GOCACHE=/private/tmp/tide-review-gocache \
+  GOPROXY=off GOSUMDB=off \
+  python3 docs/experiments/scripts/run_group_resume.py \
+  --mode formal --count 3 --output /private/tmp/tide-group-formal-new-run
+```
+
+脚本保存源码快照与摘要、commit/工作区状态、构建及运行参数、Go/运行时环境、原始 `go-events.jsonl` 和退出状态。一次构建后运行固定入口，不启用 race；报告的 race 标记来自构建约束。macOS 正式测量期间使用本脚本拥有的 caffeinate 进程保持唤醒，结束后只关闭该进程；提前退出标记证据失败。默认不会运行本正式测量。
+
+分析默认写入归档的 `analysis/`，原始报告、逐场 CSV、请求桶 CSV、汇总及分析摘要分别保存。复核必须使用另一新目录，不覆盖原分析：
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/summarize_group_resume.py \
+  /private/tmp/tide-group-formal-new-run \
+  --output /private/tmp/tide-group-formal-new-run/reanalysis-1
+```
+
+本次补明确统计口径，未修改负载/预算/业务判据：50ms 桶从 T0 到整批客户端返回，包含最后请求之后的空桶；首波指每场 connection=2 的入口到达，其余恢复连接列为重试。转录等待同时列实际 Read 开始和首次 Read+块序号×100ms 两个起点，后者包含采集落后。缺口分别报告未采集、已采集未到 Worker、已采集未处理，避免把接收当作处理。runtime goroutine/heap 是整个测试进程的非原子采样；另列采样调用耗时和最大间隔，不解释成单会话资源或严格上界。
+
+工具/同步/归档校验失败的报告继续保留在计划分母，未知与业务失败分开；没有测到的时间为 null。完成率和成功场时延同时展示失败数和时延样本数。控制入口占位实验不代表自然弱网或生产容量，正式结果尚待采集。
 
 次数过早耗尽则先讨论预算；重复聚集并伴随拒绝则设计 jitter 对照。平均等待或首试规则调整必须明示。未观察到瓶颈也保留为有效结论，不为了产生收益而改变判据。

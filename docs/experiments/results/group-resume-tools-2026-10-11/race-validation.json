@@ -1,0 +1,10 @@
+{
+  "scope": "correctness only, three repetitions, formal measurement skipped",
+  "command": "go test -race ./internal/gateway -run '^TestGroupResume' -count=3 -timeout=2m -json",
+  "leaf_counts": {
+    "skip": 3,
+    "pass": 105
+  },
+  "raw_log": "/private/tmp/tide-group-tools-final-race-2-2026-10-11.jsonl",
+  "raw_log_sha256": "a9324ff49c6f5cd6daf6d7837dd983f9255e70bc4aadc3e774061c400e366038"
+}

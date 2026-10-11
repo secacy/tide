@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "scope": "tool acceptance only; compressed original Go events plus collection manifest, not a complete runnable archive",
+  "full_collection_directory": "/private/tmp/tide-group-resume-tools-probe-2026-10-11-run-2",
+  "event_sha256": "d98a930d160b5e71631b1bdcaa58a4f584fc84bddfd050f5a43cc73f575cb9fc",
+  "planned_probe_sessions": 40,
+  "verified_batches": 5,
+  "completed": 32,
+  "failed": 8,
+  "samples": 2231,
+  "formal_sessions": 0,
+  "artifacts_sha256": {
+    "all-python.log": "b08e24c3076be68f182a42d00d60b10883858a55e444e0f50fa406a826222cf4",
+    "collection-manifest.json": "cb95326c8c89b833ebda6bc0ffee3126d804034aea61d8458a272b4d2143dcec",
+    "first-strict-analysis-failure.json": "e69745e0f5742686d335ea527749d1e1b5515de105742ce6622e1c315a5b7e85",
+    "first-synthetic-test-failure.log": "b49eccb298dfa8c1787313a7018d100ae7a63d4134d6b629aebf3f45e4328a25",
+    "focused-python.log": "97a59d7ac83a70a88c08988c7659475738cd377b0ef4c88dedacd27398310915",
+    "go-events.jsonl.gz": "f32f6d1e258ba01f0280dff53821d8c3f179222214981392513343baf11ded40",
+    "race-validation.json": "1ef4e76e02be67fd36096b04e83b046634acbabae5d5089efc96fdd3dcfebcea"
+  }
+}
