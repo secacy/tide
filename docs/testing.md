@@ -44,6 +44,16 @@ go test -race ./internal/gateway \
 
 `worker_receiver_test.go` 验证 Worker 响应解析、唯一读取的事件顺序、无缓冲交接、取消及终态发布，并用真实接收任务和 `resultBuffer` 组成受控夹具；没有接入生产协调者或真实 WebSocket 恢复，见[接收任务验收](worklog/2026-10-06-worker-receiver.md#接收任务验收2026-10-06)。
 
+## 共享 Gateway 的群体恢复工具验收
+
+```sh
+go test -race ./internal/gateway -run '^TestGroupResume' -count=3 -timeout=2m
+```
+
+`group_resume_harness_test.go` 通过一个公开 Gateway、共享 TCP gRPC 连接和多流位置 Worker 承载八场，按音频位置同步故障；真实占位连接占用握手名额，代理转发 Gateway 的实际 HTTP 拒绝码。`group_resume_test.go` 包含五组缩短 probe、报告反例、强制清理反例与工具配置边界。失败会输出 `GROUP_RESUME_PROBE_JSON`；Go test 的 JSON Output 可能拆分长行，需按测试拼接后解析。
+
+这是默认执行的行为测试，不运行 EXP-006-02 的正式 15 批测量。probe 使用较短输入、退避和保留期限，race 耗时及拒绝次数不作为正式性能数据。条件和剩余工作见[群体恢复工具验收](worklog/2026-10-11-group-resume-design.md#共享夹具与行为验收2026-10-11)。
+
 ## 显式实验
 
 以下十二个实验使用环境变量开启，变量等于 `1` 时才运行。默认回归前应确保这些变量未启用；`make test` 和 `make test-race` 沿用调用方环境。
