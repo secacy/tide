@@ -1,6 +1,6 @@
 # 第六阶段：实例异常的处理边界与验收设计
 
-日期：2026-10-11。状态：代码核对与验收设计完成，新增实例异常验收尚未执行。参照版本 `56e08ee`；本步不改变生产逻辑，也不新增性能结论。
+日期：2026-10-11。状态：代码核对与验收设计完成；Worker 在线/离线保留期的真实网络受控故障已通过完整客户端验收，Gateway 及独立进程故障仍待验证。设计参照版本 `56e08ee`，测试基于 `bb72836`；本步不改变生产逻辑，也不新增性能结论。
 
 ## 为什么进入这一步
 
@@ -71,3 +71,34 @@ EXP-006-01 已验证原 Gateway 和原 Worker 流存活时的有限断网恢复�
 1. Worker 在线/离线故障的完整客户端集成验收；发现问题再调整核心逻辑。
 2. Gateway 退出、新实例拒绝旧恢复及独立新场验证，随后独立进程退出/重启验收。
 3. 汇总实例边界证据，再设计群体重连与随机弱网条件；第六阶段继续保留真实模型、长时恢复等证据缺口。
+
+## Worker 受控故障验收（2026-10-11）
+
+助手完成 [client_v2_instance_failure_test.go](../../internal/gateway/client_v2_instance_failure_test.go)，包含在线 attached 和离线 detached 两个完整客户端场景。生产 v2 客户端 → 故障代理 → 公开 v2 Gateway → 本机 TCP gRPC Worker；测试不直接修改会话状态。每场先应用第一块音频的结果，再等待第二块被 Worker 收到并暂停处理，同时观察 Gateway 的八字节 audio_ack 已成功转发。代理转发成功不等于客户端已处理音频 ACK，测试未读取客户端内部缓存状态。
+
+在线场景通过协调者查询确认原场仍附着、接纳位置为 8 且尚未 end；离线场景关闭原连接后通过同一命令查询确认 detached。随后调用测试拥有的 `grpc.Server.Stop()`，等待原 handler 和 Serve 实际退出。Gateway 的恢复保留与上传预算均为 30 秒，测试独立保护期限为 5 秒：验收期间没有取消 Gateway 或调用 StopAccepting，普通恢复到期不能解释观察到的自然清理。
+
+恢复请求由代理暂扣，直到 Gateway 原场实际清理，再放行。因此本轮固定结果为一次恢复、`resume_unavailable`、`Completed=false`、`AppliedSeq=1`、零成功恢复连接；这个固定尝试次数来自测试屏障，不能外推到没有屏障的在线故障竞争。原场只有一次 start、Worker 选择和 RPC；音频源关闭恰好一次、代理任务自然退出，Gateway 活跃会话、握手数、注册表和 Worker 活动流均归零。
+
+Worker 观测事实：原流逐字收到 `aabbccdd` 共 8 字节，但仅处理前 4 字节，没有接纳输入结束，客户端只应用第一条结果。后 4 字节未被测试 Worker 处理；这证明已接纳音频不能被误报为整场完整完成，不代表当前产品已经能为真实崩溃精确诊断缺失范围。
+
+随后在原 TCP 地址启动新的 gRPC Server，复用 Gateway 的原 ClientConn 并等待其重新可用。由测试显式发起独立新 Run，发送不同的 `11223344` 共 8 字节；新流从自己的零处理位置开始，完整收到并处理 8 字节，结果序号 1、2、3 各应用一次，尾部结果和 completed/completed_ack 闭环完成。Gateway 仍限制 MaxSessions=1，能够接纳新场也验证了旧场名额已归还。新场证据和旧场失败分别保留，未把新连接视为旧 RPC 恢复。
+
+### 验证记录与范围
+
+- 首次非 race 定向运行两个场景均通过，没有首次失败样本。
+- 初版 race 重复十轮、20 个场景通过；随后补充初始 ready 与代理自然退出检查。
+- 最终版相关两包 race 回归：Gateway 1010、wsclient 305 个叶级检查通过，合计 1315 通过、0 失败；Gateway 13 个显式实验默认跳过。
+- 最终版两个场景 race 重复十轮：20 个场景通过、0 失败、0 跳过，每个场景均保留旧场失败并验收独立新场完成。测试耗时只表示验证耗时，本轮没有性能测量。
+
+可复现命令：
+
+```sh
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race ./internal/gateway -run '^TestV2ClientWorkerInstanceFailure$' -count=10 -timeout=90s
+
+GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
+  go test -race -p 1 ./internal/gateway ./internal/wsclient -count=1 -timeout=5m
+```
+
+本轮未修改生产代码。Worker 替身、Gateway 和客户端同处一个测试进程，gRPC Server 重启与新流处理已验证，操作系统进程强制退出尚未验证；多会话、真实 ASR、Gateway 状态丢失及故障耗时分布均不在这些测试的证据范围。退出原因与客户端音频范围诊断缺口继续保留。下一步验证 Gateway 受控停止、全新 Gateway 拒绝旧恢复及新场完成。
