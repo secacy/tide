@@ -21,16 +21,16 @@ def now():
     return datetime.now(timezone.utc).isoformat()
 
 
-def source_files(repo, plan=PLAN):
+def source_files(repo, plan=PLAN, reference_plans=()):
     """只快照代码和本实验工具/条件；不读取用户环境、凭据或未跟踪的音频。"""
     names = subprocess.check_output(['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'], cwd=repo).decode().split('\0')
     return sorted({name for name in names if name and
-                   (name.endswith(('.go', '.proto')) or name in ('go.mod', 'go.sum', plan) or
+                   (name.endswith(('.go', '.proto')) or name in ('go.mod', 'go.sum', plan, *reference_plans) or
                     name.startswith('docs/experiments/scripts/') and name.endswith('.py'))})
 
 
-def source_hashes(repo, plan=PLAN):
-    return {name: digest(repo / name) for name in source_files(repo, plan)}
+def source_hashes(repo, plan=PLAN, reference_plans=()):
+    return {name: digest(repo / name) for name in source_files(repo, plan, reference_plans)}
 
 
 def collect(output, mode='formal', rounds=3, repo=REPO):
@@ -42,10 +42,10 @@ def collect(output, mode='formal', rounds=3, repo=REPO):
 
 
 def collect_profile(output, mode, rounds, repo, *, plan, order, root_test, test_count,
-                    planned_sessions, env_overrides, analyze, experiment=None):
+                    planned_sessions, env_overrides, analyze, experiment=None, formal_rounds=3, reference_plans=()):
     """失败仍保留 manifest/日志；只终止本函数拥有的保持唤醒进程。"""
-    if mode not in ROOT_TEST or type(rounds) is not int or rounds not in (1, 2, 3) or mode == 'formal' and rounds != 3:
-        raise ValueError('formal requires exactly three rounds; probe allows one to three')
+    if mode not in ROOT_TEST or type(rounds) is not int or not 1 <= rounds <= formal_rounds or mode == 'formal' and rounds != formal_rounds:
+        raise ValueError(f'formal requires exactly {formal_rounds} rounds; probe allows one to {formal_rounds}')
     output = Path(output).resolve()
     output.mkdir(parents=True, exist_ok=False)
     manifest = dict(version=2 if experiment else 1, mode=mode, planned_rounds=rounds, planned_sessions=planned_sessions,
@@ -61,7 +61,7 @@ def collect_profile(output, mode, rounds, repo, *, plan, order, root_test, test_
     try:
         manifest['commit'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo).decode().strip()
         (output / 'git-status.txt').write_bytes(subprocess.check_output(['git', 'status', '--short'], cwd=repo))
-        manifest['source_sha256'] = source_hashes(repo, plan)
+        manifest['source_sha256'] = source_hashes(repo, plan, reference_plans)
         for name in manifest['source_sha256']:
             target = output / 'source' / name
             target.parent.mkdir(parents=True, exist_ok=True)
@@ -70,7 +70,7 @@ def collect_profile(output, mode, rounds, repo, *, plan, order, root_test, test_
         manifest['go_env'] = json.loads(subprocess.check_output(['go', 'env', '-json', 'GOVERSION', 'GOOS', 'GOARCH', 'GOFLAGS'], cwd=repo))
         if '-race' in manifest['go_env']['GOFLAGS'].split():
             raise ValueError('collection requires a non-race build; use race separately for correctness')
-        if source_hashes(repo, plan) != manifest['source_sha256']:
+        if source_hashes(repo, plan, reference_plans) != manifest['source_sha256']:
             raise ValueError('source changed while snapshotting')
         build = ['go', 'test', '-c', '-o', str(output / 'group-resume.test'), './internal/gateway']
         manifest['build_argv'] = build
@@ -79,7 +79,7 @@ def collect_profile(output, mode, rounds, repo, *, plan, order, root_test, test_
         if manifest['build_exit'] != 0:
             manifest['status'] = 'build_failed'
         else:
-            if source_hashes(repo, plan) != manifest['source_sha256']:
+            if source_hashes(repo, plan, reference_plans) != manifest['source_sha256']:
                 raise ValueError('source changed during build')
             env = os.environ.copy()
             env.update(env_overrides)
@@ -107,7 +107,7 @@ def collect_profile(output, mode, rounds, repo, *, plan, order, root_test, test_
                 awake.terminate()
             awake.wait(timeout=5)
         try:
-            manifest['source_unchanged'] = bool(manifest['source_sha256']) and source_hashes(repo, plan) == manifest['source_sha256']
+            manifest['source_unchanged'] = bool(manifest['source_sha256']) and source_hashes(repo, plan, reference_plans) == manifest['source_sha256']
         except (OSError, subprocess.SubprocessError):
             manifest['source_unchanged'] = False
         manifest['finished_at'] = now()

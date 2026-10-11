@@ -1,7 +1,7 @@
 # EXP-006-04：共享 Gateway 的随机退避对照
 
 Date: 2026-10-11
-Status: 预登记；客户端可选 jitter 及行为验收完成，群体工具待实现，正式测量未开始。
+Status: 客户端及群体比较工具验收完成；四轮缩短 probe 与独立/搬移复核完成，正式测量未开始。
 Related: [方案与实现指引](../worklog/2026-10-11-group-resume-jitter-design.md)、[EXP-006-03](group-resume-budget-comparison.md)、[Milestones](../MILESTONES.md)。
 
 ## Goal / Questions
@@ -71,3 +71,33 @@ MaxSessions=8、MaxHandshakes=2，客户端 replay=320000 字节/128 块，服�
 4. 独立目录复算、完整归档读回、快照分析复核后才填写结果及更新阶段收益。
 
 本步没有可执行的新实验命令和新结果。待工具验收时补充入口/命令，已预定的条件、种子和解释规则若需调整，必须在正式测量前记录版本和理由。
+
+## 工具条件与命令（2026-10-12，验收完成）
+
+缩短 probe 的固定条件在采集前登记：八场，每场八块 × 3200 字节、100ms 采集，第 3 块屏障，Worker 1ms/块；D/E 占位 40ms/300ms。基础退避 20ms→80ms，八次预算、窗口 2s；服务端保留 1s、业务观察 5s、自然清理观察 2s，采样 2ms、同步判据 500ms，其余入口和客户端预算沿用正式值。随机种子为 `202610120000 + 100*round + sessionID`；probe 明确缩短时间且采用另一组种子，不用它证明正式 500ms/2s 收益。
+
+新报告用独立 EXP-006-04 标记、round 与每场 retry_plans 保存候选序列；生效客户端配置记录实际 Jitter/JitterSeed。独立 Python PCG 算法核对七项序列及总和，并复用原 RPC/音频/结果/清理校验。本轮工具支持 amd64/arm64 两种 64 位 Go 目标，其他架构需先补充 Int64N 映射兼容验证。关闭策略不包含 seed 字段，已有报告契约保持严格。
+
+逻辑轮次在程序内部执行，采集器固定 test.count=1。probe 默认一轮，采集器可指定 1–4 轮；正式固定四轮。以下输出目录须不存在：
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_group_resume_jitter.py \
+  --mode probe --count 4 --output /private/tmp/tide-group-jitter-tools-new-run
+
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_group_resume_jitter.py \
+  --mode formal --count 4 --output /private/tmp/tide-group-jitter-formal-new-run
+
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/summarize_group_resume_jitter.py \
+  /private/tmp/tide-group-jitter-tools-new-run \
+  --output /private/tmp/tide-group-jitter-tools-new-run/reanalysis
+```
+
+formal 命令只在工具验收后执行。`release-bins.csv` 以实际全部占位释放为零点；`attempt-bins.csv` 继续从 T0 计时。两者都保留空桶；开放后拒绝按请求到达而非响应退出时刻分类。每场候选和只出现在策略元数据，不作实际恢复时间。
+
+## 工具验收结果（2026-10-12）
+
+[实现与验证](../worklog/2026-10-12-group-resume-jitter-tools.md) 完成：新 Go 七个叶级场景三轮 21 通过；相关两包 race 1391 通过、17 默认跳过；最终 Python 全工具 159 方法通过。旧 EXP-006-02/03 正式报告复算四类输出逐字节相同。
+
+真实非 race 四轮短条件采集：16/16 批、128/128 场证据合格且完整完成，6530 样本、全部自然清理、无替代 RPC 或串场。D none/jitter 的 Dial=112/96、开放后拒绝=16/0；E 为 203/202、11/0。这些是 40ms/300ms 占位工具事实，尚未测量正式收益。
+
+317 个源码/工具/条件文件前后摘要一致，独立复算与完整目录搬移后五类输出一致。[仓库证据子集](results/group-resume-jitter-tools-2026-10-12/README.md) 保存完整压缩事件及验证日志，源码/二进制在临时目录保留。下一步执行上述正式命令，再完整归档及快照复核。

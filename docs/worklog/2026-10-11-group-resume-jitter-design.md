@@ -1,6 +1,6 @@
 # 群体恢复：jitter 设计与第一步实现指引
 
-日期：2026-10-11。关联 [次数对照结果](2026-10-11-group-resume-budget-results.md)、[EXP-006-04 预登记](../experiments/group-resume-jitter-comparison.md)。状态：客户端可选 jitter 已实现并验收；群体比较工具及正式测量待完成。以下实现指引保留设计过程，实际实现与验证见文末。
+日期：2026-10-11。关联 [次数对照结果](2026-10-11-group-resume-budget-results.md)、[EXP-006-04 预登记](../experiments/group-resume-jitter-comparison.md)。状态：客户端可选 jitter 已实现并验收；2026-10-12 [群体工具验收](2026-10-12-group-resume-jitter-tools.md) 完成，正式测量待执行。以下实现指引保留设计过程，实际实现与验证见文末。
 
 ## 问题与目标
 

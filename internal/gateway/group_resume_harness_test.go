@@ -731,6 +731,23 @@ func (s *groupResumeSource) Read(data []byte) (int, error) {
 // 自然观察失败后才停服兜底，强制清理后的零计数不能补写 NaturalIdleAt。
 func runGroupResumeProbe(t *testing.T, cfg groupResumeConfig) groupResumeReport {
 	t.Helper()
+	return runGroupResumeWithSeeds(t, cfg, nil)
+}
+
+// runGroupResumeWithSeeds 允许新实验为每场指定固定种子；nil 保留原确定性夹具。
+// 种子只在启动前写入独立配置，不修改生产 Client/Run 的随机状态。
+func runGroupResumeWithSeeds(t *testing.T, cfg groupResumeConfig, seeds map[int]uint64) groupResumeReport {
+	t.Helper()
+	if seeds != nil {
+		if !cfg.Resume.Jitter || cfg.Resume.JitterSeed != 0 || len(seeds) != cfg.Clients {
+			t.Fatal("per-session seed plan requires jitter and all planned slots")
+		}
+		for id := 1; id <= cfg.Clients; id++ {
+			if seeds[id] == 0 {
+				t.Fatal("per-session experiment seeds must be nonzero")
+			}
+		}
+	}
 	h := newGroupResumeHarness(t, cfg)
 	h.report.StartedAt = time.Now() // 第一场业务启动的观察原点，不包含夹具构造。
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.RunTimeout)
@@ -744,6 +761,9 @@ func runGroupResumeProbe(t *testing.T, cfg groupResumeConfig) groupResumeReport 
 	defer ticker.Stop()
 	for i, recorder := range h.recorders {
 		clientCfg := h.clientConfig(i + 1)
+		if seeds != nil {
+			clientCfg.Resume.JitterSeed = seeds[i+1]
+		}
 		client, err := wsclient.NewV2(clientCfg)
 		if err != nil {
 			h.toolError("client configuration failed")

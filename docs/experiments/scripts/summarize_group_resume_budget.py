@@ -47,6 +47,11 @@ def verify_budget_report(r, mode):
             'report budget identity or round differs')
     row = verify_report(r, mode, expected_config=cfg)
     require(not row['environment']['race'], 'collected budget reports require a non-race build')
+    return enrich_original_rpc(r, row)
+
+
+def enrich_original_rpc(r, row):
+    """基于已核对原始事实补充 RPC 生命周期和逐块等待；不决定实验身份。"""
     originals = {s['id']: s['observation'] for s in r['sessions']}
     for s in row['sessions']:
         obs = originals[s['id']]

@@ -1,0 +1,20 @@
+test_archive_corruption_and_root_failure_suppress_metrics (test_group_resume_jitter.GroupResumeJitterTest.test_archive_corruption_and_root_failure_suppress_metrics) ... ok
+test_archive_relocation_and_independent_outputs (test_group_resume_jitter.GroupResumeJitterTest.test_archive_relocation_and_independent_outputs) ... ok
+test_collector_build_failure_preserves_four_round_plan (test_group_resume_jitter.GroupResumeJitterTest.test_collector_build_failure_preserves_four_round_plan) ... ok
+test_collector_rounds_and_existing_directory (test_group_resume_jitter.GroupResumeJitterTest.test_collector_rounds_and_existing_directory) ... ok
+test_fixed_conditions_and_balanced_order (test_group_resume_jitter.GroupResumeJitterTest.test_fixed_conditions_and_balanced_order) ... ok
+test_fixed_denominator_pairs_and_null_failure_latency (test_group_resume_jitter.GroupResumeJitterTest.test_fixed_denominator_pairs_and_null_failure_latency) ... ok
+test_fragment_reassembly_and_credentials (test_group_resume_jitter.GroupResumeJitterTest.test_fragment_reassembly_and_credentials) ... ok
+test_manifest_counterexamples (test_group_resume_jitter.GroupResumeJitterTest.test_manifest_counterexamples) ... ok
+test_missing_duplicate_and_wrong_path_keep_denominator (test_group_resume_jitter.GroupResumeJitterTest.test_missing_duplicate_and_wrong_path_keep_denominator) ... ok
+test_old_contracts_reject_new_strategy (test_group_resume_jitter.GroupResumeJitterTest.test_old_contracts_reject_new_strategy) ... ok
+test_release_metrics_use_arrival_not_reply_time (test_group_resume_jitter.GroupResumeJitterTest.test_release_metrics_use_arrival_not_reply_time) ... ok
+test_report_counterexamples (test_group_resume_jitter.GroupResumeJitterTest.test_report_counterexamples) ... ok
+test_seed_plan_unique_and_scenario_reuse (test_group_resume_jitter.GroupResumeJitterTest.test_seed_plan_unique_and_scenario_reuse) ... ok
+test_success_and_explicit_failures (test_group_resume_jitter.GroupResumeJitterTest.test_success_and_explicit_failures) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 1.429s
+
+OK
+{"status": "build_failed", "planned_sessions": 128, "error": null}

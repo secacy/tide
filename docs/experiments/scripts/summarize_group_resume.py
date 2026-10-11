@@ -227,7 +227,7 @@ def verify_session(session, cfg, r):
                 remote_idle_after_return_ms=duration(r['natural_idle_at'], s['returned_at']))
 
 
-def verify_report(r, mode='formal', *, expected_config=None):
+def verify_report(r, mode='formal', *, expected_config=None, expected_resumes=None):
     # 新实验必须由独立的固定条件构造器传入预期值；旧入口仍严格匹配 EXP-006-02。
     cfg = verify_settings(r, mode, expected_config)
     require(not r['tool_errors'] and not r['evidence_errors'] and not r['forced_cleanup'], 'report has invalid evidence or forced cleanup')
@@ -261,7 +261,10 @@ def verify_report(r, mode='formal', *, expected_config=None):
             require(stamp_ns(a['exited_at']) >= stamp_ns(a['backend_at']) >= stamp_ns(a['arrived_at']), 'backend request ordering')
         if a['code_written']:
             require(a['code'] and a['backend_at'], 'fabricated entry rejection')
-    sessions = [verify_session(s, cfg, r) for s in sorted(r['sessions'], key=lambda x: x['id'])]
+    if expected_resumes is not None:
+        require(sorted(expected_resumes) == list(range(1, cfg['clients'] + 1)), 'per-session resume plan incomplete')
+    sessions = [verify_session(s, cfg if expected_resumes is None else dict(cfg, resume=expected_resumes[s['id']]), r)
+                for s in sorted(r['sessions'], key=lambda x: x['id'])]
     origins = [stamp_ns(s['observation']['source_reads'][0]['started_at']) for s in r['sessions']]
     require(max(origins) - min(origins) <= cfg['sync_limit_ns'], 'startup spread exceeded')
     samples = r['samples']

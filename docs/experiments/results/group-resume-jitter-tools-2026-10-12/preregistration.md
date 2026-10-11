@@ -1,0 +1,95 @@
+# EXP-006-04：共享 Gateway 的随机退避对照
+
+Date: 2026-10-11
+Status: 预登记；客户端可选 jitter 及行为验收完成，群体工具待实现，正式测量未开始。
+Related: [方案与实现指引](../worklog/2026-10-11-group-resume-jitter-design.md)、[EXP-006-03](group-resume-budget-comparison.md)、[Milestones](../MILESTONES.md)。
+
+## Goal / Questions
+
+固定八次尝试、每轮 5s 窗口和两个握手名额，对比确定性退避与 ±50% 对称 jitter。问题是能否在保留完整原场的同时，减少入口开放后的拒绝和转录等待；结果允许无改善或退化。
+
+1. 两组是否完整完成，失败来自次数、窗口还是其他原因？
+2. 首波之后的请求是否更分散，入口实际开放后拒绝是否减少？
+3. 完成率相同或不同的情况下，实际请求、首次新音频结果和最大转录间隔怎样变化？
+4. 是否出现较长随机等待挤掉最后几次机会、短等待提前耗尽次数，或远端保留延长？
+
+只为受控共享 Mock 场景提供证据，不推断真实 ASR、长时多次故障、生产容量或最优参数。
+
+## Strategy / 固定随机规则
+
+共同配置：MaxAttempts=8，Window=5s，InitialBackoff=100ms，MaxBackoff=1s。首次 resume 在旧连接清理后立即开始；仅失败后的等待随机化。MaxAttempts 是全场累计，Window 是每轮含清理、退避和握手的固定期限。
+
+- none：按失败次数取得基础 B，等待 B。
+- symmetric_50：h=floor(B/2)，等待 `B-h + Int64N(2*h+1)` 纳秒，闭区间均匀，理论均值 B。
+- 基础间隔依次为 100/200/400/800/1000/1000/1000ms；对应随机范围为 50–150/100–300/200–600/400–1200/500–1500/500–1500/500–1500ms。
+- MaxBackoff 是基础上限，随机等待上限明确为 1.5s。抽样后不按 MaxBackoff 或窗口剩余时间压缩；窗口可先到期并取消下一次机会。每个档位理论均值相同，不保证停止规则下的实测平均、尝试数或窗口覆盖相同。
+- 选择算法标识 `pcg_symmetric50_ns_v1`：每 Run 独占 math/rand/v2 PCG，seed1=seed，seed2=seed XOR 0x9e3779b97f4a7c15；按每次合法退避调用一次 Int64N。保留 Go 版本和源码/二进制快照。
+
+正式随机组种子预定为 `202610110000 + 100*round + sessionID`，round=1..4，sessionID=1..8。32 个不同非零种子在 D/E 场景复用；这有助比较相同候选序列在不同占位下的行为，但两个场景不是独立的种子总体。确定性组关闭 jitter、seed=0。工具 probe 用另外显式登记的种子和短条件，不替换正式条件，不按预览结果筛选种子。
+
+固定种子只复现伪随机抽样，不复现网络、计时和 Go 调度顺序。工具保存全部七项候选等待及其和，注明是“假设连续失败的候选序列”；实际可能只消耗前缀，窗口也可能在等待中到期，不能把候选和当成故障到接回的实测时间。
+
+## Setup / 条件与分母
+
+链路、输入、故障及其余保护预算采用 [EXP-006-03 固定条件](group-resume-budget-comparison.md#setup--固定条件)，采集时另存本轮完整生效配置并冻结该文档摘要：每批八场，共用公开 Gateway/单个 TCP gRPC 位置 Worker；每场 60×3200 字节，100ms 采集、10ms/块 Worker；第 20 块屏障统一断线，两条真实未发首消息的升级连接占满握手入口。故障 T0 和 handler 实际释放时刻分别记录。
+
+MaxSessions=8、MaxHandshakes=2，客户端 replay=320000 字节/128 块，服务端恢复保留 10s，业务观察 15s、返回后自然清理观察 15s，采样 10ms，首读和切断跨度均 ≤50ms。一次非 race 构建、同进程 loopback，不和其他负载并行；记录环境、采样间隔、采集落后及保持唤醒状态。所有完整配置以代码核对后冻结，不允许采集器静默填补关键条件。
+
+| 条件 | 占位 | 策略 | 批数 | 计划场 |
+| --- | --- | --- | ---: | ---: |
+| D_busy_500ms_none | 500ms | none | 4 | 32 |
+| D_busy_500ms_jitter | 500ms | symmetric_50 | 4 | 32 |
+| E_busy_2s_none | 2s | none | 4 | 32 |
+| E_busy_2s_jitter | 2s | symmetric_50 | 4 | 32 |
+
+| 轮次 | 第一批 | 第二批 | 第三批 | 第四批 |
+| --- | --- | --- | --- | --- |
+| 1 | D_none | D_jitter | E_jitter | E_none |
+| 2 | D_jitter | D_none | E_none | E_jitter |
+| 3 | D_none | D_jitter | E_jitter | E_none |
+| 4 | D_jitter | D_none | E_none | E_jitter |
+
+共 16 批、128 场；每场景两种顺序各两轮。每对相邻条件为独立批次，每批重建夹具且自然空闲后进入下一批。历史八次结果不代替同版本 none 对照。每批恢复 Dial 最多 64 次，总上限 1024，不含初始 start/占位连接。
+
+## Metrics / 解释规则
+
+沿用 EXP-006-03 的原 RPC/音频逐字/结果连续性、实际请求四层、错误与未知分母、自然清理及资源证据校验，新增策略和逐场种子核对。主要展示每条件完成/32、逐批完成/8，实际恢复请求、开放后 handshake_limit 总数，以及成功场最大相邻 partial 间隔、新采集音频结果等待；列每轮对差和四批范围，不只给合并均值。
+
+请求聚集从 T0 开始使用固定 50ms 桶，保留空桶，分别给首次 resume 与后续请求。另以全部占位实际释放为零点报告后续到达和拒绝；展示最大桶计数及逐桶分布。首波仍立即开始，不能用它判断后续 jitter 没有效果；桶峰值较小也不能单独证明用户等待改善。固定桶可能受边界影响，结合原始事件解释。
+
+成本同时报告：每计划场请求数、完整/失败/未知、T0→客户端返回、T0→原 RPC 退出及 RPC·秒、整批自然空闲、音频重放和失败音频缺口。成功等待要附样本数；失败没有恢复结果记 null。不同成功子集的时延差不解释为同一患者改善。窗口/次数失败的证据不足时保留无法细分，不凭请求数猜测唯一原因。
+
+每场生效策略、固定 seed、候选序列与真实代理到达事件一起保存。候选序列不冒充实测休眠长度；算法正确性由客户端测试、代码快照和配置核对支撑，正式工具只从真实请求证明聚集和拒绝变化。若未来增加客户端退避事件，需单独说明观测开销和语义，不在此轮悄悄改变指标口径。
+
+判据预定为：证据完整且无串场/替代 RPC 是比较前提；在本轮样本中完成数不低于 none，且请求或恢复等待改善，才支持某一维度有收益；其他指标变差必须并列报告。完整性下降时，即使请求变少，也不写成总体改进。四组种子与四批重复用于描述当前样本，不以单场为独立大样本声称统计显著。
+
+## Validation / 后续步骤
+
+1. 开发者完成可选 jitter 业务接入；助手评审并完成计算边界、随机源隔离、预算/取消和真实恢复行为测试。
+2. 助手实现独立实验入口及工具，验收策略/种子/条件漂移、丢批重复批、失败分母、证据搬移及旧确定性报告兼容。EXP-006-02/03 不接受启用 jitter 的报告。
+3. 工具 probe 通过后按本表正式采集。保存所有批次；业务失败不是换种子、重测替换或扩大样本量的理由。环境无效的首次证据保留，复测另建目录并说明原因。
+4. 独立目录复算、完整归档读回、快照分析复核后才填写结果及更新阶段收益。
+
+本步没有可执行的新实验命令和新结果。待工具验收时补充入口/命令，已预定的条件、种子和解释规则若需调整，必须在正式测量前记录版本和理由。
+
+## 工具条件与命令（2026-10-12，验收进行中）
+
+缩短 probe 的固定条件在采集前登记：八场，每场八块 × 3200 字节、100ms 采集，第 3 块屏障，Worker 1ms/块；D/E 占位 40ms/300ms。基础退避 20ms→80ms，八次预算、窗口 2s；服务端保留 1s、业务观察 5s、自然清理观察 2s，采样 2ms、同步判据 500ms，其余入口和客户端预算沿用正式值。随机种子为 `202610120000 + 100*round + sessionID`；probe 明确缩短时间且采用另一组种子，不用它证明正式 500ms/2s 收益。
+
+新报告用独立 EXP-006-04 标记、round 与每场 retry_plans 保存候选序列；生效客户端配置记录实际 Jitter/JitterSeed。独立 Python PCG 算法核对七项序列及总和，并复用原 RPC/音频/结果/清理校验。本轮工具支持 amd64/arm64 两种 64 位 Go 目标，其他架构需先补充 Int64N 映射兼容验证。关闭策略不包含 seed 字段，已有报告契约保持严格。
+
+逻辑轮次在程序内部执行，采集器固定 test.count=1。probe 默认一轮，采集器可指定 1–4 轮；正式固定四轮。以下输出目录须不存在：
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_group_resume_jitter.py \
+  --mode probe --count 4 --output /private/tmp/tide-group-jitter-tools-new-run
+
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_group_resume_jitter.py \
+  --mode formal --count 4 --output /private/tmp/tide-group-jitter-formal-new-run
+
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/summarize_group_resume_jitter.py \
+  /private/tmp/tide-group-jitter-tools-new-run \
+  --output /private/tmp/tide-group-jitter-tools-new-run/reanalysis
+```
+
+formal 命令只在工具验收后执行。`release-bins.csv` 以实际全部占位释放为零点；`attempt-bins.csv` 继续从 T0 计时。两者都保留空桶；开放后拒绝按请求到达而非响应退出时刻分类。每场候选和只出现在策略元数据，不作实际恢复时间。

@@ -1,0 +1,40 @@
+{
+  "experiment": "EXP-006-04",
+  "mode": "probe",
+  "complete_archive": false,
+  "original_directory": "/private/tmp/tide-group-jitter-tools-2026-10-12-run-1",
+  "base_commit": "a9215570c80f567dfcac3c2f0632fd093ba62b82",
+  "planned_sessions": 128,
+  "collected_batches": 16,
+  "samples": 6530,
+  "event_sha256": "f6810bfd13b6de276b5081941216e685bbe2aa4bb9b5a69696d509bde700ae1d",
+  "reports_sha256": "81a95c29ea770f9e3dd5a25c66ab23c4d01f9516d35ff3266246de1490b9451b",
+  "independent_five_outputs_identical": true,
+  "relocated_five_outputs_identical": true,
+  "old_formal_four_outputs_identical": [
+    "EXP-006-02",
+    "EXP-006-03"
+  ],
+  "files_sha256": {
+    "referenced-conditions.md": "0ce8a2488c8c4ca3d846163adc0b939876c8433b8716faa31b3ee9dca60d0ae7",
+    "collection.log": "e23b23c8c03acc4821c750c01439ecf49c47d146a98ae82bea4846394be32d64",
+    "summary.json": "0261ae59c6827744b7f25b248f680ade7b0626039d3f5c2009ad61a609c0b4d3",
+    "reports.json.xz": "62ff502568fdc882e561e4460cab279f267a60aa44983152a1b44c49393e05be",
+    "preregistration.md": "8182e5ee245402b4bd9aec99f28e0b791e70594970d23e2f87e227fdd6fba6a8",
+    "related-race.jsonl.xz": "cf379ec4cf88c92d7a593dbf9ef8ebee57974c0d2e993c9fcd8d9eda5439b685",
+    "analysis-manifest.json": "c6c7d5c5ae6f8a0008a5e5ca903abe5bbe7247f01f783056ef08e14a6f8426a2",
+    "go-race.jsonl.xz": "43cec93aa8e03543447e6e9349b4e0d3555b67b9d6c9801770dc67bd99a82403",
+    "old-budget-compatibility.log": "769e79a333045e01584d203547beb1980b3ff69b4f227c75eb41d30b397f8252",
+    "reanalysis.log": "71b7cc9fe6b79106fbad36092dbdf4cfbf7529f13a849f56a0c000bbb80db9b6",
+    "README.md": "764bf5a5faf228fb55384888a8ec673f8bd70259b9ee0c7c3ccee9b7acda3ccd",
+    "attempt-bins.csv": "6da7ddcad1fb23aca9d7087eef3d5621f58fceb8ea565919b3dffdf237e4f26d",
+    ".gitattributes": "78e182c1786bc84ac435e2fe8ac30086b5c25f6a4f71348a663506a84b3917a6",
+    "manifest.json": "25f950cb60c9e1b6bc314e5750c0647e441fb7f9697fbe1b2c7a3f665dc0d330",
+    "python-validation.log": "cf2b016b5a097bbb738116e548ff3c791a6b34668340c6b4228978b768463e40",
+    "python-initial.log": "e2793abc3715ad1363466c69453956f6ffaed80cd7a707b678d9c6e30442535c",
+    "release-bins.csv": "8ad5b378dedaf355103feede1f72c238efa7482e4095a1b0c255535915c11200",
+    "go-events.jsonl.xz": "e0395b3dde05450a700cf5755e79748447d2cd95309021380e2d61af56e7a8e6",
+    "sessions.csv": "570363001f7093eb982f173a8aa793bd39693d003f8e825917db9289abc61920",
+    "old-baseline-compatibility.log": "257dc61b7b2592b9e3013c4206acbbe1abc769fd979cacee6e343d95af689adf"
+  }
+}

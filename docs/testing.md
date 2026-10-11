@@ -52,7 +52,7 @@ go test -race ./internal/gateway \
   -run '^TestV2ClientGatewayRecovery$/^jitter_resume_ready_lost$' -count=3
 ```
 
-客户端测试覆盖整数抽样/配置边界、独占随机状态、采集/取消、窗口和次数及跨次恢复语义；网络场景丢弃一次恢复 ready，核对再次接回原 RPC、音频结果完整和自然清理。这是正确性验收，尚未执行 [EXP-006-04](experiments/group-resume-jitter-comparison.md) 群体随机策略性能对照；工具待接通。
+客户端测试覆盖整数抽样/配置边界、独占随机状态、采集/取消、窗口和次数及跨次恢复语义；网络场景丢弃一次恢复 ready，核对再次接回原 RPC、音频结果完整和自然清理。这是正确性验收，尚未执行 [EXP-006-04](experiments/group-resume-jitter-comparison.md) 正式性能对照。
 
 ## 共享 Gateway 的群体恢复工具验收
 
@@ -90,9 +90,21 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
 
 新入口的逻辑轮次在程序内部执行，采集器固定 `test.count=1`；报告有独立实验标记及 round，分析按固定计划核对四条件、唯一槽位、相邻顺序、失败/未知分母和原 RPC 保留成本。probe 默认一轮，采集器可明确指定三轮；缩短条件不代表正式 500ms/2s 占位收益。旧 EXP-006-02 的五次契约保持不变。正式命令、固定条件及证据见 [EXP-006-03](experiments/group-resume-budget-comparison.md#工具验收与命令2026-10-11)。
 
+## 群体随机退避比较工具
+
+```sh
+go test -race ./internal/gateway -run '^TestGroupResumeJitter' -count=3 -timeout=2m
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
+  -s docs/experiments/scripts -p 'test_group_resume_jitter.py'
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_group_resume_jitter.py \
+  --mode probe --count 4 --output /private/tmp/tide-group-jitter-tools-new-run
+```
+
+正式默认跳过；四轮在程序内执行，采集器 test.count=1。probe 缩短输入/保护条件，逐场固定另一组种子；独立 Python 核对生效配置和 PCG 序列，T0/实际释放两套桶分别输出。支持 amd64/arm64，旧确定性契约保持严格。正式命令见 [EXP-006-04](experiments/group-resume-jitter-comparison.md#工具条件与命令2026-10-12验收完成)，验证及范围见[工程记录](worklog/2026-10-12-group-resume-jitter-tools.md)。
+
 ## 显式实验
 
-以下十五个实验使用环境变量开启，变量等于 `1` 时才运行。默认回归前应确保这些变量未启用；`make test` 和 `make test-race` 沿用调用方环境。
+以下十六个实验使用环境变量开启，变量等于 `1` 时才运行。默认回归前应确保这些变量未启用；`make test` 和 `make test-race` 沿用调用方环境。
 
 | 测试名（均在 internal/gateway） | 环境变量 |
 | --- | --- |
@@ -111,6 +123,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
 | TestClientResumeBaselineExperiment | TIDE_RUN_CLIENT_RESUME_EXPERIMENT |
 | TestGroupResumeBaselineExperiment | TIDE_RUN_GROUP_RESUME_EXPERIMENT |
 | TestGroupResumeBudgetExperiment | TIDE_RUN_GROUP_RESUME_BUDGET_EXPERIMENT |
+| TestGroupResumeJitterExperiment | TIDE_RUN_GROUP_RESUME_JITTER_EXPERIMENT |
 
 例如只执行尾部超时实验：
 
