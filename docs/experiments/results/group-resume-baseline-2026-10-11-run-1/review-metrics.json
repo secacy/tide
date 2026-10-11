@@ -1,0 +1,924 @@
+{
+  "version": 1,
+  "scope": "EXP-006-02 formal first run, fixed conditions, all planned sessions retained",
+  "planned_sessions": 120,
+  "completed": 94,
+  "failed": 26,
+  "ready_sessions": 120,
+  "fault_sessions": 96,
+  "recovered_completed": 70,
+  "source_snapshots": 304,
+  "total_samples": 11419,
+  "resume_attempts": 292,
+  "rejection_codes": {
+    "handshake_limit": 222
+  },
+  "max_capture_lag_ms": 5.587,
+  "max_sample_gap_ms": 18.383,
+  "max_sample_call_ms": 5.946,
+  "batches": [
+    {
+      "report_index": 0,
+      "case": "A_normal",
+      "planned": 8,
+      "completed": 8,
+      "failed": 0,
+      "resume_attempts": 0,
+      "recovery_arrivals": 0,
+      "parsed_resumes": 0,
+      "backend_requests": 0,
+      "rejection_codes": {},
+      "startup_spread_ms": 11.939,
+      "cut_spread_ms": null,
+      "occupancy_after_fault_ms": null,
+      "resource_samples": 604,
+      "max_sample_gap_ms": 15.302,
+      "max_sample_call_ms": 1.141,
+      "natural_cleanup_ms": 2.734,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 0,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 0,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 12374120,
+        "heap_inuse_bytes": 14000128
+      },
+      "round": 1,
+      "ready_after_fault_ms": null,
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": {
+        "n": 8,
+        "min": 102.375,
+        "median": 107.72149999999999,
+        "max": 112.713
+      },
+      "fresh_after_fault_ms": null,
+      "fresh_after_release_ms": null,
+      "failed_ids": [],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 8,
+      "natural_idle_runtime": {
+        "goroutines": 14,
+        "heap_alloc_bytes": 9494896,
+        "heap_inuse_bytes": 11501568
+      }
+    },
+    {
+      "report_index": 1,
+      "case": "B_resume_h8",
+      "planned": 8,
+      "completed": 8,
+      "failed": 0,
+      "resume_attempts": 8,
+      "recovery_arrivals": 8,
+      "parsed_resumes": 8,
+      "backend_requests": 8,
+      "rejection_codes": {},
+      "startup_spread_ms": 8.823,
+      "cut_spread_ms": 0.356,
+      "occupancy_after_fault_ms": null,
+      "resource_samples": 604,
+      "max_sample_gap_ms": 13.065,
+      "max_sample_call_ms": 2.068,
+      "natural_cleanup_ms": 10.464,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 0,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 0,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 25277064,
+        "heap_inuse_bytes": 27418624
+      },
+      "round": 1,
+      "ready_after_fault_ms": {
+        "n": 8,
+        "min": 5.128,
+        "median": 5.461,
+        "max": 6.466
+      },
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": {
+        "n": 8,
+        "min": 105.633,
+        "median": 110.718,
+        "max": 114.272
+      },
+      "fresh_after_fault_ms": {
+        "n": 8,
+        "min": 102.945,
+        "median": 107.22749999999999,
+        "max": 110.964
+      },
+      "fresh_after_release_ms": null,
+      "failed_ids": [],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 8,
+      "natural_idle_runtime": {
+        "goroutines": 14,
+        "heap_alloc_bytes": 7461416,
+        "heap_inuse_bytes": 10321920
+      }
+    },
+    {
+      "report_index": 2,
+      "case": "C_resume_h2",
+      "planned": 8,
+      "completed": 8,
+      "failed": 0,
+      "resume_attempts": 17,
+      "recovery_arrivals": 17,
+      "parsed_resumes": 17,
+      "backend_requests": 17,
+      "rejection_codes": {
+        "handshake_limit": 9
+      },
+      "startup_spread_ms": 10.097,
+      "cut_spread_ms": 0.33,
+      "occupancy_after_fault_ms": null,
+      "resource_samples": 604,
+      "max_sample_gap_ms": 18.376,
+      "max_sample_call_ms": 2.483,
+      "natural_cleanup_ms": 8.077,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 0,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 0,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 16882560,
+        "heap_inuse_bytes": 19267584
+      },
+      "round": 1,
+      "ready_after_fault_ms": {
+        "n": 8,
+        "min": 3.816,
+        "median": 107.3775,
+        "max": 309.01
+      },
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": {
+        "n": 8,
+        "min": 107.814,
+        "median": 214.3415,
+        "max": 419.436
+      },
+      "fresh_after_fault_ms": {
+        "n": 8,
+        "min": 105.962,
+        "median": 128.813,
+        "max": 331.321
+      },
+      "fresh_after_release_ms": null,
+      "failed_ids": [],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 8,
+      "natural_idle_runtime": {
+        "goroutines": 14,
+        "heap_alloc_bytes": 8101592,
+        "heap_inuse_bytes": 11247616
+      }
+    },
+    {
+      "report_index": 3,
+      "case": "D_busy_500ms",
+      "planned": 8,
+      "completed": 8,
+      "failed": 0,
+      "resume_attempts": 34,
+      "recovery_arrivals": 34,
+      "parsed_resumes": 34,
+      "backend_requests": 34,
+      "rejection_codes": {
+        "handshake_limit": 26
+      },
+      "startup_spread_ms": 9.477,
+      "cut_spread_ms": 0.192,
+      "occupancy_after_fault_ms": 500.717,
+      "resource_samples": 603,
+      "max_sample_gap_ms": 14.621,
+      "max_sample_call_ms": 0.476,
+      "natural_cleanup_ms": 0.118,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 2,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 2,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 29579432,
+        "heap_inuse_bytes": 31801344
+      },
+      "round": 1,
+      "ready_after_fault_ms": {
+        "n": 8,
+        "min": 711.834,
+        "median": 712.8985,
+        "max": 1514.488
+      },
+      "ready_after_release_ms": {
+        "n": 8,
+        "min": 211.117,
+        "median": 212.1815,
+        "max": 1013.771
+      },
+      "max_partial_gap_ms": {
+        "n": 8,
+        "min": 814.372,
+        "median": 820.241,
+        "max": 1621.422
+      },
+      "fresh_after_fault_ms": {
+        "n": 8,
+        "min": 734.502,
+        "median": 734.6379999999999,
+        "max": 1537.558
+      },
+      "fresh_after_release_ms": {
+        "n": 8,
+        "min": 287.963,
+        "median": 288.02750000000003,
+        "max": 1087.933
+      },
+      "failed_ids": [],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 8,
+      "natural_idle_runtime": {
+        "goroutines": 14,
+        "heap_alloc_bytes": 9827752,
+        "heap_inuse_bytes": 13099008
+      }
+    },
+    {
+      "report_index": 4,
+      "case": "E_busy_2s",
+      "planned": 8,
+      "completed": 0,
+      "failed": 8,
+      "resume_attempts": 40,
+      "recovery_arrivals": 40,
+      "parsed_resumes": 40,
+      "backend_requests": 40,
+      "rejection_codes": {
+        "handshake_limit": 40
+      },
+      "startup_spread_ms": 10.517,
+      "cut_spread_ms": 0.271,
+      "occupancy_after_fault_ms": 2001.255,
+      "resource_samples": 1194,
+      "max_sample_gap_ms": 16.551,
+      "max_sample_call_ms": 5.946,
+      "natural_cleanup_ms": 8491.068,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 2,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 2,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 22482312,
+        "heap_inuse_bytes": 24666112
+      },
+      "round": 1,
+      "ready_after_fault_ms": null,
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": null,
+      "fresh_after_fault_ms": null,
+      "fresh_after_release_ms": null,
+      "failed_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 0,
+      "natural_idle_runtime": {
+        "goroutines": 20,
+        "heap_alloc_bytes": 10045304,
+        "heap_inuse_bytes": 12738560
+      }
+    },
+    {
+      "report_index": 5,
+      "case": "A_normal",
+      "planned": 8,
+      "completed": 8,
+      "failed": 0,
+      "resume_attempts": 0,
+      "recovery_arrivals": 0,
+      "parsed_resumes": 0,
+      "backend_requests": 0,
+      "rejection_codes": {},
+      "startup_spread_ms": 10.76,
+      "cut_spread_ms": null,
+      "occupancy_after_fault_ms": null,
+      "resource_samples": 604,
+      "max_sample_gap_ms": 15.794,
+      "max_sample_call_ms": 1.332,
+      "natural_cleanup_ms": 7.076,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 1,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 1,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 12532928,
+        "heap_inuse_bytes": 14508032
+      },
+      "round": 2,
+      "ready_after_fault_ms": null,
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": {
+        "n": 8,
+        "min": 102.448,
+        "median": 106.001,
+        "max": 111.07
+      },
+      "fresh_after_fault_ms": null,
+      "fresh_after_release_ms": null,
+      "failed_ids": [],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 8,
+      "natural_idle_runtime": {
+        "goroutines": 14,
+        "heap_alloc_bytes": 10446352,
+        "heap_inuse_bytes": 12664832
+      }
+    },
+    {
+      "report_index": 6,
+      "case": "B_resume_h8",
+      "planned": 8,
+      "completed": 8,
+      "failed": 0,
+      "resume_attempts": 8,
+      "recovery_arrivals": 8,
+      "parsed_resumes": 8,
+      "backend_requests": 8,
+      "rejection_codes": {},
+      "startup_spread_ms": 10.197,
+      "cut_spread_ms": 0.971,
+      "occupancy_after_fault_ms": null,
+      "resource_samples": 604,
+      "max_sample_gap_ms": 12.49,
+      "max_sample_call_ms": 1.827,
+      "natural_cleanup_ms": 7.841,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 0,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 0,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 23009584,
+        "heap_inuse_bytes": 24952832
+      },
+      "round": 2,
+      "ready_after_fault_ms": {
+        "n": 8,
+        "min": 2.257,
+        "median": 2.4539999999999997,
+        "max": 2.665
+      },
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": {
+        "n": 8,
+        "min": 103.895,
+        "median": 108.1745,
+        "max": 113.347
+      },
+      "fresh_after_fault_ms": {
+        "n": 8,
+        "min": 103.607,
+        "median": 105.901,
+        "max": 112.189
+      },
+      "fresh_after_release_ms": null,
+      "failed_ids": [],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 8,
+      "natural_idle_runtime": {
+        "goroutines": 14,
+        "heap_alloc_bytes": 20922752,
+        "heap_inuse_bytes": 23101440
+      }
+    },
+    {
+      "report_index": 7,
+      "case": "C_resume_h2",
+      "planned": 8,
+      "completed": 8,
+      "failed": 0,
+      "resume_attempts": 16,
+      "recovery_arrivals": 16,
+      "parsed_resumes": 16,
+      "backend_requests": 16,
+      "rejection_codes": {
+        "handshake_limit": 8
+      },
+      "startup_spread_ms": 10.551,
+      "cut_spread_ms": 0.23,
+      "occupancy_after_fault_ms": null,
+      "resource_samples": 604,
+      "max_sample_gap_ms": 14.522,
+      "max_sample_call_ms": 1.123,
+      "natural_cleanup_ms": 7.424,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 0,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 0,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 12131392,
+        "heap_inuse_bytes": 14237696
+      },
+      "round": 2,
+      "ready_after_fault_ms": {
+        "n": 8,
+        "min": 2.34,
+        "median": 104.24549999999999,
+        "max": 305.704
+      },
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": {
+        "n": 8,
+        "min": 104.153,
+        "median": 209.334,
+        "max": 417.557
+      },
+      "fresh_after_fault_ms": {
+        "n": 8,
+        "min": 106.682,
+        "median": 125.9465,
+        "max": 328.497
+      },
+      "fresh_after_release_ms": null,
+      "failed_ids": [],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 8,
+      "natural_idle_runtime": {
+        "goroutines": 14,
+        "heap_alloc_bytes": 11589208,
+        "heap_inuse_bytes": 14008320
+      }
+    },
+    {
+      "report_index": 8,
+      "case": "D_busy_500ms",
+      "planned": 8,
+      "completed": 8,
+      "failed": 0,
+      "resume_attempts": 35,
+      "recovery_arrivals": 35,
+      "parsed_resumes": 35,
+      "backend_requests": 35,
+      "rejection_codes": {
+        "handshake_limit": 27
+      },
+      "startup_spread_ms": 14.32,
+      "cut_spread_ms": 0.316,
+      "occupancy_after_fault_ms": 500.736,
+      "resource_samples": 604,
+      "max_sample_gap_ms": 13.93,
+      "max_sample_call_ms": 1.214,
+      "natural_cleanup_ms": 2.331,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 2,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 2,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 23038376,
+        "heap_inuse_bytes": 26083328
+      },
+      "round": 2,
+      "ready_after_fault_ms": {
+        "n": 8,
+        "min": 713.825,
+        "median": 714.572,
+        "max": 1516.15
+      },
+      "ready_after_release_ms": {
+        "n": 8,
+        "min": 213.089,
+        "median": 213.836,
+        "max": 1015.414
+      },
+      "max_partial_gap_ms": {
+        "n": 8,
+        "min": 816.936,
+        "median": 829.817,
+        "max": 1629.762
+      },
+      "fresh_after_fault_ms": {
+        "n": 8,
+        "min": 735.462,
+        "median": 735.9095,
+        "max": 1539.453
+      },
+      "fresh_after_release_ms": {
+        "n": 8,
+        "min": 286.491,
+        "median": 286.6655,
+        "max": 1091.15
+      },
+      "failed_ids": [],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 8,
+      "natural_idle_runtime": {
+        "goroutines": 14,
+        "heap_alloc_bytes": 14923392,
+        "heap_inuse_bytes": 18685952
+      }
+    },
+    {
+      "report_index": 9,
+      "case": "E_busy_2s",
+      "planned": 8,
+      "completed": 0,
+      "failed": 8,
+      "resume_attempts": 40,
+      "recovery_arrivals": 40,
+      "parsed_resumes": 40,
+      "backend_requests": 40,
+      "rejection_codes": {
+        "handshake_limit": 40
+      },
+      "startup_spread_ms": 9.431,
+      "cut_spread_ms": 0.387,
+      "occupancy_after_fault_ms": 2000.655,
+      "resource_samples": 1194,
+      "max_sample_gap_ms": 14.801,
+      "max_sample_call_ms": 1.642,
+      "natural_cleanup_ms": 8489.26,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 2,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 2,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 22884984,
+        "heap_inuse_bytes": 25722880
+      },
+      "round": 2,
+      "ready_after_fault_ms": null,
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": null,
+      "fresh_after_fault_ms": null,
+      "fresh_after_release_ms": null,
+      "failed_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 0,
+      "natural_idle_runtime": {
+        "goroutines": 20,
+        "heap_alloc_bytes": 9633168,
+        "heap_inuse_bytes": 12632064
+      }
+    },
+    {
+      "report_index": 10,
+      "case": "A_normal",
+      "planned": 8,
+      "completed": 8,
+      "failed": 0,
+      "resume_attempts": 0,
+      "recovery_arrivals": 0,
+      "parsed_resumes": 0,
+      "backend_requests": 0,
+      "rejection_codes": {},
+      "startup_spread_ms": 13.411,
+      "cut_spread_ms": null,
+      "occupancy_after_fault_ms": null,
+      "resource_samples": 604,
+      "max_sample_gap_ms": 18.383,
+      "max_sample_call_ms": 2.241,
+      "natural_cleanup_ms": 3.628,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 0,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 0,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 12845232,
+        "heap_inuse_bytes": 14729216
+      },
+      "round": 3,
+      "ready_after_fault_ms": null,
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": {
+        "n": 8,
+        "min": 103.055,
+        "median": 107.7695,
+        "max": 114.442
+      },
+      "fresh_after_fault_ms": null,
+      "fresh_after_release_ms": null,
+      "failed_ids": [],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 8,
+      "natural_idle_runtime": {
+        "goroutines": 14,
+        "heap_alloc_bytes": 9184104,
+        "heap_inuse_bytes": 11681792
+      }
+    },
+    {
+      "report_index": 11,
+      "case": "B_resume_h8",
+      "planned": 8,
+      "completed": 8,
+      "failed": 0,
+      "resume_attempts": 8,
+      "recovery_arrivals": 8,
+      "parsed_resumes": 8,
+      "backend_requests": 8,
+      "rejection_codes": {},
+      "startup_spread_ms": 10.351,
+      "cut_spread_ms": 0.336,
+      "occupancy_after_fault_ms": null,
+      "resource_samples": 604,
+      "max_sample_gap_ms": 15.566,
+      "max_sample_call_ms": 2.431,
+      "natural_cleanup_ms": 7.801,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 0,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 0,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 12071704,
+        "heap_inuse_bytes": 14213120
+      },
+      "round": 3,
+      "ready_after_fault_ms": {
+        "n": 8,
+        "min": 4.882,
+        "median": 5.429,
+        "max": 7.127
+      },
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": {
+        "n": 8,
+        "min": 107.018,
+        "median": 112.10650000000001,
+        "max": 117.015
+      },
+      "fresh_after_fault_ms": {
+        "n": 8,
+        "min": 100.654,
+        "median": 105.3825,
+        "max": 110.28
+      },
+      "fresh_after_release_ms": null,
+      "failed_ids": [],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 8,
+      "natural_idle_runtime": {
+        "goroutines": 14,
+        "heap_alloc_bytes": 10656728,
+        "heap_inuse_bytes": 13492224
+      }
+    },
+    {
+      "report_index": 12,
+      "case": "C_resume_h2",
+      "planned": 8,
+      "completed": 8,
+      "failed": 0,
+      "resume_attempts": 10,
+      "recovery_arrivals": 10,
+      "parsed_resumes": 10,
+      "backend_requests": 10,
+      "rejection_codes": {
+        "handshake_limit": 2
+      },
+      "startup_spread_ms": 10.765,
+      "cut_spread_ms": 0.643,
+      "occupancy_after_fault_ms": null,
+      "resource_samples": 604,
+      "max_sample_gap_ms": 14.219,
+      "max_sample_call_ms": 2.856,
+      "natural_cleanup_ms": 6.358,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 0,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 0,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 22880000,
+        "heap_inuse_bytes": 25354240
+      },
+      "round": 3,
+      "ready_after_fault_ms": {
+        "n": 8,
+        "min": 7.102,
+        "median": 7.796,
+        "max": 109.111
+      },
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": {
+        "n": 8,
+        "min": 110.436,
+        "median": 116.859,
+        "max": 217.467
+      },
+      "fresh_after_fault_ms": {
+        "n": 8,
+        "min": 100.127,
+        "median": 106.63900000000001,
+        "max": 130.633
+      },
+      "fresh_after_release_ms": null,
+      "failed_ids": [],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 8,
+      "natural_idle_runtime": {
+        "goroutines": 14,
+        "heap_alloc_bytes": 9147000,
+        "heap_inuse_bytes": 12263424
+      }
+    },
+    {
+      "report_index": 13,
+      "case": "D_busy_500ms",
+      "planned": 8,
+      "completed": 6,
+      "failed": 2,
+      "resume_attempts": 36,
+      "recovery_arrivals": 36,
+      "parsed_resumes": 36,
+      "backend_requests": 36,
+      "rejection_codes": {
+        "handshake_limit": 30
+      },
+      "startup_spread_ms": 10.211,
+      "cut_spread_ms": 0.298,
+      "occupancy_after_fault_ms": 500.698,
+      "resource_samples": 1194,
+      "max_sample_gap_ms": 17.476,
+      "max_sample_call_ms": 1.112,
+      "natural_cleanup_ms": 5908.87,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 2,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 2,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 18960848,
+        "heap_inuse_bytes": 21331968
+      },
+      "round": 3,
+      "ready_after_fault_ms": {
+        "n": 6,
+        "min": 710.535,
+        "median": 711.6555,
+        "max": 1513.732
+      },
+      "ready_after_release_ms": {
+        "n": 6,
+        "min": 209.837,
+        "median": 210.95749999999998,
+        "max": 1013.034
+      },
+      "max_partial_gap_ms": {
+        "n": 6,
+        "min": 820.136,
+        "median": 824.6265000000001,
+        "max": 1622.565
+      },
+      "fresh_after_fault_ms": {
+        "n": 6,
+        "min": 735.513,
+        "median": 735.5575,
+        "max": 1536.952
+      },
+      "fresh_after_release_ms": {
+        "n": 6,
+        "min": 287.013,
+        "median": 287.093,
+        "max": 1087.24
+      },
+      "failed_ids": [
+        6,
+        8
+      ],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 6,
+      "natural_idle_runtime": {
+        "goroutines": 20,
+        "heap_alloc_bytes": 18563896,
+        "heap_inuse_bytes": 21225472
+      }
+    },
+    {
+      "report_index": 14,
+      "case": "E_busy_2s",
+      "planned": 8,
+      "completed": 0,
+      "failed": 8,
+      "resume_attempts": 40,
+      "recovery_arrivals": 40,
+      "parsed_resumes": 40,
+      "backend_requests": 40,
+      "rejection_codes": {
+        "handshake_limit": 40
+      },
+      "startup_spread_ms": 10.442,
+      "cut_spread_ms": 0.61,
+      "occupancy_after_fault_ms": 2001.304,
+      "resource_samples": 1194,
+      "max_sample_gap_ms": 12.38,
+      "max_sample_call_ms": 1.147,
+      "natural_cleanup_ms": 8492.138,
+      "sampled_peak": {
+        "sessions": 8,
+        "handshakes": 2,
+        "registry": 8,
+        "worker_active": 8,
+        "gateway_handlers": 3,
+        "proxy_handlers": 8,
+        "fault_timers": 0,
+        "goroutines": 144,
+        "heap_alloc_bytes": 23322976,
+        "heap_inuse_bytes": 26337280
+      },
+      "round": 3,
+      "ready_after_fault_ms": null,
+      "ready_after_release_ms": null,
+      "max_partial_gap_ms": null,
+      "fresh_after_fault_ms": null,
+      "fresh_after_release_ms": null,
+      "failed_ids": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8
+      ],
+      "initial_ready_sessions": 8,
+      "completion_ack_written": 0,
+      "natural_idle_runtime": {
+        "goroutines": 20,
+        "heap_alloc_bytes": 8163960,
+        "heap_inuse_bytes": 11517952
+      }
+    }
+  ]
+}

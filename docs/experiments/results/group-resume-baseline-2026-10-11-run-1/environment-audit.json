@@ -1,0 +1,10 @@
+{
+  "cpu_brand": "Apple M2 Pro",
+  "physical_memory_bytes": 34359738368,
+  "sw_vers": "ProductName:\t\tmacOS\nProductVersion:\t\t26.6.2\nBuildVersion:\t\t25G83\n",
+  "pmset_exit": 0,
+  "sleep_transition_window_begin": "2026-10-11T14:26:48.964298+08:00",
+  "sleep_transition_window_end": "2026-10-11T14:28:44.496927+08:00",
+  "sleep_transition_lines": [],
+  "scope": "supplemental read after collection; absence in available logs does not prove the host never paused"
+}

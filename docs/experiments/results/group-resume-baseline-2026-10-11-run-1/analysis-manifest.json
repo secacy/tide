@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "source_sha256": "2abc7493f19eb16f812534a89c97b6a2111db8da02e2ad1fcf77f4ff24aa6038",
+  "input_sha256": {
+    "manifest.json": "9ca2b7b9606427c76ce368143fa02e0b0c695907ab8b16c661cd40d71af167c4",
+    "go-events.jsonl": "2a3ffabea664823021472a589e8aca61823d3c2e4c4afbb122887f677f0810ee"
+  },
+  "output_sha256": {
+    "reports.json": "0277013e1c8ab690360ac0ad57f96bf8a56aff124045294226337b50059ee89a",
+    "summary.json": "5a000ae59d0f56e6b307dc7594d6477b6f7461f01d37f7bb8c4b3c00aafc8057",
+    "sessions.csv": "0a46fb41429e0901f12c08e15fab6982280f3fc795c57dd7d5ac87f6093a17f9",
+    "attempt-bins.csv": "e6050084f730cce30d1e45ac9b9c71e5980acd6e0bdcd3db65f72ec071723a19"
+  }
+}

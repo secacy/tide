@@ -1,0 +1,2 @@
+# Keep original CSV line endings so the archived output hashes survive checkout.
+*.csv -text whitespace=cr-at-eol
