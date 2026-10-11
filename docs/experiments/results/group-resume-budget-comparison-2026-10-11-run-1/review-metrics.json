@@ -1,0 +1,1203 @@
+{
+  "version": 1,
+  "groups": [
+    {
+      "case": "D_busy_500ms_a5",
+      "round_completed": [
+        6,
+        6,
+        8
+      ],
+      "attempt_histogram": {
+        "4": 11,
+        "5": 13
+      },
+      "beyond_five": 0,
+      "ready_seen": 20,
+      "sample_count": 2993
+    },
+    {
+      "case": "D_busy_500ms_a8",
+      "round_completed": [
+        8,
+        8,
+        8
+      ],
+      "attempt_histogram": {
+        "4": 15,
+        "5": 9
+      },
+      "beyond_five": 0,
+      "ready_seen": 24,
+      "sample_count": 1812
+    },
+    {
+      "case": "E_busy_2s_a5",
+      "round_completed": [
+        0,
+        0,
+        0
+      ],
+      "attempt_histogram": {
+        "5": 24
+      },
+      "beyond_five": 0,
+      "ready_seen": 0,
+      "sample_count": 3581
+    },
+    {
+      "case": "E_busy_2s_a8",
+      "round_completed": [
+        8,
+        8,
+        8
+      ],
+      "attempt_histogram": {
+        "6": 15,
+        "7": 8,
+        "8": 1
+      },
+      "beyond_five": 24,
+      "ready_seen": 24,
+      "sample_count": 1898
+    }
+  ],
+  "failed_sessions": [
+    {
+      "round": 1,
+      "case": "D_busy_500ms_a5",
+      "id": 4,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1515.967,
+      "rpc_after_fault_ms": 10002.095,
+      "rpc_after_return_ms": 8486.128,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        2.449,
+        104.619,
+        308.025,
+        711.748,
+        1514.743
+      ]
+    },
+    {
+      "round": 1,
+      "case": "D_busy_500ms_a5",
+      "id": 8,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1516.018,
+      "rpc_after_fault_ms": 10002.084,
+      "rpc_after_return_ms": 8486.066,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.713,
+        104.42,
+        307.911,
+        711.697,
+        1514.712
+      ]
+    },
+    {
+      "round": 1,
+      "case": "E_busy_2s_a5",
+      "id": 1,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1518.032,
+      "rpc_after_fault_ms": 10000.975,
+      "rpc_after_return_ms": 8482.943,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        0.978,
+        104.064,
+        308.245,
+        712.482,
+        1516.447
+      ]
+    },
+    {
+      "round": 1,
+      "case": "E_busy_2s_a5",
+      "id": 2,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1517.697,
+      "rpc_after_fault_ms": 10000.989,
+      "rpc_after_return_ms": 8483.292,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        0.83,
+        103.989,
+        308.183,
+        712.332,
+        1516.275
+      ]
+    },
+    {
+      "round": 1,
+      "case": "E_busy_2s_a5",
+      "id": 3,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1517.206,
+      "rpc_after_fault_ms": 10000.999,
+      "rpc_after_return_ms": 8483.793,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        0.925,
+        103.848,
+        308.084,
+        712.232,
+        1516.184
+      ]
+    },
+    {
+      "round": 1,
+      "case": "E_busy_2s_a5",
+      "id": 4,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1518.261,
+      "rpc_after_fault_ms": 10000.983,
+      "rpc_after_return_ms": 8482.722,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        0.759,
+        104.178,
+        308.196,
+        712.315,
+        1516.635
+      ]
+    },
+    {
+      "round": 1,
+      "case": "E_busy_2s_a5",
+      "id": 5,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1518.23,
+      "rpc_after_fault_ms": 10000.983,
+      "rpc_after_return_ms": 8482.753,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.074,
+        103.953,
+        308.254,
+        712.398,
+        1516.433
+      ]
+    },
+    {
+      "round": 1,
+      "case": "E_busy_2s_a5",
+      "id": 6,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1518.172,
+      "rpc_after_fault_ms": 10001.099,
+      "rpc_after_return_ms": 8482.927,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.16,
+        104.361,
+        308.188,
+        712.573,
+        1516.742
+      ]
+    },
+    {
+      "round": 1,
+      "case": "E_busy_2s_a5",
+      "id": 7,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1517.931,
+      "rpc_after_fault_ms": 10000.966,
+      "rpc_after_return_ms": 8483.035,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        0.783,
+        105.862,
+        308.109,
+        712.179,
+        1516.237
+      ]
+    },
+    {
+      "round": 1,
+      "case": "E_busy_2s_a5",
+      "id": 8,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1518.122,
+      "rpc_after_fault_ms": 10000.988,
+      "rpc_after_return_ms": 8482.866,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        0.817,
+        104.032,
+        308.197,
+        712.378,
+        1516.384
+      ]
+    },
+    {
+      "round": 2,
+      "case": "D_busy_500ms_a5",
+      "id": 1,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1516.083,
+      "rpc_after_fault_ms": 10001.542,
+      "rpc_after_return_ms": 8485.459,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.753,
+        104.499,
+        307.731,
+        710.453,
+        1514.827
+      ]
+    },
+    {
+      "round": 2,
+      "case": "D_busy_500ms_a5",
+      "id": 2,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1516.498,
+      "rpc_after_fault_ms": 10001.541,
+      "rpc_after_return_ms": 8485.043,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.782,
+        104.567,
+        307.564,
+        710.557,
+        1515.225
+      ]
+    },
+    {
+      "round": 2,
+      "case": "E_busy_2s_a5",
+      "id": 1,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1517.055,
+      "rpc_after_fault_ms": 10001.463,
+      "rpc_after_return_ms": 8484.408,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        0.959,
+        104.673,
+        309.056,
+        711.997,
+        1515.448
+      ]
+    },
+    {
+      "round": 2,
+      "case": "E_busy_2s_a5",
+      "id": 2,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1517.287,
+      "rpc_after_fault_ms": 10003.193,
+      "rpc_after_return_ms": 8485.906,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.096,
+        104.723,
+        308.718,
+        712.044,
+        1515.52
+      ]
+    },
+    {
+      "round": 2,
+      "case": "E_busy_2s_a5",
+      "id": 3,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1516.991,
+      "rpc_after_fault_ms": 10001.498,
+      "rpc_after_return_ms": 8484.507,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.378,
+        105.117,
+        310.397,
+        711.524,
+        1515.277
+      ]
+    },
+    {
+      "round": 2,
+      "case": "E_busy_2s_a5",
+      "id": 4,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1516.837,
+      "rpc_after_fault_ms": 10001.476,
+      "rpc_after_return_ms": 8484.639,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.252,
+        104.694,
+        308.985,
+        711.532,
+        1515.365
+      ]
+    },
+    {
+      "round": 2,
+      "case": "E_busy_2s_a5",
+      "id": 5,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1517.105,
+      "rpc_after_fault_ms": 10001.528,
+      "rpc_after_return_ms": 8484.423,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.311,
+        104.783,
+        308.979,
+        711.654,
+        1515.462
+      ]
+    },
+    {
+      "round": 2,
+      "case": "E_busy_2s_a5",
+      "id": 6,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1517.273,
+      "rpc_after_fault_ms": 10001.504,
+      "rpc_after_return_ms": 8484.231,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.209,
+        105.528,
+        309.115,
+        711.94,
+        1515.795
+      ]
+    },
+    {
+      "round": 2,
+      "case": "E_busy_2s_a5",
+      "id": 7,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1517.034,
+      "rpc_after_fault_ms": 10001.491,
+      "rpc_after_return_ms": 8484.457,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.157,
+        104.906,
+        308.827,
+        711.515,
+        1515.188
+      ]
+    },
+    {
+      "round": 2,
+      "case": "E_busy_2s_a5",
+      "id": 8,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1516.808,
+      "rpc_after_fault_ms": 10001.505,
+      "rpc_after_return_ms": 8484.697,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.476,
+        104.774,
+        308.838,
+        711.614,
+        1515.39
+      ]
+    },
+    {
+      "round": 3,
+      "case": "E_busy_2s_a5",
+      "id": 1,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1540.015,
+      "rpc_after_fault_ms": 10001.769,
+      "rpc_after_return_ms": 8461.754,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.784,
+        105.881,
+        307.976,
+        736.473,
+        1539.102
+      ]
+    },
+    {
+      "round": 3,
+      "case": "E_busy_2s_a5",
+      "id": 2,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1539.675,
+      "rpc_after_fault_ms": 10001.758,
+      "rpc_after_return_ms": 8462.083,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.66,
+        104.723,
+        307.867,
+        730.22,
+        1538.423
+      ]
+    },
+    {
+      "round": 3,
+      "case": "E_busy_2s_a5",
+      "id": 3,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1539.844,
+      "rpc_after_fault_ms": 10001.772,
+      "rpc_after_return_ms": 8461.928,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.704,
+        105.716,
+        307.958,
+        734.927,
+        1539.065
+      ]
+    },
+    {
+      "round": 3,
+      "case": "E_busy_2s_a5",
+      "id": 4,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1539.416,
+      "rpc_after_fault_ms": 10001.781,
+      "rpc_after_return_ms": 8462.365,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.646,
+        105.128,
+        307.809,
+        731.482,
+        1538.318
+      ]
+    },
+    {
+      "round": 3,
+      "case": "E_busy_2s_a5",
+      "id": 5,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1539.658,
+      "rpc_after_fault_ms": 10001.749,
+      "rpc_after_return_ms": 8462.091,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.865,
+        105.702,
+        307.941,
+        730.262,
+        1539.148
+      ]
+    },
+    {
+      "round": 3,
+      "case": "E_busy_2s_a5",
+      "id": 6,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1539.416,
+      "rpc_after_fault_ms": 10001.774,
+      "rpc_after_return_ms": 8462.358,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.724,
+        105.647,
+        307.951,
+        730.243,
+        1538.309
+      ]
+    },
+    {
+      "round": 3,
+      "case": "E_busy_2s_a5",
+      "id": 7,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1539.8,
+      "rpc_after_fault_ms": 10001.746,
+      "rpc_after_return_ms": 8461.946,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.6,
+        105.265,
+        307.835,
+        736.678,
+        1538.93
+      ]
+    },
+    {
+      "round": 3,
+      "case": "E_busy_2s_a5",
+      "id": 8,
+      "attempts": 5,
+      "last_entry_code": "handshake_limit",
+      "error_class": "recovery_exhausted",
+      "return_after_fault_ms": 1539.623,
+      "rpc_after_fault_ms": 10001.778,
+      "rpc_after_return_ms": 8462.155,
+      "worker_exit_class": "canceled",
+      "captured_bytes": 112000,
+      "worker_bytes": 60800,
+      "applications": 19,
+      "arrival_after_fault_ms": [
+        1.751,
+        105.226,
+        307.782,
+        730.101,
+        1538.332
+      ]
+    }
+  ],
+  "batches": [
+    {
+      "round": 1,
+      "case": "D_busy_500ms_a5",
+      "reject_before_release": 24,
+      "reject_after_release": 7,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 5,
+          "first": 0,
+          "retries": 5
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "case": "D_busy_500ms_a8",
+      "reject_before_release": 24,
+      "reject_after_release": 3,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 3,
+          "first": 0,
+          "retries": 3
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "case": "E_busy_2s_a8",
+      "reject_before_release": 40,
+      "reject_after_release": 4,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 2500000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 3500000000,
+          "arrivals": 3,
+          "first": 0,
+          "retries": 3
+        },
+        {
+          "begin_ns": 4500000000,
+          "arrivals": 1,
+          "first": 0,
+          "retries": 1
+        }
+      ]
+    },
+    {
+      "round": 1,
+      "case": "E_busy_2s_a5",
+      "reject_before_release": 40,
+      "reject_after_release": 0,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "case": "D_busy_500ms_a8",
+      "reject_before_release": 24,
+      "reject_after_release": 3,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 3,
+          "first": 0,
+          "retries": 3
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "case": "D_busy_500ms_a5",
+      "reject_before_release": 24,
+      "reject_after_release": 8,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 6,
+          "first": 0,
+          "retries": 6
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "case": "E_busy_2s_a5",
+      "reject_before_release": 40,
+      "reject_after_release": 0,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        }
+      ]
+    },
+    {
+      "round": 2,
+      "case": "E_busy_2s_a8",
+      "reject_before_release": 40,
+      "reject_after_release": 2,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 2500000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 3500000000,
+          "arrivals": 2,
+          "first": 0,
+          "retries": 2
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "case": "D_busy_500ms_a5",
+      "reject_before_release": 24,
+      "reject_after_release": 2,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 2,
+          "first": 0,
+          "retries": 2
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "case": "D_busy_500ms_a8",
+      "reject_before_release": 24,
+      "reject_after_release": 3,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 3,
+          "first": 0,
+          "retries": 3
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "case": "E_busy_2s_a8",
+      "reject_before_release": 40,
+      "reject_after_release": 4,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 2500000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 3500000000,
+          "arrivals": 4,
+          "first": 0,
+          "retries": 4
+        }
+      ]
+    },
+    {
+      "round": 3,
+      "case": "E_busy_2s_a5",
+      "reject_before_release": 40,
+      "reject_after_release": 0,
+      "recovery_waves": [
+        {
+          "begin_ns": 0,
+          "arrivals": 8,
+          "first": 8,
+          "retries": 0
+        },
+        {
+          "begin_ns": 100000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 300000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 700000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        },
+        {
+          "begin_ns": 1500000000,
+          "arrivals": 8,
+          "first": 0,
+          "retries": 8
+        }
+      ]
+    }
+  ],
+  "total_completed": 68,
+  "total_failed": 28,
+  "total_samples": 10284,
+  "startup_spread_ms": {
+    "n": 12,
+    "min": 8.856,
+    "median": 10.246500000000001,
+    "max": 12.252
+  },
+  "cut_spread_ms": {
+    "n": 12,
+    "min": 0.248,
+    "median": 0.34550000000000003,
+    "max": 2.937
+  },
+  "max_sample_gap_ms": 33.439,
+  "max_sample_call_ms": 7.983,
+  "max_capture_lag_ms": 3.291,
+  "total_attempts": 488,
+  "original_rpc_count": 96
+}

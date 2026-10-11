@@ -1,0 +1,17 @@
+{
+  "relevant_process_names": [
+    "85796 /usr/bin/caffeinate",
+    "85802 /private/tmp/tide-group-budget-formal-2026-10-11-run-1/group-resume.test"
+  ],
+  "os": "26.6.2",
+  "cpu": "Apple M2 Pro",
+  "memory_bytes": 34359738368,
+  "cpu_count": 12,
+  "pmset_log_exit": 0,
+  "sleep_wake_transition_lines": [],
+  "queried_window": {
+    "start": "2026-10-11T07:21:31.039874+00:00",
+    "end": "2026-10-11T07:23:15.027974+00:00",
+    "padding_seconds": 1
+  }
+}

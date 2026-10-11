@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "source_sha256": {
+    "summarize_group_resume_budget.py": "98bffa7b4de7c626774e2223a401f931ae4af7459a6e48b0d39a8f1af4678be2",
+    "group_resume_budget_contract.py": "8f827a666c0273bccb9728b351f8dfa3450ac71f0c0dc1313dab882ad3784488",
+    "summarize_group_resume.py": "48da7f6046e63dae9c8abf62377e86166888843038e4183959dea91884d32a63",
+    "summarize_client_resume.py": "00de41e85e561c929ff047de7bbcf4e6b1b707a99ee35cd815ffe0376c573177"
+  },
+  "input_sha256": {
+    "manifest.json": "8a8e9a386ecc1505cae3f037e46042e33031fd84199617c07491f673f212cf26",
+    "go-events.jsonl": "8d0a0fe92dde6fa07abd0f32719822566aae2e1bddab5a81236e4b1735bbc25f"
+  },
+  "output_sha256": {
+    "reports.json": "430df2b381a8329b3fa30c056fa5fc8bf24be8a2738fb6ad487f5770a97c76b3",
+    "summary.json": "364c6e75c60c5268cb63019b1302f88343ec20747d423500f9281793f0172a06",
+    "sessions.csv": "e73b1b51e0febb3a66ad92e97ffeb8512a06800ad2a450e6014bc9dfcc7bf2f8",
+    "attempt-bins.csv": "602ee47367bd03d3010a938ae035c9f9726d6a107d14b0bc95ce8996cceedf8f"
+  }
+}
