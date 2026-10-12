@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "source_sha256": {
+    "summarize_group_resume_jitter.py": "c2e7d78b41d117143f62c53f26f7aa7a51026f9187a9e5791ef483609d515863",
+    "group_resume_jitter_contract.py": "aba64d5c7e595d84a1b2102719b5c3efe8da0d0e0d69e346eacd7b2dbc0bad39",
+    "summarize_group_resume_budget.py": "56488a38f8fd940915c45837dd86967dcd2f222a9ec6f38b9b7f24a143fd462d",
+    "group_resume_budget_contract.py": "8f827a666c0273bccb9728b351f8dfa3450ac71f0c0dc1313dab882ad3784488",
+    "summarize_group_resume.py": "ced626b1ca989358496d11f06a933a606e2c032bce5b02185dfd7bf880957040",
+    "summarize_client_resume.py": "00de41e85e561c929ff047de7bbcf4e6b1b707a99ee35cd815ffe0376c573177"
+  },
+  "input_sha256": {
+    "manifest.json": "73e2c777bf8dc5b09d7133011811f3e3bb49776725a8316dce9f66661276f835",
+    "go-events.jsonl": "0c1ff8d991afa215c94f5bed813c6002f9aba6e31f1aad1aae71c5b8c02d2e06"
+  },
+  "output_sha256": {
+    "release-bins.csv": "7c89d83af86f877de35544b385c263f2409eea8dfe2442d6f5e14da2ceec58b2",
+    "reports.json": "4072451e454b048fd92671ab645a4ef3978c31a7572fcd8dcc4d2fe356c89946",
+    "summary.json": "b06c3cc1f8dd4b409be1babfd6a6409673def00f3dc5436c81231b453dad8c87",
+    "sessions.csv": "9136a67fa0bfedb0f7be52bf553184939dcbc89183f947dcf7678a59513a9c4e",
+    "attempt-bins.csv": "419309186250f3e36c51a30ecc45380f6a9b6e445be7dfbf251b4bc2763bab22"
+  }
+}
