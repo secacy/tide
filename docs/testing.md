@@ -44,6 +44,15 @@ go test -race ./internal/gateway \
 
 `worker_receiver_test.go` 验证 Worker 响应解析、唯一读取的事件顺序、无缓冲交接、取消及终态发布，并用真实接收任务和 `resultBuffer` 组成受控夹具；没有接入生产协调者或真实 WebSocket 恢复，见[接收任务验收](worklog/2026-10-06-worker-receiver.md#接收任务验收2026-10-06)。
 
+## 同一会话多次断线
+
+```sh
+go test -race ./internal/gateway \
+  -run '^TestV2ClientRepeatedGatewayRecovery$' -count=5 -timeout=90s
+```
+
+新测试在每轮新音频结果应用后丢弃下一块并关闭真实连接，暂扣恢复握手期间继续读取同一源；覆盖两次接回后完成、最后一次接回后完成、再次断线不超过整场预算。核对原 RPC、音频/结果、位置和自然清理。首次真实网络三个场景通过，随后五轮 race 共 15 场景通过；相关两包 race 1400 叶级检查通过。此前监听/审批受阻记录保留，当前验收已完成；见[实现与验收](worklog/2026-10-12-repeated-recovery-validation.md)。这些短场景不作长时或恢复性能结论。
+
 ## 客户端可选随机退避
 
 ```sh
@@ -52,7 +61,7 @@ go test -race ./internal/gateway \
   -run '^TestV2ClientGatewayRecovery$/^jitter_resume_ready_lost$' -count=3
 ```
 
-客户端测试覆盖整数抽样/配置边界、独占随机状态、采集/取消、窗口和次数及跨次恢复语义；网络场景丢弃一次恢复 ready，核对再次接回原 RPC、音频结果完整和自然清理。这是正确性验收，尚未执行 [EXP-006-04](experiments/group-resume-jitter-comparison.md) 正式性能对照。
+客户端测试覆盖整数抽样/配置边界、独占随机状态、采集/取消、窗口和次数及跨次恢复语义；网络场景丢弃一次恢复 ready，核对再次接回原 RPC、音频结果完整和自然清理。这是正确性验收；另行完成的 [EXP-006-04](experiments/group-resume-jitter-comparison.md) 正式对照保留请求收益及典型等待退化，不能从这里的测试耗时推断性能。
 
 ## 共享 Gateway 的群体恢复工具验收
 

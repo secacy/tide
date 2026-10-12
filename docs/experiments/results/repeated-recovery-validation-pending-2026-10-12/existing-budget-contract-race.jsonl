@@ -1,0 +1,20 @@
+{"Time":"2026-10-12T11:12:56.113214+08:00","Action":"start","Package":"github.com/secacy/tide-artisan/internal/wsclient"}
+{"Time":"2026-10-12T11:12:56.645274+08:00","Action":"run","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits"}
+{"Time":"2026-10-12T11:12:56.645376+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits","Output":"=== RUN   TestV2ResumeWindowAndAttemptLimits\n"}
+{"Time":"2026-10-12T11:12:56.645405+08:00","Action":"run","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/fixed_window"}
+{"Time":"2026-10-12T11:12:56.64542+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/fixed_window","Output":"=== RUN   TestV2ResumeWindowAndAttemptLimits/fixed_window\n"}
+{"Time":"2026-10-12T11:12:56.646198+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/fixed_window","Output":"--- PASS: TestV2ResumeWindowAndAttemptLimits/fixed_window (0.00s)\n"}
+{"Time":"2026-10-12T11:12:56.646233+08:00","Action":"pass","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/fixed_window","Elapsed":0}
+{"Time":"2026-10-12T11:12:56.646377+08:00","Action":"run","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/total_attempts_survive_success"}
+{"Time":"2026-10-12T11:12:56.64639+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/total_attempts_survive_success","Output":"=== RUN   TestV2ResumeWindowAndAttemptLimits/total_attempts_survive_success\n"}
+{"Time":"2026-10-12T11:12:56.647597+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/total_attempts_survive_success","Output":"--- PASS: TestV2ResumeWindowAndAttemptLimits/total_attempts_survive_success (0.00s)\n"}
+{"Time":"2026-10-12T11:12:56.647624+08:00","Action":"pass","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/total_attempts_survive_success","Elapsed":0}
+{"Time":"2026-10-12T11:12:56.647631+08:00","Action":"run","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/cancel_backoff"}
+{"Time":"2026-10-12T11:12:56.647636+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/cancel_backoff","Output":"=== RUN   TestV2ResumeWindowAndAttemptLimits/cancel_backoff\n"}
+{"Time":"2026-10-12T11:12:56.647836+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/cancel_backoff","Output":"--- PASS: TestV2ResumeWindowAndAttemptLimits/cancel_backoff (0.00s)\n"}
+{"Time":"2026-10-12T11:12:56.647853+08:00","Action":"pass","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits/cancel_backoff","Elapsed":0}
+{"Time":"2026-10-12T11:12:56.647868+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits","Output":"--- PASS: TestV2ResumeWindowAndAttemptLimits (0.00s)\n"}
+{"Time":"2026-10-12T11:12:56.647885+08:00","Action":"pass","Package":"github.com/secacy/tide-artisan/internal/wsclient","Test":"TestV2ResumeWindowAndAttemptLimits","Elapsed":0}
+{"Time":"2026-10-12T11:12:56.647964+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/wsclient","Output":"PASS\n"}
+{"Time":"2026-10-12T11:12:57.653845+08:00","Action":"output","Package":"github.com/secacy/tide-artisan/internal/wsclient","Output":"ok  \tgithub.com/secacy/tide-artisan/internal/wsclient\t1.540s\n"}
+{"Time":"2026-10-12T11:12:57.653956+08:00","Action":"pass","Package":"github.com/secacy/tide-artisan/internal/wsclient","Elapsed":1.541}

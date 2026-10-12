@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-12",
+  "timezone": "Asia/Taipei",
+  "go": "go1.26.5 darwin/arm64",
+  "scope": "controlled short real-network correctness tests; no performance conclusion",
+  "source": {
+    "path": "internal/gateway/client_v2_repeated_recovery_test.go",
+    "sha256": "d11865a941ed278cb4c180237cb40f24a323ef2d116d42bfb7a4ed0138a2de48",
+    "state": "working tree uncommitted new file; production code unchanged"
+  },
+  "commands": [
+    {
+      "command": "go test -json ./internal/gateway -run '^TestV2ClientRepeatedGatewayRecovery$' -count=1 -timeout=30s",
+      "exit_code": 0,
+      "leaf_pass": 3
+    },
+    {
+      "command": "go test -race -json ./internal/gateway -run '^TestV2ClientRepeatedGatewayRecovery$' -count=5 -timeout=90s",
+      "exit_code": 0,
+      "leaf_pass": 15
+    },
+    {
+      "command": "go test -race -json -p 1 ./internal/gateway ./internal/wsclient -count=1 -timeout=5m",
+      "exit_code": 0,
+      "counts": {
+        "github.com/secacy/tide-artisan/internal/gateway": {
+          "pass": 1073,
+          "fail": 0,
+          "skip": 17
+        },
+        "github.com/secacy/tide-artisan/internal/wsclient": {
+          "pass": 327,
+          "fail": 0,
+          "skip": 0
+        }
+      }
+    }
+  ],
+  "environment": {
+    "GOCACHE": "/private/tmp/tide-review-gocache",
+    "GOPROXY": "off",
+    "GOSUMDB": "off"
+  },
+  "files": {
+    "README.md": "51cd4e056cd5336b6e88575d66967f49ca0c52c435af5217c198aa7a2f358cf1",
+    "network-first.jsonl": "9bc97b17e9f81920d83e652cba1806743b7f0e7e082b3a0f519194b93f98d1d5",
+    "network-race-five-rounds.jsonl": "493ea9871b1206fa177e801fe98958425e191430e4f85be5711cae15a10365af",
+    "related-packages-race.jsonl.xz": "779ad635d2f7a9db643fb2f3423ddb5c3a3629a1773798cec91af5326389cc24"
+  }
+}
