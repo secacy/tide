@@ -1,0 +1,14 @@
+{
+  "macos": "26.6.2",
+  "cpu": "Apple M2 Pro",
+  "physical_memory_bytes": "34359738368",
+  "cpu_count": "12",
+  "related_process_names_before": [],
+  "scope": "Read-only hardware/process-name check; this does not prove an isolated host.",
+  "pmset_exit": 0,
+  "query_start": "2026-10-12T09:16:30.574738+08:00",
+  "query_end": "2026-10-12T09:18:11.498739+08:00",
+  "sleep_wake_lines": [],
+  "awake_guard": "owned_caffeinate",
+  "awake_guard_exit_before_cleanup": null
+}

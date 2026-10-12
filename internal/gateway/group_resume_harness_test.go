@@ -688,11 +688,11 @@ func (h *groupResumeHarness) inject(ctx context.Context) {
 	h.mu.Lock()
 	releaseAt := h.report.FaultAt.Add(h.cfg.Busy)
 	h.mu.Unlock()
-	timer := time.NewTimer(time.Until(releaseAt))
-	defer timer.Stop()
-	select {
-	case <-timer.C:
-	case <-ctx.Done():
+	if err := waitGroupRelease(ctx, func() time.Duration {
+		now := time.Now()
+		// JSON 不保留单调时钟，独立分析用墙钟；两种口径均不得提前释放。
+		return max(releaseAt.Sub(now), releaseAt.Round(0).Sub(now.Round(0)))
+	}); err != nil {
 		h.toolError("holder release canceled")
 		return
 	}
@@ -710,6 +710,30 @@ func (h *groupResumeHarness) inject(ctx context.Context) {
 	h.mu.Lock()
 	h.report.ReleasedAt = resumeAt(time.Now())
 	h.mu.Unlock()
+}
+
+// waitGroupRelease 在定时器唤醒后重新检查剩余时间，防止墙钟调整造成导出时间提前。
+// remaining 仅由本任务调用，返回所有时间约束中最大的剩余值；非正表示可以释放。
+// context 仍限制等待，墙钟反复后退不会产生超出业务观察窗口的无限占位。
+func waitGroupRelease(ctx context.Context, remaining func() time.Duration) error {
+	timer := time.NewTimer(time.Hour)
+	timer.Stop()
+	defer timer.Stop()
+	for {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		delay := remaining()
+		if delay <= 0 {
+			return nil
+		}
+		timer.Reset(delay)
+		select {
+		case <-timer.C:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
 }
 
 // groupResumeSource 通知实际首次读取，不阻塞 Read 或移动固定采集时间轴。
@@ -1057,7 +1081,8 @@ func validateGroupResumeReport(r *groupResumeReport) {
 		if r.OccupiedAt == nil || r.ReleasedAt == nil {
 			problem("holder lifecycle missing")
 		}
-		if r.ReleasedAt != nil && r.FaultAt != nil && r.ReleasedAt.Before(r.FaultAt.Add(r.Config.Busy)) {
+		if r.ReleasedAt != nil && r.FaultAt != nil && (r.ReleasedAt.Before(r.FaultAt.Add(r.Config.Busy)) ||
+			r.ReleasedAt.Round(0).Before(r.FaultAt.Round(0).Add(r.Config.Busy))) {
 			problem("holder released before planned interval")
 		}
 		rejections := 0
