@@ -1,0 +1,363 @@
+{
+  "scope": "Go fixture correctness, twelve-second probe; not EXP-006-05 formal results",
+  "started_date": "2026-10-12",
+  "timezone": "Asia/Taipei",
+  "regression_finished_at": "2026-10-13T00:00:01.071254+08:00",
+  "go": "go1.26.5 darwin/arm64",
+  "parent_commit": "9fb25a8",
+  "source_note": "Three new working-tree Go files frozen for final probe; not a complete source/binary formal archive. Initial prototype has no frozen source snapshot.",
+  "source_sha256": {
+    "extended_resume_harness_test.go": "036031c66622b095fa08008847ea57b1b507c8360ca5f2ddfb80769db9ea16cd",
+    "extended_resume_test.go": "1138d0bf7af590e96137be7f0b2d45ca5786e8ee90466d2745ef163e607077a8",
+    "extended_resume_log_test.go": "2b916d21ca9196fd634e4c135aaac2173426c8b32a5ec8e8972981aae018b90d"
+  },
+  "validation": {
+    "first-components-timeout.jsonl": {
+      "leaf_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "package_outcomes": [
+        {
+          "Time": "2026-10-12T23:53:01.381148+08:00",
+          "Action": "fail",
+          "Package": "github.com/secacy/tide-artisan/internal/gateway",
+          "Elapsed": 30.629
+        }
+      ],
+      "race_warning": false
+    },
+    "fixed-components-intermediate.jsonl": {
+      "leaf_counts": {
+        "pass": 42,
+        "fail": 0,
+        "skip": 0
+      },
+      "package_outcomes": [
+        {
+          "Time": "2026-10-12T23:53:45.591899+08:00",
+          "Action": "pass",
+          "Package": "github.com/secacy/tide-artisan/internal/gateway",
+          "Elapsed": 1.6440000000000001
+        }
+      ],
+      "race_warning": false
+    },
+    "final-components.jsonl": {
+      "leaf_counts": {
+        "pass": 78,
+        "fail": 0,
+        "skip": 0
+      },
+      "package_outcomes": [
+        {
+          "Time": "2026-10-12T23:56:44.329003+08:00",
+          "Action": "pass",
+          "Package": "github.com/secacy/tide-artisan/internal/gateway",
+          "Elapsed": 3.246
+        }
+      ],
+      "race_warning": false
+    },
+    "initial-probe-race.jsonl": {
+      "leaf_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "package_outcomes": [
+        {
+          "Time": "2026-10-12T23:53:51.539859+08:00",
+          "Action": "pass",
+          "Package": "github.com/secacy/tide-artisan/internal/gateway",
+          "Elapsed": 44.17
+        }
+      ],
+      "race_warning": false
+    },
+    "final-probe.jsonl": {
+      "leaf_counts": {
+        "pass": 3,
+        "fail": 0,
+        "skip": 0
+      },
+      "package_outcomes": [
+        {
+          "Time": "2026-10-12T23:57:59.935024+08:00",
+          "Action": "pass",
+          "Package": "github.com/secacy/tide-artisan/internal/gateway",
+          "Elapsed": 43.162
+        }
+      ],
+      "race_warning": false
+    },
+    "related-race.jsonl": {
+      "leaf_counts": {
+        "pass": 1429,
+        "fail": 0,
+        "skip": 17
+      },
+      "package_outcomes": [
+        {
+          "Time": "2026-10-12T23:59:58.040563+08:00",
+          "Action": "pass",
+          "Package": "github.com/secacy/tide-artisan/internal/gateway",
+          "Elapsed": 88.309
+        },
+        {
+          "Time": "2026-10-13T00:00:01.071254+08:00",
+          "Action": "pass",
+          "Package": "github.com/secacy/tide-artisan/internal/wsclient",
+          "Elapsed": 2.577
+        }
+      ],
+      "race_warning": false
+    }
+  },
+  "final_probe": {
+    "C_budget_5": {
+      "config": {
+        "case": "C_budget_5",
+        "chunks": 120,
+        "fault_chunks": [
+          10,
+          25,
+          40,
+          55,
+          70,
+          85
+        ],
+        "attempts": 5,
+        "outage_ns": 500000000,
+        "processing_ns": 10000000,
+        "run_timeout_ns": 42000000000,
+        "cleanup_timeout_ns": 15000000000,
+        "sample_period_ns": 100000000
+      },
+      "gateway_config": {
+        "MaxMessageBytes": 1048576,
+        "StartTimeout": 10000000000,
+        "InputIdleTimeout": 30000000000,
+        "WorkerSendTimeout": 2000000000,
+        "MaxSessions": 1,
+        "TailTimeout": 15000000000,
+        "ResultWriteTimeout": 2000000000,
+        "MaxPendingAudioBytes": 0,
+        "V2": null
+      },
+      "client_config": {
+        "chunk_bytes": 3200,
+        "realtime": true,
+        "read_limit": 65536,
+        "max_replay_bytes": 320000,
+        "max_replay_chunks": 128,
+        "handshake_timeout_ns": 10000000000,
+        "write_timeout_ns": 5000000000,
+        "apply_timeout_ns": 5000000000,
+        "completion_timeout_ns": 30000000000,
+        "resume": {
+          "MaxAttempts": 5,
+          "Window": 5000000000,
+          "InitialBackoff": 100000000,
+          "MaxBackoff": 1000000000
+        }
+      },
+      "log_limits": {
+        "queue": 1024,
+        "event_bytes": 8192,
+        "buffer_bytes": 65536
+      },
+      "result": {
+        "Completed": false,
+        "FinalOffset": 0,
+        "AppliedSeq": 85,
+        "ResumeAttempts": 5,
+        "ResumedConnections": 5,
+        "CompletionAckWritten": false
+      },
+      "error_class": "recovery_exhausted",
+      "captured_bytes": 275200,
+      "received_bytes": 272000,
+      "processed_bytes": 272000,
+      "source_sha256": "63dc6ec79c2cab9ed748adec231314b3a690756dd9c234a638c410079859f6f6",
+      "worker_sha256": "b09d450f528887563f787a4a5e2b399d5d07c4729525236fc8061526d7d999ff",
+      "source_closes": 1,
+      "worker_calls": 1,
+      "worker_picks": 1,
+      "connections": 6,
+      "faults": 6,
+      "natural_idle": true,
+      "forced_cleanup": false,
+      "log_error": false,
+      "observed_queue_peak": 13,
+      "events": 1335,
+      "buffer_accepted_bytes": 256138,
+      "returned_ns": 8505714375,
+      "idle_ns": 18518945417
+    },
+    "B_budget_8": {
+      "config": {
+        "case": "B_budget_8",
+        "chunks": 120,
+        "fault_chunks": [
+          10,
+          25,
+          40,
+          55,
+          70,
+          85
+        ],
+        "attempts": 8,
+        "outage_ns": 500000000,
+        "processing_ns": 10000000,
+        "run_timeout_ns": 42000000000,
+        "cleanup_timeout_ns": 15000000000,
+        "sample_period_ns": 100000000
+      },
+      "gateway_config": {
+        "MaxMessageBytes": 1048576,
+        "StartTimeout": 10000000000,
+        "InputIdleTimeout": 30000000000,
+        "WorkerSendTimeout": 2000000000,
+        "MaxSessions": 1,
+        "TailTimeout": 15000000000,
+        "ResultWriteTimeout": 2000000000,
+        "MaxPendingAudioBytes": 0,
+        "V2": null
+      },
+      "client_config": {
+        "chunk_bytes": 3200,
+        "realtime": true,
+        "read_limit": 65536,
+        "max_replay_bytes": 320000,
+        "max_replay_chunks": 128,
+        "handshake_timeout_ns": 10000000000,
+        "write_timeout_ns": 5000000000,
+        "apply_timeout_ns": 5000000000,
+        "completion_timeout_ns": 30000000000,
+        "resume": {
+          "MaxAttempts": 8,
+          "Window": 5000000000,
+          "InitialBackoff": 100000000,
+          "MaxBackoff": 1000000000
+        }
+      },
+      "log_limits": {
+        "queue": 1024,
+        "event_bytes": 8192,
+        "buffer_bytes": 65536
+      },
+      "result": {
+        "Completed": true,
+        "FinalOffset": 384000,
+        "AppliedSeq": 121,
+        "ResumeAttempts": 6,
+        "ResumedConnections": 6,
+        "CompletionAckWritten": true
+      },
+      "error_class": "",
+      "captured_bytes": 384000,
+      "received_bytes": 384000,
+      "processed_bytes": 384000,
+      "source_sha256": "031fc3a15841f7b6c4ef6f29947ded19c0408435dcf8245f97c31af52b8864d1",
+      "worker_sha256": "031fc3a15841f7b6c4ef6f29947ded19c0408435dcf8245f97c31af52b8864d1",
+      "source_closes": 1,
+      "worker_calls": 1,
+      "worker_picks": 1,
+      "connections": 7,
+      "faults": 6,
+      "natural_idle": true,
+      "forced_cleanup": false,
+      "log_error": false,
+      "observed_queue_peak": 10,
+      "events": 1744,
+      "buffer_accepted_bytes": 308404,
+      "returned_ns": 12006565792,
+      "idle_ns": 12018649458
+    },
+    "A_normal": {
+      "config": {
+        "case": "A_normal",
+        "chunks": 120,
+        "fault_chunks": null,
+        "attempts": 8,
+        "outage_ns": 500000000,
+        "processing_ns": 10000000,
+        "run_timeout_ns": 42000000000,
+        "cleanup_timeout_ns": 15000000000,
+        "sample_period_ns": 100000000
+      },
+      "gateway_config": {
+        "MaxMessageBytes": 1048576,
+        "StartTimeout": 10000000000,
+        "InputIdleTimeout": 30000000000,
+        "WorkerSendTimeout": 2000000000,
+        "MaxSessions": 1,
+        "TailTimeout": 15000000000,
+        "ResultWriteTimeout": 2000000000,
+        "MaxPendingAudioBytes": 0,
+        "V2": null
+      },
+      "client_config": {
+        "chunk_bytes": 3200,
+        "realtime": true,
+        "read_limit": 65536,
+        "max_replay_bytes": 320000,
+        "max_replay_chunks": 128,
+        "handshake_timeout_ns": 10000000000,
+        "write_timeout_ns": 5000000000,
+        "apply_timeout_ns": 5000000000,
+        "completion_timeout_ns": 30000000000,
+        "resume": {
+          "MaxAttempts": 8,
+          "Window": 5000000000,
+          "InitialBackoff": 100000000,
+          "MaxBackoff": 1000000000
+        }
+      },
+      "log_limits": {
+        "queue": 1024,
+        "event_bytes": 8192,
+        "buffer_bytes": 65536
+      },
+      "result": {
+        "Completed": true,
+        "FinalOffset": 384000,
+        "AppliedSeq": 121,
+        "ResumeAttempts": 0,
+        "ResumedConnections": 0,
+        "CompletionAckWritten": true
+      },
+      "error_class": "",
+      "captured_bytes": 384000,
+      "received_bytes": 384000,
+      "processed_bytes": 384000,
+      "source_sha256": "031fc3a15841f7b6c4ef6f29947ded19c0408435dcf8245f97c31af52b8864d1",
+      "worker_sha256": "031fc3a15841f7b6c4ef6f29947ded19c0408435dcf8245f97c31af52b8864d1",
+      "source_closes": 1,
+      "worker_calls": 1,
+      "worker_picks": 1,
+      "connections": 1,
+      "faults": 0,
+      "natural_idle": true,
+      "forced_cleanup": false,
+      "log_error": false,
+      "observed_queue_peak": 2,
+      "events": 1703,
+      "buffer_accepted_bytes": 302192,
+      "returned_ns": 12009185125,
+      "idle_ns": 12021267292
+    }
+  },
+  "checks": {
+    "go_vet_gateway": "passed",
+    "independent_python_analysis": "not implemented",
+    "formal_run": "not run"
+  },
+  "commands": {
+    "components": "go test -race -json ./internal/gateway -run '^TestExtendedResume(Log|PatternAndConfiguration|EvidenceReader|WorkerRejectsBadInput|ForcedCleanup)' -count=3 -timeout=30s",
+    "probe": "go test -json ./internal/gateway -run '^TestExtendedResumeProbe$' -count=1 -timeout=90s",
+    "regression": "go test -race -json -p 1 ./internal/gateway ./internal/wsclient -count=1 -timeout=5m"
+  }
+}

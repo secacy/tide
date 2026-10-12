@@ -44,6 +44,14 @@ go test -race ./internal/gateway \
 
 `worker_receiver_test.go` 验证 Worker 响应解析、唯一读取的事件顺序、无缓冲交接、取消及终态发布，并用真实接收任务和 `resultBuffer` 组成受控夹具；没有接入生产协调者或真实 WebSocket 恢复，见[接收任务验收](worklog/2026-10-06-worker-receiver.md#接收任务验收2026-10-06)。
 
+## 多轮恢复延长实验的 Go 工具
+
+```sh
+go test -race ./internal/gateway -run '^TestExtendedResume' -count=1 -timeout=90s
+```
+
+新增专用按块源、在线校验 Worker、多轮故障代理及有界 JSONL 写入器，默认执行十二秒 A/B/C probe，不运行十分钟正式实验。指定 `TIDE_EXTENDED_PROBE_OUTPUT` 可保留逐场事件与摘要；已有事件文件会明确拒绝覆盖。组件测试包含短写/满队列/写盘错误、坏音频、证据截断与强制清理反例。首次短写超时与修正见[工具验收](worklog/2026-10-12-extended-resume-harness.md)。独立采集/分析待接，不能从 probe 耗时推断恢复性能。
+
 ## 同一会话多次断线
 
 ```sh

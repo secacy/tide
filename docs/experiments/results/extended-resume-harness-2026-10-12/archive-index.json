@@ -1,0 +1,29 @@
+{
+  "file_count": 22,
+  "files": {
+    "final-components.jsonl": "758d0138889086b89d71c1f8c73c2a85815bb95bfbb214b81bd00d8328af3427",
+    "first-components-timeout.jsonl": "85d688b21242d5f7d9b5d4122b87d9883841e8f0b8027f9887521b5c8e938629",
+    "final-probe.jsonl": "33fefbcd88dbaaeb70fa98e726e4dc1436e3b5134f0becc4d96d1697414eb802",
+    "fixed-components-intermediate.jsonl": "39071fb4c7ac225a9c2165f79576ea306acf90fb7b0a645785b6623591015203",
+    "initial-probe-race.jsonl": "a245d3e3841be87693f47c168bae6f5c8d23a640bce8810c4383600f60682e55",
+    "related-race.jsonl": "1049838d5bed237f79d3b1e73eb21591c2bf82258ccbb5afb335a510bd809781",
+    "validation-manifest.json": "8ff53b0fd02abe238b3330099922ea960503f199bf5b86685d5ba0c172943afd",
+    "initial-probe/C_budget_5/summary.json": "528c98f7d1defd124d6dde0491f2bd6433425e69b191939a4402a1bfb6ff2359",
+    "initial-probe/C_budget_5/events.jsonl": "0279eef3b2da4c3b138c503d1a035f4d799ab290da1c313d5f5ed333cff4d202",
+    "initial-probe/B_budget_8/summary.json": "50c6041ccc94c52b2476abf289f3a960656e8504be4825e8f9484df2c78e7431",
+    "initial-probe/B_budget_8/events.jsonl": "ef3fb80b85a01ea99efa39abb29208ddf4e175c7eb788ffc1ff61a2f46e20fba",
+    "initial-probe/A_normal/summary.json": "438af7ccf9846ff7a82eb6ee5fcdab4598f4384c29a0b95e064d9ea6fa8be7fa",
+    "initial-probe/A_normal/events.jsonl": "4de479d988424e9a7e5a0856c4eb6710b791261caaaa5d25959210a6eef874cf",
+    "final-probe/C_budget_5/summary.json": "81baa670830e6dfebe4f582ba6317ea80cb3b734a0576eda16c2e30c2760ed55",
+    "final-probe/C_budget_5/events.jsonl": "5ad6f6e6b7dc2583351d957a3835cc84621f84ce83713844285014109937cb46",
+    "final-probe/source/extended_resume_harness_test.go": "036031c66622b095fa08008847ea57b1b507c8360ca5f2ddfb80769db9ea16cd",
+    "final-probe/source/extended_resume_test.go": "1138d0bf7af590e96137be7f0b2d45ca5786e8ee90466d2745ef163e607077a8",
+    "final-probe/source/extended_resume_log_test.go": "2b916d21ca9196fd634e4c135aaac2173426c8b32a5ec8e8972981aae018b90d",
+    "final-probe/B_budget_8/summary.json": "f15ffbee3b97df8147461123931f8b0528a22d840ba724846ae07f6eea93c082",
+    "final-probe/B_budget_8/events.jsonl": "64c8d6b0d71f153f2854d0d3ea87ef50acdac655382430346086ca773176a881",
+    "final-probe/A_normal/summary.json": "93130d596f0aeddab8178fc268cb760ba1c1561a96afdf35479d193a41897760",
+    "final-probe/A_normal/events.jsonl": "249c0950bf58421f1990dcb5ae32251e9a450c0bf8011dd5f8e6991af2896b4f"
+  },
+  "archive_sha256": "f1ea073c5caccd6720b8ae0cc90fe7294555b461c8cc23fb707937bcb3a8c107",
+  "all_files_readback_equal": true
+}
