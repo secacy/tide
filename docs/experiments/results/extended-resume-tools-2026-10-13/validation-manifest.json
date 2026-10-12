@@ -1,0 +1,48 @@
+{
+  "date": "2026-10-13",
+  "scope": "EXP-006-05 independent tools probe acceptance; formal not run",
+  "measured_head": "bf85832ab68f772ff7172995f2ca181d9be24a43",
+  "measured_worktree_changes": true,
+  "python_all": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 TIDE_EXTENDED_ANALYSIS_FIXTURE=/private/tmp/tide-extended-tools-2026-10-13-run-2 python3 -m unittest discover -s docs/experiments/scripts -p 'test_*.py' -v",
+    "passed": 177,
+    "exit_code": 0,
+    "log": "python-all.log.xz"
+  },
+  "python_archived_fixture": {
+    "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s docs/experiments/scripts -p test_extended_resume.py -v",
+    "passed": 18,
+    "exit_code": 0,
+    "log": "python-archived-fixture.log.xz"
+  },
+  "go_related": {
+    "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race -json -p 1 ./internal/gateway ./internal/wsclient -count=1 -timeout=5m",
+    "passed": 1430,
+    "skipped": 18,
+    "failed": 0,
+    "exit_code": 0,
+    "log": "related-race.jsonl.xz"
+  },
+  "go_vet": {
+    "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go vet ./internal/gateway",
+    "exit_code": 0
+  },
+  "final_collection": {
+    "mode": "probe",
+    "rounds": 2,
+    "planned": 6,
+    "verified": 6,
+    "complete": 4,
+    "explicit_failure": 2,
+    "unknown": 0,
+    "source_count": 326,
+    "source_unchanged": true,
+    "original_path": "/private/tmp/tide-extended-tools-2026-10-13-run-2",
+    "archive": "collection.tar.xz"
+  },
+  "frozen_reanalysis": {
+    "final_four_outputs_identical": true,
+    "initial_four_outputs_identical": true,
+    "details": "archive-index.json"
+  }
+}

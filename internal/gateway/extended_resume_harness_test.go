@@ -269,7 +269,11 @@ func (p *extendedProxy) serve(w http.ResponseWriter, r *http.Request) {
 	p.tasks.Add(1)
 	defer p.tasks.Done()
 	p.active.Add(1)
-	defer func() { p.active.Add(-1); p.log.emit("proxy", "handler_exit", time.Now(), nil) }()
+	number := 0
+	defer func() {
+		p.active.Add(-1)
+		p.log.emit("proxy", "handler_exit", time.Now(), map[string]any{"connection": number})
+	}()
 	front, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		return
@@ -278,7 +282,7 @@ func (p *extendedProxy) serve(w http.ResponseWriter, r *http.Request) {
 	front.SetReadLimit(1 << 20)
 	ctx, cancel := context.WithCancel(p.life)
 	defer cancel()
-	number := int(p.count.Add(1))
+	number = int(p.count.Add(1))
 	typ, data, err := front.Read(ctx)
 	if err != nil {
 		return
@@ -428,6 +432,13 @@ func (p *extendedProxy) serve(w http.ResponseWriter, r *http.Request) {
 				}
 				kind = "audio_ack"
 				payload = map[string]any{"connection": number, "generation": ack.Generation, "next_offset": ack.NextOffset, "input_ended": ack.InputEnded}
+			case wsprotocol.MessageTypeError:
+				var rejection wsprotocol.V2ErrorMessage
+				if err := json.Unmarshal(data, &rejection); err != nil {
+					return err
+				}
+				kind = "entry_error"
+				payload = map[string]any{"connection": number, "code": rejection.Code}
 			default:
 				payload = map[string]any{"connection": number, "type": tag.Type}
 			}
@@ -495,6 +506,9 @@ func runExtendedProbe(t *testing.T, cfg extendedConfig, dir string) extendedSumm
 	if err != nil {
 		t.Fatal(err)
 	}
+	actualGatewayConfig := gateway.cfg
+	actualV2 := *gateway.v2
+	actualGatewayConfig.V2 = &actualV2
 	var gatewayHandlers atomic.Int32
 	var gatewayTasks sync.WaitGroup
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -551,7 +565,7 @@ func runExtendedProbe(t *testing.T, cfg extendedConfig, dir string) extendedSumm
 		t.Fatal(err)
 	}
 	clientSettings := resumeClientSettings{clientCfg.ChunkBytes, clientCfg.Realtime, clientCfg.ReadLimit, clientCfg.MaxReplayBytes, clientCfg.MaxReplayChunks, clientCfg.HandshakeTimeout, clientCfg.WriteTimeout, clientCfg.ApplyTimeout, clientCfg.CompletionTimeout, clientCfg.Resume}
-	log.emit("run", "configuration", time.Now(), map[string]any{"experiment": "EXP-006-05", "config": cfg, "client": clientSettings, "gateway": gateway.cfg, "log_limits": log.limits})
+	log.emit("run", "configuration", time.Now(), map[string]any{"experiment": "EXP-006-05", "config": cfg, "client": clientSettings, "gateway": actualGatewayConfig, "log_limits": log.limits, "origin_utc": log.origin.UTC().Format(time.RFC3339Nano)})
 	registryCount := func() int {
 		gateway.registry.mu.Lock()
 		defer gateway.registry.mu.Unlock()
@@ -581,7 +595,7 @@ func runExtendedProbe(t *testing.T, cfg extendedConfig, dir string) extendedSumm
 		}
 	}()
 	result, runErr := client.Run(runCtx, source)
-	summary := extendedSummary{Config: cfg, GatewayConfig: gateway.cfg, ClientConfig: clientSettings, LogLimits: log.limits, Result: result, ErrorClass: resumeErrorClass(runErr), ReturnedNS: time.Since(log.origin).Nanoseconds()}
+	summary := extendedSummary{Config: cfg, GatewayConfig: actualGatewayConfig, ClientConfig: clientSettings, LogLimits: log.limits, Result: result, ErrorClass: resumeErrorClass(runErr), ReturnedNS: time.Since(log.origin).Nanoseconds()}
 	log.emit("run", "returned", time.Now(), map[string]any{"result": result, "error_class": summary.ErrorClass, "outer_expired": runCtx.Err() != nil})
 	cleanupCtx, cancelCleanup := context.WithTimeout(context.Background(), cfg.CleanupTimeout)
 	for !idle() {
@@ -592,9 +606,13 @@ func runExtendedProbe(t *testing.T, cfg extendedConfig, dir string) extendedSumm
 			goto observeDone
 		}
 	}
+	if life.Err() != nil {
+		summary.Forced = true
+		goto observeDone
+	}
 	summary.NaturalIdle = true
 	summary.IdleNS = time.Since(log.origin).Nanoseconds()
-	log.emit("run", "natural_idle", time.Now(), nil)
+	log.emit("run", "natural_idle", time.Now(), map[string]any{"sessions": gateway.Snapshot().ActiveSessions, "handshakes": entryHandshakeCount(gateway.gate), "registry": registryCount(), "worker_active": worker.active.Load(), "gateway_handlers": gatewayHandlers.Load(), "proxy_handlers": proxy.active.Load(), "fault_timers": proxy.timerCount.Load(), "stopping": gateway.Snapshot().Stopping, "service_cancelled": life.Err() != nil})
 observeDone:
 	cancelCleanup()
 	if summary.Forced {

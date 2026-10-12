@@ -50,7 +50,24 @@ go test -race ./internal/gateway \
 go test -race ./internal/gateway -run '^TestExtendedResume' -count=1 -timeout=90s
 ```
 
-新增专用按块源、在线校验 Worker、多轮故障代理及有界 JSONL 写入器，默认执行十二秒 A/B/C probe，不运行十分钟正式实验。指定 `TIDE_EXTENDED_PROBE_OUTPUT` 可保留逐场事件与摘要；已有事件文件会明确拒绝覆盖。组件测试包含短写/满队列/写盘错误、坏音频、证据截断与强制清理反例。首次短写超时与修正见[工具验收](worklog/2026-10-12-extended-resume-harness.md)。独立采集/分析待接，不能从 probe 耗时推断恢复性能。
+新增专用按块源、在线校验 Worker、多轮故障代理及有界 JSONL 写入器，默认执行十二秒 A/B/C probe，不运行十分钟正式实验。指定 `TIDE_EXTENDED_PROBE_OUTPUT` 可保留逐场事件与摘要；已有事件文件会明确拒绝覆盖。组件测试包含短写/满队列/写盘错误、坏音频、证据截断与强制清理反例。首次短写超时与修正见[工具验收](worklog/2026-10-12-extended-resume-harness.md)。独立采集/分析入口见下节，不能从 probe 耗时推断恢复性能。
+
+## 多轮延长观察的独立采集与分析
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/run_extended_resume.py \
+  --mode probe --count 2 --output /private/tmp/tide-extended-tools-new
+
+PYTHONDONTWRITEBYTECODE=1 python3 docs/experiments/scripts/summarize_extended_resume.py \
+  /private/tmp/tide-extended-tools-new --output /private/tmp/tide-extended-analysis-new
+
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover \
+  -s docs/experiments/scripts -p 'test_extended_resume.py' -v
+```
+
+一次构建，每场独立进程；原始 JSONL 直接存盘，四种分析输出可在新目录重算与搬移。probe 一至两轮，正式模式仅允许 `--mode formal --count 2`，十分钟实验不会默认运行。完整性、行为预期与时间/资源质量分开，未知保留分母；详情见[独立工具验收](worklog/2026-10-13-extended-resume-tools.md)。
+
+单场内部入口 `TestExtendedResumeCollectedCase` 默认跳过，由采集器提供 `TIDE_EXTENDED_MODE`、`TIDE_EXTENDED_CASE` 和独占输出目录；formal 还需 `TIDE_RUN_EXTENDED_FORMAL=1`。不与下表十六个单变量实验开关混用。
 
 ## 同一会话多次断线
 

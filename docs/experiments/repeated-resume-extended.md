@@ -1,6 +1,6 @@
 # EXP-006-05：十分钟会话与多轮断线观察
 
-日期：2026-10-12。状态：**实验已预登记；Go 专用夹具/有界记录器及十二秒 probe 已验收，独立采集/分析待实现，正式测量未运行。**
+日期：2026-10-12。状态：**实验已预登记；Go 专用夹具/有界记录器及十二秒 probe 已验收，独立采集/分析与六场缩短 probe 也已验收，正式测量未运行。**
 
 依据：[多次断线短场景验收](../worklog/2026-10-12-repeated-recovery-validation.md)、[第六阶段检查点](../worklog/2026-10-12-stage-six-review.md)。正式版本在工具验收后冻结，本文件与实现一同记录摘要；任何条件修改须先记录理由和新版本，原运行保留。
 
@@ -107,3 +107,7 @@ A 预期两场均完成且零 resume；B 预期两场均完成且六轮都接回
 ## 工具进度（2026-10-12）
 
 [Go 夹具与记录器验收](../worklog/2026-10-12-extended-resume-harness.md)完成；最终十二秒 A/B 完整、C 第六轮累计耗尽，均原 RPC 及自然清理。先前短写反例超时保留并修正。probe 是工具行为检查，不填入本轮正式 Results；独立 Python 采集/分析及正式六场仍待执行。
+
+## 独立工具进度（2026-10-13）
+
+[逐场采集与独立分析验收](../worklog/2026-10-13-extended-resume-tools.md)完成：一次构建、六场独立进程 probe，原始事件复算及固定分母核对；正式十分钟 Results 仍为空。默认命令只执行 probe，正式阶段显式使用 `python3 docs/experiments/scripts/run_extended_resume.py --mode formal --count 2 --output 新目录`；复算使用 `summarize_extended_resume.py 采集目录 --output 新分析目录`。
