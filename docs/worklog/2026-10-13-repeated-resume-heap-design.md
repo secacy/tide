@@ -1,6 +1,6 @@
 # 多轮恢复堆诊断：目的、方案与实现边界
 
-日期：2026-10-13。状态：设计及预登记完成，[工具及短场验收](2026-10-13-repeated-resume-heap-tools.md)已落地；正式诊断尚未运行。依据[十分钟正式结果](2026-10-13-repeated-resume-extended-results.md)，执行条件见 [EXP-006-06](../experiments/repeated-resume-heap-diagnostic.md)。
+日期：2026-10-13。状态：设计及预登记完成，[工具及短场验收](2026-10-13-repeated-resume-heap-tools.md)已落地；[正式四场诊断](2026-10-13-repeated-resume-heap-results.md)已核实，分配路径已分类，原自然 GC 增长未完全归因。依据[十分钟正式结果](2026-10-13-repeated-resume-extended-results.md)，执行条件见 [EXP-006-06](../experiments/repeated-resume-heap-diagnostic.md)。
 
 ## 要解释的现象
 
@@ -67,4 +67,4 @@ EXP-006-05 五个时间/资源合格场中，四个触发 HeapAlloc 增长线索
 - 只见累计分配增长、存活差分无一致增长：先解释分配压力和 GC，不据此直接做泄漏修复。
 - profile 未复现、对象来源歧义、采集导致业务失败或清理未完成：结论为未定位，保留证据；再决定是否补无强制 GC 对照、缩小采集频率或做同进程重复生命周期诊断，不随意加长全部实验。
 
-本计划的快照/清理边界及短 probe 已由助手实现并验收，反例与归档见[工具工作记录](2026-10-13-repeated-resume-heap-tools.md)。下一单元冻结提交后执行本次预登记的四场正式诊断。累计恢复预算讨论继续保留在后续，当前不将“六次断线超过五次总预算”当作协议实现错误。
+本计划的快照/清理边界及短 probe 已由助手实现并验收，反例与归档见[工具工作记录](2026-10-13-repeated-resume-heap-tools.md)。后续[正式四场结果](2026-10-13-repeated-resume-heap-results.md)已完成，下一单元回到长问诊累计恢复预算评审；未取得引用图的残留边界保留。累计恢复预算讨论继续保留在后续，当前不将“六次断线超过五次总预算”当作协议实现错误。

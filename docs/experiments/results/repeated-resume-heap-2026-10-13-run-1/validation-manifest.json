@@ -1,0 +1,50 @@
+{
+  "archive_files": 722,
+  "archive_readback_equal": true,
+  "source_files": 332,
+  "source_unchanged": true,
+  "formal": {
+    "planned_sessions": 4,
+    "business_valid": 4,
+    "phase_valid": 4,
+    "profiles": 20,
+    "pprof_commands": 160
+  },
+  "frozen_reanalysis": {
+    "files": 325,
+    "byte_identical": true
+  },
+  "moved_frozen_reanalysis": {
+    "files": 325,
+    "byte_identical": true
+  },
+  "postprocessor": {
+    "counterexamples_pass": 5,
+    "raw_files": 32,
+    "difference_files": 12,
+    "four_counters_exact_differences": true,
+    "unknown_symbol_samples": 0,
+    "moved_outputs_byte_identical": true,
+    "moved_output_files": 4,
+    "csv_line_endings": "LF"
+  },
+  "artifacts_sha256": {
+    "profile-totals.csv": "1582319b09291cc8588591290611790d48871b7c35148298f47d98243a1f00bf",
+    "collection.log": "5bb0e26593adfdba90a6f94606416f7219581fb5a067cedea71c6d671317eccf",
+    "collection.tar.xz": "76282a5559415e77c6888a72d3e57de91a626e85088e696d6999e13a26704897",
+    "preregistration.md": "b1cbfa7abdb0338b22e3e07d4551b977467a3728002dc759777d3cf9168f6f78",
+    "stack_report.py": "c8083daf9aad45234d650532734aa87249fc35e9082be383ea30c65511fa8039",
+    "selected-paths.csv": "e2dc124f2145f75755ecbfddc9fb1338265f749afc82019c28d14d4f3b13c5c4",
+    "stack-tests.log": "535b1749744ef8013b093fdf58dbd9df5eef061114cdec62da65f421cb1feb41",
+    "archive-index.json": "74249482d85ed90fde1e320a9af1dd1c331c5a062748fc214a4a3049d79b2d46",
+    "source-references.json": "ac2940f902ee31faa4a0256280b38e5804a57d4d86b6d9d8c85ca5d6ac5740cd",
+    "source-references.tar.xz": "7c2e6153bd564b38495d505a27557d6666c1521dcaae0e21b14cdba2dac78e58",
+    "manifest.json": "62dda64d2a85203bcad07769ea0c2037956c7365420329bddfb9042a6de934a0",
+    "stack-summary.json.xz": "eb204536aef69f4f6b613cf6e65b4db768862e98e853abb0b14e16349f182883",
+    "moved-reanalysis.log": "2cf3308c3ee7167fc53ff0ebbf2fe24c9121211db7474475d009e745fad487dc",
+    "frozen-reanalysis.log": "2cf3308c3ee7167fc53ff0ebbf2fe24c9121211db7474475d009e745fad487dc",
+    "checkpoints.csv": "29f5bc43003e88c4835ce6d3db4ea237c41622ba1211dfa421a9913f031d4313",
+    "summary.json.xz": "1705541a10900f765e5f56bc2be83206f382814c990b34d6e25f5aa79e6bcd2d",
+    "test_stack_report.py": "69bffc61fa80adfac5186c98cd89e6c70a0c03d69e60687c22e09e289d7f2929"
+  }
+}

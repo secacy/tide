@@ -1,0 +1,10 @@
+test_counter_order_and_rate_rejected (test_stack_report.RawProfileTest.test_counter_order_and_rate_rejected) ... ok
+test_exact_sum_negative_and_inline_frames (test_stack_report.RawProfileTest.test_exact_sum_negative_and_inline_frames) ... ok
+test_missing_location_rejected (test_stack_report.RawProfileTest.test_missing_location_rejected) ... ok
+test_unknown_symbol_not_inferred (test_stack_report.RawProfileTest.test_unknown_symbol_not_inferred) ... ok
+test_unparsed_sample_rejected (test_stack_report.RawProfileTest.test_unparsed_sample_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.003s
+
+OK

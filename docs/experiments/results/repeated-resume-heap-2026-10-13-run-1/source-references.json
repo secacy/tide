@@ -1,0 +1,46 @@
+{
+  "scope": "local SDK/module sources used to check allocation paths; no object reference graph",
+  "go_version": "go1.26.5",
+  "files": {
+    "runtime/proc.go": {
+      "original_path": "/opt/homebrew/Cellar/go/1.26.5/libexec/src/runtime/proc.go",
+      "sha256": "b0ea864c1dd251cd9146644863ae9126ca57761dff05862dc80ab0799925fec6"
+    },
+    "runtime/select.go": {
+      "original_path": "/opt/homebrew/Cellar/go/1.26.5/libexec/src/runtime/select.go",
+      "sha256": "93977178a5c507d2bd0bbd990613fa0c8a1d6d18b974fcbcd6c9edce6bd8b5bf"
+    },
+    "runtime/runtime2.go": {
+      "original_path": "/opt/homebrew/Cellar/go/1.26.5/libexec/src/runtime/runtime2.go",
+      "sha256": "1aae37f643d6092ab3911ae5bf95b14941e88efc2c17609bb1db29f6c70841dd"
+    },
+    "runtime/mprof.go": {
+      "original_path": "/opt/homebrew/Cellar/go/1.26.5/libexec/src/runtime/mprof.go",
+      "sha256": "cd26b885d64fa60668250491c3ea127d3364874059ed390d8cb9de570ecbb234"
+    },
+    "encoding/json/encode.go": {
+      "original_path": "/opt/homebrew/Cellar/go/1.26.5/libexec/src/encoding/json/encode.go",
+      "sha256": "4012d78aa8236f3067a6330ddf2f719c7e59b262fcf4fff5e51b4abd1ccba235"
+    },
+    "http2/hpack/huffman.go": {
+      "original_path": "/Users/can/go/pkg/mod/golang.org/x/net@v0.58.0/http2/hpack/huffman.go",
+      "sha256": "3d41693bd77da34093c1d334842d8cbeffb3a2f3e0fa5cf0af5e6e9e65b19be1"
+    },
+    "grpc/mem/buffer_pool.go": {
+      "original_path": "/Users/can/go/pkg/mod/google.golang.org/grpc@v1.83.2/internal/mem/buffer_pool.go",
+      "sha256": "ffcb191777909f96dd1677977c9fef2f897cca5243439f76780d7ddc576ad92a"
+    },
+    "licenses/go-LICENSE": {
+      "original_path": "/opt/homebrew/Cellar/go/1.26.5/LICENSE",
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    "licenses/x-net-LICENSE": {
+      "original_path": "/Users/can/go/pkg/mod/golang.org/x/net@v0.58.0/LICENSE",
+      "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    "licenses/grpc-LICENSE": {
+      "original_path": "/Users/can/go/pkg/mod/google.golang.org/grpc@v1.83.2/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    }
+  }
+}
