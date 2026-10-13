@@ -1,0 +1,60 @@
+{
+  "experiment": "EXP-006-05",
+  "date": "2026-10-13",
+  "measured_commit": "ecf8a92f140cc0f9b63e0a30a757529afa3e3a9e",
+  "source_count": 326,
+  "source_unchanged": true,
+  "collector_exit_code": 0,
+  "analysis_evidence_valid": true,
+  "planned": 6,
+  "verified": 6,
+  "completed": 4,
+  "explicit_failure": 2,
+  "unknown": 0,
+  "behavior_passed": 6,
+  "quality_passed": 5,
+  "groups": [
+    {
+      "case": "A_normal",
+      "planned": 2,
+      "verified": 2,
+      "completed": 2,
+      "failed": 0,
+      "unknown": 0,
+      "behavior_passed": 2,
+      "quality_passed": 2
+    },
+    {
+      "case": "B_budget_8",
+      "planned": 2,
+      "verified": 2,
+      "completed": 2,
+      "failed": 0,
+      "unknown": 0,
+      "behavior_passed": 2,
+      "quality_passed": 1
+    },
+    {
+      "case": "C_budget_5",
+      "planned": 2,
+      "verified": 2,
+      "completed": 0,
+      "failed": 2,
+      "unknown": 0,
+      "behavior_passed": 2,
+      "quality_passed": 2
+    }
+  ],
+  "archive_files": 359,
+  "archive_readback_identical": true,
+  "frozen_reanalysis_exit_code": 0,
+  "current_reanalysis_exit_code": 0,
+  "four_outputs_identical": true,
+  "power_audit": {
+    "exit_code": 0,
+    "transitions": []
+  },
+  "awake_guard_exit_before_cleanup": null,
+  "business_code_or_defaults_changed": false,
+  "formal_replacement_runs": 0
+}

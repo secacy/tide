@@ -1,0 +1,34 @@
+{
+  "slot": "05_B_budget_8",
+  "threshold_ns": 100000000,
+  "formula": "source/read elapsed_ns minus planned_ns, matching frozen analyzer",
+  "violating_reads": [
+    {
+      "block": 1592,
+      "elapsed_ns": 159342663417,
+      "planned_ns": 159201916875,
+      "start_lag_ns": 140746542,
+      "read_duration_ns": 8458
+    }
+  ],
+  "sampling_gaps_over_200ms": [
+    {
+      "begin_ns": 150110365875,
+      "end_ns": 150399638000,
+      "gap_ns": 289272125
+    },
+    {
+      "begin_ns": 159065381667,
+      "end_ns": 159288748084,
+      "gap_ns": 223366417
+    },
+    {
+      "begin_ns": 159443532625,
+      "end_ns": 159688653250,
+      "gap_ns": 245120625
+    }
+  ],
+  "sleep_audit_transitions": [],
+  "cause": "not established by current evidence",
+  "decision": "retain business evidence; disqualify this slot for timing/resource comparisons; do not replace it"
+}
