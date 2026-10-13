@@ -1,0 +1,5358 @@
+{
+  "version": 1,
+  "experiment": "EXP-006-06",
+  "mode": "probe",
+  "planned_sessions": 2,
+  "archive_valid": true,
+  "business_valid": 2,
+  "checkpoints_valid": 2,
+  "exported": 2,
+  "analysis_go_version": "go1.26.5",
+  "export_requested": true,
+  "evidence_valid": true,
+  "errors": [],
+  "cases": [
+    {
+      "index": 1,
+      "case": "A_normal",
+      "business_valid": true,
+      "checkpoints_valid": true,
+      "export_valid": true,
+      "business": {
+        "case": "A_normal",
+        "completed": true,
+        "error_class": "",
+        "behavior_passed": true,
+        "timing_resource_quality": true,
+        "quality_issues": [],
+        "captured_bytes": 384000,
+        "received_bytes": 384000,
+        "processed_bytes": 384000,
+        "missing_captured": null,
+        "uncaptured": null,
+        "applied_results": 121,
+        "attempts": 0,
+        "resumed": 0,
+        "repeated_audio_bytes": 0,
+        "max_partial_gap_ns": 118928792,
+        "partial_waits_ns": {
+          "n": 120,
+          "min": 12434750,
+          "median": 15572562.5,
+          "max": 35345667
+        },
+        "source_max_lag_ns": 4689083,
+        "max_sampling_gap_ns": 106689416,
+        "cleanup_after_return_ns": 12359959,
+        "worker_exit_after_return_ns": -2239416,
+        "outages": [],
+        "resources": [
+          {
+            "window": 1,
+            "begin_ns": 2000000000,
+            "end_ns": 2400000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 2946640,
+              "median": 4524600.0,
+              "max": 4680624
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 4546560,
+              "median": 6504448.0,
+              "max": 6569984
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 2,
+              "median": 2.0,
+              "max": 2
+            },
+            "written": {
+              "n": 4,
+              "min": 51958,
+              "median": 56580.5,
+              "max": 60287
+            },
+            "gc_count": 2,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          },
+          {
+            "window": 2,
+            "begin_ns": 3500000000,
+            "end_ns": 3900000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 1422640,
+              "median": 1547260.0,
+              "max": 1676352
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 3162112,
+              "median": 3215360.0,
+              "max": 3276800
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 2,
+              "median": 2.0,
+              "max": 2
+            },
+            "written": {
+              "n": 4,
+              "min": 90050,
+              "median": 93783.5,
+              "max": 97517
+            },
+            "gc_count": 0,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          },
+          {
+            "window": 3,
+            "begin_ns": 5000000000,
+            "end_ns": 5400000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 1088328,
+              "median": 1910428.0,
+              "max": 2721056
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 2785280,
+              "median": 3588096.0,
+              "max": 4145152
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 2,
+              "median": 2.0,
+              "max": 2
+            },
+            "written": {
+              "n": 4,
+              "min": 127396,
+              "median": 131131.0,
+              "max": 134866
+            },
+            "gc_count": 1,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          },
+          {
+            "window": 4,
+            "begin_ns": 6500000000,
+            "end_ns": 6900000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 2252832,
+              "median": 2373588.0,
+              "max": 2494168
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 3858432,
+              "median": 3915776.0,
+              "max": 4005888
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 2,
+              "median": 2.0,
+              "max": 2
+            },
+            "written": {
+              "n": 4,
+              "min": 164746,
+              "median": 168481.0,
+              "max": 172216
+            },
+            "gc_count": 0,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          },
+          {
+            "window": 5,
+            "begin_ns": 8000000000,
+            "end_ns": 8400000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 1907360,
+              "median": 2027696.0,
+              "max": 2148440
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 3678208,
+              "median": 3780608.0,
+              "max": 3866624
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 2,
+              "median": 2.0,
+              "max": 2
+            },
+            "written": {
+              "n": 4,
+              "min": 200795,
+              "median": 204530.0,
+              "max": 208265
+            },
+            "gc_count": 0,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          },
+          {
+            "window": 6,
+            "begin_ns": 9500000000,
+            "end_ns": 9900000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 1554408,
+              "median": 1677704.0,
+              "max": 1805184
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 3432448,
+              "median": 3477504.0,
+              "max": 3555328
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 2,
+              "median": 2.0,
+              "max": 2
+            },
+            "written": {
+              "n": 4,
+              "min": 239068,
+              "median": 242803.0,
+              "max": 246539
+            },
+            "gc_count": 0,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          }
+        ],
+        "growth_signals": {
+          "goroutines": {
+            "needs_investigation": false,
+            "eligible_windows": 6,
+            "meaning": "descriptive increase, not proof of a leak"
+          },
+          "heap_alloc": {
+            "needs_investigation": false,
+            "eligible_windows": 6,
+            "meaning": "descriptive increase, not proof of a leak"
+          },
+          "heap_inuse": {
+            "needs_investigation": false,
+            "eligible_windows": 6,
+            "meaning": "descriptive increase, not proof of a leak"
+          }
+        },
+        "position_series": {
+          "captured": [
+            {
+              "at_ns": 8113250,
+              "offset": 3200
+            },
+            {
+              "at_ns": 108634750,
+              "offset": 6400
+            },
+            {
+              "at_ns": 208535333,
+              "offset": 9600
+            },
+            {
+              "at_ns": 308387708,
+              "offset": 12800
+            },
+            {
+              "at_ns": 408338792,
+              "offset": 16000
+            },
+            {
+              "at_ns": 509477708,
+              "offset": 19200
+            },
+            {
+              "at_ns": 609371792,
+              "offset": 22400
+            },
+            {
+              "at_ns": 709173042,
+              "offset": 25600
+            },
+            {
+              "at_ns": 808777542,
+              "offset": 28800
+            },
+            {
+              "at_ns": 909256792,
+              "offset": 32000
+            },
+            {
+              "at_ns": 1009613375,
+              "offset": 35200
+            },
+            {
+              "at_ns": 1109219292,
+              "offset": 38400
+            },
+            {
+              "at_ns": 1208867750,
+              "offset": 41600
+            },
+            {
+              "at_ns": 1309248500,
+              "offset": 44800
+            },
+            {
+              "at_ns": 1409099917,
+              "offset": 48000
+            },
+            {
+              "at_ns": 1509311000,
+              "offset": 51200
+            },
+            {
+              "at_ns": 1608895417,
+              "offset": 54400
+            },
+            {
+              "at_ns": 1709012417,
+              "offset": 57600
+            },
+            {
+              "at_ns": 1808269792,
+              "offset": 60800
+            },
+            {
+              "at_ns": 1909223667,
+              "offset": 64000
+            },
+            {
+              "at_ns": 2009377083,
+              "offset": 67200
+            },
+            {
+              "at_ns": 2109184667,
+              "offset": 70400
+            },
+            {
+              "at_ns": 2209179667,
+              "offset": 73600
+            },
+            {
+              "at_ns": 2309272583,
+              "offset": 76800
+            },
+            {
+              "at_ns": 2409491708,
+              "offset": 80000
+            },
+            {
+              "at_ns": 2509431833,
+              "offset": 83200
+            },
+            {
+              "at_ns": 2612802333,
+              "offset": 86400
+            },
+            {
+              "at_ns": 2709219167,
+              "offset": 89600
+            },
+            {
+              "at_ns": 2808806708,
+              "offset": 92800
+            },
+            {
+              "at_ns": 2909264583,
+              "offset": 96000
+            },
+            {
+              "at_ns": 3009646625,
+              "offset": 99200
+            },
+            {
+              "at_ns": 3109268875,
+              "offset": 102400
+            },
+            {
+              "at_ns": 3209296708,
+              "offset": 105600
+            },
+            {
+              "at_ns": 3309185417,
+              "offset": 108800
+            },
+            {
+              "at_ns": 3409233708,
+              "offset": 112000
+            },
+            {
+              "at_ns": 3508675708,
+              "offset": 115200
+            },
+            {
+              "at_ns": 3608505625,
+              "offset": 118400
+            },
+            {
+              "at_ns": 3709282833,
+              "offset": 121600
+            },
+            {
+              "at_ns": 3809304583,
+              "offset": 124800
+            },
+            {
+              "at_ns": 3909389792,
+              "offset": 128000
+            },
+            {
+              "at_ns": 4008974917,
+              "offset": 131200
+            },
+            {
+              "at_ns": 4109268375,
+              "offset": 134400
+            },
+            {
+              "at_ns": 4208857875,
+              "offset": 137600
+            },
+            {
+              "at_ns": 4309295000,
+              "offset": 140800
+            },
+            {
+              "at_ns": 4409274250,
+              "offset": 144000
+            },
+            {
+              "at_ns": 4509339000,
+              "offset": 147200
+            },
+            {
+              "at_ns": 4609215583,
+              "offset": 150400
+            },
+            {
+              "at_ns": 4709253333,
+              "offset": 153600
+            },
+            {
+              "at_ns": 4808248542,
+              "offset": 156800
+            },
+            {
+              "at_ns": 4909194917,
+              "offset": 160000
+            },
+            {
+              "at_ns": 5009262083,
+              "offset": 163200
+            },
+            {
+              "at_ns": 5108415667,
+              "offset": 166400
+            },
+            {
+              "at_ns": 5209277000,
+              "offset": 169600
+            },
+            {
+              "at_ns": 5309283417,
+              "offset": 172800
+            },
+            {
+              "at_ns": 5408984458,
+              "offset": 176000
+            },
+            {
+              "at_ns": 5509254667,
+              "offset": 179200
+            },
+            {
+              "at_ns": 5608762083,
+              "offset": 182400
+            },
+            {
+              "at_ns": 5708818875,
+              "offset": 185600
+            },
+            {
+              "at_ns": 5809983667,
+              "offset": 188800
+            },
+            {
+              "at_ns": 5909062458,
+              "offset": 192000
+            },
+            {
+              "at_ns": 6009265000,
+              "offset": 195200
+            },
+            {
+              "at_ns": 6108760958,
+              "offset": 198400
+            },
+            {
+              "at_ns": 6209292333,
+              "offset": 201600
+            },
+            {
+              "at_ns": 6308538750,
+              "offset": 204800
+            },
+            {
+              "at_ns": 6409289792,
+              "offset": 208000
+            },
+            {
+              "at_ns": 6509314458,
+              "offset": 211200
+            },
+            {
+              "at_ns": 6609271958,
+              "offset": 214400
+            },
+            {
+              "at_ns": 6709292833,
+              "offset": 217600
+            },
+            {
+              "at_ns": 6809439042,
+              "offset": 220800
+            },
+            {
+              "at_ns": 6909126208,
+              "offset": 224000
+            },
+            {
+              "at_ns": 7008603875,
+              "offset": 227200
+            },
+            {
+              "at_ns": 7108715042,
+              "offset": 230400
+            },
+            {
+              "at_ns": 7208454667,
+              "offset": 233600
+            },
+            {
+              "at_ns": 7308493333,
+              "offset": 236800
+            },
+            {
+              "at_ns": 7409375792,
+              "offset": 240000
+            },
+            {
+              "at_ns": 7508365167,
+              "offset": 243200
+            },
+            {
+              "at_ns": 7609358458,
+              "offset": 246400
+            },
+            {
+              "at_ns": 7709259250,
+              "offset": 249600
+            },
+            {
+              "at_ns": 7808721625,
+              "offset": 252800
+            },
+            {
+              "at_ns": 7909192000,
+              "offset": 256000
+            },
+            {
+              "at_ns": 8008312333,
+              "offset": 259200
+            },
+            {
+              "at_ns": 8109273792,
+              "offset": 262400
+            },
+            {
+              "at_ns": 8208376458,
+              "offset": 265600
+            },
+            {
+              "at_ns": 8308860333,
+              "offset": 268800
+            },
+            {
+              "at_ns": 8408582958,
+              "offset": 272000
+            },
+            {
+              "at_ns": 8509216292,
+              "offset": 275200
+            },
+            {
+              "at_ns": 8609179250,
+              "offset": 278400
+            },
+            {
+              "at_ns": 8709195875,
+              "offset": 281600
+            },
+            {
+              "at_ns": 8809228042,
+              "offset": 284800
+            },
+            {
+              "at_ns": 8909231875,
+              "offset": 288000
+            },
+            {
+              "at_ns": 9009208125,
+              "offset": 291200
+            },
+            {
+              "at_ns": 9108941000,
+              "offset": 294400
+            },
+            {
+              "at_ns": 9209186792,
+              "offset": 297600
+            },
+            {
+              "at_ns": 9309225625,
+              "offset": 300800
+            },
+            {
+              "at_ns": 9409180208,
+              "offset": 304000
+            },
+            {
+              "at_ns": 9509215750,
+              "offset": 307200
+            },
+            {
+              "at_ns": 9609239167,
+              "offset": 310400
+            },
+            {
+              "at_ns": 9709176417,
+              "offset": 313600
+            },
+            {
+              "at_ns": 9808466583,
+              "offset": 316800
+            },
+            {
+              "at_ns": 9909155792,
+              "offset": 320000
+            },
+            {
+              "at_ns": 10009209208,
+              "offset": 323200
+            },
+            {
+              "at_ns": 10109361625,
+              "offset": 326400
+            },
+            {
+              "at_ns": 10209138542,
+              "offset": 329600
+            },
+            {
+              "at_ns": 10309198000,
+              "offset": 332800
+            },
+            {
+              "at_ns": 10408625750,
+              "offset": 336000
+            },
+            {
+              "at_ns": 10509256417,
+              "offset": 339200
+            },
+            {
+              "at_ns": 10609248792,
+              "offset": 342400
+            },
+            {
+              "at_ns": 10709271667,
+              "offset": 345600
+            },
+            {
+              "at_ns": 10809344417,
+              "offset": 348800
+            },
+            {
+              "at_ns": 10908290542,
+              "offset": 352000
+            },
+            {
+              "at_ns": 11008447750,
+              "offset": 355200
+            },
+            {
+              "at_ns": 11108532167,
+              "offset": 358400
+            },
+            {
+              "at_ns": 11208462250,
+              "offset": 361600
+            },
+            {
+              "at_ns": 11308938042,
+              "offset": 364800
+            },
+            {
+              "at_ns": 11408524083,
+              "offset": 368000
+            },
+            {
+              "at_ns": 11508744000,
+              "offset": 371200
+            },
+            {
+              "at_ns": 11608478333,
+              "offset": 374400
+            },
+            {
+              "at_ns": 11709302000,
+              "offset": 377600
+            },
+            {
+              "at_ns": 11808677125,
+              "offset": 380800
+            },
+            {
+              "at_ns": 11909295875,
+              "offset": 384000
+            }
+          ],
+          "accepted": [
+            {
+              "at_ns": 8886708,
+              "offset": 3200,
+              "connection": 1
+            },
+            {
+              "at_ns": 109402083,
+              "offset": 6400,
+              "connection": 1
+            },
+            {
+              "at_ns": 210115500,
+              "offset": 9600,
+              "connection": 1
+            },
+            {
+              "at_ns": 310528375,
+              "offset": 12800,
+              "connection": 1
+            },
+            {
+              "at_ns": 410597500,
+              "offset": 16000,
+              "connection": 1
+            },
+            {
+              "at_ns": 511187542,
+              "offset": 19200,
+              "connection": 1
+            },
+            {
+              "at_ns": 611186042,
+              "offset": 22400,
+              "connection": 1
+            },
+            {
+              "at_ns": 711275417,
+              "offset": 25600,
+              "connection": 1
+            },
+            {
+              "at_ns": 812222833,
+              "offset": 28800,
+              "connection": 1
+            },
+            {
+              "at_ns": 911527542,
+              "offset": 32000,
+              "connection": 1
+            },
+            {
+              "at_ns": 1014224208,
+              "offset": 35200,
+              "connection": 1
+            },
+            {
+              "at_ns": 1110689042,
+              "offset": 38400,
+              "connection": 1
+            },
+            {
+              "at_ns": 1210732458,
+              "offset": 41600,
+              "connection": 1
+            },
+            {
+              "at_ns": 1311535833,
+              "offset": 44800,
+              "connection": 1
+            },
+            {
+              "at_ns": 1412070042,
+              "offset": 48000,
+              "connection": 1
+            },
+            {
+              "at_ns": 1511588417,
+              "offset": 51200,
+              "connection": 1
+            },
+            {
+              "at_ns": 1611122083,
+              "offset": 54400,
+              "connection": 1
+            },
+            {
+              "at_ns": 1711388583,
+              "offset": 57600,
+              "connection": 1
+            },
+            {
+              "at_ns": 1810318167,
+              "offset": 60800,
+              "connection": 1
+            },
+            {
+              "at_ns": 1911301125,
+              "offset": 64000,
+              "connection": 1
+            },
+            {
+              "at_ns": 2012888375,
+              "offset": 67200,
+              "connection": 1
+            },
+            {
+              "at_ns": 2110138125,
+              "offset": 70400,
+              "connection": 1
+            },
+            {
+              "at_ns": 2210493625,
+              "offset": 73600,
+              "connection": 1
+            },
+            {
+              "at_ns": 2315121292,
+              "offset": 76800,
+              "connection": 1
+            },
+            {
+              "at_ns": 2412182542,
+              "offset": 80000,
+              "connection": 1
+            },
+            {
+              "at_ns": 2511708625,
+              "offset": 83200,
+              "connection": 1
+            },
+            {
+              "at_ns": 2617514500,
+              "offset": 86400,
+              "connection": 1
+            },
+            {
+              "at_ns": 2710281958,
+              "offset": 89600,
+              "connection": 1
+            },
+            {
+              "at_ns": 2809937875,
+              "offset": 92800,
+              "connection": 1
+            },
+            {
+              "at_ns": 2911812500,
+              "offset": 96000,
+              "connection": 1
+            },
+            {
+              "at_ns": 3011634417,
+              "offset": 99200,
+              "connection": 1
+            },
+            {
+              "at_ns": 3111418375,
+              "offset": 102400,
+              "connection": 1
+            },
+            {
+              "at_ns": 3210399292,
+              "offset": 105600,
+              "connection": 1
+            },
+            {
+              "at_ns": 3310399500,
+              "offset": 108800,
+              "connection": 1
+            },
+            {
+              "at_ns": 3411162333,
+              "offset": 112000,
+              "connection": 1
+            },
+            {
+              "at_ns": 3510667958,
+              "offset": 115200,
+              "connection": 1
+            },
+            {
+              "at_ns": 3611234500,
+              "offset": 118400,
+              "connection": 1
+            },
+            {
+              "at_ns": 3711534000,
+              "offset": 121600,
+              "connection": 1
+            },
+            {
+              "at_ns": 3812120625,
+              "offset": 124800,
+              "connection": 1
+            },
+            {
+              "at_ns": 3911595458,
+              "offset": 128000,
+              "connection": 1
+            },
+            {
+              "at_ns": 4011500000,
+              "offset": 131200,
+              "connection": 1
+            },
+            {
+              "at_ns": 4111642583,
+              "offset": 134400,
+              "connection": 1
+            },
+            {
+              "at_ns": 4211932292,
+              "offset": 137600,
+              "connection": 1
+            },
+            {
+              "at_ns": 4312013333,
+              "offset": 140800,
+              "connection": 1
+            },
+            {
+              "at_ns": 4411719542,
+              "offset": 144000,
+              "connection": 1
+            },
+            {
+              "at_ns": 4512315958,
+              "offset": 147200,
+              "connection": 1
+            },
+            {
+              "at_ns": 4612050625,
+              "offset": 150400,
+              "connection": 1
+            },
+            {
+              "at_ns": 4711767208,
+              "offset": 153600,
+              "connection": 1
+            },
+            {
+              "at_ns": 4810150292,
+              "offset": 156800,
+              "connection": 1
+            },
+            {
+              "at_ns": 4910479708,
+              "offset": 160000,
+              "connection": 1
+            },
+            {
+              "at_ns": 5011100250,
+              "offset": 163200,
+              "connection": 1
+            },
+            {
+              "at_ns": 5110537625,
+              "offset": 166400,
+              "connection": 1
+            },
+            {
+              "at_ns": 5211735375,
+              "offset": 169600,
+              "connection": 1
+            },
+            {
+              "at_ns": 5310947333,
+              "offset": 172800,
+              "connection": 1
+            },
+            {
+              "at_ns": 5411190000,
+              "offset": 176000,
+              "connection": 1
+            },
+            {
+              "at_ns": 5511158250,
+              "offset": 179200,
+              "connection": 1
+            },
+            {
+              "at_ns": 5611325625,
+              "offset": 182400,
+              "connection": 1
+            },
+            {
+              "at_ns": 5710826125,
+              "offset": 185600,
+              "connection": 1
+            },
+            {
+              "at_ns": 5813622417,
+              "offset": 188800,
+              "connection": 1
+            },
+            {
+              "at_ns": 5911092375,
+              "offset": 192000,
+              "connection": 1
+            },
+            {
+              "at_ns": 6011498750,
+              "offset": 195200,
+              "connection": 1
+            },
+            {
+              "at_ns": 6110728792,
+              "offset": 198400,
+              "connection": 1
+            },
+            {
+              "at_ns": 6211429250,
+              "offset": 201600,
+              "connection": 1
+            },
+            {
+              "at_ns": 6311005583,
+              "offset": 204800,
+              "connection": 1
+            },
+            {
+              "at_ns": 6411911792,
+              "offset": 208000,
+              "connection": 1
+            },
+            {
+              "at_ns": 6512606125,
+              "offset": 211200,
+              "connection": 1
+            },
+            {
+              "at_ns": 6611839500,
+              "offset": 214400,
+              "connection": 1
+            },
+            {
+              "at_ns": 6711758750,
+              "offset": 217600,
+              "connection": 1
+            },
+            {
+              "at_ns": 6812206167,
+              "offset": 220800,
+              "connection": 1
+            },
+            {
+              "at_ns": 6911225667,
+              "offset": 224000,
+              "connection": 1
+            },
+            {
+              "at_ns": 7011446292,
+              "offset": 227200,
+              "connection": 1
+            },
+            {
+              "at_ns": 7110915625,
+              "offset": 230400,
+              "connection": 1
+            },
+            {
+              "at_ns": 7210543500,
+              "offset": 233600,
+              "connection": 1
+            },
+            {
+              "at_ns": 7311651208,
+              "offset": 236800,
+              "connection": 1
+            },
+            {
+              "at_ns": 7411503958,
+              "offset": 240000,
+              "connection": 1
+            },
+            {
+              "at_ns": 7510523250,
+              "offset": 243200,
+              "connection": 1
+            },
+            {
+              "at_ns": 7611583708,
+              "offset": 246400,
+              "connection": 1
+            },
+            {
+              "at_ns": 7711237708,
+              "offset": 249600,
+              "connection": 1
+            },
+            {
+              "at_ns": 7810968000,
+              "offset": 252800,
+              "connection": 1
+            },
+            {
+              "at_ns": 7910875875,
+              "offset": 256000,
+              "connection": 1
+            },
+            {
+              "at_ns": 8010060083,
+              "offset": 259200,
+              "connection": 1
+            },
+            {
+              "at_ns": 8111706917,
+              "offset": 262400,
+              "connection": 1
+            },
+            {
+              "at_ns": 8211610000,
+              "offset": 265600,
+              "connection": 1
+            },
+            {
+              "at_ns": 8310794125,
+              "offset": 268800,
+              "connection": 1
+            },
+            {
+              "at_ns": 8410876750,
+              "offset": 272000,
+              "connection": 1
+            },
+            {
+              "at_ns": 8510767125,
+              "offset": 275200,
+              "connection": 1
+            },
+            {
+              "at_ns": 8610858000,
+              "offset": 278400,
+              "connection": 1
+            },
+            {
+              "at_ns": 8710849667,
+              "offset": 281600,
+              "connection": 1
+            },
+            {
+              "at_ns": 8811038167,
+              "offset": 284800,
+              "connection": 1
+            },
+            {
+              "at_ns": 8911086458,
+              "offset": 288000,
+              "connection": 1
+            },
+            {
+              "at_ns": 9010956167,
+              "offset": 291200,
+              "connection": 1
+            },
+            {
+              "at_ns": 9110586458,
+              "offset": 294400,
+              "connection": 1
+            },
+            {
+              "at_ns": 9210938917,
+              "offset": 297600,
+              "connection": 1
+            },
+            {
+              "at_ns": 9311426375,
+              "offset": 300800,
+              "connection": 1
+            },
+            {
+              "at_ns": 9410821667,
+              "offset": 304000,
+              "connection": 1
+            },
+            {
+              "at_ns": 9511723833,
+              "offset": 307200,
+              "connection": 1
+            },
+            {
+              "at_ns": 9610079208,
+              "offset": 310400,
+              "connection": 1
+            },
+            {
+              "at_ns": 9710803250,
+              "offset": 313600,
+              "connection": 1
+            },
+            {
+              "at_ns": 9810729708,
+              "offset": 316800,
+              "connection": 1
+            },
+            {
+              "at_ns": 9910515625,
+              "offset": 320000,
+              "connection": 1
+            },
+            {
+              "at_ns": 10012028917,
+              "offset": 323200,
+              "connection": 1
+            },
+            {
+              "at_ns": 10110100917,
+              "offset": 326400,
+              "connection": 1
+            },
+            {
+              "at_ns": 10209853167,
+              "offset": 329600,
+              "connection": 1
+            },
+            {
+              "at_ns": 10310775625,
+              "offset": 332800,
+              "connection": 1
+            },
+            {
+              "at_ns": 10410482542,
+              "offset": 336000,
+              "connection": 1
+            },
+            {
+              "at_ns": 10511088250,
+              "offset": 339200,
+              "connection": 1
+            },
+            {
+              "at_ns": 10611227792,
+              "offset": 342400,
+              "connection": 1
+            },
+            {
+              "at_ns": 10711262458,
+              "offset": 345600,
+              "connection": 1
+            },
+            {
+              "at_ns": 10812202500,
+              "offset": 348800,
+              "connection": 1
+            },
+            {
+              "at_ns": 10910569875,
+              "offset": 352000,
+              "connection": 1
+            },
+            {
+              "at_ns": 11010778750,
+              "offset": 355200,
+              "connection": 1
+            },
+            {
+              "at_ns": 11111080292,
+              "offset": 358400,
+              "connection": 1
+            },
+            {
+              "at_ns": 11211254417,
+              "offset": 361600,
+              "connection": 1
+            },
+            {
+              "at_ns": 11311853292,
+              "offset": 364800,
+              "connection": 1
+            },
+            {
+              "at_ns": 11410937375,
+              "offset": 368000,
+              "connection": 1
+            },
+            {
+              "at_ns": 11512164667,
+              "offset": 371200,
+              "connection": 1
+            },
+            {
+              "at_ns": 11612123042,
+              "offset": 374400,
+              "connection": 1
+            },
+            {
+              "at_ns": 11713630875,
+              "offset": 377600,
+              "connection": 1
+            },
+            {
+              "at_ns": 11811387958,
+              "offset": 380800,
+              "connection": 1
+            },
+            {
+              "at_ns": 11911714375,
+              "offset": 384000,
+              "connection": 1
+            },
+            {
+              "at_ns": 12011598000,
+              "offset": 384000,
+              "connection": 1
+            }
+          ],
+          "processed": [
+            {
+              "at_ns": 20401833,
+              "offset": 3200
+            },
+            {
+              "at_ns": 120073708,
+              "offset": 6400
+            },
+            {
+              "at_ns": 221125583,
+              "offset": 9600
+            },
+            {
+              "at_ns": 321263750,
+              "offset": 12800
+            },
+            {
+              "at_ns": 421791583,
+              "offset": 16000
+            },
+            {
+              "at_ns": 522241750,
+              "offset": 19200
+            },
+            {
+              "at_ns": 622560333,
+              "offset": 22400
+            },
+            {
+              "at_ns": 722305542,
+              "offset": 25600
+            },
+            {
+              "at_ns": 823167125,
+              "offset": 28800
+            },
+            {
+              "at_ns": 922605000,
+              "offset": 32000
+            },
+            {
+              "at_ns": 1025542417,
+              "offset": 35200
+            },
+            {
+              "at_ns": 1121781667,
+              "offset": 38400
+            },
+            {
+              "at_ns": 1221520125,
+              "offset": 41600
+            },
+            {
+              "at_ns": 1321962292,
+              "offset": 44800
+            },
+            {
+              "at_ns": 1423707417,
+              "offset": 48000
+            },
+            {
+              "at_ns": 1522122750,
+              "offset": 51200
+            },
+            {
+              "at_ns": 1621490167,
+              "offset": 54400
+            },
+            {
+              "at_ns": 1721829708,
+              "offset": 57600
+            },
+            {
+              "at_ns": 1821463833,
+              "offset": 60800
+            },
+            {
+              "at_ns": 1922602708,
+              "offset": 64000
+            },
+            {
+              "at_ns": 2024145708,
+              "offset": 67200
+            },
+            {
+              "at_ns": 2121088333,
+              "offset": 70400
+            },
+            {
+              "at_ns": 2221650875,
+              "offset": 73600
+            },
+            {
+              "at_ns": 2322690042,
+              "offset": 76800
+            },
+            {
+              "at_ns": 2423644333,
+              "offset": 80000
+            },
+            {
+              "at_ns": 2521844333,
+              "offset": 83200
+            },
+            {
+              "at_ns": 2631713417,
+              "offset": 86400
+            },
+            {
+              "at_ns": 2720970792,
+              "offset": 89600
+            },
+            {
+              "at_ns": 2820968458,
+              "offset": 92800
+            },
+            {
+              "at_ns": 2923183125,
+              "offset": 96000
+            },
+            {
+              "at_ns": 3022931542,
+              "offset": 99200
+            },
+            {
+              "at_ns": 3122937833,
+              "offset": 102400
+            },
+            {
+              "at_ns": 3221006292,
+              "offset": 105600
+            },
+            {
+              "at_ns": 3321205708,
+              "offset": 108800
+            },
+            {
+              "at_ns": 3422609708,
+              "offset": 112000
+            },
+            {
+              "at_ns": 3521088583,
+              "offset": 115200
+            },
+            {
+              "at_ns": 3622367375,
+              "offset": 118400
+            },
+            {
+              "at_ns": 3722807667,
+              "offset": 121600
+            },
+            {
+              "at_ns": 3822766792,
+              "offset": 124800
+            },
+            {
+              "at_ns": 3922583167,
+              "offset": 128000
+            },
+            {
+              "at_ns": 4022833875,
+              "offset": 131200
+            },
+            {
+              "at_ns": 4122751292,
+              "offset": 134400
+            },
+            {
+              "at_ns": 4242113417,
+              "offset": 137600
+            },
+            {
+              "at_ns": 4322460000,
+              "offset": 140800
+            },
+            {
+              "at_ns": 4423227042,
+              "offset": 144000
+            },
+            {
+              "at_ns": 4522983042,
+              "offset": 147200
+            },
+            {
+              "at_ns": 4623409583,
+              "offset": 150400
+            },
+            {
+              "at_ns": 4722134125,
+              "offset": 153600
+            },
+            {
+              "at_ns": 4821153750,
+              "offset": 156800
+            },
+            {
+              "at_ns": 4921556833,
+              "offset": 160000
+            },
+            {
+              "at_ns": 5021746125,
+              "offset": 163200
+            },
+            {
+              "at_ns": 5121410333,
+              "offset": 166400
+            },
+            {
+              "at_ns": 5222595375,
+              "offset": 169600
+            },
+            {
+              "at_ns": 5321961042,
+              "offset": 172800
+            },
+            {
+              "at_ns": 5422329167,
+              "offset": 176000
+            },
+            {
+              "at_ns": 5522432500,
+              "offset": 179200
+            },
+            {
+              "at_ns": 5622827333,
+              "offset": 182400
+            },
+            {
+              "at_ns": 5722063833,
+              "offset": 185600
+            },
+            {
+              "at_ns": 5824904083,
+              "offset": 188800
+            },
+            {
+              "at_ns": 5922329208,
+              "offset": 192000
+            },
+            {
+              "at_ns": 6021656708,
+              "offset": 195200
+            },
+            {
+              "at_ns": 6122070000,
+              "offset": 198400
+            },
+            {
+              "at_ns": 6223818167,
+              "offset": 201600
+            },
+            {
+              "at_ns": 6322590250,
+              "offset": 204800
+            },
+            {
+              "at_ns": 6422549000,
+              "offset": 208000
+            },
+            {
+              "at_ns": 6523005458,
+              "offset": 211200
+            },
+            {
+              "at_ns": 6622505250,
+              "offset": 214400
+            },
+            {
+              "at_ns": 6722771833,
+              "offset": 217600
+            },
+            {
+              "at_ns": 6823049625,
+              "offset": 220800
+            },
+            {
+              "at_ns": 6922721542,
+              "offset": 224000
+            },
+            {
+              "at_ns": 7021897000,
+              "offset": 227200
+            },
+            {
+              "at_ns": 7122304667,
+              "offset": 230400
+            },
+            {
+              "at_ns": 7221701083,
+              "offset": 233600
+            },
+            {
+              "at_ns": 7322794458,
+              "offset": 236800
+            },
+            {
+              "at_ns": 7422110500,
+              "offset": 240000
+            },
+            {
+              "at_ns": 7521533792,
+              "offset": 243200
+            },
+            {
+              "at_ns": 7622595542,
+              "offset": 246400
+            },
+            {
+              "at_ns": 7722695750,
+              "offset": 249600
+            },
+            {
+              "at_ns": 7821564083,
+              "offset": 252800
+            },
+            {
+              "at_ns": 7921917292,
+              "offset": 256000
+            },
+            {
+              "at_ns": 8020884875,
+              "offset": 259200
+            },
+            {
+              "at_ns": 8122760958,
+              "offset": 262400
+            },
+            {
+              "at_ns": 8222437292,
+              "offset": 265600
+            },
+            {
+              "at_ns": 8321681167,
+              "offset": 268800
+            },
+            {
+              "at_ns": 8421367792,
+              "offset": 272000
+            },
+            {
+              "at_ns": 8521024417,
+              "offset": 275200
+            },
+            {
+              "at_ns": 8620927333,
+              "offset": 278400
+            },
+            {
+              "at_ns": 8721581375,
+              "offset": 281600
+            },
+            {
+              "at_ns": 8821478667,
+              "offset": 284800
+            },
+            {
+              "at_ns": 8922054750,
+              "offset": 288000
+            },
+            {
+              "at_ns": 9021008083,
+              "offset": 291200
+            },
+            {
+              "at_ns": 9121573375,
+              "offset": 294400
+            },
+            {
+              "at_ns": 9222068250,
+              "offset": 297600
+            },
+            {
+              "at_ns": 9322670167,
+              "offset": 300800
+            },
+            {
+              "at_ns": 9422087167,
+              "offset": 304000
+            },
+            {
+              "at_ns": 9521878917,
+              "offset": 307200
+            },
+            {
+              "at_ns": 9621105167,
+              "offset": 310400
+            },
+            {
+              "at_ns": 9721105458,
+              "offset": 313600
+            },
+            {
+              "at_ns": 9821531125,
+              "offset": 316800
+            },
+            {
+              "at_ns": 9921535500,
+              "offset": 320000
+            },
+            {
+              "at_ns": 10023577750,
+              "offset": 323200
+            },
+            {
+              "at_ns": 10121179958,
+              "offset": 326400
+            },
+            {
+              "at_ns": 10220935000,
+              "offset": 329600
+            },
+            {
+              "at_ns": 10321857042,
+              "offset": 332800
+            },
+            {
+              "at_ns": 10421591417,
+              "offset": 336000
+            },
+            {
+              "at_ns": 10521843375,
+              "offset": 339200
+            },
+            {
+              "at_ns": 10621685875,
+              "offset": 342400
+            },
+            {
+              "at_ns": 10721818542,
+              "offset": 345600
+            },
+            {
+              "at_ns": 10823268375,
+              "offset": 348800
+            },
+            {
+              "at_ns": 10921651500,
+              "offset": 352000
+            },
+            {
+              "at_ns": 11021803708,
+              "offset": 355200
+            },
+            {
+              "at_ns": 11121803667,
+              "offset": 358400
+            },
+            {
+              "at_ns": 11222115625,
+              "offset": 361600
+            },
+            {
+              "at_ns": 11323146625,
+              "offset": 364800
+            },
+            {
+              "at_ns": 11422165250,
+              "offset": 368000
+            },
+            {
+              "at_ns": 11523345583,
+              "offset": 371200
+            },
+            {
+              "at_ns": 11623140625,
+              "offset": 374400
+            },
+            {
+              "at_ns": 11724196208,
+              "offset": 377600
+            },
+            {
+              "at_ns": 11822407208,
+              "offset": 380800
+            },
+            {
+              "at_ns": 11922116833,
+              "offset": 384000
+            }
+          ]
+        }
+      },
+      "heap": {
+        "version": 1,
+        "experiment": "EXP-006-06",
+        "case": "A_normal",
+        "origin_utc": "2026-10-13T05:10:40.496346Z",
+        "fixture_origin_ns": 29315917,
+        "first_ns": 8113250,
+        "returned_ns": 12013995375,
+        "tcp_cleanup": {
+          "client_closed": true,
+          "serve_exited": true
+        },
+        "owned_joined": true,
+        "detached": true,
+        "child_ok": true,
+        "checkpoints": [
+          {
+            "version": 1,
+            "name": "before_fixture",
+            "planned_ns": null,
+            "start_ns": 201250,
+            "end_ns": 27928834,
+            "fixture_ns": null,
+            "rate_before": 1,
+            "rate_after": 1,
+            "gc_requested": 2,
+            "before": {
+              "heap_alloc": 2385152,
+              "heap_objects": 4533,
+              "heap_inuse": 3473408,
+              "heap_idle": 4489216,
+              "heap_released": 3235840,
+              "heap_sys": 7962624,
+              "stack_inuse": 425984,
+              "buck_hash_sys": 1943567,
+              "total_alloc": 3504248,
+              "num_gc": 1
+            },
+            "after_gc": {
+              "heap_alloc": 445632,
+              "heap_objects": 1290,
+              "heap_inuse": 1056768,
+              "heap_idle": 6840320,
+              "heap_released": 4415488,
+              "heap_sys": 7897088,
+              "stack_inuse": 491520,
+              "buck_hash_sys": 1947127,
+              "total_alloc": 3514904,
+              "num_gc": 3
+            },
+            "after_write": {
+              "heap_alloc": 2164432,
+              "heap_objects": 3895,
+              "heap_inuse": 3121152,
+              "heap_idle": 4775936,
+              "heap_released": 3284992,
+              "heap_sys": 7897088,
+              "stack_inuse": 491520,
+              "buck_hash_sys": 1995423,
+              "total_alloc": 6642528,
+              "num_gc": 4
+            },
+            "resources_before": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "resources_after": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "file": "before_fixture.pb.gz",
+            "bytes": 48953,
+            "sha256": "a77f0dbbd3ae0b2131b7290a886d0521d38fb12b3d82256fa447a484aa9e938d",
+            "write_error": "",
+            "close_error": "",
+            "valid": true,
+            "reason": ""
+          },
+          {
+            "version": 1,
+            "name": "early_active",
+            "planned_ns": 2037429167,
+            "start_ns": 2039556084,
+            "end_ns": 2119518667,
+            "fixture_ns": 2010240167,
+            "rate_before": 1,
+            "rate_after": 1,
+            "gc_requested": 2,
+            "before": {
+              "heap_alloc": 2745760,
+              "heap_objects": 14991,
+              "heap_inuse": 4325376,
+              "heap_idle": 7438336,
+              "heap_released": 5734400,
+              "heap_sys": 11763712,
+              "stack_inuse": 819200,
+              "buck_hash_sys": 2826663,
+              "total_alloc": 9138096,
+              "num_gc": 5
+            },
+            "after_gc": {
+              "heap_alloc": 997736,
+              "heap_objects": 3187,
+              "heap_inuse": 2670592,
+              "heap_idle": 9093120,
+              "heap_released": 8290304,
+              "heap_sys": 11763712,
+              "stack_inuse": 819200,
+              "buck_hash_sys": 2828599,
+              "total_alloc": 9220480,
+              "num_gc": 7
+            },
+            "after_write": {
+              "heap_alloc": 4247704,
+              "heap_objects": 13216,
+              "heap_inuse": 5971968,
+              "heap_idle": 5758976,
+              "heap_released": 4268032,
+              "heap_sys": 11730944,
+              "stack_inuse": 851968,
+              "buck_hash_sys": 2890839,
+              "total_alloc": 15266056,
+              "num_gc": 9
+            },
+            "resources_before": {
+              "sessions": 1,
+              "registry": 1,
+              "worker_active": 1,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "resources_after": {
+              "sessions": 1,
+              "registry": 1,
+              "worker_active": 1,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "file": "early_active.pb.gz",
+            "bytes": 124299,
+            "sha256": "1536684b5a82bb016b863a19a8d147c81f2abc91ff1168c5218fc9e51b49c4a0",
+            "write_error": "",
+            "close_error": "",
+            "valid": true,
+            "reason": ""
+          },
+          {
+            "version": 1,
+            "name": "late_active",
+            "planned_ns": 10037429167,
+            "start_ns": 10039052375,
+            "end_ns": 10105787250,
+            "fixture_ns": 10009736458,
+            "rate_before": 1,
+            "rate_after": 1,
+            "gc_requested": 2,
+            "before": {
+              "heap_alloc": 1908024,
+              "heap_objects": 7756,
+              "heap_inuse": 3604480,
+              "heap_idle": 8126464,
+              "heap_released": 6725632,
+              "heap_sys": 11730944,
+              "stack_inuse": 851968,
+              "buck_hash_sys": 2917015,
+              "total_alloc": 22372160,
+              "num_gc": 13
+            },
+            "after_gc": {
+              "heap_alloc": 1033032,
+              "heap_objects": 3347,
+              "heap_inuse": 2736128,
+              "heap_idle": 8994816,
+              "heap_released": 8175616,
+              "heap_sys": 11730944,
+              "stack_inuse": 851968,
+              "buck_hash_sys": 2919975,
+              "total_alloc": 22533648,
+              "num_gc": 15
+            },
+            "after_write": {
+              "heap_alloc": 4692816,
+              "heap_objects": 16792,
+              "heap_inuse": 6406144,
+              "heap_idle": 5292032,
+              "heap_released": 4513792,
+              "heap_sys": 11698176,
+              "stack_inuse": 884736,
+              "buck_hash_sys": 2934807,
+              "total_alloc": 28538288,
+              "num_gc": 17
+            },
+            "resources_before": {
+              "sessions": 1,
+              "registry": 1,
+              "worker_active": 1,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "resources_after": {
+              "sessions": 1,
+              "registry": 1,
+              "worker_active": 1,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "file": "late_active.pb.gz",
+            "bytes": 127810,
+            "sha256": "4dd42de71ee88303bd71df3918a6bfb4ee17bc30df65125cc324131ca73f0df8",
+            "write_error": "",
+            "close_error": "",
+            "valid": true,
+            "reason": ""
+          },
+          {
+            "version": 1,
+            "name": "session_idle",
+            "planned_ns": null,
+            "start_ns": 12056535917,
+            "end_ns": 12156731500,
+            "fixture_ns": 12027220000,
+            "rate_before": 1,
+            "rate_after": 1,
+            "gc_requested": 2,
+            "before": {
+              "heap_alloc": 1193424,
+              "heap_objects": 3591,
+              "heap_inuse": 3022848,
+              "heap_idle": 8773632,
+              "heap_released": 7036928,
+              "heap_sys": 11796480,
+              "stack_inuse": 786432,
+              "buck_hash_sys": 3043567,
+              "total_alloc": 30577928,
+              "num_gc": 19
+            },
+            "after_gc": {
+              "heap_alloc": 816232,
+              "heap_objects": 3018,
+              "heap_inuse": 2359296,
+              "heap_idle": 9437184,
+              "heap_released": 8609792,
+              "heap_sys": 11796480,
+              "stack_inuse": 786432,
+              "buck_hash_sys": 3043567,
+              "total_alloc": 30577928,
+              "num_gc": 21
+            },
+            "after_write": {
+              "heap_alloc": 4237200,
+              "heap_objects": 13311,
+              "heap_inuse": 5898240,
+              "heap_idle": 5865472,
+              "heap_released": 4456448,
+              "heap_sys": 11763712,
+              "stack_inuse": 819200,
+              "buck_hash_sys": 3103359,
+              "total_alloc": 36827392,
+              "num_gc": 23
+            },
+            "resources_before": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "resources_after": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "file": "session_idle.pb.gz",
+            "bytes": 135809,
+            "sha256": "38cf48ff41a4c1ca8edc51438ec18354067010db98953573617ec0ff6137e75b",
+            "write_error": "",
+            "close_error": "",
+            "valid": true,
+            "reason": ""
+          },
+          {
+            "version": 1,
+            "name": "after_fixture",
+            "planned_ns": null,
+            "start_ns": 12158744417,
+            "end_ns": 12221508709,
+            "fixture_ns": null,
+            "rate_before": 1,
+            "rate_after": 1,
+            "gc_requested": 2,
+            "before": {
+              "heap_alloc": 4324136,
+              "heap_objects": 13699,
+              "heap_inuse": 5996544,
+              "heap_idle": 5799936,
+              "heap_released": 4423680,
+              "heap_sys": 11796480,
+              "stack_inuse": 786432,
+              "buck_hash_sys": 3179087,
+              "total_alloc": 36914328,
+              "num_gc": 23
+            },
+            "after_gc": {
+              "heap_alloc": 632944,
+              "heap_objects": 2719,
+              "heap_inuse": 1908736,
+              "heap_idle": 9887744,
+              "heap_released": 7569408,
+              "heap_sys": 11796480,
+              "stack_inuse": 786432,
+              "buck_hash_sys": 3179087,
+              "total_alloc": 36914328,
+              "num_gc": 25
+            },
+            "after_write": {
+              "heap_alloc": 3931248,
+              "heap_objects": 12349,
+              "heap_inuse": 5521408,
+              "heap_idle": 6275072,
+              "heap_released": 4661248,
+              "heap_sys": 11796480,
+              "stack_inuse": 786432,
+              "buck_hash_sys": 3237319,
+              "total_alloc": 43379848,
+              "num_gc": 27
+            },
+            "resources_before": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "resources_after": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "file": "after_fixture.pb.gz",
+            "bytes": 143253,
+            "sha256": "f0b52faf8979d71831bf38d0f9c6c9bf397378311a0c7c7d574316f06c76a89f",
+            "write_error": "",
+            "close_error": "",
+            "valid": true,
+            "reason": ""
+          }
+        ]
+      },
+      "exports": {
+        "commands": 40,
+        "stderr_reports": [],
+        "reports_sha256": {
+          "late_active.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "early_active.alloc_space.top.txt": "df5af7fa7f473188334e0f95fdcce59ff89070a5ee6ac07629cb5a3a48cb5df2",
+          "session_idle.inuse_space.top.txt": "debc5131d80390f201a4157c7720cd971fcf31068c08c31296d11f392a50c36c",
+          "session_idle-minus-late_active.inuse_objects.top.txt": "b3c0e9db34ccee2c1312bb7d01908ca28d28f242d184415dda793a5f2978ba7d",
+          "after_fixture.alloc_objects.top.txt": "68ede5a5958c5da7f24415cf0ce2f4c85dca2fe9c422bf80ffc92be7189fb566",
+          "session_idle-minus-late_active.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.inuse_space.top.txt": "2127f6111794d295558090ad24f89db0a23db42a83d916df50fbf9b426587a65",
+          "early_active.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active-minus-early_active.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "early_active.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "before_fixture.raw.txt": "5c69567534aba9f9a0fa22386183c7973a367652906021d6d689f52e0d8cf442",
+          "session_idle-minus-late_active.raw.txt": "e65f014490dcf424dff514492ae06e2267684d4c2e172e68fd4e56aec575aac1",
+          "after_fixture-minus-before_fixture.inuse_space.top.txt": "0d46e35cffabd944f224f642ec03967738555f065ae24203ba474585fd09c790",
+          "before_fixture.inuse_objects.top.txt": "406ee71ba76d886c3b54f5ebd1fbcc7074488ef27520b34d5c0cc067b82f2df9",
+          "session_idle.raw.txt": "0acc0a58269624f76f6a5066f7ad14f4286cf89e6c4b14fedf6032b790843156",
+          "after_fixture.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle-minus-late_active.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "early_active.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.inuse_objects.top.txt": "e57b274f3717a34731f78fd505f0c9aa2984dfb32fa3c1cb7ae631f2a1b7c5a6",
+          "before_fixture.inuse_space.top.txt": "f70d3ed43efc702c69fc66af983cae008b61e491d07a7e94fc1060ae81166b6b",
+          "session_idle-minus-late_active.alloc_objects.top.txt": "2767119d6595d5eac4cffbe295c819e8bd9520c2012e640a085f314799e9f7cf",
+          "session_idle-minus-late_active.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle-minus-late_active.inuse_space.top.txt": "4fea80417a555d590cde690e0dc1720c010371df222184fa5de8de4cfa596b96",
+          "after_fixture.alloc_space.top.txt": "61c91764e7908051c3f85e1b27357436ce2b7c7439897f85acadd3dc5351dee1",
+          "session_idle-minus-late_active.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "early_active.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.raw.txt": "697abf72378ff144c40a74a4a8b0ca2efce6cda0691e3cf735e275b03e51d28d",
+          "late_active-minus-early_active.alloc_space.top.txt": "82023d652a6dfc104d78fe4a7c8fee74856081173652e1a557394dc8218b0621",
+          "early_active.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "before_fixture.alloc_objects.top.txt": "ff021d3da6caf730c0e6d75dad184d09d4872b6d610abbfdde82ab99f368cc73",
+          "session_idle.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active-minus-early_active.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "commands.json": "764add7e595173681b499b48f5e6b450429e467b52b9b5d960de037ef3582439",
+          "before_fixture.alloc_space.top.txt": "1625ae592a2997ab1d8681d976d7c2d28b0a1debbc36c8fb4eee0d0f4c15b1ec",
+          "before_fixture.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture-minus-before_fixture.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active-minus-early_active.inuse_objects.top.txt": "45ea4e56fe8f1e533499d74454dc4368ed198deb2b49be55441a7ec975224d95",
+          "late_active-minus-early_active.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle.inuse_objects.top.txt": "833af8783cdf1794a10aebcba94ff52fc5fa6d9d47d6eb7e1e08a4268bb7a3e9",
+          "before_fixture.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active-minus-early_active.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture-minus-before_fixture.inuse_objects.top.txt": "4b279892a9ba212a5e9aed202e786a936bda902319812a109bf3723908168b97",
+          "late_active-minus-early_active.inuse_space.top.txt": "0d5214872f5359ae05a36225ffd20e50d306cae042f1c43be27371c22df9ae12",
+          "after_fixture-minus-before_fixture.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.inuse_space.top.txt": "3396528939556462096a75edafe14323697ae2dabcf8a03095589fe765b0cb05",
+          "after_fixture-minus-before_fixture.raw.txt": "05f40401c287f1609669875ae46afa2f57bffa822fc4434cced58278696a64af",
+          "after_fixture-minus-before_fixture.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "early_active.inuse_objects.top.txt": "f1943152b7b502c571acc4cae33cc03d9178c0b7889386649ab2f9e35c6fe90b",
+          "late_active-minus-early_active.raw.txt": "9c45625a4dbf65ab61e50aee7c1ca20b3ee372b7ad05649663719cd47d911df1",
+          "early_active.raw.txt": "69f0cdf62a2a5846fd6393994992c360d890802fa1e5d0f6a445a587e3508083",
+          "late_active.inuse_objects.top.txt": "2c5adae3900530f4fcb051d259118d8cd2e60b7be9340f9a1338db8e33586362",
+          "session_idle-minus-late_active.alloc_space.top.txt": "caff0693a15f4bc86dcc325965e6e03a0499ab4c65b5887655ad239dc0d7af3a",
+          "after_fixture-minus-before_fixture.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle-minus-late_active.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active-minus-early_active.alloc_objects.top.txt": "9263f5e4bbabbe4184639aec6f923f24b46007a91467c7ee2f06090b571dd9b0",
+          "session_idle.alloc_space.top.txt": "b8f220f5ad8340e3e34ac9c35c0ce52516ac18153b8a86c8f48d42bcc66fbedb",
+          "late_active.alloc_space.top.txt": "bb0b7469257c7b3650b847fe2e9cea3b5ac4dbe5db2dc716c17c9d08f68df44f",
+          "early_active.inuse_space.top.txt": "eb7d06a653aa475f73aa803386d5c4c7cbf7d3aa56f34cb721d7ac1f2b89b715",
+          "before_fixture.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.raw.txt": "e07e564aaf31f3d034fec0c46b6e587f690d141b88a24d164a7ee3d76e2c1509",
+          "after_fixture-minus-before_fixture.alloc_objects.top.txt": "ba73ff7fcdcf183e3ade284ec6bb5774c89d3f616ab82503f6af40c3cab72212",
+          "after_fixture-minus-before_fixture.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "before_fixture.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle.alloc_objects.top.txt": "9682ea83a3432fb191b8d4235d387b87535112cffd0da2795b9bb1a1d117f925",
+          "after_fixture-minus-before_fixture.alloc_space.top.txt": "418fa753f578ffd44d0cdb117aa4a87412b056554d5e804d99bee7a1cc0e567c",
+          "session_idle.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.alloc_objects.top.txt": "6d127eeb4a8bbf2caa13af0cef185806220a48955b339d871244e5846f38ad23",
+          "early_active.alloc_objects.top.txt": "4a193b203137aa635e12e8a40a152685a31778b7523e985797bb3daccb500ec6",
+          "late_active-minus-early_active.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "before_fixture.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    },
+    {
+      "index": 2,
+      "case": "B_budget_8",
+      "business_valid": true,
+      "checkpoints_valid": true,
+      "export_valid": true,
+      "business": {
+        "case": "B_budget_8",
+        "completed": true,
+        "error_class": "",
+        "behavior_passed": true,
+        "timing_resource_quality": true,
+        "quality_issues": [],
+        "captured_bytes": 384000,
+        "received_bytes": 384000,
+        "processed_bytes": 384000,
+        "missing_captured": null,
+        "uncaptured": null,
+        "applied_results": 121,
+        "attempts": 6,
+        "resumed": 6,
+        "repeated_audio_bytes": 19200,
+        "max_partial_gap_ns": 610322084,
+        "partial_waits_ns": {
+          "n": 120,
+          "min": 12375208,
+          "median": 16269396.0,
+          "max": 525462292
+        },
+        "source_max_lag_ns": 1544333,
+        "max_sampling_gap_ns": 105255875,
+        "cleanup_after_return_ns": 11612750,
+        "worker_exit_after_return_ns": -1907125,
+        "outages": [
+          {
+            "round": 1,
+            "offset": 32000,
+            "fault_ns": 1009495584,
+            "opened_ns": 1510073167,
+            "outage_ns": 500577583,
+            "duration_quality": true,
+            "ready_wait_ns": 504670041,
+            "fresh_end": 38400,
+            "fresh_wait_ns": 533998125,
+            "fresh_after_open_ns": 33420542,
+            "catchup_after_open_ns": 111696417,
+            "caught_up_before_next": true,
+            "partial_gap_ns": 608598625,
+            "right_censored": false,
+            "censored_until_return_ns": null,
+            "observed_requests": 1,
+            "captured_during_outage": 5
+          },
+          {
+            "round": 2,
+            "offset": 80000,
+            "fault_ns": 2509052125,
+            "opened_ns": 3009451792,
+            "outage_ns": 500399667,
+            "duration_quality": true,
+            "ready_wait_ns": 504394250,
+            "fresh_end": 86400,
+            "fresh_wait_ns": 527995875,
+            "fresh_after_open_ns": 27596208,
+            "catchup_after_open_ns": 113185417,
+            "caught_up_before_next": true,
+            "partial_gap_ns": 604973042,
+            "right_censored": false,
+            "censored_until_return_ns": null,
+            "observed_requests": 1,
+            "captured_during_outage": 5
+          },
+          {
+            "round": 3,
+            "offset": 128000,
+            "fault_ns": 4009721917,
+            "opened_ns": 4510228417,
+            "outage_ns": 500506500,
+            "duration_quality": true,
+            "ready_wait_ns": 504291417,
+            "fresh_end": 134400,
+            "fresh_wait_ns": 528594500,
+            "fresh_after_open_ns": 28088000,
+            "catchup_after_open_ns": 111339625,
+            "caught_up_before_next": true,
+            "partial_gap_ns": 604110084,
+            "right_censored": false,
+            "censored_until_return_ns": null,
+            "observed_requests": 1,
+            "captured_during_outage": 5
+          },
+          {
+            "round": 4,
+            "offset": 176000,
+            "fault_ns": 5509163584,
+            "opened_ns": 6009563375,
+            "outage_ns": 500399791,
+            "duration_quality": true,
+            "ready_wait_ns": 504025541,
+            "fresh_end": 182400,
+            "fresh_wait_ns": 528386666,
+            "fresh_after_open_ns": 27986875,
+            "catchup_after_open_ns": 114178834,
+            "caught_up_before_next": true,
+            "partial_gap_ns": 603625083,
+            "right_censored": false,
+            "censored_until_return_ns": null,
+            "observed_requests": 1,
+            "captured_during_outage": 5
+          },
+          {
+            "round": 5,
+            "offset": 224000,
+            "fault_ns": 7009325250,
+            "opened_ns": 7509988750,
+            "outage_ns": 500663500,
+            "duration_quality": true,
+            "ready_wait_ns": 506903042,
+            "fresh_end": 230400,
+            "fresh_wait_ns": 534308792,
+            "fresh_after_open_ns": 33645292,
+            "catchup_after_open_ns": 111859417,
+            "caught_up_before_next": true,
+            "partial_gap_ns": 610322084,
+            "right_censored": false,
+            "censored_until_return_ns": null,
+            "observed_requests": 1,
+            "captured_during_outage": 5
+          },
+          {
+            "round": 6,
+            "offset": 272000,
+            "fault_ns": 8509376542,
+            "opened_ns": 9009797167,
+            "outage_ns": 500420625,
+            "duration_quality": true,
+            "ready_wait_ns": 503944167,
+            "fresh_end": 278400,
+            "fresh_wait_ns": 529350208,
+            "fresh_after_open_ns": 28929583,
+            "catchup_after_open_ns": 113117000,
+            "caught_up_before_next": true,
+            "partial_gap_ns": 603501208,
+            "right_censored": false,
+            "censored_until_return_ns": null,
+            "observed_requests": 1,
+            "captured_during_outage": 5
+          }
+        ],
+        "resources": [
+          {
+            "window": 1,
+            "begin_ns": 2000000000,
+            "end_ns": 2400000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 2988512,
+              "median": 4301736.0,
+              "max": 4473584
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 4587520,
+              "median": 6262784.0,
+              "max": 6471680
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 5,
+              "median": 5.0,
+              "max": 5
+            },
+            "written": {
+              "n": 4,
+              "min": 53628,
+              "median": 57626.0,
+              "max": 61334
+            },
+            "gc_count": 2,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          },
+          {
+            "window": 2,
+            "begin_ns": 3500000000,
+            "end_ns": 3900000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 1878664,
+              "median": 1999452.0,
+              "max": 2120304
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 3735552,
+              "median": 3842048.0,
+              "max": 3923968
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 5,
+              "median": 5.0,
+              "max": 5
+            },
+            "written": {
+              "n": 4,
+              "min": 92134,
+              "median": 95867.5,
+              "max": 99601
+            },
+            "gc_count": 0,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          },
+          {
+            "window": 3,
+            "begin_ns": 5000000000,
+            "end_ns": 5400000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 2172464,
+              "median": 2292876.0,
+              "max": 2413392
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 4243456,
+              "median": 4321280.0,
+              "max": 4366336
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 5,
+              "median": 5.0,
+              "max": 5
+            },
+            "written": {
+              "n": 4,
+              "min": 130513,
+              "median": 134248.0,
+              "max": 137983
+            },
+            "gc_count": 0,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          },
+          {
+            "window": 4,
+            "begin_ns": 6500000000,
+            "end_ns": 6900000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 2049480,
+              "median": 2169932.0,
+              "max": 2290384
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 4136960,
+              "median": 4182016.0,
+              "max": 4259840
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 5,
+              "median": 5.0,
+              "max": 5
+            },
+            "written": {
+              "n": 4,
+              "min": 168896,
+              "median": 172631.0,
+              "max": 176366
+            },
+            "gc_count": 0,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          },
+          {
+            "window": 5,
+            "begin_ns": 8000000000,
+            "end_ns": 8400000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 2310992,
+              "median": 2436264.0,
+              "max": 2562440
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 4505600,
+              "median": 4562944.0,
+              "max": 4636672
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 5,
+              "median": 5.0,
+              "max": 5
+            },
+            "written": {
+              "n": 4,
+              "min": 205978,
+              "median": 209942.0,
+              "max": 214080
+            },
+            "gc_count": 0,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          },
+          {
+            "window": 6,
+            "begin_ns": 9500000000,
+            "end_ns": 9900000000,
+            "state": "online",
+            "samples": 4,
+            "coverage": 1.0,
+            "goroutines": {
+              "n": 4,
+              "min": 32,
+              "median": 32.0,
+              "max": 32
+            },
+            "heap_alloc": {
+              "n": 4,
+              "min": 2332456,
+              "median": 2452980.0,
+              "max": 2573520
+            },
+            "heap_inuse": {
+              "n": 4,
+              "min": 4382720,
+              "median": 4452352.0,
+              "max": 4513792
+            },
+            "queue_depth": {
+              "n": 4,
+              "min": 0,
+              "median": 0.0,
+              "max": 0
+            },
+            "queue_peak": {
+              "n": 4,
+              "min": 5,
+              "median": 5.0,
+              "max": 5
+            },
+            "written": {
+              "n": 4,
+              "min": 245284,
+              "median": 249019.0,
+              "max": 252755
+            },
+            "gc_count": 0,
+            "resource_counts": {
+              "sessions": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "handshakes": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "registry": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "worker_active": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "gateway_handlers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              },
+              "proxy_handlers": {
+                "n": 4,
+                "min": 1,
+                "median": 1.0,
+                "max": 1
+              },
+              "fault_timers": {
+                "n": 4,
+                "min": 0,
+                "median": 0.0,
+                "max": 0
+              }
+            },
+            "quality_ok": true
+          }
+        ],
+        "growth_signals": {
+          "goroutines": {
+            "needs_investigation": false,
+            "eligible_windows": 6,
+            "meaning": "descriptive increase, not proof of a leak"
+          },
+          "heap_alloc": {
+            "needs_investigation": false,
+            "eligible_windows": 6,
+            "meaning": "descriptive increase, not proof of a leak"
+          },
+          "heap_inuse": {
+            "needs_investigation": false,
+            "eligible_windows": 6,
+            "meaning": "descriptive increase, not proof of a leak"
+          }
+        },
+        "position_series": {
+          "captured": [
+            {
+              "at_ns": 6640292,
+              "offset": 3200
+            },
+            {
+              "at_ns": 106753084,
+              "offset": 6400
+            },
+            {
+              "at_ns": 206955750,
+              "offset": 9600
+            },
+            {
+              "at_ns": 306712292,
+              "offset": 12800
+            },
+            {
+              "at_ns": 406860209,
+              "offset": 16000
+            },
+            {
+              "at_ns": 506947625,
+              "offset": 19200
+            },
+            {
+              "at_ns": 607758834,
+              "offset": 22400
+            },
+            {
+              "at_ns": 707401334,
+              "offset": 25600
+            },
+            {
+              "at_ns": 807809750,
+              "offset": 28800
+            },
+            {
+              "at_ns": 907778459,
+              "offset": 32000
+            },
+            {
+              "at_ns": 1007808959,
+              "offset": 35200
+            },
+            {
+              "at_ns": 1107812875,
+              "offset": 38400
+            },
+            {
+              "at_ns": 1207809500,
+              "offset": 41600
+            },
+            {
+              "at_ns": 1307811500,
+              "offset": 44800
+            },
+            {
+              "at_ns": 1407836209,
+              "offset": 48000
+            },
+            {
+              "at_ns": 1507194375,
+              "offset": 51200
+            },
+            {
+              "at_ns": 1607772667,
+              "offset": 54400
+            },
+            {
+              "at_ns": 1707797209,
+              "offset": 57600
+            },
+            {
+              "at_ns": 1807785667,
+              "offset": 60800
+            },
+            {
+              "at_ns": 1907517375,
+              "offset": 64000
+            },
+            {
+              "at_ns": 2007804459,
+              "offset": 67200
+            },
+            {
+              "at_ns": 2106904459,
+              "offset": 70400
+            },
+            {
+              "at_ns": 2207730084,
+              "offset": 73600
+            },
+            {
+              "at_ns": 2307773417,
+              "offset": 76800
+            },
+            {
+              "at_ns": 2407815959,
+              "offset": 80000
+            },
+            {
+              "at_ns": 2507811542,
+              "offset": 83200
+            },
+            {
+              "at_ns": 2607066875,
+              "offset": 86400
+            },
+            {
+              "at_ns": 2707826125,
+              "offset": 89600
+            },
+            {
+              "at_ns": 2807848917,
+              "offset": 92800
+            },
+            {
+              "at_ns": 2907795917,
+              "offset": 96000
+            },
+            {
+              "at_ns": 3007761375,
+              "offset": 99200
+            },
+            {
+              "at_ns": 3107529834,
+              "offset": 102400
+            },
+            {
+              "at_ns": 3207742209,
+              "offset": 105600
+            },
+            {
+              "at_ns": 3307843417,
+              "offset": 108800
+            },
+            {
+              "at_ns": 3407131459,
+              "offset": 112000
+            },
+            {
+              "at_ns": 3507788834,
+              "offset": 115200
+            },
+            {
+              "at_ns": 3607797917,
+              "offset": 118400
+            },
+            {
+              "at_ns": 3707795042,
+              "offset": 121600
+            },
+            {
+              "at_ns": 3807815875,
+              "offset": 124800
+            },
+            {
+              "at_ns": 3907853000,
+              "offset": 128000
+            },
+            {
+              "at_ns": 4007858750,
+              "offset": 131200
+            },
+            {
+              "at_ns": 4107886917,
+              "offset": 134400
+            },
+            {
+              "at_ns": 4207918709,
+              "offset": 137600
+            },
+            {
+              "at_ns": 4307857292,
+              "offset": 140800
+            },
+            {
+              "at_ns": 4407876625,
+              "offset": 144000
+            },
+            {
+              "at_ns": 4507825792,
+              "offset": 147200
+            },
+            {
+              "at_ns": 4607785750,
+              "offset": 150400
+            },
+            {
+              "at_ns": 4707349750,
+              "offset": 153600
+            },
+            {
+              "at_ns": 4807228500,
+              "offset": 156800
+            },
+            {
+              "at_ns": 4907790292,
+              "offset": 160000
+            },
+            {
+              "at_ns": 5007791792,
+              "offset": 163200
+            },
+            {
+              "at_ns": 5107798750,
+              "offset": 166400
+            },
+            {
+              "at_ns": 5207805667,
+              "offset": 169600
+            },
+            {
+              "at_ns": 5307865125,
+              "offset": 172800
+            },
+            {
+              "at_ns": 5407194709,
+              "offset": 176000
+            },
+            {
+              "at_ns": 5507478959,
+              "offset": 179200
+            },
+            {
+              "at_ns": 5607785209,
+              "offset": 182400
+            },
+            {
+              "at_ns": 5707914209,
+              "offset": 185600
+            },
+            {
+              "at_ns": 5808105542,
+              "offset": 188800
+            },
+            {
+              "at_ns": 5907841584,
+              "offset": 192000
+            },
+            {
+              "at_ns": 6007984167,
+              "offset": 195200
+            },
+            {
+              "at_ns": 6107842209,
+              "offset": 198400
+            },
+            {
+              "at_ns": 6207237125,
+              "offset": 201600
+            },
+            {
+              "at_ns": 6308013042,
+              "offset": 204800
+            },
+            {
+              "at_ns": 6407738834,
+              "offset": 208000
+            },
+            {
+              "at_ns": 6507756709,
+              "offset": 211200
+            },
+            {
+              "at_ns": 6607493250,
+              "offset": 214400
+            },
+            {
+              "at_ns": 6707425875,
+              "offset": 217600
+            },
+            {
+              "at_ns": 6807262917,
+              "offset": 220800
+            },
+            {
+              "at_ns": 6906968750,
+              "offset": 224000
+            },
+            {
+              "at_ns": 7006726500,
+              "offset": 227200
+            },
+            {
+              "at_ns": 7107591792,
+              "offset": 230400
+            },
+            {
+              "at_ns": 7207747584,
+              "offset": 233600
+            },
+            {
+              "at_ns": 7307741375,
+              "offset": 236800
+            },
+            {
+              "at_ns": 7407777709,
+              "offset": 240000
+            },
+            {
+              "at_ns": 7507821292,
+              "offset": 243200
+            },
+            {
+              "at_ns": 7607768709,
+              "offset": 246400
+            },
+            {
+              "at_ns": 7707743792,
+              "offset": 249600
+            },
+            {
+              "at_ns": 7807735792,
+              "offset": 252800
+            },
+            {
+              "at_ns": 7907769084,
+              "offset": 256000
+            },
+            {
+              "at_ns": 8007911500,
+              "offset": 259200
+            },
+            {
+              "at_ns": 8107811917,
+              "offset": 262400
+            },
+            {
+              "at_ns": 8207881125,
+              "offset": 265600
+            },
+            {
+              "at_ns": 8307799875,
+              "offset": 268800
+            },
+            {
+              "at_ns": 8407798167,
+              "offset": 272000
+            },
+            {
+              "at_ns": 8507768500,
+              "offset": 275200
+            },
+            {
+              "at_ns": 8607869459,
+              "offset": 278400
+            },
+            {
+              "at_ns": 8707302292,
+              "offset": 281600
+            },
+            {
+              "at_ns": 8806880500,
+              "offset": 284800
+            },
+            {
+              "at_ns": 8907799667,
+              "offset": 288000
+            },
+            {
+              "at_ns": 9007740584,
+              "offset": 291200
+            },
+            {
+              "at_ns": 9107815334,
+              "offset": 294400
+            },
+            {
+              "at_ns": 9207815125,
+              "offset": 297600
+            },
+            {
+              "at_ns": 9307660792,
+              "offset": 300800
+            },
+            {
+              "at_ns": 9407469917,
+              "offset": 304000
+            },
+            {
+              "at_ns": 9507790834,
+              "offset": 307200
+            },
+            {
+              "at_ns": 9607816584,
+              "offset": 310400
+            },
+            {
+              "at_ns": 9707926167,
+              "offset": 313600
+            },
+            {
+              "at_ns": 9806887292,
+              "offset": 316800
+            },
+            {
+              "at_ns": 9907884375,
+              "offset": 320000
+            },
+            {
+              "at_ns": 10007681917,
+              "offset": 323200
+            },
+            {
+              "at_ns": 10107703834,
+              "offset": 326400
+            },
+            {
+              "at_ns": 10207705125,
+              "offset": 329600
+            },
+            {
+              "at_ns": 10307745584,
+              "offset": 332800
+            },
+            {
+              "at_ns": 10407756084,
+              "offset": 336000
+            },
+            {
+              "at_ns": 10507832959,
+              "offset": 339200
+            },
+            {
+              "at_ns": 10607818959,
+              "offset": 342400
+            },
+            {
+              "at_ns": 10707816709,
+              "offset": 345600
+            },
+            {
+              "at_ns": 10808184625,
+              "offset": 348800
+            },
+            {
+              "at_ns": 10907788542,
+              "offset": 352000
+            },
+            {
+              "at_ns": 11007924459,
+              "offset": 355200
+            },
+            {
+              "at_ns": 11107858875,
+              "offset": 358400
+            },
+            {
+              "at_ns": 11207869917,
+              "offset": 361600
+            },
+            {
+              "at_ns": 11307490084,
+              "offset": 364800
+            },
+            {
+              "at_ns": 11407962417,
+              "offset": 368000
+            },
+            {
+              "at_ns": 11507710959,
+              "offset": 371200
+            },
+            {
+              "at_ns": 11607218542,
+              "offset": 374400
+            },
+            {
+              "at_ns": 11707872334,
+              "offset": 377600
+            },
+            {
+              "at_ns": 11807864500,
+              "offset": 380800
+            },
+            {
+              "at_ns": 11907854584,
+              "offset": 384000
+            }
+          ],
+          "accepted": [
+            {
+              "at_ns": 7279542,
+              "offset": 3200,
+              "connection": 1
+            },
+            {
+              "at_ns": 107838000,
+              "offset": 6400,
+              "connection": 1
+            },
+            {
+              "at_ns": 208909792,
+              "offset": 9600,
+              "connection": 1
+            },
+            {
+              "at_ns": 308465292,
+              "offset": 12800,
+              "connection": 1
+            },
+            {
+              "at_ns": 409374792,
+              "offset": 16000,
+              "connection": 1
+            },
+            {
+              "at_ns": 509418750,
+              "offset": 19200,
+              "connection": 1
+            },
+            {
+              "at_ns": 610139667,
+              "offset": 22400,
+              "connection": 1
+            },
+            {
+              "at_ns": 709813792,
+              "offset": 25600,
+              "connection": 1
+            },
+            {
+              "at_ns": 810649459,
+              "offset": 28800,
+              "connection": 1
+            },
+            {
+              "at_ns": 910014875,
+              "offset": 32000,
+              "connection": 1
+            },
+            {
+              "at_ns": 1517300292,
+              "offset": 35200,
+              "connection": 2
+            },
+            {
+              "at_ns": 1517518000,
+              "offset": 38400,
+              "connection": 2
+            },
+            {
+              "at_ns": 1517687834,
+              "offset": 41600,
+              "connection": 2
+            },
+            {
+              "at_ns": 1518270084,
+              "offset": 44800,
+              "connection": 2
+            },
+            {
+              "at_ns": 1519044000,
+              "offset": 48000,
+              "connection": 2
+            },
+            {
+              "at_ns": 1519319875,
+              "offset": 51200,
+              "connection": 2
+            },
+            {
+              "at_ns": 1609723625,
+              "offset": 54400,
+              "connection": 2
+            },
+            {
+              "at_ns": 1710424459,
+              "offset": 57600,
+              "connection": 2
+            },
+            {
+              "at_ns": 1810663792,
+              "offset": 60800,
+              "connection": 2
+            },
+            {
+              "at_ns": 1909321667,
+              "offset": 64000,
+              "connection": 2
+            },
+            {
+              "at_ns": 2010901209,
+              "offset": 67200,
+              "connection": 2
+            },
+            {
+              "at_ns": 2107901292,
+              "offset": 70400,
+              "connection": 2
+            },
+            {
+              "at_ns": 2208963084,
+              "offset": 73600,
+              "connection": 2
+            },
+            {
+              "at_ns": 2309854167,
+              "offset": 76800,
+              "connection": 2
+            },
+            {
+              "at_ns": 2409465542,
+              "offset": 80000,
+              "connection": 2
+            },
+            {
+              "at_ns": 3014830209,
+              "offset": 83200,
+              "connection": 3
+            },
+            {
+              "at_ns": 3015667750,
+              "offset": 86400,
+              "connection": 3
+            },
+            {
+              "at_ns": 3016075792,
+              "offset": 89600,
+              "connection": 3
+            },
+            {
+              "at_ns": 3019125542,
+              "offset": 92800,
+              "connection": 3
+            },
+            {
+              "at_ns": 3019925875,
+              "offset": 96000,
+              "connection": 3
+            },
+            {
+              "at_ns": 3020425834,
+              "offset": 99200,
+              "connection": 3
+            },
+            {
+              "at_ns": 3109341459,
+              "offset": 102400,
+              "connection": 3
+            },
+            {
+              "at_ns": 3210587292,
+              "offset": 105600,
+              "connection": 3
+            },
+            {
+              "at_ns": 3309837625,
+              "offset": 108800,
+              "connection": 3
+            },
+            {
+              "at_ns": 3408689625,
+              "offset": 112000,
+              "connection": 3
+            },
+            {
+              "at_ns": 3509594500,
+              "offset": 115200,
+              "connection": 3
+            },
+            {
+              "at_ns": 3609907834,
+              "offset": 118400,
+              "connection": 3
+            },
+            {
+              "at_ns": 3709998084,
+              "offset": 121600,
+              "connection": 3
+            },
+            {
+              "at_ns": 3810322542,
+              "offset": 124800,
+              "connection": 3
+            },
+            {
+              "at_ns": 3910016667,
+              "offset": 128000,
+              "connection": 3
+            },
+            {
+              "at_ns": 4515557750,
+              "offset": 131200,
+              "connection": 4
+            },
+            {
+              "at_ns": 4516067000,
+              "offset": 134400,
+              "connection": 4
+            },
+            {
+              "at_ns": 4517463375,
+              "offset": 137600,
+              "connection": 4
+            },
+            {
+              "at_ns": 4517738959,
+              "offset": 140800,
+              "connection": 4
+            },
+            {
+              "at_ns": 4520249625,
+              "offset": 144000,
+              "connection": 4
+            },
+            {
+              "at_ns": 4520558459,
+              "offset": 147200,
+              "connection": 4
+            },
+            {
+              "at_ns": 4609938792,
+              "offset": 150400,
+              "connection": 4
+            },
+            {
+              "at_ns": 4709369250,
+              "offset": 153600,
+              "connection": 4
+            },
+            {
+              "at_ns": 4808839959,
+              "offset": 156800,
+              "connection": 4
+            },
+            {
+              "at_ns": 4911098542,
+              "offset": 160000,
+              "connection": 4
+            },
+            {
+              "at_ns": 5009677292,
+              "offset": 163200,
+              "connection": 4
+            },
+            {
+              "at_ns": 5110155084,
+              "offset": 166400,
+              "connection": 4
+            },
+            {
+              "at_ns": 5210738334,
+              "offset": 169600,
+              "connection": 4
+            },
+            {
+              "at_ns": 5310086334,
+              "offset": 172800,
+              "connection": 4
+            },
+            {
+              "at_ns": 5409679250,
+              "offset": 176000,
+              "connection": 4
+            },
+            {
+              "at_ns": 6014943292,
+              "offset": 179200,
+              "connection": 5
+            },
+            {
+              "at_ns": 6015235834,
+              "offset": 182400,
+              "connection": 5
+            },
+            {
+              "at_ns": 6015822834,
+              "offset": 185600,
+              "connection": 5
+            },
+            {
+              "at_ns": 6016296042,
+              "offset": 188800,
+              "connection": 5
+            },
+            {
+              "at_ns": 6017184417,
+              "offset": 192000,
+              "connection": 5
+            },
+            {
+              "at_ns": 6018767084,
+              "offset": 195200,
+              "connection": 5
+            },
+            {
+              "at_ns": 6110952292,
+              "offset": 198400,
+              "connection": 5
+            },
+            {
+              "at_ns": 6209705167,
+              "offset": 201600,
+              "connection": 5
+            },
+            {
+              "at_ns": 6310152084,
+              "offset": 204800,
+              "connection": 5
+            },
+            {
+              "at_ns": 6409521792,
+              "offset": 208000,
+              "connection": 5
+            },
+            {
+              "at_ns": 6510942042,
+              "offset": 211200,
+              "connection": 5
+            },
+            {
+              "at_ns": 6610175792,
+              "offset": 214400,
+              "connection": 5
+            },
+            {
+              "at_ns": 6710099292,
+              "offset": 217600,
+              "connection": 5
+            },
+            {
+              "at_ns": 6809488084,
+              "offset": 220800,
+              "connection": 5
+            },
+            {
+              "at_ns": 6909252250,
+              "offset": 224000,
+              "connection": 5
+            },
+            {
+              "at_ns": 7520262375,
+              "offset": 227200,
+              "connection": 6
+            },
+            {
+              "at_ns": 7521711250,
+              "offset": 230400,
+              "connection": 6
+            },
+            {
+              "at_ns": 7522228084,
+              "offset": 233600,
+              "connection": 6
+            },
+            {
+              "at_ns": 7522520334,
+              "offset": 236800,
+              "connection": 6
+            },
+            {
+              "at_ns": 7523040625,
+              "offset": 240000,
+              "connection": 6
+            },
+            {
+              "at_ns": 7523371375,
+              "offset": 243200,
+              "connection": 6
+            },
+            {
+              "at_ns": 7610559000,
+              "offset": 246400,
+              "connection": 6
+            },
+            {
+              "at_ns": 7709395875,
+              "offset": 249600,
+              "connection": 6
+            },
+            {
+              "at_ns": 7809115417,
+              "offset": 252800,
+              "connection": 6
+            },
+            {
+              "at_ns": 7909840042,
+              "offset": 256000,
+              "connection": 6
+            },
+            {
+              "at_ns": 8009994792,
+              "offset": 259200,
+              "connection": 6
+            },
+            {
+              "at_ns": 8110456084,
+              "offset": 262400,
+              "connection": 6
+            },
+            {
+              "at_ns": 8211053250,
+              "offset": 265600,
+              "connection": 6
+            },
+            {
+              "at_ns": 8310596709,
+              "offset": 268800,
+              "connection": 6
+            },
+            {
+              "at_ns": 8410457875,
+              "offset": 272000,
+              "connection": 6
+            },
+            {
+              "at_ns": 9014853250,
+              "offset": 275200,
+              "connection": 7
+            },
+            {
+              "at_ns": 9015641750,
+              "offset": 278400,
+              "connection": 7
+            },
+            {
+              "at_ns": 9015878417,
+              "offset": 281600,
+              "connection": 7
+            },
+            {
+              "at_ns": 9016382584,
+              "offset": 284800,
+              "connection": 7
+            },
+            {
+              "at_ns": 9016860459,
+              "offset": 288000,
+              "connection": 7
+            },
+            {
+              "at_ns": 9017182167,
+              "offset": 291200,
+              "connection": 7
+            },
+            {
+              "at_ns": 9110475250,
+              "offset": 294400,
+              "connection": 7
+            },
+            {
+              "at_ns": 9210443667,
+              "offset": 297600,
+              "connection": 7
+            },
+            {
+              "at_ns": 9310501667,
+              "offset": 300800,
+              "connection": 7
+            },
+            {
+              "at_ns": 9409776750,
+              "offset": 304000,
+              "connection": 7
+            },
+            {
+              "at_ns": 9510421834,
+              "offset": 307200,
+              "connection": 7
+            },
+            {
+              "at_ns": 9610279125,
+              "offset": 310400,
+              "connection": 7
+            },
+            {
+              "at_ns": 9710552542,
+              "offset": 313600,
+              "connection": 7
+            },
+            {
+              "at_ns": 9809878875,
+              "offset": 316800,
+              "connection": 7
+            },
+            {
+              "at_ns": 9911303917,
+              "offset": 320000,
+              "connection": 7
+            },
+            {
+              "at_ns": 10009416667,
+              "offset": 323200,
+              "connection": 7
+            },
+            {
+              "at_ns": 10108408542,
+              "offset": 326400,
+              "connection": 7
+            },
+            {
+              "at_ns": 10208645584,
+              "offset": 329600,
+              "connection": 7
+            },
+            {
+              "at_ns": 10309122959,
+              "offset": 332800,
+              "connection": 7
+            },
+            {
+              "at_ns": 10409144625,
+              "offset": 336000,
+              "connection": 7
+            },
+            {
+              "at_ns": 10510139334,
+              "offset": 339200,
+              "connection": 7
+            },
+            {
+              "at_ns": 10609882584,
+              "offset": 342400,
+              "connection": 7
+            },
+            {
+              "at_ns": 10710795000,
+              "offset": 345600,
+              "connection": 7
+            },
+            {
+              "at_ns": 10810360625,
+              "offset": 348800,
+              "connection": 7
+            },
+            {
+              "at_ns": 10910036750,
+              "offset": 352000,
+              "connection": 7
+            },
+            {
+              "at_ns": 11010294834,
+              "offset": 355200,
+              "connection": 7
+            },
+            {
+              "at_ns": 11110134917,
+              "offset": 358400,
+              "connection": 7
+            },
+            {
+              "at_ns": 11210401042,
+              "offset": 361600,
+              "connection": 7
+            },
+            {
+              "at_ns": 11310055792,
+              "offset": 364800,
+              "connection": 7
+            },
+            {
+              "at_ns": 11409181250,
+              "offset": 368000,
+              "connection": 7
+            },
+            {
+              "at_ns": 11510103542,
+              "offset": 371200,
+              "connection": 7
+            },
+            {
+              "at_ns": 11610135000,
+              "offset": 374400,
+              "connection": 7
+            },
+            {
+              "at_ns": 11710400542,
+              "offset": 377600,
+              "connection": 7
+            },
+            {
+              "at_ns": 11810680375,
+              "offset": 380800,
+              "connection": 7
+            },
+            {
+              "at_ns": 11910691875,
+              "offset": 384000,
+              "connection": 7
+            },
+            {
+              "at_ns": 12010922250,
+              "offset": 384000,
+              "connection": 7
+            }
+          ],
+          "processed": [
+            {
+              "at_ns": 17964625,
+              "offset": 3200
+            },
+            {
+              "at_ns": 118631834,
+              "offset": 6400
+            },
+            {
+              "at_ns": 220335792,
+              "offset": 9600
+            },
+            {
+              "at_ns": 319127417,
+              "offset": 12800
+            },
+            {
+              "at_ns": 420236250,
+              "offset": 16000
+            },
+            {
+              "at_ns": 520592375,
+              "offset": 19200
+            },
+            {
+              "at_ns": 621654834,
+              "offset": 22400
+            },
+            {
+              "at_ns": 721113042,
+              "offset": 25600
+            },
+            {
+              "at_ns": 821014292,
+              "offset": 28800
+            },
+            {
+              "at_ns": 920744542,
+              "offset": 32000
+            },
+            {
+              "at_ns": 1528834917,
+              "offset": 35200
+            },
+            {
+              "at_ns": 1541508750,
+              "offset": 38400
+            },
+            {
+              "at_ns": 1554089917,
+              "offset": 41600
+            },
+            {
+              "at_ns": 1565787750,
+              "offset": 44800
+            },
+            {
+              "at_ns": 1577495542,
+              "offset": 48000
+            },
+            {
+              "at_ns": 1590080709,
+              "offset": 51200
+            },
+            {
+              "at_ns": 1620140250,
+              "offset": 54400
+            },
+            {
+              "at_ns": 1720870875,
+              "offset": 57600
+            },
+            {
+              "at_ns": 1821044250,
+              "offset": 60800
+            },
+            {
+              "at_ns": 1920712417,
+              "offset": 64000
+            },
+            {
+              "at_ns": 2021558750,
+              "offset": 67200
+            },
+            {
+              "at_ns": 2119063209,
+              "offset": 70400
+            },
+            {
+              "at_ns": 2220149375,
+              "offset": 73600
+            },
+            {
+              "at_ns": 2321424875,
+              "offset": 76800
+            },
+            {
+              "at_ns": 2420470542,
+              "offset": 80000
+            },
+            {
+              "at_ns": 3025561209,
+              "offset": 83200
+            },
+            {
+              "at_ns": 3036265875,
+              "offset": 86400
+            },
+            {
+              "at_ns": 3047713167,
+              "offset": 89600
+            },
+            {
+              "at_ns": 3059321042,
+              "offset": 92800
+            },
+            {
+              "at_ns": 3071038584,
+              "offset": 96000
+            },
+            {
+              "at_ns": 3082494500,
+              "offset": 99200
+            },
+            {
+              "at_ns": 3120560667,
+              "offset": 102400
+            },
+            {
+              "at_ns": 3221288667,
+              "offset": 105600
+            },
+            {
+              "at_ns": 3320939250,
+              "offset": 108800
+            },
+            {
+              "at_ns": 3419119750,
+              "offset": 112000
+            },
+            {
+              "at_ns": 3520886709,
+              "offset": 115200
+            },
+            {
+              "at_ns": 3620703542,
+              "offset": 118400
+            },
+            {
+              "at_ns": 3721349875,
+              "offset": 121600
+            },
+            {
+              "at_ns": 3821478042,
+              "offset": 124800
+            },
+            {
+              "at_ns": 3921343167,
+              "offset": 128000
+            },
+            {
+              "at_ns": 4526235000,
+              "offset": 131200
+            },
+            {
+              "at_ns": 4537446334,
+              "offset": 134400
+            },
+            {
+              "at_ns": 4549015250,
+              "offset": 137600
+            },
+            {
+              "at_ns": 4560686667,
+              "offset": 140800
+            },
+            {
+              "at_ns": 4573231125,
+              "offset": 144000
+            },
+            {
+              "at_ns": 4585042542,
+              "offset": 147200
+            },
+            {
+              "at_ns": 4620113084,
+              "offset": 150400
+            },
+            {
+              "at_ns": 4720447875,
+              "offset": 153600
+            },
+            {
+              "at_ns": 4820072459,
+              "offset": 156800
+            },
+            {
+              "at_ns": 4922401042,
+              "offset": 160000
+            },
+            {
+              "at_ns": 5020472042,
+              "offset": 163200
+            },
+            {
+              "at_ns": 5121720459,
+              "offset": 166400
+            },
+            {
+              "at_ns": 5222012459,
+              "offset": 169600
+            },
+            {
+              "at_ns": 5320535042,
+              "offset": 172800
+            },
+            {
+              "at_ns": 5420744125,
+              "offset": 176000
+            },
+            {
+              "at_ns": 6025593334,
+              "offset": 179200
+            },
+            {
+              "at_ns": 6036986375,
+              "offset": 182400
+            },
+            {
+              "at_ns": 6048247417,
+              "offset": 185600
+            },
+            {
+              "at_ns": 6059618875,
+              "offset": 188800
+            },
+            {
+              "at_ns": 6070849875,
+              "offset": 192000
+            },
+            {
+              "at_ns": 6082567667,
+              "offset": 195200
+            },
+            {
+              "at_ns": 6122045417,
+              "offset": 198400
+            },
+            {
+              "at_ns": 6220643709,
+              "offset": 201600
+            },
+            {
+              "at_ns": 6321445167,
+              "offset": 204800
+            },
+            {
+              "at_ns": 6420582292,
+              "offset": 208000
+            },
+            {
+              "at_ns": 6521933000,
+              "offset": 211200
+            },
+            {
+              "at_ns": 6621314417,
+              "offset": 214400
+            },
+            {
+              "at_ns": 6721043334,
+              "offset": 217600
+            },
+            {
+              "at_ns": 6820519500,
+              "offset": 220800
+            },
+            {
+              "at_ns": 6920177959,
+              "offset": 224000
+            },
+            {
+              "at_ns": 7531394667,
+              "offset": 227200
+            },
+            {
+              "at_ns": 7542842375,
+              "offset": 230400
+            },
+            {
+              "at_ns": 7554367125,
+              "offset": 233600
+            },
+            {
+              "at_ns": 7566227334,
+              "offset": 236800
+            },
+            {
+              "at_ns": 7577264209,
+              "offset": 240000
+            },
+            {
+              "at_ns": 7588922584,
+              "offset": 243200
+            },
+            {
+              "at_ns": 7620520042,
+              "offset": 246400
+            },
+            {
+              "at_ns": 7719955625,
+              "offset": 249600
+            },
+            {
+              "at_ns": 7821500750,
+              "offset": 252800
+            },
+            {
+              "at_ns": 7920890375,
+              "offset": 256000
+            },
+            {
+              "at_ns": 8021516500,
+              "offset": 259200
+            },
+            {
+              "at_ns": 8121485875,
+              "offset": 262400
+            },
+            {
+              "at_ns": 8222535209,
+              "offset": 265600
+            },
+            {
+              "at_ns": 8321723042,
+              "offset": 268800
+            },
+            {
+              "at_ns": 8421586959,
+              "offset": 272000
+            },
+            {
+              "at_ns": 9026226209,
+              "offset": 275200
+            },
+            {
+              "at_ns": 9037262667,
+              "offset": 278400
+            },
+            {
+              "at_ns": 9048299584,
+              "offset": 281600
+            },
+            {
+              "at_ns": 9060130959,
+              "offset": 284800
+            },
+            {
+              "at_ns": 9072097209,
+              "offset": 288000
+            },
+            {
+              "at_ns": 9083696167,
+              "offset": 291200
+            },
+            {
+              "at_ns": 9121480000,
+              "offset": 294400
+            },
+            {
+              "at_ns": 9221604209,
+              "offset": 297600
+            },
+            {
+              "at_ns": 9321097334,
+              "offset": 300800
+            },
+            {
+              "at_ns": 9421130917,
+              "offset": 304000
+            },
+            {
+              "at_ns": 9521752084,
+              "offset": 307200
+            },
+            {
+              "at_ns": 9621230292,
+              "offset": 310400
+            },
+            {
+              "at_ns": 9720957417,
+              "offset": 313600
+            },
+            {
+              "at_ns": 9820463084,
+              "offset": 316800
+            },
+            {
+              "at_ns": 9921401000,
+              "offset": 320000
+            },
+            {
+              "at_ns": 10019910125,
+              "offset": 323200
+            },
+            {
+              "at_ns": 10119542167,
+              "offset": 326400
+            },
+            {
+              "at_ns": 10219837834,
+              "offset": 329600
+            },
+            {
+              "at_ns": 10319302084,
+              "offset": 332800
+            },
+            {
+              "at_ns": 10420452959,
+              "offset": 336000
+            },
+            {
+              "at_ns": 10520772459,
+              "offset": 339200
+            },
+            {
+              "at_ns": 10621032459,
+              "offset": 342400
+            },
+            {
+              "at_ns": 10721864250,
+              "offset": 345600
+            },
+            {
+              "at_ns": 10821495875,
+              "offset": 348800
+            },
+            {
+              "at_ns": 10921156542,
+              "offset": 352000
+            },
+            {
+              "at_ns": 11022236500,
+              "offset": 355200
+            },
+            {
+              "at_ns": 11121157667,
+              "offset": 358400
+            },
+            {
+              "at_ns": 11221064917,
+              "offset": 361600
+            },
+            {
+              "at_ns": 11321381209,
+              "offset": 364800
+            },
+            {
+              "at_ns": 11420275125,
+              "offset": 368000
+            },
+            {
+              "at_ns": 11521490250,
+              "offset": 371200
+            },
+            {
+              "at_ns": 11621164917,
+              "offset": 374400
+            },
+            {
+              "at_ns": 11721330209,
+              "offset": 377600
+            },
+            {
+              "at_ns": 11821661542,
+              "offset": 380800
+            },
+            {
+              "at_ns": 11921532792,
+              "offset": 384000
+            }
+          ]
+        }
+      },
+      "heap": {
+        "version": 1,
+        "experiment": "EXP-006-06",
+        "case": "B_budget_8",
+        "origin_utc": "2026-10-13T05:10:52.838502Z",
+        "fixture_origin_ns": 22364750,
+        "first_ns": 6640292,
+        "returned_ns": 12012865917,
+        "tcp_cleanup": {
+          "client_closed": true,
+          "serve_exited": true
+        },
+        "owned_joined": true,
+        "detached": true,
+        "child_ok": true,
+        "checkpoints": [
+          {
+            "version": 1,
+            "name": "before_fixture",
+            "planned_ns": null,
+            "start_ns": 109750,
+            "end_ns": 21310917,
+            "fixture_ns": null,
+            "rate_before": 1,
+            "rate_after": 1,
+            "gc_requested": 2,
+            "before": {
+              "heap_alloc": 2308088,
+              "heap_objects": 4087,
+              "heap_inuse": 3203072,
+              "heap_idle": 8953856,
+              "heap_released": 7921664,
+              "heap_sys": 12156928,
+              "stack_inuse": 425984,
+              "buck_hash_sys": 1944135,
+              "total_alloc": 3502304,
+              "num_gc": 1
+            },
+            "after_gc": {
+              "heap_alloc": 440048,
+              "heap_objects": 1283,
+              "heap_inuse": 1007616,
+              "heap_idle": 11116544,
+              "heap_released": 8871936,
+              "heap_sys": 12124160,
+              "stack_inuse": 458752,
+              "buck_hash_sys": 1946015,
+              "total_alloc": 3507640,
+              "num_gc": 3
+            },
+            "after_write": {
+              "heap_alloc": 2158336,
+              "heap_objects": 3876,
+              "heap_inuse": 3072000,
+              "heap_idle": 9052160,
+              "heap_released": 7471104,
+              "heap_sys": 12124160,
+              "stack_inuse": 458752,
+              "buck_hash_sys": 1994639,
+              "total_alloc": 6631536,
+              "num_gc": 4
+            },
+            "resources_before": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "resources_after": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "file": "before_fixture.pb.gz",
+            "bytes": 48770,
+            "sha256": "4cd1c638d583b9516b8cc218a2be95591780238d03b97779970bd27ea604229c",
+            "write_error": "",
+            "close_error": "",
+            "valid": true,
+            "reason": ""
+          },
+          {
+            "version": 1,
+            "name": "early_active",
+            "planned_ns": 2029005042,
+            "start_ns": 2030860125,
+            "end_ns": 2111095542,
+            "fixture_ns": 2008495375,
+            "rate_before": 1,
+            "rate_after": 1,
+            "gc_requested": 2,
+            "before": {
+              "heap_alloc": 1697216,
+              "heap_objects": 6418,
+              "heap_inuse": 3440640,
+              "heap_idle": 8388608,
+              "heap_released": 6742016,
+              "heap_sys": 11829248,
+              "stack_inuse": 753664,
+              "buck_hash_sys": 2878367,
+              "total_alloc": 9506344,
+              "num_gc": 6
+            },
+            "after_gc": {
+              "heap_alloc": 976464,
+              "heap_objects": 3252,
+              "heap_inuse": 2621440,
+              "heap_idle": 9207808,
+              "heap_released": 8495104,
+              "heap_sys": 11829248,
+              "stack_inuse": 753664,
+              "buck_hash_sys": 2883087,
+              "total_alloc": 9594440,
+              "num_gc": 8
+            },
+            "after_write": {
+              "heap_alloc": 4008000,
+              "heap_objects": 11958,
+              "heap_inuse": 5824512,
+              "heap_idle": 5971968,
+              "heap_released": 4169728,
+              "heap_sys": 11796480,
+              "stack_inuse": 786432,
+              "buck_hash_sys": 2942463,
+              "total_alloc": 15648400,
+              "num_gc": 10
+            },
+            "resources_before": {
+              "sessions": 1,
+              "registry": 1,
+              "worker_active": 1,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "resources_after": {
+              "sessions": 1,
+              "registry": 1,
+              "worker_active": 1,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "file": "early_active.pb.gz",
+            "bytes": 128406,
+            "sha256": "7bd18147ebadb0129ec9a4ec953be2a82b7e52e534400e654a41f506c8b7285d",
+            "write_error": "",
+            "close_error": "",
+            "valid": true,
+            "reason": ""
+          },
+          {
+            "version": 1,
+            "name": "late_active",
+            "planned_ns": 10029005042,
+            "start_ns": 10030243459,
+            "end_ns": 10106425084,
+            "fixture_ns": 10007878709,
+            "rate_before": 1,
+            "rate_after": 1,
+            "gc_requested": 2,
+            "before": {
+              "heap_alloc": 1255712,
+              "heap_objects": 3669,
+              "heap_inuse": 3137536,
+              "heap_idle": 12754944,
+              "heap_released": 10461184,
+              "heap_sys": 15892480,
+              "stack_inuse": 884736,
+              "buck_hash_sys": 2987311,
+              "total_alloc": 24209032,
+              "num_gc": 17
+            },
+            "after_gc": {
+              "heap_alloc": 1069944,
+              "heap_objects": 3498,
+              "heap_inuse": 2801664,
+              "heap_idle": 13090816,
+              "heap_released": 12156928,
+              "heap_sys": 15892480,
+              "stack_inuse": 884736,
+              "buck_hash_sys": 2987863,
+              "total_alloc": 24371672,
+              "num_gc": 19
+            },
+            "after_write": {
+              "heap_alloc": 4845056,
+              "heap_objects": 17344,
+              "heap_inuse": 6529024,
+              "heap_idle": 9363456,
+              "heap_released": 8462336,
+              "heap_sys": 15892480,
+              "stack_inuse": 884736,
+              "buck_hash_sys": 2997135,
+              "total_alloc": 30582840,
+              "num_gc": 21
+            },
+            "resources_before": {
+              "sessions": 1,
+              "registry": 1,
+              "worker_active": 1,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "resources_after": {
+              "sessions": 1,
+              "registry": 1,
+              "worker_active": 1,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "file": "late_active.pb.gz",
+            "bytes": 133736,
+            "sha256": "d5df133b6a9495c61d7f20539d642119c66355bd34884f514521218feec6396d",
+            "write_error": "",
+            "close_error": "",
+            "valid": true,
+            "reason": ""
+          },
+          {
+            "version": 1,
+            "name": "session_idle",
+            "planned_ns": null,
+            "start_ns": 12047719209,
+            "end_ns": 12142376375,
+            "fixture_ns": 12025354459,
+            "rate_before": 1,
+            "rate_after": 1,
+            "gc_requested": 2,
+            "before": {
+              "heap_alloc": 2514872,
+              "heap_objects": 13723,
+              "heap_inuse": 4276224,
+              "heap_idle": 11681792,
+              "heap_released": 10608640,
+              "heap_sys": 15958016,
+              "stack_inuse": 819200,
+              "buck_hash_sys": 3085743,
+              "total_alloc": 32482192,
+              "num_gc": 22
+            },
+            "after_gc": {
+              "heap_alloc": 848232,
+              "heap_objects": 3132,
+              "heap_inuse": 2383872,
+              "heap_idle": 13574144,
+              "heap_released": 11264000,
+              "heap_sys": 15958016,
+              "stack_inuse": 819200,
+              "buck_hash_sys": 3085743,
+              "total_alloc": 32482192,
+              "num_gc": 24
+            },
+            "after_write": {
+              "heap_alloc": 4334768,
+              "heap_objects": 13002,
+              "heap_inuse": 6037504,
+              "heap_idle": 9920512,
+              "heap_released": 8609792,
+              "heap_sys": 15958016,
+              "stack_inuse": 819200,
+              "buck_hash_sys": 3145007,
+              "total_alloc": 38926488,
+              "num_gc": 26
+            },
+            "resources_before": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "resources_after": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "file": "session_idle.pb.gz",
+            "bytes": 139004,
+            "sha256": "6d53db5e3610a0f0d5af16914ee6b45f21b606ecd9d3d3ccbe3ee709e51688ab",
+            "write_error": "",
+            "close_error": "",
+            "valid": true,
+            "reason": ""
+          },
+          {
+            "version": 1,
+            "name": "after_fixture",
+            "planned_ns": null,
+            "start_ns": 12143999792,
+            "end_ns": 12208156834,
+            "fixture_ns": null,
+            "rate_before": 1,
+            "rate_after": 1,
+            "gc_requested": 2,
+            "before": {
+              "heap_alloc": 4416632,
+              "heap_objects": 13368,
+              "heap_inuse": 6127616,
+              "heap_idle": 9863168,
+              "heap_released": 8609792,
+              "heap_sys": 15990784,
+              "stack_inuse": 786432,
+              "buck_hash_sys": 3214711,
+              "total_alloc": 39008352,
+              "num_gc": 26
+            },
+            "after_gc": {
+              "heap_alloc": 660496,
+              "heap_objects": 2835,
+              "heap_inuse": 1998848,
+              "heap_idle": 13991936,
+              "heap_released": 11714560,
+              "heap_sys": 15990784,
+              "stack_inuse": 786432,
+              "buck_hash_sys": 3214711,
+              "total_alloc": 39008352,
+              "num_gc": 28
+            },
+            "after_write": {
+              "heap_alloc": 4248176,
+              "heap_objects": 13399,
+              "heap_inuse": 5832704,
+              "heap_idle": 10158080,
+              "heap_released": 8470528,
+              "heap_sys": 15990784,
+              "stack_inuse": 786432,
+              "buck_hash_sys": 3271303,
+              "total_alloc": 45662000,
+              "num_gc": 30
+            },
+            "resources_before": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "resources_after": {
+              "sessions": 0,
+              "registry": 0,
+              "worker_active": 0,
+              "handshakes": 0,
+              "fault_timers": 0
+            },
+            "file": "after_fixture.pb.gz",
+            "bytes": 146154,
+            "sha256": "10f71198551d77e10d653e78d4115c111a97caca9c0d679341dac0585c072df2",
+            "write_error": "",
+            "close_error": "",
+            "valid": true,
+            "reason": ""
+          }
+        ]
+      },
+      "exports": {
+        "commands": 40,
+        "stderr_reports": [],
+        "reports_sha256": {
+          "late_active.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "early_active.alloc_space.top.txt": "874c366fd3afe0447babfbbf4e586a8c7425d20f1f7d679b19e6c52bd46ecbb4",
+          "session_idle.inuse_space.top.txt": "cffd138d6723091c68ce976c091e1acd72d3601f1497f35a01b84fd4031f4e2c",
+          "session_idle-minus-late_active.inuse_objects.top.txt": "d85807ee7a695307bb09d99b7cb66b1da1f64f1292273ef1456c745e22c98a47",
+          "after_fixture.alloc_objects.top.txt": "2dfe3bf1b5d633d166a15570062e13eebd33f3acdd09095e6c0877f3a48952c7",
+          "session_idle-minus-late_active.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.inuse_space.top.txt": "6ff00fb86f16267511274c6a36af021b032efcb18309bc0bcd1543f331e82aff",
+          "early_active.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active-minus-early_active.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "early_active.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "before_fixture.raw.txt": "6e9a26afc6556978f024517e710d2b378b5d5cf6b9cce83ed691b822f9709c34",
+          "session_idle-minus-late_active.raw.txt": "77a9d7dc5f1131e740e6d16b98be23a246a4cf91ed8c39a07bddae135267801a",
+          "after_fixture-minus-before_fixture.inuse_space.top.txt": "19894f304618c623f009d217cb16a8ad4691bce75bf3dd3aedd1ac2979170d79",
+          "before_fixture.inuse_objects.top.txt": "a25291c2f702510516d7a5a97a3994f3d0b79dfb1b3e726fe27b2b49ff510c9a",
+          "session_idle.raw.txt": "8062ff2f4c845bdbc26d798c7c00b0192c3752d8c46e7ee36ad64806a1d2f2a4",
+          "after_fixture.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle-minus-late_active.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "early_active.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.inuse_objects.top.txt": "761371fbd0ad1cb65473bff5f1febe72e24621dd00b79b52c960c4002d742391",
+          "before_fixture.inuse_space.top.txt": "0fdac301dea9c1816cbf0e7ff3c02ef64481193f5b8c75b6795e572569b97a06",
+          "session_idle-minus-late_active.alloc_objects.top.txt": "23056bd999a8f30f7e4a423108394402fcd50ec9825d3cccb5a20e930556e486",
+          "session_idle-minus-late_active.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle-minus-late_active.inuse_space.top.txt": "66cce2a23bdcb9e98096bd21d5e42fdeb001e6f8504d90d8396d53fc5eeb8931",
+          "after_fixture.alloc_space.top.txt": "ca1f5d3ddd47c4b78bd1b6d123cc32f28f52bee1cc6601d0363a2ebcfe603e06",
+          "session_idle-minus-late_active.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "early_active.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.raw.txt": "75aad5b6e453364233bae02e2c061012049137ea812728492c8eb4df91eb8e0f",
+          "late_active-minus-early_active.alloc_space.top.txt": "ef86385d6688037981ae73e8afd8fc5e80ded1b02a1d0fdee469b52fa8000801",
+          "early_active.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "before_fixture.alloc_objects.top.txt": "96274fb4d363b96a18deea1b3a833feb475979a87980bd8b3ac2b97b61dcdda5",
+          "session_idle.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active-minus-early_active.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "commands.json": "32ddf315d00c1a49ea45b24019a78475cad02593eed5ff468602a03b3a74254c",
+          "before_fixture.alloc_space.top.txt": "9e37229f6603d565c6ee4a45cbd1fb0327ab5e121a10621c425a15daee95e0cd",
+          "before_fixture.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture-minus-before_fixture.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active-minus-early_active.inuse_objects.top.txt": "5650411e1c7fd796ab69a733531387301417f66b730d54108f994ef79e5ebac4",
+          "late_active-minus-early_active.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle.inuse_objects.top.txt": "cc6bcd980a6d441dc6cd0f6c46f905c42b7fbf74f09d28273d98284880d99711",
+          "before_fixture.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active-minus-early_active.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture-minus-before_fixture.inuse_objects.top.txt": "c81501d979e556af763c32dfd35df0b442a026dd516906c575ae438969f9f3a0",
+          "late_active-minus-early_active.inuse_space.top.txt": "7662dad90c6582ae1e168549d620d8d9f2dd8fc63a44758e7db9fc41ea09f3b5",
+          "after_fixture-minus-before_fixture.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.inuse_space.top.txt": "a1c8e25cf6b24b011b1a058218cd1107854a080ff071fd7ed51cc48cded8aa5f",
+          "after_fixture-minus-before_fixture.raw.txt": "0c6bb1934ae252fe5e8750e5ae773f87fefd3387c7ddcf19ad57f4329ac57305",
+          "after_fixture-minus-before_fixture.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "early_active.inuse_objects.top.txt": "e369cc0a5ee37a29be4f584d19fae62f071ca53e155f7a2695d7344483812ce3",
+          "late_active-minus-early_active.raw.txt": "d2b0ff521e8328a17a3a82d96c4d375af0a48147e12937e3a289457d6b45da35",
+          "early_active.raw.txt": "88a5a271eac0aa5a910ebd9a89527d26bc277ac137377516d29abbe97560446f",
+          "late_active.inuse_objects.top.txt": "5ac14504432ebab576580cc98e3941117caa0cac26ec4e1adad1613121b977f3",
+          "session_idle-minus-late_active.alloc_space.top.txt": "3cfba6cd7214f5229793173732358f8aeda04c806489f6bdd395170949d710ae",
+          "after_fixture-minus-before_fixture.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle-minus-late_active.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active-minus-early_active.alloc_objects.top.txt": "39a5a305e30c6c649f06db8677b39f37a82d9e9c656a24f4bebf14ff9c44d5a3",
+          "session_idle.alloc_space.top.txt": "48e4d82e67386800fe6096e82299acea22feaeca72189efe3875bfecdd76b34a",
+          "late_active.alloc_space.top.txt": "e1626c92a869229e8d8ea5885ffcd7cedc478c205df585b6395ec3842de41645",
+          "early_active.inuse_space.top.txt": "2dcb71d737e4c99201969a6c74a9e99bc67cb3c56aea88e92a9726d4396dba42",
+          "before_fixture.inuse_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.raw.txt": "6101f8a7b88069f39e0c225a62e7c21f3d7431053e6bf69998648d5b04b72329",
+          "after_fixture-minus-before_fixture.alloc_objects.top.txt": "a98d50f4fa3c341954107db437dfca3bd3e836081c2ef821ecdd08a5363b921c",
+          "after_fixture-minus-before_fixture.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "before_fixture.alloc_objects.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "after_fixture.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_idle.alloc_objects.top.txt": "10965f1eaa294bef163947dfdf9106f2fc7a45f5aa6db904d258a8152c66840d",
+          "after_fixture-minus-before_fixture.alloc_space.top.txt": "538a61795bcc389d0003edc6b339d9820f50055241b9e04115d15f5a9390341b",
+          "session_idle.alloc_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "late_active.alloc_objects.top.txt": "fb6887ef93dc4b30d4f073d1f799e077613f5e9540f45736c068503cf1fd2d5a",
+          "early_active.alloc_objects.top.txt": "eae844a9c9757d6e69df37024eed8c40e0094da9559386add383529f0f3f9f87",
+          "late_active-minus-early_active.raw.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "before_fixture.inuse_space.top.txt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      }
+    }
+  ],
+  "scope": "diagnostic under full allocation profiling and forced GC; no leak/performance verdict"
+}

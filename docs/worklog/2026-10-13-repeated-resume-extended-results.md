@@ -103,4 +103,4 @@ C 两场都在 offset 15,360,000 的第六次断线耗尽，最后一轮无 resu
 
 下一步先针对堆增长线索设计诊断，并结合“第六次低频断线仍耗尽”的事实讨论整场累计预算是否适合长问诊。每轮重置、滑动窗口和分层限额各有成本，需要先确定契约与判据；本轮不直接提高默认次数或更改预算算法。第六阶段仍保留这些解释及边界，第七阶段真实模型尚未开始。
 
-后续进度：[堆诊断设计](2026-10-13-repeated-resume-heap-design.md)及 [EXP-006-06 预登记](../experiments/repeated-resume-heap-diagnostic.md)已完成，工具尚未实现、尚无诊断结果；原实验和本报告结论保留。
+后续进度：[堆诊断设计](2026-10-13-repeated-resume-heap-design.md)及 [EXP-006-06 预登记](../experiments/repeated-resume-heap-diagnostic.md)已完成，[工具与短场验收](2026-10-13-repeated-resume-heap-tools.md)已完成，正式四场尚未运行、增长尚未归因；原实验和本报告结论保留。

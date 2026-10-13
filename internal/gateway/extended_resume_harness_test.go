@@ -483,6 +483,13 @@ type extendedSummary struct {
 // dir 必须为调用方已创建的空目录；事件文件独占创建，终态在测试退出前保存。
 func runExtendedProbe(t *testing.T, cfg extendedConfig, dir string) extendedSummary {
 	t.Helper()
+	return runExtendedProbeObserved(t, cfg, dir, nil)
+}
+
+// runExtendedProbeObserved 的 heap 只用于专用诊断；nil 保持原实验路径。
+// 观察任务在 Run 返回后 join；P3 在环境拆除前，P4 由子测试外层采集。
+func runExtendedProbeObserved(t *testing.T, cfg extendedConfig, dir string, heap *heapCaseObserver) extendedSummary {
+	t.Helper()
 	if err := cfg.validate(); err != nil {
 		t.Fatal(err)
 	}
@@ -501,7 +508,11 @@ func runExtendedProbe(t *testing.T, cfg extendedConfig, dir string) extendedSumm
 	}
 	defer log.finish()
 	worker := &extendedWorker{log: log, cfg: cfg, digest: sha256.New(), done: make(chan struct{})}
-	pool := &v2EntrySelector{client: newBaselineTCPWorkerClient(t, worker)}
+	var tcpStatus *baselineTCPCleanup
+	if heap != nil {
+		tcpStatus = &heap.TCP
+	}
+	pool := &v2EntrySelector{client: newBaselineTCPWorkerClientTracked(t, worker, tcpStatus)}
 	gateway, err := New(life, pool, resumeGatewayConfig(resumeExperimentConfig{ServerWindow: 10 * time.Second}))
 	if err != nil {
 		t.Fatal(err)
@@ -594,8 +605,18 @@ func runExtendedProbe(t *testing.T, cfg extendedConfig, dir string) extendedSumm
 			}
 		}
 	}()
+	if heap != nil {
+		heap.start(log.origin, &source.firstReadNS, func() heapResources {
+			return heapResources{gateway.Snapshot().ActiveSessions, registryCount(), int(worker.active.Load()), entryHandshakeCount(gateway.gate), int(proxy.timerCount.Load())}
+		})
+		defer heap.stopActive()
+	}
 	result, runErr := client.Run(runCtx, source)
 	summary := extendedSummary{Config: cfg, GatewayConfig: actualGatewayConfig, ClientConfig: clientSettings, LogLimits: log.limits, Result: result, ErrorClass: resumeErrorClass(runErr), ReturnedNS: time.Since(log.origin).Nanoseconds()}
+	if heap != nil {
+		heap.returnedNS.Store(summary.ReturnedNS)
+		heap.stopActive()
+	}
 	log.emit("run", "returned", time.Now(), map[string]any{"result": result, "error_class": summary.ErrorClass, "outer_expired": runCtx.Err() != nil})
 	cleanupCtx, cancelCleanup := context.WithTimeout(context.Background(), cfg.CleanupTimeout)
 	for !idle() {
@@ -615,6 +636,9 @@ func runExtendedProbe(t *testing.T, cfg extendedConfig, dir string) extendedSumm
 	log.emit("run", "natural_idle", time.Now(), map[string]any{"sessions": gateway.Snapshot().ActiveSessions, "handshakes": entryHandshakeCount(gateway.gate), "registry": registryCount(), "worker_active": worker.active.Load(), "gateway_handlers": gatewayHandlers.Load(), "proxy_handlers": proxy.active.Load(), "fault_timers": proxy.timerCount.Load(), "stopping": gateway.Snapshot().Stopping, "service_cancelled": life.Err() != nil})
 observeDone:
 	cancelCleanup()
+	if heap != nil {
+		heap.idle(summary.NaturalIdle && !summary.Forced)
+	}
 	if summary.Forced {
 		gateway.StopAccepting()
 		stop()
@@ -627,7 +651,8 @@ observeDone:
 	gatewayTasks.Wait()
 	gateway.StopAccepting()
 	waitCtx, endWait := context.WithTimeout(context.Background(), 5*time.Second)
-	if err := gateway.Wait(waitCtx); err != nil {
+	joinErr := gateway.Wait(waitCtx)
+	if joinErr != nil {
 		log.fail("Gateway join failed")
 	}
 	endWait()
@@ -657,6 +682,9 @@ observeDone:
 	summary.QueuePeak = log.peak.Load()
 	summary.Events = log.events.Load()
 	summary.Written = log.written.Load()
+	if heap != nil {
+		heap.OwnedJoined = joinErr == nil && !summary.LogError
+	}
 	data, err := json.MarshalIndent(summary, "", "  ")
 	if err != nil {
 		t.Fatal(err)

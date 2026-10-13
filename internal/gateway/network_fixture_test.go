@@ -17,6 +17,18 @@ func baselineMS(duration time.Duration) float64 { return float64(duration) / flo
 // Client、Gateway、Worker 仍在同一进程，结果只代表本次本机实验环境。
 func newBaselineTCPWorkerClient(t *testing.T, worker asrv1.ASRServiceServer) asrv1.ASRServiceClient {
 	t.Helper()
+	return newBaselineTCPWorkerClientTracked(t, worker, nil)
+}
+
+// baselineTCPCleanup 只保存关闭事实；子测试返回后读取，不持有连接或服务引用。
+type baselineTCPCleanup struct {
+	ClientClosed bool `json:"client_closed"`
+	ServeExited  bool `json:"serve_exited"`
+}
+
+// newBaselineTCPWorkerClientTracked 的 status 可选；非并行子测试 Cleanup 是其唯一写入者。
+func newBaselineTCPWorkerClientTracked(t *testing.T, worker asrv1.ASRServiceServer, status *baselineTCPCleanup) asrv1.ASRServiceClient {
+	t.Helper()
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
 		t.Fatal(err)
@@ -30,6 +42,9 @@ func newBaselineTCPWorkerClient(t *testing.T, worker asrv1.ASRServiceServer) asr
 		_ = listener.Close()
 		select {
 		case <-done:
+			if status != nil {
+				status.ServeExited = true
+			}
 		case <-time.After(time.Second):
 			t.Error("gRPC server did not stop")
 		}
@@ -38,6 +53,14 @@ func newBaselineTCPWorkerClient(t *testing.T, worker asrv1.ASRServiceServer) asr
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = conn.Close() })
+	t.Cleanup(func() {
+		err := conn.Close()
+		if status != nil {
+			status.ClientClosed = err == nil
+			if err != nil {
+				t.Errorf("gRPC connection Close: %v", err)
+			}
+		}
+	})
 	return asrv1.NewASRServiceClient(conn)
 }

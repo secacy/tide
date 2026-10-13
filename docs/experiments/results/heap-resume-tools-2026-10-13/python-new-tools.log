@@ -1,0 +1,21 @@
+test_collector_build_failure_preserved (test_heap_resume.HeapResumeTest.test_collector_build_failure_preserved) ... ok
+test_collector_exclusive_directory (test_heap_resume.HeapResumeTest.test_collector_exclusive_directory) ... ok
+test_fixed_conditions_and_owned_environment (test_heap_resume.HeapResumeTest.test_fixed_conditions_and_owned_environment) ... ok
+test_fixed_denominator_on_missing_slot (test_heap_resume.HeapResumeTest.test_fixed_denominator_on_missing_slot) ... ok
+test_idle_and_fixture_phases (test_heap_resume.HeapResumeTest.test_idle_and_fixture_phases) ... ok
+test_invalid_capture_outcomes (test_heap_resume.HeapResumeTest.test_invalid_capture_outcomes) ... ok
+test_manifest_counterexamples (test_heap_resume.HeapResumeTest.test_manifest_counterexamples) ... ok
+test_metadata_disagreement (test_heap_resume.HeapResumeTest.test_metadata_disagreement) ... ok
+test_missing_or_reordered_points (test_heap_resume.HeapResumeTest.test_missing_or_reordered_points) ... ok
+test_missing_truncated_or_digest_changed (test_heap_resume.HeapResumeTest.test_missing_truncated_or_digest_changed) ... ok
+test_numeric_boolean_and_schema_drift (test_heap_resume.HeapResumeTest.test_numeric_boolean_and_schema_drift) ... ok
+test_pprof_rejects_corruption_even_with_repaired_hash (test_heap_resume.HeapResumeTest.test_pprof_rejects_corruption_even_with_repaired_hash) ... ok
+test_real_probe_and_manifest (test_heap_resume.HeapResumeTest.test_real_probe_and_manifest) ... ok
+test_teardown_not_confirmed (test_heap_resume.HeapResumeTest.test_teardown_not_confirmed) ... ok
+test_wrong_active_target_and_crossed_return (test_heap_resume.HeapResumeTest.test_wrong_active_target_and_crossed_return) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 8.381s
+
+OK
+{"mode": "probe", "evidence_valid": false, "planned_sessions": 2, "business_valid": 0, "checkpoints_valid": 0, "exported": 0, "errors": ["manifest: collection failed/source drift", "slot 1 business: [Errno 2] No such file or directory: '/private/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tmp879xi6gn/failed/sessions/01_A_normal/data/summary.json'", "slot 1 heap: [Errno 2] No such file or directory: '/private/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tmp879xi6gn/failed/sessions/01_A_normal/data/heap-report.json'", "slot 2 business: [Errno 2] No such file or directory: '/private/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tmp879xi6gn/failed/sessions/02_B_budget_8/data/summary.json'", "slot 2 heap: [Errno 2] No such file or directory: '/private/var/folders/p0/px77pwlj1_b5vbqcw6kwzwtw0000gn/T/tmp879xi6gn/failed/sessions/02_B_budget_8/data/heap-report.json'"]}

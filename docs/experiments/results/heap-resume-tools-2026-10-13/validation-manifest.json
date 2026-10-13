@@ -1,0 +1,45 @@
+{
+  "full_go_race": {
+    "gateway_pass": 1342,
+    "wsclient_pass": 385,
+    "total_pass": 1727,
+    "total_skip": 19,
+    "fail": 0
+  },
+  "final_heap_go_race": {
+    "pass_cases": 15,
+    "skip_cases": 1,
+    "fail": 0
+  },
+  "python": {
+    "new_methods": 15,
+    "all_methods": 192,
+    "fail": 0
+  },
+  "vet": {
+    "package": "internal/gateway",
+    "exit_code": 0
+  },
+  "frozen_reanalysis": {
+    "files": 163,
+    "byte_identical": true
+  },
+  "moved_frozen_reanalysis": {
+    "files": 163,
+    "byte_identical": true
+  },
+  "logs_sha256": {
+    "go-unit.log": "1ce0178314bac76207e90f14906a5668de766dc3ef7cfd5a59d9d2736d2cb4bb",
+    "python-first-failure.log": "764976314c4f7c5d34584eaf15eac1700928d4c58eb734a370ca16c2433117fc",
+    "python-new-tools.log": "88b776a1c2d99664d4b05f55c300ad4b576c0f8ce35984996725c564b28a3a89",
+    "python-all.log": "73980ddcdbb173e84d9e989569704968752bbf06d8ef2d96b77392c2a439f8fb",
+    "probe-first.log": "faa9ff644471df363be76d71701861492bee39b71c581239f1849cd28cfa5288",
+    "probe-final.log": "faa9ff644471df363be76d71701861492bee39b71c581239f1849cd28cfa5288",
+    "frozen-reanalysis.log": "db28ba5714d5a1fcfab24a7ded54710f1b28900ae493336094add827f99959b0",
+    "moved-reanalysis.log": "db28ba5714d5a1fcfab24a7ded54710f1b28900ae493336094add827f99959b0",
+    "final-go-race.jsonl": "6e8476a27e24b826637a0f5d04e03daf81e1b97d7fbd8b933de063dc6ba773a6",
+    "final-go-race.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "full-go-race.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "full-go-race.jsonl.xz": "898917dd0814bfe4fa05c497eafeb7251242be59ca9b2b3a02338b40371d55ae"
+  }
+}

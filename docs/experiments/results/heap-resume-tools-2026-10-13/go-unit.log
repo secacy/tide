@@ -1,0 +1,23 @@
+=== RUN   TestHeapCheckpointWriterFailures
+=== RUN   TestHeapCheckpointWriterFailures/write
+=== RUN   TestHeapCheckpointWriterFailures/short
+=== RUN   TestHeapCheckpointWriterFailures/close
+--- PASS: TestHeapCheckpointWriterFailures (0.00s)
+    --- PASS: TestHeapCheckpointWriterFailures/write (0.00s)
+    --- PASS: TestHeapCheckpointWriterFailures/short (0.00s)
+    --- PASS: TestHeapCheckpointWriterFailures/close (0.00s)
+=== RUN   TestHeapCheckpointExclusiveFiles
+--- PASS: TestHeapCheckpointExclusiveFiles (0.00s)
+=== RUN   TestHeapCheckpointRunnerJoins
+--- PASS: TestHeapCheckpointRunnerJoins (0.02s)
+=== RUN   TestHeapActiveCheckpointCancelledBeforeRead
+--- PASS: TestHeapActiveCheckpointCancelledBeforeRead (0.00s)
+=== RUN   TestHeapProfileObjectLifecycle
+    heap_diagnostic_validation_test.go:157: known allocation stack retained=4194608B released=112B
+--- PASS: TestHeapProfileObjectLifecycle (0.38s)
+=== RUN   TestHeapFixtureCleanupBoundary
+=== RUN   TestHeapFixtureCleanupBoundary/owned_fixture
+--- PASS: TestHeapFixtureCleanupBoundary (0.00s)
+    --- PASS: TestHeapFixtureCleanupBoundary/owned_fixture (0.00s)
+PASS
+ok  	github.com/secacy/tide-artisan/internal/gateway	0.748s
