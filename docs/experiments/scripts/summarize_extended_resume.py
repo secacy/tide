@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import statistics
 
+import extended_resume_contract as legacy_profile
 from extended_resume_contract import (CASES, CHUNK, EXPERIMENT, LOG_LIMITS, NS, PERIOD, PLAN, ROOT_TEST,
                                       client_config, configured, gateway_config, order, pattern, windows)
 from summarize_client_resume import digest, require, stamp_ns
@@ -80,9 +81,9 @@ def stats(values):
     return None if not values else dict(n=len(values),min=min(values),median=statistics.median(values),max=max(values))
 
 
-def verify_case(directory, mode, case):
+def verify_case(directory, mode, case, profile=legacy_profile):
     """Verify input, results, RPC ownership and cleanup before interpreting any durations."""
-    cfg=configured(case,mode);total=cfg['chunks']*CHUNK
+    cfg=profile.configured(case,mode);total=cfg['chunks']*CHUNK
     s=json.loads((directory/'summary.json').read_text());rows=read_events(directory/'events.jsonl')
     for key in ('captured_bytes','received_bytes','processed_bytes','source_closes','worker_calls','worker_picks','connections','faults','observed_queue_peak','events','buffer_accepted_bytes','returned_ns','idle_ns'):
         integer(s[key],'invalid terminal number')
@@ -91,8 +92,8 @@ def verify_case(directory, mode, case):
     def one(component,kind):
         values=by[component,kind];require(len(values)==1,f'{component}/{kind} missing or duplicated');return values[0]
     configuration=one('run','configuration')['data']
-    require(configuration['experiment']==EXPERIMENT and same(configuration['config'],cfg) and same(s['config'],cfg),'case profile drift')
-    require(same(configuration['client'],client_config(case)) and same(s['client_config'],client_config(case)),'client config drift')
+    require(configuration['experiment']==profile.EXPERIMENT and same(configuration['config'],cfg) and same(s['config'],cfg),'case profile drift')
+    require(same(configuration['client'],profile.client_config(case,mode)) and same(s['client_config'],profile.client_config(case,mode)),'client config drift')
     require(same(configuration['gateway'],gateway_config()) and same(s['gateway_config'],gateway_config()),'effective gateway config drift')
     require(same(configuration['log_limits'],LOG_LIMITS) and same(s['log_limits'],LOG_LIMITS),'recorder config drift')
     stamp_ns(configuration['origin_utc'])
@@ -114,7 +115,8 @@ def verify_case(directory, mode, case):
     require(set(result)=={'Completed','FinalOffset','AppliedSeq','ResumeAttempts','ResumedConnections','CompletionAckWritten'},'RunResult schema differs')
     for key in ('Completed','CompletionAckWritten'):require(type(result[key]) is bool,'invalid result boolean')
     for key in ('FinalOffset','AppliedSeq','ResumeAttempts','ResumedConnections'):integer(result[key],'invalid result count')
-    require(result['ResumeAttempts']<=cfg['attempts'] and result['ResumedConnections']<=result['ResumeAttempts'],'attempt budget exceeded')
+    require(result['ResumedConnections']<=result['ResumeAttempts'],'accepted more than started attempts')
+    if profile.lifetime_limited(case):require(result['ResumeAttempts']<=cfg['attempts'],'attempt budget exceeded')
 
     source=by['source','read'];require(source,'no actual input capture')
     source_digest=hashlib.sha256();read_by_end={};first=source[0]['elapsed_ns'];lags=[]
@@ -273,9 +275,7 @@ def verify_case(directory, mode, case):
                 if streak>=3:signal=True
         growth[key]=dict(needs_investigation=signal,eligible_windows=len(eligible),meaning='descriptive increase, not proof of a leak')
     complete=result['Completed']
-    behavior=(complete and not faults and result['ResumeAttempts']==0) if case==CASES[0] else (
-        complete and len(faults)==6 and result['ResumedConnections']==6 and all(o['caught_up_before_next'] for o in outages)) if case==CASES[1] else (
-        not complete and len(faults)==6 and result['ResumeAttempts']==result['ResumedConnections']==5 and s['error_class']=='recovery_exhausted' and outages[-1]['observed_requests']==0 and not returned['data']['outer_expired'])
+    behavior=profile.behavior(case, complete, faults, result, outages, s['error_class'], returned['data']['outer_expired'])
     return dict(case=case,completed=complete,error_class=s['error_class'],behavior_passed=behavior,
                 timing_resource_quality=not quality,quality_issues=quality,captured_bytes=captured,received_bytes=received,
                 processed_bytes=processed_bytes,missing_captured=[processed_bytes,captured] if captured>processed_bytes else None,
@@ -295,19 +295,21 @@ def safe_relative(root,name):
     return root/path
 
 
-def verify_manifest(root,m):
-    mode,rounds=m['mode'],m['planned_rounds'];expected=order(rounds)
+def verify_manifest(root,m,profile=legacy_profile):
+    mode,rounds=m['mode'],m['planned_rounds'];expected=profile.order(rounds)
     require(mode in ('probe','formal') and (mode!='formal' or rounds==2),'collection mode/count differs')
-    require(type(m['version']) is int and m['version']==1 and m['experiment']==EXPERIMENT and m['root_test']==ROOT_TEST and m['order']==expected and m['planned_sessions']==len(expected),'manifest identity/order differs')
+    require(type(m['version']) is int and m['version']==1 and m['experiment']==profile.EXPERIMENT and m['root_test']==profile.ROOT_TEST and m['order']==expected and m['planned_sessions']==len(expected),'manifest identity/order differs')
     require(m['status']=='collected' and m['build_exit']==0 and m['source_unchanged'] is True,'collection failed or source drift')
     require(not any(flag=='-race' or flag.startswith('-race=') for flag in m['go_env']['GOFLAGS'].split()),'race collection')
     require(Path(m['collection_directory']).is_absolute(),'original root missing')
     require(m['build_argv']==['go','test','-c','-o',str(Path(m['collection_directory'])/'extended-resume.test'),'./internal/gateway'],'build command drift')
-    require(m['source_sha256'] and PLAN in m['source_sha256'],'source/plan snapshot missing')
-    mandatory={PLAN,'go.mod','go.sum','internal/gateway/extended_resume_harness_test.go','internal/gateway/extended_resume_log_test.go',
+    require(m['source_sha256'] and profile.PLAN in m['source_sha256'],'source/plan snapshot missing')
+    mandatory={profile.PLAN,'go.mod','go.sum','internal/gateway/extended_resume_harness_test.go','internal/gateway/extended_resume_log_test.go',
                'internal/gateway/extended_resume_collection_test.go','internal/wsclient/client_v2_run.go',
                'docs/experiments/scripts/run_extended_resume.py','docs/experiments/scripts/summarize_extended_resume.py',
                'docs/experiments/scripts/extended_resume_contract.py'}
+    mandatory.update(getattr(profile, 'EXTRA_SOURCES', ()))
+    if hasattr(profile, 'validate_environment'):profile.validate_environment(mode, m['runtime_environment'])
     require(mandatory<=m['source_sha256'].keys(),'required implementation snapshot missing')
     for name,sha in m['source_sha256'].items():require(digest(safe_relative(root/'source',name))==sha,'source snapshot digest differs')
     required={'extended-resume.test','build.log','git-status.txt','preregistration.md'}
@@ -315,37 +317,37 @@ def verify_manifest(root,m):
         required|={f'sessions/{i:02d}_{case}/{name}' for name in ('stdout.log','stderr.log','data/events.jsonl','data/summary.json')}
     require(required<=m['artifacts_sha256'].keys(),'required artifact missing')
     for name,sha in m['artifacts_sha256'].items():require(digest(safe_relative(root,name))==sha,'artifact digest differs')
-    require(digest(root/'preregistration.md')==digest(root/'source'/PLAN),'preregistration snapshot differs')
+    require(digest(root/'preregistration.md')==digest(root/'source'/profile.PLAN),'preregistration snapshot differs')
     require(len(m['slots'])==len(expected),'slot missing/duplicated')
     previous=None
     for i,(case,slot) in enumerate(zip(expected,m['slots']),1):
         relative=f'sessions/{i:02d}_{case}';original=Path(m['collection_directory'])/relative
-        require(slot['index']==i and slot['round']==(1 if i<=3 else 2) and slot['case']==case and slot['path']==relative,'slot order/path differs')
+        require(slot['index']==i and slot['round']==((i-1)//len(profile.CASES)+1) and slot['case']==case and slot['path']==relative,'slot order/path differs')
         timeout=90 if mode=='probe' else 660
-        require(slot['argv']==[str(Path(m['collection_directory'])/'extended-resume.test'),'-test.run=^'+ROOT_TEST+'$','-test.count=1',f'-test.timeout={timeout}s','-test.v'],'case command drift')
-        require(slot['environment']==dict(TIDE_EXTENDED_MODE=mode,TIDE_EXTENDED_CASE=case,TIDE_EXTENDED_CASE_OUTPUT=str(original/'data'),TIDE_RUN_EXTENDED_FORMAL='1' if mode=='formal' else '0'),'case environment drift')
+        require(slot['argv']==[str(Path(m['collection_directory'])/'extended-resume.test'),'-test.run=^'+profile.ROOT_TEST+'$','-test.count=1',f'-test.timeout={timeout}s','-test.v'],'case command drift')
+        require(slot['environment']==profile.environment(mode, case, original/'data'),'case environment drift')
         require(slot['status']=='finished' and slot['exit_code']==0 and slot['source_unchanged'] is True,'case process failed/incomplete')
         begin,end=stamp_ns(slot['started_at']),stamp_ns(slot['finished_at']);require(begin<=end and (previous is None or begin>=previous),'case processes overlap');previous=end
         text=(root/relative/'stdout.log').read_text()
-        require('--- PASS: '+ROOT_TEST+' (' in text and 'WARNING: DATA RACE' not in text,'case root did not pass')
+        require('--- PASS: '+profile.ROOT_TEST+' (' in text and 'WARNING: DATA RACE' not in text,'case root did not pass')
         require((root/relative/'stderr.log').read_bytes()==b'','unexpected case stderr')
         for part in ('session_id','resume_token','resumeToken'):require(part not in text,'credentials in case log')
         require(f'go={m["go_env"]["GOVERSION"]} os={m["go_env"]["GOOS"]} arch={m["go_env"]["GOARCH"]}' in text and f'mode={mode} case={case}' in text,'build/run profile differs')
     if mode=='formal' and m['host']['system']=='Darwin':require(m.get('awake_guard')=='owned_caffeinate' and m.get('awake_guard_exit_before_cleanup') is None,'awake guard failed')
 
 
-def summarize(root,output):
+def summarize(root,output,profile=legacy_profile):
     root,output=Path(root),Path(output);m=json.loads((root/'manifest.json').read_text())
-    mode,rounds=m['mode'],m['planned_rounds'];expected=order(rounds);require(mode in ('probe','formal'),'unknown mode')
+    mode,rounds=m['mode'],m['planned_rounds'];expected=profile.order(rounds);require(mode in ('probe','formal'),'unknown mode')
     output.mkdir(parents=True,exist_ok=False)
     errors,verified=[],[]
-    try:verify_manifest(root,m)
+    try:verify_manifest(root,m,profile)
     except (ValueError,OSError,KeyError,TypeError) as exc:errors.append('manifest: '+str(exc))
     archive_valid=not errors
     for i,case in enumerate(expected,1):
         try:
-            row=verify_case(root/f'sessions/{i:02d}_{case}'/'data',mode,case)
-            row.update(index=i,round=1 if i<=3 else 2);verified.append(row)
+            row=verify_case(root/f'sessions/{i:02d}_{case}'/'data',mode,case,profile)
+            row.update(index=i,round=(i-1)//len(profile.CASES)+1);verified.append(row)
         except (ValueError,OSError,KeyError,TypeError,IndexError) as exc:errors.append(f'slot {i} {case}: '+str(exc))
     # Evidence failures remain unknown in fixed denominators; corrupted archives do not authorize metrics.
     valid_rows=verified if archive_valid else []
@@ -356,11 +358,11 @@ def summarize(root,output):
             row['quality_issues'].append('host_sleep_transition_or_missing_audit')
             for window in row['resources']:window['quality_ok']=False
     groups=[]
-    for case in CASES:
+    for case in profile.CASES:
         rows=[r for r in valid_rows if r['case']==case];groups.append(dict(case=case,planned=rounds,verified=len(rows),
             completed=sum(r['completed'] for r in rows),failed=sum(not r['completed'] for r in rows),unknown=rounds-len(rows),
             behavior_passed=sum(r['behavior_passed'] for r in rows),quality_passed=sum(r['timing_resource_quality'] for r in rows)))
-    result=dict(experiment=EXPERIMENT,mode=mode,evidence_valid=not errors,planned_sessions=len(expected),verified_sessions=len(valid_rows),groups=groups,errors=errors,sessions=valid_rows)
+    result=dict(experiment=profile.EXPERIMENT,mode=mode,evidence_valid=not errors,planned_sessions=len(expected),verified_sessions=len(valid_rows),groups=groups,errors=errors,sessions=valid_rows)
     (output/'summary.json').write_text(json.dumps(result,indent=2)+'\n')
     for filename,rows in [('sessions', [{k:v for k,v in r.items() if k not in ('outages','resources','position_series')} for r in valid_rows]),
                           ('outages',[dict(index=r['index'],case=r['case'],**o) for r in valid_rows for o in r['outages']]),

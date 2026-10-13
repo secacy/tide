@@ -28,7 +28,7 @@ def order(rounds):
     return list(CASES) + (list(reversed(CASES)) if rounds == 2 else [])
 
 
-def client_config(case):
+def client_config(case, mode=None):
     return dict(chunk_bytes=CHUNK, realtime=True, read_limit=65536, max_replay_bytes=320000, max_replay_chunks=128,
                 handshake_timeout_ns=10*NS, write_timeout_ns=5*NS, apply_timeout_ns=5*NS, completion_timeout_ns=30*NS,
                 resume=dict(MaxAttempts=5 if case == CASES[2] else 8, Window=5*NS, InitialBackoff=PERIOD, MaxBackoff=NS))
@@ -50,3 +50,19 @@ def windows(mode):
     seconds = [(2, 2.4), (3.5, 3.9), (5, 5.4), (6.5, 6.9), (8, 8.4), (9.5, 9.9)] if mode == 'probe' else [
         (60, 90), (150, 180), (240, 270), (330, 360), (420, 450), (510, 540), (550, 590)]
     return [(int(a*NS), int(b*NS)) for a, b in seconds]
+
+
+def environment(mode, case, directory):
+    return dict(TIDE_EXTENDED_MODE=mode, TIDE_EXTENDED_CASE=case,
+                TIDE_EXTENDED_CASE_OUTPUT=str(directory), TIDE_RUN_EXTENDED_FORMAL='1' if mode == 'formal' else '0')
+
+
+def lifetime_limited(case):
+    return True
+
+
+def behavior(case, complete, faults, result, outages, error_class, outer_expired):
+    return (complete and not faults and result['ResumeAttempts'] == 0) if case == CASES[0] else (
+        complete and len(faults) == 6 and result['ResumedConnections'] == 6 and all(o['caught_up_before_next'] for o in outages)) if case == CASES[1] else (
+        not complete and len(faults) == 6 and result['ResumeAttempts'] == result['ResumedConnections'] == 5
+        and error_class == 'recovery_exhausted' and outages[-1]['observed_requests'] == 0 and not outer_expired)

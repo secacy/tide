@@ -1,6 +1,6 @@
 # 第六阶段：长时预算策略对照预登记与工具适配
 
-日期：2026-10-14。状态：方案与 [EXP-006-07 预登记](../experiments/recovery-attempt-window-comparison.md)已完成，工具适配/probe/正式采集尚未执行。前置[三类各三场网络验收](2026-10-14-recovery-attempt-window-network.md)证明规则在短场中可用；本步把要量化的条件、指标及证据边界写清楚。
+日期：2026-10-14。状态：方案与 [EXP-006-07 预登记](../experiments/recovery-attempt-window-comparison.md)已完成，工具适配及 probe 后续已通过[验收](2026-10-14-recovery-budget-comparison-tools.md)，正式采集待执行。前置[三类各三场网络验收](2026-10-14-recovery-attempt-window-network.md)证明规则在短场中可用；本步把要量化的条件、指标及证据边界写清楚。
 
 ## 为什么做与怎样选择
 

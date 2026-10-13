@@ -1,0 +1,103 @@
+{
+  "date": "2026-10-14",
+  "timezone": "Asia/Taipei",
+  "measurement_scope": "12-second tool probe, not formal 10-minute results",
+  "baseline": "0a5931243084003a2fc28e758bd780d7affe6b72",
+  "frozen_source_files": 339,
+  "archived_files": 364,
+  "probe_command": "PYTHONDONTWRITEBYTECODE=1 GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off python3 docs/experiments/scripts/run_attempt_window_resume.py --output /private/tmp/tide-policy-probe-2026-10-14",
+  "probe_exit": 0,
+  "probe_groups": [
+    {
+      "case": "L_lifetime_5",
+      "planned": 2,
+      "verified": 2,
+      "completed": 0,
+      "failed": 2,
+      "unknown": 0,
+      "behavior_passed": 2,
+      "quality_passed": 2
+    },
+    {
+      "case": "S_sliding_5",
+      "planned": 2,
+      "verified": 2,
+      "completed": 2,
+      "failed": 0,
+      "unknown": 0,
+      "behavior_passed": 2,
+      "quality_passed": 2
+    }
+  ],
+  "probe_source_unchanged": true,
+  "probe_runs_serial": true,
+  "concurrent_verification": "Gateway/wsclient race regression was run concurrently with probe; probe timings not presented as performance",
+  "go_race": {
+    "exit_code": 0,
+    "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race -json ./internal/gateway ./internal/wsclient -count=1 -timeout=5m",
+    "test_node_counts": {
+      "pass": 1746,
+      "skip": 20
+    },
+    "packages": [
+      {
+        "package": "github.com/secacy/tide-artisan/internal/wsclient",
+        "action": "pass",
+        "elapsed_seconds": 3.197
+      },
+      {
+        "package": "github.com/secacy/tide-artisan/internal/gateway",
+        "action": "pass",
+        "elapsed_seconds": 93.454
+      }
+    ]
+  },
+  "python_final": {
+    "exit_code": 0,
+    "methods": 206,
+    "command": "PYTHONDONTWRITEBYTECODE=1 TIDE_ATTEMPT_WINDOW_ANALYSIS_FIXTURE=/private/tmp/tide-policy-probe-2026-10-14 python3 -m unittest discover -s docs/experiments/scripts -p test_*.py"
+  },
+  "first_failure": "One new counterexample constructed a slice on reversed() iterator; corrected only that test. First log retained. Runtime/analyzer/collector sources unchanged; probe not replaced.",
+  "post_probe_source_change": {
+    "path": "docs/experiments/scripts/test_attempt_window_resume.py",
+    "final_sha256": "28ebb0c5a1861ec05b8db491c18b6459cfaa6caf405c58b4cd4cb7a0a2252cc8"
+  },
+  "vet": {
+    "command": "go vet ./internal/gateway",
+    "exit_code": 0
+  },
+  "reanalysis": {
+    "frozen_original_outputs_identical": 4,
+    "frozen_moved_outputs_identical": 4,
+    "legacy_current_default_outputs_identical": 4
+  },
+  "logs": {
+    "collection": {
+      "sha256": "daf2cf21bbfee37ef57cc289cc69bdc13732ebf6e5e275f2f088596c8a08367a",
+      "compressed_sha256": "cc328dc4347f645cf57870c109c193fbc711779b156d172c6d74a15de16aba0a"
+    },
+    "python-first": {
+      "sha256": "7cafd629e7d243a570c601185ebe162c299b8ce3bdad92e31a8d29d210dd33c4",
+      "compressed_sha256": "35a701221b351e987f157b638e7e4f353232f89915485fa6b0732b4f53802d74"
+    },
+    "python-final": {
+      "sha256": "c853b56a13a219d93f057d0c7a37a1011a6b13e34a8fc63689342b1d90b8e945",
+      "compressed_sha256": "06512b61551e7e986bc3d0d1efa69541c19be4ebedcb1b76be80ee90ad93b993"
+    },
+    "go-race": {
+      "sha256": "eb0ba5321087d8cb18fdd44eb892e3f6b706b8b981ae4bfd3c66c35094af76de",
+      "compressed_sha256": "1f29ba194e2360622b7f5ae2356409de4985fc8fb7646ca999b702096704c368"
+    }
+  },
+  "archive_fixture_tests": {
+    "methods": 14,
+    "exit_code": 0,
+    "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=docs/experiments/scripts python3 -m unittest test_attempt_window_resume",
+    "sha256": "c9677a9b03127318595b31072f780ed4a407d1a1273076657132d666230ebe0b"
+  },
+  "probe_summary": {
+    "raw_sha256": "29f7edd688b8f028de1edef2633e20c64e7898f5968fe0b07c040690785c4af4",
+    "xz_sha256": "4b631d2b7906b24eec43f16cd1163439ffcfa2a356f18f54e0857ba9a0cc46a4",
+    "roundtrip_equal": true
+  }
+}

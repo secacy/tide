@@ -36,6 +36,8 @@ const extendedChunkBytes = 3200
 // 新夹具独立于旧全量 resumeRecorder，不改变旧实验的结构或条件。
 type extendedConfig struct {
 	Case           string        `json:"case"`
+	Experiment     string        `json:"experiment,omitempty"`        // 空值沿用 EXP-006-05；新实验显式标记。
+	AttemptWindow  time.Duration `json:"attempt_window_ns,omitempty"` // 零值保留旧累计预算与配置 JSON。
 	Chunks         int           `json:"chunks"`
 	FaultChunks    []int         `json:"fault_chunks"`
 	Attempts       int           `json:"attempts"`
@@ -54,7 +56,7 @@ func extendedCases(probe bool) []extendedConfig {
 	}
 	cases := make([]extendedConfig, 3)
 	for i, name := range []string{"A_normal", "B_budget_8", "C_budget_5"} {
-		cases[i] = extendedConfig{name, chunks, nil, 8, 500 * time.Millisecond, 10 * time.Millisecond, timeout, 15 * time.Second, 100 * time.Millisecond}
+		cases[i] = extendedConfig{Case: name, Chunks: chunks, Attempts: 8, Outage: 500 * time.Millisecond, Processing: 10 * time.Millisecond, RunTimeout: timeout, CleanupTimeout: 15 * time.Second, SamplePeriod: 100 * time.Millisecond}
 		if i > 0 {
 			cases[i].FaultChunks = append([]int(nil), faults...)
 		}
@@ -67,7 +69,7 @@ func extendedCases(probe bool) []extendedConfig {
 
 // validate 拒绝无序/重复/越界故障及不符合音频格式的条件，运行前调用。
 func (c extendedConfig) validate() error {
-	if c.Case == "" || c.Chunks < 1 || c.Chunks > 6000 || c.Attempts < 1 || c.Outage <= 0 || c.Processing <= 0 || c.RunTimeout <= 0 || c.CleanupTimeout <= 0 || c.SamplePeriod <= 0 || (len(c.FaultChunks) != 0 && len(c.FaultChunks) != 6) {
+	if c.Case == "" || c.Chunks < 1 || c.Chunks > 6000 || c.Attempts < 1 || c.AttemptWindow < 0 || (c.Experiment != "" && c.Experiment != "EXP-006-07") || c.Outage <= 0 || c.Processing <= 0 || c.RunTimeout <= 0 || c.CleanupTimeout <= 0 || c.SamplePeriod <= 0 || (len(c.FaultChunks) != 0 && len(c.FaultChunks) != 6) {
 		return errors.New("invalid extended configuration")
 	}
 	last := -1
@@ -543,7 +545,7 @@ func runExtendedProbeObserved(t *testing.T, cfg extendedConfig, dir string, heap
 	source := &extendedSource{log: log, chunks: cfg.Chunks, digest: sha256.New()}
 	source.firstReadNS.Store(-1)
 	clientCfg := resumeClientConfig(resumeExperimentConfig{ChunkBytes: extendedChunkBytes}, "ws"+strings.TrimPrefix(proxyServer.URL, "http"), nil)
-	clientCfg.Resume = &wsclient.V2ResumeConfig{MaxAttempts: cfg.Attempts, Window: 5 * time.Second, InitialBackoff: 100 * time.Millisecond, MaxBackoff: time.Second}
+	clientCfg.Resume = &wsclient.V2ResumeConfig{MaxAttempts: cfg.Attempts, AttemptWindow: cfg.AttemptWindow, Window: 5 * time.Second, InitialBackoff: 100 * time.Millisecond, MaxBackoff: time.Second}
 	var applied uint64
 	clientCfg.OnResult = func(ctx context.Context, msg wsprotocol.SequencedResultMessage, received time.Time) error {
 		if err := ctx.Err(); err != nil {
@@ -576,7 +578,11 @@ func runExtendedProbeObserved(t *testing.T, cfg extendedConfig, dir string, heap
 		t.Fatal(err)
 	}
 	clientSettings := resumeClientSettings{clientCfg.ChunkBytes, clientCfg.Realtime, clientCfg.ReadLimit, clientCfg.MaxReplayBytes, clientCfg.MaxReplayChunks, clientCfg.HandshakeTimeout, clientCfg.WriteTimeout, clientCfg.ApplyTimeout, clientCfg.CompletionTimeout, clientCfg.Resume}
-	log.emit("run", "configuration", time.Now(), map[string]any{"experiment": "EXP-006-05", "config": cfg, "client": clientSettings, "gateway": actualGatewayConfig, "log_limits": log.limits, "origin_utc": log.origin.UTC().Format(time.RFC3339Nano)})
+	experiment := cfg.Experiment
+	if experiment == "" {
+		experiment = "EXP-006-05"
+	}
+	log.emit("run", "configuration", time.Now(), map[string]any{"experiment": experiment, "config": cfg, "client": clientSettings, "gateway": actualGatewayConfig, "log_limits": log.limits, "origin_utc": log.origin.UTC().Format(time.RFC3339Nano)})
 	registryCount := func() int {
 		gateway.registry.mu.Lock()
 		defer gateway.registry.mu.Unlock()

@@ -1,6 +1,6 @@
 # EXP-006-07：长会话累计与滑动恢复预算对照
 
-日期：2026-10-14。状态：**预登记完成；专用工具适配、probe 验收与正式四场均待执行，Results 暂无数据。**
+日期：2026-10-14。状态：**预登记与工具适配已完成，四场 probe 已验收；正式十分钟四场待执行，Results 暂无正式数据。**
 
 依据：[预算设计](../worklog/2026-10-13-recovery-budget-review.md)、[客户端实现](../worklog/2026-10-14-recovery-attempt-window.md)、[短场网络验收](../worklog/2026-10-14-recovery-attempt-window-network.md)、[工具适配方案](../worklog/2026-10-14-recovery-budget-comparison-design.md)。复用 [EXP-006-05](repeated-resume-extended.md) 的输入、故障和观测口径，旧六场只作问题依据，不进入本次统计分母。正式受测版本在工具验收后冻结，计划与源码一同保存摘要；变更条件须另记版本和理由。
 
@@ -95,3 +95,7 @@ probe 顺序同为 L→S→S→L，预期 L 第六轮耗尽、S 六轮完整；�
 ## Results
 
 尚未执行 probe 或正式四场。预期不填写为结果；新完成率、恢复等待、音频缺口与资源变化均待原始证据验证。
+
+## 工具进度（2026-10-14）
+
+[工具与 probe 验收](../worklog/2026-10-14-recovery-budget-comparison-tools.md)已完成：L 两场第六轮耗尽，S 两场六次恢复/384000B/121 结果完整；339 文件冻结、364 文件归档读回及四输出搬移复算一致。probe 使用专用 1s，不填入正式 Results；下一步冻结验收版本，显式 formal 四场使用本页 60s 配置。
