@@ -69,28 +69,36 @@ func (w *repeatedRecoveryWorker) StreamingRecognize(s grpc.BidiStreamingServer[a
 // repeatedRecoveryConnection 属于代理的一次连接；测试只操作 permit 并读取事件。
 // request 含凭据，仅用于内存核对，禁止整体日志输出。
 type repeatedRecoveryConnection struct {
-	request wsprotocol.V2Handshake
-	permit  chan struct{}                // 测试放行后才建立后端连接，方便观察断线期间的采集。
-	ready   chan wsprotocol.ReadyMessage // 原样成功转发 ready 后发布。
-	lost    chan wsprotocol.V2Input      // 指定音频被丢弃；Payload 独占副本。
-	done    chan struct{}                // 两个转发任务及 socket 实际退出。
+	request      wsprotocol.V2Handshake
+	permit       chan struct{}                // 测试放行后才建立后端连接，方便观察断线期间的采集。
+	ready        chan wsprotocol.ReadyMessage // 原样成功转发 ready 后发布。
+	droppedReady chan wsprotocol.ReadyMessage // 可选故障：后端 ready 已收到但不交给客户端。
+	lost         chan wsprotocol.V2Input      // 指定音频被丢弃；Payload 独占副本。
+	done         chan struct{}                // 两个转发任务及 socket 实际退出。
 }
 
 // repeatedRecoveryProxy 每条连接只在预定 offset 丢弃一块并切断真实 socket。
 // 不修改 Gateway 状态。cuts 为不可变配置；attempts 顺序由实际客户端连接决定。
 type repeatedRecoveryProxy struct {
-	url      string
-	attempts chan *repeatedRecoveryConnection
-	cuts     map[int]uint64
-	count    atomic.Int32
-	active   atomic.Int32
+	url             string
+	attempts        chan *repeatedRecoveryConnection
+	cuts            map[int]uint64
+	count           atomic.Int32
+	active          atomic.Int32
+	dropResumeReady bool // 不可变配置；仅丢恢复 ready，首次 start 仍正常接纳。
 }
 
 // newRepeatedRecoveryProxy 预定 cuts 个断线轮次；首轮丢 offset=4，随后每轮增加 8。
 // 每次接回会补发丢块与断线期间的新块；测试最终取消和关闭代理。
 func newRepeatedRecoveryProxy(t *testing.T, f *v2EntryFixture, cuts int) *repeatedRecoveryProxy {
+	return newRepeatedRecoveryProxyOptions(t, f, cuts, false)
+}
+
+// newRepeatedRecoveryProxyOptions 复用真实转发，可选丢弃每次恢复 ready 后关闭连接。
+// permit 仍由测试逐次放行，避免前次 Gateway detach 尚未完成就进入下一次握手。
+func newRepeatedRecoveryProxyOptions(t *testing.T, f *v2EntryFixture, cuts int, dropResumeReady bool) *repeatedRecoveryProxy {
 	t.Helper()
-	p := &repeatedRecoveryProxy{attempts: make(chan *repeatedRecoveryConnection, 8), cuts: make(map[int]uint64)}
+	p := &repeatedRecoveryProxy{attempts: make(chan *repeatedRecoveryConnection, 8), cuts: make(map[int]uint64), dropResumeReady: dropResumeReady}
 	for i := 1; i <= cuts; i++ {
 		p.cuts[i] = uint64(4 + 8*(i-1))
 	}
@@ -118,7 +126,7 @@ func newRepeatedRecoveryProxy(t *testing.T, f *v2EntryFixture, cuts int) *repeat
 		if err != nil {
 			return
 		}
-		c = &repeatedRecoveryConnection{request: request, permit: make(chan struct{}), ready: make(chan wsprotocol.ReadyMessage, 1), lost: make(chan wsprotocol.V2Input, 1), done: make(chan struct{})}
+		c = &repeatedRecoveryConnection{request: request, permit: make(chan struct{}), ready: make(chan wsprotocol.ReadyMessage, 1), droppedReady: make(chan wsprotocol.ReadyMessage, 1), lost: make(chan wsprotocol.V2Input, 1), done: make(chan struct{})}
 		select {
 		case p.attempts <- c:
 		case <-ctx.Done():
@@ -171,6 +179,18 @@ func newRepeatedRecoveryProxy(t *testing.T, f *v2EntryFixture, cuts int) *repeat
 				}
 				if err := json.Unmarshal(data, &tag); err != nil {
 					return err
+				}
+				if tag.Type == wsprotocol.MessageTypeReady && number > 1 && p.dropResumeReady {
+					var ready wsprotocol.ReadyMessage
+					if err := json.Unmarshal(data, &ready); err != nil {
+						return err
+					}
+					select {
+					case c.droppedReady <- ready:
+					case <-streamCtx.Done():
+						return streamCtx.Err()
+					}
+					return errClientTestCut
 				}
 				if err := front.Write(streamCtx, typ, data); err != nil {
 					return err

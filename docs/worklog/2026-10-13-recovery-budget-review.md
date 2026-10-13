@@ -1,6 +1,6 @@
 # 第六阶段：长问诊恢复预算评审
 
-日期：2026-10-13。下文保留设计与实现指导。2026-10-14 开发者明确委托助手实现本步，客户端已接入滑动窗口预算；实现与验证进度见[实施记录](2026-10-14-recovery-attempt-window.md)。依据[十分钟多轮结果](2026-10-13-repeated-resume-extended-results.md)与[堆诊断结果](2026-10-13-repeated-resume-heap-results.md)。
+日期：2026-10-13。下文保留设计与实现指导。2026-10-14 开发者明确委托助手实现本步，客户端已接入滑动窗口预算；实现与验证进度见[实施记录](2026-10-14-recovery-attempt-window.md)及[短场真实网络验收](2026-10-14-recovery-attempt-window-network.md)。依据[十分钟多轮结果](2026-10-13-repeated-resume-extended-results.md)与[堆诊断结果](2026-10-13-repeated-resume-heap-results.md)。
 
 ## 问题与目标
 

@@ -1,6 +1,6 @@
 # 第六阶段：客户端恢复次数滑动窗口
 
-日期：2026-10-14。开发者明确委托实现；承接[预算评审](2026-10-13-recovery-budget-review.md)。客户端功能已接通，验证结果见下文；新策略的真实 Gateway 短场组合验收为下一步。
+日期：2026-10-14。开发者明确委托实现；承接[预算评审](2026-10-13-recovery-budget-review.md)。客户端功能已接通，验证结果见下文；后续[真实 Gateway 短场组合验收](2026-10-14-recovery-attempt-window-network.md)已完成，长时策略对照待预登记。
 
 ## 变化与实现选择
 
@@ -43,3 +43,5 @@ GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
 ## 下一步
 
 短场真实 Gateway/TCP Mock 组合：分散故障可以超过整场 N 次，密集 ready 后立即断线耗尽，持续恢复握手失败按额度/期限终止。核对原 RPC/Worker pick、采集/结果完整性、实际尝试与自然资源回落。通过后再决定是否预登记长时累计/滑动策略对照，当前不先扩展 CLI 或重复堆诊断。
+
+后续进度：上述三类短场景已完成三轮九场真实网络验收，详见[网络结果](2026-10-14-recovery-attempt-window-network.md)；下一步先预登记长时累计/滑动策略对照。
