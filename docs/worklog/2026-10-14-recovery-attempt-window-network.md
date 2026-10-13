@@ -49,3 +49,5 @@ GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off \
 ## 下一步
 
 先预登记相同十分钟音频与六次低频断线下的整场累计/滑动窗口对照：固定默认五次、单轮期限、回看窗口、完成与音频缺口判据，复用现有采集/独立分析工具，必要时增加配置及策略标记。测试证明规则可用，正式对照再回答该固定负载下的实际完成行为与资源表现；当前不提高默认次数，不重复堆剖析，也不据此进入生产容量结论。
+
+后续进度：[EXP-006-07 预登记](../experiments/recovery-attempt-window-comparison.md)与[工具适配方案](2026-10-14-recovery-budget-comparison-design.md)已完成；正式为五次整场累计/五次每 60s，L→S→S→L 四场，工具与正式采集待执行。
