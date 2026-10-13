@@ -26,12 +26,43 @@ const (
 	v2Finishing                     // 已核实完成，仅等待最终确认。
 )
 
-// v2RecoveryState 保留固定一轮期限和全场次数；成功 ready 不重置 attempts。
+// v2RecoveryState 由协调者独占；成功 ready 不重置整场统计或近期记录。
 type v2RecoveryState struct {
-	deadline time.Time // 当前断线固定截止点，成功接纳 ready 后清零。
-	attempts int       // 整场实际启动的恢复尝试数，成功后不清零。
-	failures int       // 当前一轮失败尝试数，决定下一次退避。
-	lastErr  error     // 最近故障原因，预算耗尽时一并返回。
+	deadline     time.Time   // 当前断线固定截止点，成功接纳 ready 后清零。
+	attempts     int         // 整场实际启动的恢复尝试数，成功后不清零。
+	attemptTimes []time.Time // 仅滑动模式使用；按启动顺序保存，有效记录数至多 MaxAttempts。
+	failures     int         // 当前一轮失败尝试数，决定下一次退避。
+	lastErr      error       // 最近故障原因，预算耗尽时一并返回。
+}
+
+// resumeAttemptAllowed 检查次数额度但不消耗；调用前须已确认 Resume 非 nil。
+// now 保留单调时钟；滑动模式仅保留 (now-AttemptWindow, now] 内的记录。
+// 仅在可恢复故障和准备启动握手时检查，不能因为额度用完而结束正常传输。
+func (r *v2ClientRun) resumeAttemptAllowed(now time.Time) bool {
+	cfg := r.client.cfg.Resume
+	if cfg.AttemptWindow == 0 {
+		return r.recovery.attempts < cfg.MaxAttempts
+	}
+	times := r.recovery.attemptTimes
+	expired := 0
+	for expired < len(times) && now.Sub(times[expired]) >= cfg.AttemptWindow {
+		expired++
+	}
+	if expired > 0 {
+		remaining := copy(times, times[expired:])
+		clear(times[remaining:]) // 清除尾部 time.Time 所含引用，复用已分配存储。
+		r.recovery.attemptTimes = times[:remaining]
+	}
+	return len(r.recovery.attemptTimes) < cfg.MaxAttempts
+}
+
+// recordResumeAttempt 在协调者确认额度后、启动恢复握手任务前调用一次。
+// 两种模式都累计整场统计；滑动模式另记 now，首次 start 不调用此方法。
+func (r *v2ClientRun) recordResumeAttempt(now time.Time) {
+	r.recovery.attempts++
+	if r.client.cfg.Resume.AttemptWindow > 0 {
+		r.recovery.attemptTimes = append(r.recovery.attemptTimes, now)
+	}
 }
 
 // v2ClientRun 拥有整场资源；只由调用 Run 的 goroutine 读写。
@@ -96,12 +127,13 @@ func (r *v2ClientRun) startCapture() {
 
 // startHandshake 构造独立身份快照；resume 的预算包含此前清理与退避。
 func (r *v2ClientRun) startHandshake(resume bool) {
+	now := time.Now()
 	var request any = wsprotocol.StartMessage{Type: wsprotocol.MessageTypeStart, Version: "v2"}
 	if resume {
-		r.recovery.attempts++
+		r.recordResumeAttempt(now)
 		request = wsprotocol.ResumeMessage{Type: wsprotocol.MessageTypeResume, Version: "v2", SessionID: r.state.sessionID, ResumeToken: r.state.resumeToken, AppliedSeq: r.state.appliedSeq}
 	}
-	deadline := earlierV2(time.Now().Add(r.client.cfg.HandshakeTimeout), r.recovery.deadline, r.completionDeadline)
+	deadline := earlierV2(now.Add(r.client.cfg.HandshakeTimeout), r.recovery.deadline, r.completionDeadline)
 	r.attempt = r.client.startV2Handshake(r.ctx, request, deadline, r.dial)
 	r.phase = v2Handshaking
 	r.backoffUntil = time.Time{}
@@ -135,7 +167,7 @@ func (r *v2ClientRun) recover(failure v2AttemptFailure) error {
 		return failure.err
 	}
 	r.recovery.lastErr = failure.err
-	if r.recovery.attempts >= cfg.MaxAttempts {
+	if !r.resumeAttemptAllowed(time.Now()) {
 		return errors.Join(ErrV2RecoveryExhausted, failure.err)
 	}
 	if r.recovery.deadline.IsZero() {
@@ -263,7 +295,7 @@ func (r *v2ClientRun) coordinate() error {
 			return err
 		}
 		if r.phase == v2Backoff && !time.Now().Before(r.backoffUntil) {
-			if r.recovery.attempts >= r.client.cfg.Resume.MaxAttempts {
+			if !r.resumeAttemptAllowed(time.Now()) {
 				return errors.Join(ErrV2RecoveryExhausted, r.recovery.lastErr)
 			}
 			r.startHandshake(true)

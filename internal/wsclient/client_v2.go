@@ -27,11 +27,15 @@ type V2Config struct {
 	OnResult          V2ResultHandler // nil 表示有意消费并丢弃结果，仍推进连续应用位置。
 }
 
-// V2ResumeConfig 限制原会话的恢复；非 nil 显式启用，零字段使用默认值。
-// jitter 零值不写入 JSON，保持旧确定性实验的配置格式；开启后显式标记策略。
+// V2ResumeConfig 限制原会话的恢复；非 nil 显式启用。
+// AttemptWindow 零值保留整场累计语义；其他数值零字段使用默认值。
+// 可选窗口及 jitter 零值不写入 JSON，保持旧实验的配置格式。
 type V2ResumeConfig struct {
-	MaxAttempts    int           // 默认 5；整场累计 resume Dial 次数，首次 start 不计。
-	Window         time.Duration // 默认 5s；每轮断线含清理、退避、握手的固定总预算。
+	MaxAttempts int           // 默认 5；AttemptWindow=0 限整场次数，正值限近期次数；首次 start 不计。
+	Window      time.Duration // 默认 5s；每轮断线含清理、退避、握手的固定总预算。
+	// AttemptWindow 为尝试计数的回看时长；负值非法，0 保持整场累计限制。
+	// 正值仅计最近该时长内的尝试；与 Window 独立，成功 ready 不清空记录。
+	AttemptWindow  time.Duration `json:"AttemptWindow,omitempty"`
 	InitialBackoff time.Duration // 默认 100ms；第一次恢复失败后的基础等待，随机化前。
 	MaxBackoff     time.Duration // 默认 1s；基础指数退避上限，须 >= InitialBackoff；jitter 后最多增加 50%。
 	Jitter         bool          `json:"Jitter,omitempty"`     // 默认关闭；开启后在基础间隔上下各 50% 范围内均匀抽样。
@@ -65,7 +69,7 @@ func (e *V2EntryError) Error() string { return "v2 session entry rejected" }
 // ErrV2Incomplete 表示对端正常关闭，但本地尚未核实整场完成。
 var ErrV2Incomplete = errors.New("v2 session ended before completion")
 
-// ErrV2RecoveryExhausted 表示恢复窗口或整场尝试次数耗尽；同时保留最近原因。
+// ErrV2RecoveryExhausted 表示单轮恢复期限或尝试额度耗尽；同时保留最近原因。
 var ErrV2RecoveryExhausted = errors.New("v2 recovery budget exhausted")
 
 // NewV2 填充默认值并校验分块、预算及超时。
@@ -106,7 +110,7 @@ func NewV2(cfg V2Config) (*V2Client, error) {
 	}
 	if cfg.Resume != nil {
 		resume := *cfg.Resume
-		if resume.MaxAttempts < 0 || resume.Window < 0 || resume.InitialBackoff < 0 || resume.MaxBackoff < 0 {
+		if resume.MaxAttempts < 0 || resume.Window < 0 || resume.AttemptWindow < 0 || resume.InitialBackoff < 0 || resume.MaxBackoff < 0 {
 			return nil, errors.New("v2 resume limits must not be negative")
 		}
 		if resume.MaxAttempts == 0 {

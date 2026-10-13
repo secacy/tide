@@ -1,0 +1,237 @@
+{
+  "date": "2026-10-14",
+  "timezone": "Asia/Taipei",
+  "baseline": "dc55f11251aa5a47ce77e266070b6e14111ec23c",
+  "scope": "Client sliding attempt window correctness and regression; new-strategy Gateway network acceptance pending",
+  "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race -json ./... -count=1 -timeout=5m",
+  "exit_code": 0,
+  "test_node_counts": {
+    "pass": 3330,
+    "skip": 19
+  },
+  "packages": [
+    {
+      "package": "github.com/secacy/tide-artisan/cmd/ws-client",
+      "action": "skip",
+      "elapsed_seconds": 0
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/audio",
+      "action": "pass",
+      "elapsed_seconds": 2.464
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/proto/tide/asr/v1",
+      "action": "skip",
+      "elapsed_seconds": 0
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/mockasr",
+      "action": "pass",
+      "elapsed_seconds": 4.376
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/cmd/gateway",
+      "action": "pass",
+      "elapsed_seconds": 7.695
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/wsprotocol",
+      "action": "pass",
+      "elapsed_seconds": 5.664
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/workerpool",
+      "action": "pass",
+      "elapsed_seconds": 5.845
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/wsclient",
+      "action": "pass",
+      "elapsed_seconds": 6.249
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/loadgen",
+      "action": "pass",
+      "elapsed_seconds": 8.82
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/cmd/loadgen",
+      "action": "pass",
+      "elapsed_seconds": 11.56
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/cmd/worker-sampler",
+      "action": "pass",
+      "elapsed_seconds": 14.985
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/cmd/gateway-sampler",
+      "action": "pass",
+      "elapsed_seconds": 15.216
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/cmd/asr-worker",
+      "action": "pass",
+      "elapsed_seconds": 15.36
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "action": "pass",
+      "elapsed_seconds": 91.604
+    }
+  ],
+  "new_test_nodes": [
+    {
+      "test": "TestV2AttemptWindowConfig",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowPartialExpiry",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowRecoveries/spaced_exceeds_lifetime_limit",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowRecoveries/dense_success_does_not_refill",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowRecoveries/only_oldest_expires",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowRecoveries",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowFailedHandshakesConsume/dial",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowFailedHandshakesConsume/entry",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowFailedHandshakesConsume",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowDoesNotExtendDeadlines/failed_attempts_expire_but_outage_deadline_fixed",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowDoesNotExtendDeadlines/ready_after_outage_deadline_rejected",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowDoesNotExtendDeadlines/completion_deadline_survives_new_ready",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowDoesNotExtendDeadlines/cancel_during_backoff",
+      "action": "pass"
+    },
+    {
+      "test": "TestV2AttemptWindowDoesNotExtendDeadlines",
+      "action": "pass"
+    }
+  ],
+  "skipped_test_nodes": [
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestSessionAdmissionExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestAudioBacklogComparisonExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestClientResumeBaselineExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestV2InstanceProcessHelper"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestExtendedResumeCollectedCase"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestGroupResumeBudgetExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestGroupResumeBaselineExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestGroupResumeJitterExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestHeapDiagnosticCollectedCase"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestProgressBacklogBaselineExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestProtectionCleanupExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestResultWriteTimeoutExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestSlowReaderBaselineExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestSlowWorkerBaselineExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestStalledWorkerExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestWorkerSendTimeoutExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestTailTimeoutExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestTailStallBaselineExperiment"
+    },
+    {
+      "package": "github.com/secacy/tide-artisan/internal/gateway",
+      "test": "TestWorkerPauseExperiment"
+    }
+  ],
+  "raw_log_sha256": "b482b26ec2f71dcb7924ccfb1299b7ac21c935d7b2a55af00d12e204e01c838f",
+  "compressed_log_sha256": "1b64bc7d84a14dca03418d7994ef2ab03fc24bfaf1034a6b8451aa8f136730a2",
+  "changed_sources_sha256": {
+    "internal/wsclient/client_v2.go": "250d9e2fb870731b862042378dcedc968b7c06d41706a7edf8cdcf00dea4a434",
+    "internal/wsclient/client_v2_run.go": "14f9a5df0abbf6c2c24314050fe308419a092ed822ac2bd0a27e52c6b834a1c1",
+    "internal/wsclient/client_v2_attempt_budget_test.go": "76b716e0185186f602aeaeb2062fb6bad2708040067924c40d601845a989dcfd"
+  },
+  "first_event": "2026-10-14T02:57:49.321496+08:00",
+  "last_event": "2026-10-14T02:59:23.195909+08:00",
+  "vet": {
+    "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go vet ./internal/wsclient ./internal/gateway",
+    "exit_code": 0
+  },
+  "focused_race": {
+    "command": "GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off go test -race ./internal/wsclient -run TestV2AttemptWindow -count=1 -timeout=60s",
+    "exit_code": 0
+  }
+}
