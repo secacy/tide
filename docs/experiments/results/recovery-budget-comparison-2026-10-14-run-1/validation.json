@@ -1,0 +1,60 @@
+{
+  "date": "2026-10-14",
+  "timezone": "Asia/Taipei",
+  "commit": "ae6f06ce93505feb721fbfcaa8a6268f773ca82e",
+  "command": "PYTHONDONTWRITEBYTECODE=1 GOCACHE=/private/tmp/tide-review-gocache GOPROXY=off GOSUMDB=off python3 docs/experiments/scripts/run_attempt_window_resume.py --mode formal --output /private/tmp/tide-policy-formal-2026-10-14-run-1",
+  "collector_exit": 0,
+  "source_files": 339,
+  "source_unchanged": true,
+  "archive_files": 364,
+  "reanalysis_original_outputs_identical": 4,
+  "reanalysis_moved_outputs_identical": 4,
+  "groups": [
+    {
+      "case": "L_lifetime_5",
+      "planned": 2,
+      "verified": 2,
+      "completed": 0,
+      "failed": 2,
+      "unknown": 0,
+      "behavior_passed": 2,
+      "quality_passed": 2
+    },
+    {
+      "case": "S_sliding_5",
+      "planned": 2,
+      "verified": 2,
+      "completed": 2,
+      "failed": 0,
+      "unknown": 0,
+      "behavior_passed": 2,
+      "quality_passed": 1
+    }
+  ],
+  "all_behavior_verified": true,
+  "timing_resource_quality_count": 3,
+  "planned_sessions": 4,
+  "sleep_audit": {
+    "exit_code": 0,
+    "transitions": []
+  },
+  "awake_guard_exit_before_cleanup": null,
+  "downgraded_slot": {
+    "index": 2,
+    "case": "S_sliding_5",
+    "zero_based_source_block": 158,
+    "elapsed_ns": 15988644792,
+    "planned_ns": 15802864208,
+    "lag_ns": 185780584,
+    "read_duration_ns": 7208,
+    "cause": "undetermined; before first fault; no replacement run"
+  },
+  "no_code_changes_or_repeated_suites": true,
+  "standalone_artifacts": {
+    "sessions.csv": "0c3ffca78c5924bff335bee16da156377e38ba0426c7a8aa11b113d0b26c82b0",
+    "summary.json.xz": "27231ac726a8d191bb01fdb8453a5806698ec6cc75cadf3b5a0e05979d9173d7",
+    "manifest.json": "dbaa4a501b9d38b24d391733fbce4758f6435c14487e29f3ebabf66fbd9a262a",
+    "preregistration.md": "51c68ba74a9db17874eb188e4941115f5329a4ffb8bb2c542dad16d99e599dbb",
+    "collection.log": "268b7ad4fb4cb5e51d454afed95da5348b1074f447030dd6e7bed9d6eb930a1e"
+  }
+}

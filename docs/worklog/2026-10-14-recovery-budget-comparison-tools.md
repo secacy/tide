@@ -1,6 +1,6 @@
 # 第六阶段：恢复预算对照工具与 probe 验收
 
-日期：2026-10-14。承接 [EXP-006-07](../experiments/recovery-attempt-window-comparison.md) 与[工具设计](2026-10-14-recovery-budget-comparison-design.md)。本步工具实现及四场 probe 已验收，正式十分钟四场尚未运行，没有新增正式完成率或恢复性能数据。
+日期：2026-10-14。承接 [EXP-006-07](../experiments/recovery-attempt-window-comparison.md) 与[工具设计](2026-10-14-recovery-budget-comparison-design.md)。本步工具实现及四场 probe 已验收，工具验收时正式十分钟四场尚未运行；后续[正式结果](2026-10-14-recovery-budget-comparison-results.md)已完成，本页保留工具/probe 口径。
 
 ## 实现与兼容
 
@@ -54,3 +54,5 @@ PYTHONDONTWRITEBYTECODE=1 GOCACHE=/private/tmp/tide-review-gocache \
 ```
 
 正式 S 使用 60s，不能改成 probe 的 1s；累计/滑动四场预计约 37 分钟。保持唤醒，采集器持有自己的保护并审计睡眠，逐场原值及质量保留；完成后独立复算与归档，再整理第六阶段结论。真实 ASR 尚未接入。
+
+后续进度：上述 formal 四场已完成，见[正式结果](2026-10-14-recovery-budget-comparison-results.md)；累计 0/2、滑动 2/2 完成，质量 3/4。下一步整理第六阶段总结与剩余边界。

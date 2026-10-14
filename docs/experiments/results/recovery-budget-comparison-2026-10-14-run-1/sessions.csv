@@ -1,0 +1,5 @@
+index,case,completed,behavior_passed,timing_resource_quality,captured_bytes,processed_bytes,applied_results,attempts,resumed,source_max_lag_ns,max_sampling_gap_ns,cleanup_after_return_ns,worker_exit_after_return_ns,quality_issues
+1,L_lifetime_5,False,True,True,15363200,15360000,4800,5,5,12582250,110018125,10004933208,10001021708,[]
+2,S_sliding_5,True,True,False,19200000,19200000,6001,6,6,185780584,199313750,192250,-1114042,"[""source_lag_over_100ms""]"
+3,S_sliding_5,True,True,True,19200000,19200000,6001,6,6,39183166,130244250,48917,-477375,[]
+4,L_lifetime_5,False,True,True,15363200,15360000,4800,5,5,6257750,108859125,10010575667,10000671000,[]
