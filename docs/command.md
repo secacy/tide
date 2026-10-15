@@ -137,6 +137,28 @@ go run cmd/ws-client/main.go
 ```
 
 
+## v2 会话恢复
+
+当前 `cmd/loadgen` 和 `cmd/ws-client` 使用 **v1**，没有自动恢复。**v2** 是独立的实验协议，Gateway 需要显式传入 `-enable-v2`，入口为 `/v2/asr`；客户端实现位于 [internal/wsclient/client_v2.go](../internal/wsclient/client_v2.go)。仅把 v1 客户端 URL 改成 `/v2/asr` 不能启用恢复。
+
+在已启动 Worker 的前提下，启动支持 v2 的 Gateway：
+
+```sh
+go run ./cmd/gateway -enable-v2
+```
+
+该开关保留 `/v1/asr`，同时启用 `/v2/asr`。现有示例客户端和通用负载命令尚未提供 v2 模式，使用恢复能力需要通过仓库内的 `wsclient.NewV2` 接入。
+
+v2 通过位置与确认确定断线后从哪里继续：
+
+- **音频补发**：每块音频携带字节位置，Gateway 确认连续接纳到的位置。客户端有界保留未确认音频，恢复时根据 Gateway 返回的位置补发；已接纳的重复音频不会再次送入 Worker。这里的接纳确认不等于模型已处理完成。
+- **结果接续**：每条识别更新携带序号，客户端确认已连续应用的位置。Gateway 保留未确认结果供恢复时重发，客户端根据序号跳过已应用的更新，避免重复交付。
+- **完成确认**：输入结束时声明最终音频位置，识别结束后再通过 `completed` / `completed_ack` 确认整场完成范围，区分输入结束、片段定稿和整场完成。
+
+客户端通过 `NewV2` 创建，并用非空 `Resume` 配置启用自动恢复；`Resume=nil` 时仍使用 v2 协议，但不自动重连。启用恢复后默认整场最多五次尝试、每轮五秒恢复期限。`AttemptWindow > 0` 改为近期滑动计数，成功握手不清空尝试记录；jitter 默认关闭。超过恢复预算或原场状态已丢失时，客户端结束并报告失败，不自动新建会话续接。
+
+真实网络测试会自行启动服务，命令与覆盖范围见[同一会话多次断线](testing.md#同一会话多次断线)。设计依据见[客户端恢复契约](worklog/2026-10-08-client-v2-resume.md)，当前验收结论与限制见[第六阶段总结](worklog/2026-10-14-stage-six-summary.md)。
+
 ## 有限并发负载
 
 先启动上文的 Mock Worker 与 Gateway，再从项目根目录构建负载程序。使用直接运行的二进制测试 Ctrl+C/SIGTERM，避免混入 `go run` 工具进程的信号行为。
