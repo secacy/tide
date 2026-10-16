@@ -7,6 +7,7 @@
 | 位置 | 内容 | Git 管理 |
 | --- | --- | --- |
 | [MILESTONES.md](MILESTONES.md) | 阶段目标、进度、验收结论与证据缺口 | 是 |
+| [TODO.md](TODO.md) | 待探索需求、能力缺口、候选路线与验证问题；不表示方案已定或已排期 | 是 |
 | [command.md](command.md) | 当前可用命令、参数和运行方式 | 是 |
 | [testing.md](testing.md) | 测试入口、覆盖范围、显式实验开关及公共夹具组织 | 是 |
 | `development.md` | 本地开发协作约定 | 否；本地保留，由根 `.gitignore` 忽略 |
