@@ -1,5 +1,15 @@
 测试与回归入口见 [testing.md](testing.md)，仓库根目录可运行 `make help` 查看常用命令。
 
+真实模型 Worker 使用独立模块，在仓库根目录执行：
+
+```bash
+cd workers/sherpa
+go build -o /tmp/tide-sherpa-worker ./cmd/asr-worker
+/tmp/tide-sherpa-worker -model-dir /path/to/fixed-zipformer-model
+```
+
+当前仅支持 macOS/cgo/CPU，模型资源准备、参数、单场限制及显式运行验证见 [sherpa Worker 说明](../workers/sherpa/README.md)。下文 `cmd/asr-worker` 仍为 Mock Worker 的命令。
+
 ## wav转pcm
 ```bash
 ffmpeg \
