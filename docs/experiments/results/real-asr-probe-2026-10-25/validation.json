@@ -1,0 +1,31 @@
+{
+  "archive_files": 55,
+  "archive_readback_sha256_match": true,
+  "moved_frozen_verifier_exit": 0,
+  "source_hashes_match": {
+    "first": 6,
+    "final": 8
+  },
+  "first_source_note": "First snapshot restored after the reporting correction; every byte verified against the pre-run manifest SHA256",
+  "final_cases_reconciled": 4,
+  "report_corruption_counterexamples_rejected": 5,
+  "asset_hashes_verified": 7,
+  "fetcher_checked": "local file URL copy, existing-directory refusal, deliberately wrong SHA256 refusal",
+  "go_checks": [
+    "go test -race -count=1 ./...: passed",
+    "go vet ./...: passed"
+  ],
+  "first_reporting_issues": [
+    "Canceled run used whole planned input duration as RTF denominator; final canceled RTF is null",
+    "Leading padding count initialized before actual submission; final count follows actual Accept",
+    "Final text renamed last_text_snapshot to avoid implying segment finality"
+  ],
+  "binary_and_models_in_archive": false,
+  "limits": [
+    "exploratory single-process single-model probe",
+    "no human-verified reference or clinical quality evaluation",
+    "processed audio prefix remains unknown",
+    "no hard native cancellation guarantee",
+    "no Gateway/Worker integration or capacity measurement"
+  ]
+}

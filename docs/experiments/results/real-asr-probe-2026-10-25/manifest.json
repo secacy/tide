@@ -1,0 +1,86 @@
+{
+  "kind": "final tool acceptance probe; first run retained separately",
+  "started_utc": "2026-10-25T14:58:43.368352+00:00",
+  "model_revision": "98590b7ed6443e77b714204da2757d75e1a642f4",
+  "binding": "github.com/k2-fsa/sherpa-onnx-go-macos@v1.13.8",
+  "sources": {
+    "experiments/asrprobe/go.mod": "4e7bef733d05bd36f3a93b84a78d8c0c4b280463870fc89b38ad727a70710f73",
+    "experiments/asrprobe/probe_test.go": "9809af2f1df2346cfad2dd3c7b6a406c84f7f077679351afde3aa3789d32f0be",
+    "experiments/asrprobe/native.go": "aae0b895b38a099a2d2ba74df4c4d9b2251be3e833de20a1292371bbeed7488e",
+    "experiments/asrprobe/go.sum": "2d42cf4d03fa9f369d2972c2b44914f5fd5532cb4c3e8968e69b9e67b1decd92",
+    "experiments/asrprobe/fetch_assets.py": "e0d7563c57e5716af3630898e51c53a9229317cbb4729a6b9da2883adf8abc1b",
+    "experiments/asrprobe/README.md": "81441af22e6caa90bbe5c6bf9fc640ed6e12eb269d0984838f0ef1e89d2afc99",
+    "experiments/asrprobe/probe.go": "8a3642303a3101514c5c0d3fb1f2ccbb7bca623ff6e83f039108d78a1cc96f58",
+    "experiments/asrprobe/main.go": "046649e41cf1bbb4f4d0f085d7df399d77bad7ec612a0125d71324002f3b6d34"
+  },
+  "cases": [
+    {
+      "name": "speech-0",
+      "command": [
+        "/private/tmp/tide-asrprobe-final-2026-10-25",
+        "-model-dir",
+        "/private/tmp/tide-asrprobe-assets-2026-10-25",
+        "-threads",
+        "2",
+        "-output",
+        "/private/tmp/tide-asrprobe-run-2026-10-25-2/speech-0",
+        "-wav",
+        "/private/tmp/tide-asrprobe-assets-2026-10-25/test_wavs/0.wav"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "speech-1",
+      "command": [
+        "/private/tmp/tide-asrprobe-final-2026-10-25",
+        "-model-dir",
+        "/private/tmp/tide-asrprobe-assets-2026-10-25",
+        "-threads",
+        "2",
+        "-output",
+        "/private/tmp/tide-asrprobe-run-2026-10-25-2/speech-1",
+        "-wav",
+        "/private/tmp/tide-asrprobe-assets-2026-10-25/test_wavs/1.wav"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "silence",
+      "command": [
+        "/private/tmp/tide-asrprobe-final-2026-10-25",
+        "-model-dir",
+        "/private/tmp/tide-asrprobe-assets-2026-10-25",
+        "-threads",
+        "2",
+        "-output",
+        "/private/tmp/tide-asrprobe-run-2026-10-25-2/silence",
+        "-silence",
+        "2035ms"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "canceled",
+      "command": [
+        "/private/tmp/tide-asrprobe-final-2026-10-25",
+        "-model-dir",
+        "/private/tmp/tide-asrprobe-assets-2026-10-25",
+        "-threads",
+        "2",
+        "-output",
+        "/private/tmp/tide-asrprobe-run-2026-10-25-2/canceled",
+        "-wav",
+        "/private/tmp/tide-asrprobe-assets-2026-10-25/test_wavs/0.wav",
+        "-cancel-after",
+        "350ms"
+      ],
+      "exit_code": 1
+    }
+  ],
+  "native_libraries": {
+    "libsherpa-onnx-c-api.dylib": "579e3d8765b27eea31a6bf55018a7735e32f1f69734b35bf239c8cd332ae59ed",
+    "libsherpa-onnx-cxx-api.dylib": "fa3dfbc10af9af9f59d7b53386d47be99bc8e2ba12aab63ca5a3c91bbd483a00",
+    "libonnxruntime.dylib": "b0613d0ae53199a83b05fa48e169211498e9d40d54beaa372068ebe5ec5b0929"
+  },
+  "finished_utc": "2026-10-25T14:59:04.297294+00:00"
+}
