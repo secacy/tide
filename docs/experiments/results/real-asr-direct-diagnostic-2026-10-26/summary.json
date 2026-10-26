@@ -1,0 +1,55 @@
+{
+  "schema": "tide.asr-quality-direct-comparison.v1",
+  "planned": 2,
+  "completed": 2,
+  "unknown": 0,
+  "scope": "diagnostic samples selected after baseline; not an independent quality estimate",
+  "cases": [
+    {
+      "id": "q04",
+      "outcome": "completed",
+      "input_bytes": 365910,
+      "pcm_sha256": "d18c57c37a2c0996afed31c898a56b56224f88328f07c6490a6897324786da3e",
+      "reference": "我以前吃阿莫西林后身上起过疹子。这次没有吃阿莫西林，也没有吃其他抗生素。",
+      "gateway_text": "我以前吃阿莫西林后身上上起起起落落枕景疹疹子子姐姐这这这次没有吃吃阿莫西林也也没有吃其他抗上抗生生素素素",
+      "direct_text": "我以前吃阿莫西林后身上上起起起落落枕景疹疹子子姐姐这这这次没有吃吃阿莫西林也也没有吃其他抗上抗生生素素素",
+      "last_text_equal": true,
+      "changed_snapshots_equal": true,
+      "direct_changed_snapshots": 23,
+      "gateway_changed_snapshots": 23,
+      "direct_call_verification": {
+        "name": "q04",
+        "status": "completed_probe",
+        "submitted_bytes": 365910,
+        "decode_calls": 38,
+        "text_changes": 23,
+        "call_rtf": 0.07693347142193435
+      },
+      "direct_cer": 0.6060606060606061,
+      "gateway_cer": 0.6060606060606061
+    },
+    {
+      "id": "q05",
+      "outcome": "completed",
+      "input_bytes": 516096,
+      "pcm_sha256": "a6d580e7a3dfcbe65135b5a352bf8853081e0b323e6846bc96710903c326573b",
+      "reference": "今天早上体温是三十七点八摄氏度，昨天最高三十八点二摄氏度。我今年四十二岁。",
+      "gateway_text": "今天天早上体温是六十七点八十之度昨明天最高到三十八点二摄氏度我我今年今年四十二二十",
+      "direct_text": "今天天早上体温是六十七点八十之度昨明天最高到三十八点二摄氏度我我今年今年四十二二十",
+      "last_text_equal": true,
+      "changed_snapshots_equal": true,
+      "direct_changed_snapshots": 28,
+      "gateway_changed_snapshots": 28,
+      "direct_call_verification": {
+        "name": "q05",
+        "status": "completed_probe",
+        "submitted_bytes": 516096,
+        "decode_calls": 52,
+        "text_changes": 28,
+        "call_rtf": 0.08509433172123015
+      },
+      "direct_cer": 0.3235294117647059,
+      "gateway_cer": 0.3235294117647059
+    }
+  ]
+}

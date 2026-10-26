@@ -48,3 +48,16 @@ PYTHONDONTWRITEBYTECODE=1 python3 experiments/asrquality/score.py \
 事实检查输出待人工审核项目，工具不自动认定医学语义正确。可以另外保存带原文依据、注明审核者的判断；助手的文字对照必须注明为助手初评，不能标成人工或临床标注。
 
 原始音频和 WAV 保留在本地；提交代码、条件、摘要及结果文本时，不包含音频或模型权重。仅有哈希无法恢复音频，异机重放需要另行取得同一份本地素材。
+
+## 直接探针对照
+
+针对首轮 q04/q05 的错误，另用既有 `experiments/asrprobe` 独立调用 SDK，不传其 `-reference` 参数。固定模型、同一 WAV/PCM、100ms 块、padding 和解码配置，只移除生产适配与网络链路；完整步骤与结果见[定位记录](../../docs/worklog/2026-10-26-real-asr-direct-diagnostic.md)。
+
+`compare_probe.py` 是该固定两段诊断的复核入口，复用探针 `verify.py` 及当前 `score.py`，核对原始消息、输入和模型身份，再原样比较变化全文与最后全文。它读取诊断目录的执行前清单、基线副本、执行记录及两个探针目录，不是通用语料采集器。
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 experiments/asrquality/compare_probe.py \
+  /tmp/tide-quality-direct-evidence --output /tmp/tide-quality-direct-evidence/comparison.json
+```
+
+冻结目录结构与可搬移复算命令随[诊断证据](../../docs/experiments/results/real-asr-direct-diagnostic-2026-10-26/README.md)提供。相邻相同快照可忽略末尾重复 final，文本内部任何字符均不去重；本轮不比较两路延迟。
