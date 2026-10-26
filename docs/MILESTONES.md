@@ -27,6 +27,8 @@
 
 已完成[真实 ASR 准入与背压设计评审](worklog/2026-10-26-real-asr-admission-design.md)：Gateway 总名额不保证空闲 Worker 被利用，采用原子 TryAcquire/Lease 的本地占用轮询，Worker 仍负责实际模型准入。2026-10-27 [本地占用池实现与组件验收](worklog/2026-10-27-worker-local-capacity-validation.md)已完成：配置隔离、错峰复用、并发上限与幂等释放测试通过 race/vet。**Gateway 集成及[两 Worker 对照](experiments/real-asr-admission-comparison.md)待实现，没有新的真实容量或调度收益数据。** 未知处理进度预算仍关闭，应用缓冲及发送/收尾期限不等于模型积压保护。
 
+2026-10-27 已形成[Gateway Lease 集成指导](worklog/2026-10-27-gateway-worker-lease-integration.md)：明确旧选择器适配、v1 完整退出后释放、v2 准备/提交/运行三阶段交接，以及本地清理先于名额归还的顺序。核心实现待开发者完成，随后由助手迁移测试夹具并补所有权验收。
+
 | 阶段 | 状态 | 目标与主要工作 | 完成依据 / 验收标准 |
 | --- | --- | --- | --- |
 | 1. 最小双向流 | 已完成 | 打通客户端与 Mock Worker 的 gRPC 双向流，理解发送、接收和半关闭 | 音频仍在发送时能收到结果；输入结束后能继续收到尾部结果 |

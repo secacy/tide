@@ -179,6 +179,8 @@ func (l *WorkerLease) Release()
 
 ## 随后如何接入 Gateway
 
+2026-10-27 已补充[逐文件集成指导](2026-10-27-gateway-worker-lease-integration.md)，包括私有 Lease 的旧策略适配入口和准备失败回滚顺序；以下保留接口选择依据。
+
 新增明确的分配接口，不通过可选 type assertion 猜测选择器是否有容量，也不改变旧 Pick 的语义：
 
 ```go
