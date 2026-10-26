@@ -20,7 +20,7 @@
 
 ## 阶段总览
 
-2026-10-26 [第七阶段中途评审](worklog/2026-10-26-stage-seven-review.md)后，已完成六段自录模拟问诊[识别质量基线](experiments/real-asr-quality-baseline.md)：6/6 完整结束，CER=35%（S=7、D=0、I=63，N=200），出现重复字与体温错误。录制者确认参考，关键事实仅助手初评、人工审核待完成；见[结果与证据](worklog/2026-10-26-real-asr-quality-results.md)。随后 q04/q05 [直接探针对照](worklog/2026-10-26-real-asr-direct-diagnostic.md)复现相同全文及 23/28 次变化；[六段解码对照](worklog/2026-10-26-real-asr-decoding-results.md)中 greedy/beam 各 6/6，CER=35%/42.5%，beam/4 增加错误且未修正体温，本轮保持生产 greedy。下一步候选中文流式模型同素材对照待设计；临床质量、独立新素材、长对话和真实容量仍未验收。
+2026-10-26 [第七阶段中途评审](worklog/2026-10-26-stage-seven-review.md)后，已完成六段自录模拟问诊[识别质量基线](experiments/real-asr-quality-baseline.md)：6/6 完整结束，CER=35%（S=7、D=0、I=63，N=200），出现重复字与体温错误。录制者确认参考，关键事实仅助手初评、人工审核待完成；见[结果与证据](worklog/2026-10-26-real-asr-quality-results.md)。随后 q04/q05 [直接探针对照](worklog/2026-10-26-real-asr-direct-diagnostic.md)复现相同全文及 23/28 次变化；[六段解码对照](worklog/2026-10-26-real-asr-decoding-results.md)中 greedy/beam 各 6/6，CER=35%/42.5%，beam/4 增加错误且未修正体温，本轮保持生产 greedy。已完成[候选模型对照设计](worklog/2026-10-26-real-asr-model-comparison-design.md)：首选同运行时的中文流式 Zipformer 2025 候选，先冻结资产与验证探针配置，再做六对测量；候选尚未下载或验收。临床质量、独立新素材、长对话和真实容量仍未验收。
 
 | 阶段 | 状态 | 目标与主要工作 | 完成依据 / 验收标准 |
 | --- | --- | --- | --- |
