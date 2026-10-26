@@ -53,6 +53,17 @@ TIDE_SHERPA_EVIDENCE_DIR=/tmp/tide-sherpa-evidence-new \
 
 可用 `python3 verify.py /tmp/tide-sherpa-evidence-new` 独立核对摘要、逐条消息与创建/释放日志。[本机证据归档](../../docs/experiments/results/sherpa-worker-smoke-2026-10-26/README.md)保留一次完整接通运行。
 
+生产 Gateway 处理器和 v2 客户端的真实网络闭环另行启用：
+
+```sh
+TIDE_SHERPA_MODEL_DIR=/tmp/tide-sherpa-model \
+TIDE_SHERPA_WORKER_BIN=/tmp/tide-sherpa-worker \
+TIDE_SHERPA_GATEWAY_EVIDENCE_DIR=/tmp/tide-sherpa-gateway-evidence-new \
+  go test -v -count=1 ./cmd/asr-worker -run '^TestRealWorkerGatewayV2$'
+```
+
+该验证在临时 HTTP 端口组装生产 Gateway/V2Client，Worker 是独立进程；它检查音频转发 SHA、快照替换、completed 和自然清理，不覆盖 cmd/gateway 启动与演示客户端。保留默认十秒恢复窗口，因此取消场景会等待窗口到期，全部场景约三十秒。消息中不保存 ready 凭据。最终结果、首次计时修正及复核命令见[闭环证据](../../docs/experiments/results/real-asr-gateway-v2-2026-10-26/README.md)。
+
 ## 当前边界
 
 - 不发送 AudioProgress。专用 Gateway 接通配置必须显式 `MaxPendingAudioBytes=0`；这项处理积压保护当前不可用，不能用模型接收量或文本位置代替。
@@ -61,4 +72,4 @@ TIDE_SHERPA_EVIDENCE_DIR=/tmp/tide-sherpa-evidence-new \
 - 部分绑定方法不返回错误，Go stream 包装对象也不暴露底层 C 指针状态；不承诺捕获全部原生故障。没有新增处理位置、说话人或准确率保证。
 - 动态库按 SDK 自带 rpath 加载，移动二进制仍需保留相应原生库路径；当前没有自包含分发包。
 
-接入范围与后续 Gateway 闭环见[组装记录](../../docs/worklog/2026-10-26-sherpa-engine-assembly.md)。
+原生接入边界见[组装记录](../../docs/worklog/2026-10-26-sherpa-engine-assembly.md)，短音频完整链路见[Gateway/v2 验收](../../docs/worklog/2026-10-26-real-asr-gateway-v2.md)。

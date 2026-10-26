@@ -195,6 +195,69 @@ func readTestPCM(path string) ([]byte, error) {
 	return pcm, nil
 }
 
+// realWorkerProcess 是显式原生验证共用的独立进程夹具。
+// Cleanup 仅作为失败兜底；正常场景先检查自然清理，再主动停服。
+type realWorkerProcess struct {
+	cmd     *exec.Cmd
+	waited  <-chan struct{}
+	waitErr *error
+	logFile *os.File
+	address string
+}
+
+func startRealWorkerProcess(t *testing.T, bin, modelDir, out string) *realWorkerProcess {
+	t.Helper()
+	logFile, err := os.Create(filepath.Join(out, "server.log"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = logFile.Close() })
+	capture := &addressCapture{address: make(chan string, 1)}
+	cmd := exec.Command(bin, "-model-dir="+modelDir, "-listen=127.0.0.1:0", "-threads=2")
+	cmd.Stdout, cmd.Stderr = logFile, io.MultiWriter(logFile, capture)
+	if err := cmd.Start(); err != nil {
+		t.Fatal(err)
+	}
+	waited := make(chan struct{})
+	var waitErr error
+	go func() { waitErr = cmd.Wait(); close(waited) }()
+	t.Cleanup(func() {
+		select {
+		case <-waited:
+		default:
+			_ = cmd.Process.Kill()
+			<-waited
+		}
+	})
+	var address string
+	select {
+	case address = <-capture.address:
+	case <-waited:
+		t.Fatalf("process exited during startup: %v", waitErr)
+	case <-time.After(5 * time.Second):
+		t.Fatal("process did not listen")
+	}
+	return &realWorkerProcess{cmd: cmd, waited: waited, waitErr: &waitErr, logFile: logFile, address: address}
+}
+
+func (p *realWorkerProcess) stop(t *testing.T) {
+	t.Helper()
+	if err := p.cmd.Process.Signal(syscall.SIGTERM); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case <-p.waited:
+		if *p.waitErr != nil {
+			t.Fatalf("idle shutdown failed: %v", *p.waitErr)
+		}
+	case <-time.After(10 * time.Second):
+		t.Fatal("idle process failed to exit")
+	}
+	if err := p.logFile.Sync(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // TestRealWorkerProcess 使用非 race 可执行程序，显式启用才执行真实模型。
 // 普通测试不依赖模型、下载或预构建程序；超时只用于测试兜底。
 func TestRealWorkerProcess(t *testing.T) {
@@ -226,36 +289,8 @@ func TestRealWorkerProcess(t *testing.T) {
 			t.Fatalf("process check %s: %v, %s", check.name, err, data)
 		}
 	}
-	logFile, err := os.Create(filepath.Join(out, "server.log"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = logFile.Close() })
-	capture := &addressCapture{address: make(chan string, 1)}
-	cmd := exec.Command(bin, "-model-dir="+modelDir, "-listen=127.0.0.1:0", "-threads=2")
-	cmd.Stdout, cmd.Stderr = logFile, io.MultiWriter(logFile, capture)
-	if err := cmd.Start(); err != nil {
-		t.Fatal(err)
-	}
-	waited := make(chan struct{})
-	var waitErr error
-	go func() { waitErr = cmd.Wait(); close(waited) }()
-	t.Cleanup(func() {
-		select {
-		case <-waited:
-		default:
-			_ = cmd.Process.Kill()
-			<-waited
-		}
-	})
-	var address string
-	select {
-	case address = <-capture.address:
-	case <-waited:
-		t.Fatalf("process exited during startup: %v", waitErr)
-	case <-time.After(5 * time.Second):
-		t.Fatal("process did not listen")
-	}
+	process := startRealWorkerProcess(t, bin, modelDir, out)
+	address := process.address
 	conn, err := grpc.NewClient("passthrough:///"+address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatal(err)
@@ -323,20 +358,7 @@ func TestRealWorkerProcess(t *testing.T) {
 		}
 		time.Sleep(50 * time.Millisecond)
 	}
-	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
-		t.Fatal(err)
-	}
-	select {
-	case <-waited:
-		if waitErr != nil {
-			t.Fatalf("idle shutdown failed: %v", waitErr)
-		}
-	case <-time.After(10 * time.Second):
-		t.Fatal("idle process failed to exit")
-	}
-	if err := logFile.Sync(); err != nil {
-		t.Fatal(err)
-	}
+	process.stop(t)
 	logs, err := os.ReadFile(filepath.Join(out, "server.log"))
 	if err != nil {
 		t.Fatal(err)
