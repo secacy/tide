@@ -56,9 +56,10 @@ func (r *gatewayRPCTrace) snapshot() gatewayRPCSnapshot {
 
 // gatewayObservedClient 只包裹实际 TCP 客户端，不增加 RPC 或修改消息。
 type gatewayObservedClient struct {
-	client asrv1.ASRServiceClient
-	mu     sync.Mutex
-	calls  []*gatewayRPCTrace
+	client   asrv1.ASRServiceClient
+	mu       sync.Mutex
+	calls    []*gatewayRPCTrace
+	archived int // 已落盘且移除的历史调用数；累计编号不会复用。
 }
 
 func (c *gatewayObservedClient) StreamingRecognize(ctx context.Context, opts ...grpc.CallOption) (asrv1.ASRService_StreamingRecognizeClient, error) {
@@ -77,6 +78,37 @@ func (c *gatewayObservedClient) traces() []*gatewayRPCTrace {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	return append([]*gatewayRPCTrace(nil), c.calls...)
+}
+
+// traceForCall 校验累计 RPC 数，允许历史 trace 已在自然清理后释放。
+func (c *gatewayObservedClient) traceForCall(expected int) (*gatewayRPCTrace, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if expected != c.archived+len(c.calls) || expected <= c.archived {
+		return nil, errors.New("unexpected Worker RPC count")
+	}
+	return c.calls[expected-c.archived-1], nil
+}
+
+// releaseCompleted 仅由驱动在证据落盘、Gateway 自然清理之后调用。
+// 检查 Recv 已观察到终止，避免丢弃仍在写入的 trace；编号继续累计。
+func (c *gatewayObservedClient) releaseCompleted(expected int) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if expected != c.archived+len(c.calls) {
+		return errors.New("unexpected archive count")
+	}
+	for _, trace := range c.calls {
+		trace.mu.Lock()
+		terminal := trace.terminal
+		trace.mu.Unlock()
+		if terminal == "" {
+			return errors.New("cannot archive live RPC")
+		}
+	}
+	c.calls = nil
+	c.archived = expected
+	return nil
 }
 
 type gatewayObservedStream struct {

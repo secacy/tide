@@ -1,0 +1,337 @@
+{
+  "schema": "tide.real-backend-reconciled.v1",
+  "normal_completed": 5,
+  "normal_planned": 5,
+  "cancel_expected": 5,
+  "cancel_planned": 5,
+  "warmup_completed": 1,
+  "models_created": 11,
+  "models_closed": 11,
+  "cases": [
+    {
+      "name": "warmup",
+      "warmup": true,
+      "cancel": false,
+      "load_ms": 626.389541,
+      "run_ns": 10047377750,
+      "first_text_ns": 1028266458,
+      "tail_ns": 43454333,
+      "return_to_cleanup_ns": 862333
+    },
+    {
+      "name": "r1_cancel",
+      "warmup": false,
+      "cancel": true,
+      "load_ms": 576.464167,
+      "run_ns": 1031502666,
+      "first_text_ns": 1031265083,
+      "tail_ns": null,
+      "return_to_cleanup_ns": 10021760500,
+      "cancel_to_return_ns": 107958,
+      "cancel_to_native_close_observed_ns": 10020821500,
+      "cancel_to_gateway_idle_observed_ns": 10011548042
+    },
+    {
+      "name": "r1_normal",
+      "warmup": false,
+      "cancel": false,
+      "load_ms": 529.621083,
+      "run_ns": 10057899125,
+      "first_text_ns": 1030731292,
+      "tail_ns": 53506292,
+      "return_to_cleanup_ns": 762458
+    },
+    {
+      "name": "r2_cancel",
+      "warmup": false,
+      "cancel": true,
+      "load_ms": 551.766,
+      "run_ns": 1020049292,
+      "first_text_ns": 1019835750,
+      "tail_ns": null,
+      "return_to_cleanup_ns": 10022896375,
+      "cancel_to_return_ns": 100042,
+      "cancel_to_native_close_observed_ns": 10021426167,
+      "cancel_to_gateway_idle_observed_ns": 10011456250
+    },
+    {
+      "name": "r2_normal",
+      "warmup": false,
+      "cancel": false,
+      "load_ms": 497.175333,
+      "run_ns": 10045135292,
+      "first_text_ns": 1027360958,
+      "tail_ns": 42770500,
+      "return_to_cleanup_ns": 449291
+    },
+    {
+      "name": "r3_cancel",
+      "warmup": false,
+      "cancel": true,
+      "load_ms": 601.97025,
+      "run_ns": 1023175875,
+      "first_text_ns": 1022942458,
+      "tail_ns": null,
+      "return_to_cleanup_ns": 10020877833,
+      "cancel_to_return_ns": 138708,
+      "cancel_to_native_close_observed_ns": 10020946666,
+      "cancel_to_gateway_idle_observed_ns": 10011500166
+    },
+    {
+      "name": "r3_normal",
+      "warmup": false,
+      "cancel": false,
+      "load_ms": 526.636,
+      "run_ns": 10057132542,
+      "first_text_ns": 1033950042,
+      "tail_ns": 53835083,
+      "return_to_cleanup_ns": 992417
+    },
+    {
+      "name": "r4_cancel",
+      "warmup": false,
+      "cancel": true,
+      "load_ms": 545.442625,
+      "run_ns": 1034164875,
+      "first_text_ns": 1033734500,
+      "tail_ns": null,
+      "return_to_cleanup_ns": 10021165958,
+      "cancel_to_return_ns": 203000,
+      "cancel_to_native_close_observed_ns": 10021299250,
+      "cancel_to_gateway_idle_observed_ns": 10011845792
+    },
+    {
+      "name": "r4_normal",
+      "warmup": false,
+      "cancel": false,
+      "load_ms": 549.887833,
+      "run_ns": 10066346792,
+      "first_text_ns": 1033756709,
+      "tail_ns": 62598125,
+      "return_to_cleanup_ns": 6218958
+    },
+    {
+      "name": "r5_cancel",
+      "warmup": false,
+      "cancel": true,
+      "load_ms": 536.17625,
+      "run_ns": 1025695458,
+      "first_text_ns": 1025420292,
+      "tail_ns": null,
+      "return_to_cleanup_ns": 10022886542,
+      "cancel_to_return_ns": 134708,
+      "cancel_to_native_close_observed_ns": 10021900417,
+      "cancel_to_gateway_idle_observed_ns": 10011912708
+    },
+    {
+      "name": "r5_normal",
+      "warmup": false,
+      "cancel": false,
+      "load_ms": 505.955125,
+      "run_ns": 10041560917,
+      "first_text_ns": 1024327292,
+      "tail_ns": 35860958,
+      "return_to_cleanup_ns": 733375
+    }
+  ],
+  "idle": [
+    {
+      "name": "warmup",
+      "samples": 10,
+      "worker_rss_bytes": {
+        "min": 321470464,
+        "max": 321470464
+      },
+      "driver_heap_bytes": {
+        "min": 2699088,
+        "max": 3170304
+      },
+      "driver_goroutines": {
+        "min": 11,
+        "max": 11
+      }
+    },
+    {
+      "name": "r1_cancel",
+      "samples": 4,
+      "worker_rss_bytes": {
+        "min": 590725120,
+        "max": 590725120
+      },
+      "driver_heap_bytes": {
+        "min": 3106904,
+        "max": 3263480
+      },
+      "driver_goroutines": {
+        "min": 11,
+        "max": 11
+      }
+    },
+    {
+      "name": "r1_normal",
+      "samples": 4,
+      "worker_rss_bytes": {
+        "min": 651902976,
+        "max": 651902976
+      },
+      "driver_heap_bytes": {
+        "min": 2557024,
+        "max": 2713600
+      },
+      "driver_goroutines": {
+        "min": 11,
+        "max": 11
+      }
+    },
+    {
+      "name": "r2_cancel",
+      "samples": 4,
+      "worker_rss_bytes": {
+        "min": 652460032,
+        "max": 652460032
+      },
+      "driver_heap_bytes": {
+        "min": 2961344,
+        "max": 3118880
+      },
+      "driver_goroutines": {
+        "min": 11,
+        "max": 11
+      }
+    },
+    {
+      "name": "r2_normal",
+      "samples": 4,
+      "worker_rss_bytes": {
+        "min": 642842624,
+        "max": 642842624
+      },
+      "driver_heap_bytes": {
+        "min": 2277952,
+        "max": 2434656
+      },
+      "driver_goroutines": {
+        "min": 11,
+        "max": 11
+      }
+    },
+    {
+      "name": "r3_cancel",
+      "samples": 4,
+      "worker_rss_bytes": {
+        "min": 655114240,
+        "max": 655114240
+      },
+      "driver_heap_bytes": {
+        "min": 2041264,
+        "max": 2197840
+      },
+      "driver_goroutines": {
+        "min": 11,
+        "max": 11
+      }
+    },
+    {
+      "name": "r3_normal",
+      "samples": 4,
+      "worker_rss_bytes": {
+        "min": 661274624,
+        "max": 661274624
+      },
+      "driver_heap_bytes": {
+        "min": 2953072,
+        "max": 3109648
+      },
+      "driver_goroutines": {
+        "min": 11,
+        "max": 11
+      }
+    },
+    {
+      "name": "r4_cancel",
+      "samples": 4,
+      "worker_rss_bytes": {
+        "min": 648544256,
+        "max": 648544256
+      },
+      "driver_heap_bytes": {
+        "min": 3001056,
+        "max": 3157856
+      },
+      "driver_goroutines": {
+        "min": 11,
+        "max": 11
+      }
+    },
+    {
+      "name": "r4_normal",
+      "samples": 3,
+      "worker_rss_bytes": {
+        "min": 631013376,
+        "max": 631013376
+      },
+      "driver_heap_bytes": {
+        "min": 2404696,
+        "max": 2509096
+      },
+      "driver_goroutines": {
+        "min": 11,
+        "max": 11
+      }
+    },
+    {
+      "name": "r5_cancel",
+      "samples": 4,
+      "worker_rss_bytes": {
+        "min": 661913600,
+        "max": 661913600
+      },
+      "driver_heap_bytes": {
+        "min": 2585264,
+        "max": 2741872
+      },
+      "driver_goroutines": {
+        "min": 11,
+        "max": 11
+      }
+    },
+    {
+      "name": "r5_normal",
+      "samples": 4,
+      "worker_rss_bytes": {
+        "min": 662126592,
+        "max": 662126592
+      },
+      "driver_heap_bytes": {
+        "min": 2371864,
+        "max": 2528456
+      },
+      "driver_goroutines": {
+        "min": 11,
+        "max": 11
+      }
+    }
+  ],
+  "samples": 292,
+  "sampling_gaps": [],
+  "rss_unavailable_indices": [],
+  "sampling_monotonic_max_gap_ns": 509398500,
+  "sampling_wall_max_gap_ns": 509414000,
+  "sample_duration_max_ns": 13846667,
+  "resource_sampling_quality_ok": true,
+  "worker_rss_sampled_max_bytes": 662241280,
+  "normal_first_text_ns": {
+    "min": 1024327292,
+    "max": 1033950042
+  },
+  "normal_tail_ns": {
+    "min": 35860958,
+    "max": 62598125
+  },
+  "limitations": [
+    "five rounds; not long-dialogue or stable capacity validation",
+    "driver Go heap/goroutines include Gateway, client and test tool",
+    "RSS includes native allocator/cache/mappings; sampled maximum is not exact peak",
+    "cancel cleanup includes default 10-second resume policy"
+  ]
+}

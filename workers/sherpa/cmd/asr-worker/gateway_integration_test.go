@@ -97,7 +97,20 @@ func waitGatewayNaturalCleanup(g *gateway.Gateway, logPath string, expectedClose
 	}
 }
 
+// gatewayCaseHooks 仅为实验观察提供本进程时刻；不改变客户端/网关语义。
+// 回调随 Run 串行执行，WaitCleanup 在 Run 返回后执行。
+type gatewayCaseHooks struct {
+	Started     func(time.Time)                // Run 起点，包含后续握手与模型加载。
+	Canceled    func(time.Time, int64, uint64) // 取消触发时刻、已读字节、正在回调的结果序号。
+	Returned    func(time.Time)                // Run 已等待本地任务退出，但远端可能仍保留会话。
+	WaitCleanup func(int, time.Duration) error // 累计预期释放数与本场观察预算。
+}
+
 func runGatewayCase(t *testing.T, g *gateway.Gateway, observer *gatewayObservedClient, url, out, name string, pcm []byte, cancelOnText bool, expectedClosed int) (gatewayCaseReport, error) {
+	return runGatewayCaseObserved(t, g, observer, url, out, name, pcm, cancelOnText, expectedClosed, gatewayCaseHooks{})
+}
+
+func runGatewayCaseObserved(t *testing.T, g *gateway.Gateway, observer *gatewayObservedClient, url, out, name string, pcm []byte, cancelOnText bool, expectedClosed int, hooks gatewayCaseHooks) (gatewayCaseReport, error) {
 	t.Helper()
 	sum := sha256.Sum256(pcm)
 	report := gatewayCaseReport{Name: name, InputBytes: len(pcm), InputSHA: hex.EncodeToString(sum[:])}
@@ -113,16 +126,20 @@ func runGatewayCase(t *testing.T, g *gateway.Gateway, observer *gatewayObservedC
 	client, err := wsclient.NewV2(wsclient.V2Config{
 		URL: url, ChunkBytes: 3200, Realtime: true,
 		OnResult: func(ctx context.Context, result wsprotocol.SequencedResultMessage, at time.Time) error {
-			if err := consumer.apply(ctx, result, at.Sub(start).Nanoseconds(), source.read.Load(), file); err != nil {
+			read := source.read.Load()
+			if err := consumer.apply(ctx, result, at.Sub(start).Nanoseconds(), read, file); err != nil {
 				return err
 			}
 			if report.FirstTextNS == nil && strings.TrimSpace(result.Text) != "" {
 				ns := at.Sub(start).Nanoseconds()
 				report.FirstTextNS = &ns
-				report.FirstTextBeforeEnd = source.read.Load() < int64(len(pcm))
+				report.FirstTextBeforeEnd = read < int64(len(pcm))
 			}
 			if cancelOnText && !result.IsFinal && strings.TrimSpace(result.Text) != "" {
 				// 回调已更新示例文本，但取消可能先于客户端提交 AppliedSeq。
+				if hooks.Canceled != nil {
+					hooks.Canceled(time.Now(), source.read.Load(), result.Seq)
+				}
 				cancel()
 			}
 			return nil
@@ -134,8 +151,15 @@ func runGatewayCase(t *testing.T, g *gateway.Gateway, observer *gatewayObservedC
 	}
 	start = time.Now()
 	source.start = start
+	if hooks.Started != nil {
+		hooks.Started(start)
+	}
 	report.Client, err = client.Run(ctx, source)
-	report.RunNS = time.Since(start).Nanoseconds()
+	returned := time.Now()
+	report.RunNS = returned.Sub(start).Nanoseconds()
+	if hooks.Returned != nil {
+		hooks.Returned(returned)
+	}
 	report.ActiveAtReturn = g.Snapshot().ActiveSessions
 	report.Canceled = errors.Is(err, context.Canceled)
 	if err != nil {
@@ -163,16 +187,22 @@ func runGatewayCase(t *testing.T, g *gateway.Gateway, observer *gatewayObservedC
 	if cancelOnText {
 		cleanupBudget = 15 * time.Second // 包含默认 10 秒恢复窗口。
 	}
-	cleanupErr := waitGatewayNaturalCleanup(g, filepath.Join(out, "server.log"), expectedClosed, cleanupBudget)
+	waitCleanup := hooks.WaitCleanup
+	if waitCleanup == nil {
+		waitCleanup = func(expected int, budget time.Duration) error {
+			return waitGatewayNaturalCleanup(g, filepath.Join(out, "server.log"), expected, budget)
+		}
+	}
+	cleanupErr := waitCleanup(expectedClosed, cleanupBudget)
 	// 从已记录的 Run 返回点计时，包含保存中间记录及等待观察的开销。
 	report.CleanupWaitNS = time.Since(start).Nanoseconds() - report.RunNS
 	report.ActiveAfterCleanup = g.Snapshot().ActiveSessions
 	report.NativeClosed = nativeCloseCount(filepath.Join(out, "server.log"))
-	traces := observer.traces()
-	if len(traces) != expectedClosed {
-		return report, errors.New("unexpected Worker RPC count")
+	trace, traceErr := observer.traceForCall(expectedClosed)
+	if traceErr != nil {
+		return report, traceErr
 	}
-	report.RPC = traces[expectedClosed-1].snapshot()
+	report.RPC = trace.snapshot()
 	writeGatewayJSON(t, filepath.Join(out, name+"-grpc.json"), report.RPC)
 	if cleanupErr != nil {
 		return report, cleanupErr

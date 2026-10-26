@@ -64,6 +64,13 @@ TIDE_SHERPA_GATEWAY_EVIDENCE_DIR=/tmp/tide-sherpa-gateway-evidence-new \
 
 该验证在临时 HTTP 端口组装生产 Gateway/V2Client，Worker 是独立进程；它检查音频转发 SHA、快照替换、completed 和自然清理，不覆盖 cmd/gateway 启动与演示客户端。保留默认十秒恢复窗口，因此取消场景会等待窗口到期，全部场景约三十秒。消息中不保存 ready 凭据。最终结果、首次计时修正及复核命令见[闭环证据](../../docs/experiments/results/real-asr-gateway-v2-2026-10-26/README.md)。
 
+
+## 连续会话与资源采样
+
+同一 Worker 进程的五轮取消/正常会话基线见 [asrbackend 工具说明](../../experiments/asrbackend/README.md)。显式设置 `TIDE_SHERPA_BACKEND_EVIDENCE_DIR` 才启用 `TestRealWorkerBackendBaseline`；它保留默认十秒恢复窗口，约三分钟，使用非 race 驱动和 Worker。运行前冻结源码与输入/模型/程序摘要，运行后独立核对逐场证据、原生创建/释放、网关归零及 500ms 资源采样。
+
+该实验区分客户端返回、原生释放返回与 Gateway 会话归零。RSS 包含原生堆、映射与分配器缓存，Go 堆包含客户端及工具；五轮结果只描述重复短会话行为。
+
 ## 当前边界
 
 - 不发送 AudioProgress。专用 Gateway 接通配置必须显式 `MaxPendingAudioBytes=0`；这项处理积压保护当前不可用，不能用模型接收量或文本位置代替。
