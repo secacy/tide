@@ -1,0 +1,41 @@
+{
+  "schema": "tide.asrprobe.model-assets.v1",
+  "profiles": {
+    "zipformer-bilingual-2023": {
+      "source": {
+        "base_url": "https://huggingface.co/csukuangfj/sherpa-onnx-streaming-zipformer-bilingual-zh-en-2023-02-20/resolve/98590b7ed6443e77b714204da2757d75e1a642f4/",
+        "revision": "98590b7ed6443e77b714204da2757d75e1a642f4",
+        "license_status": "model-card-declares-apache-2.0"
+      },
+      "files": {
+        "encoder-epoch-99-avg-1.int8.onnx": "8fa764187a261844f859d7143ebaa563af5d10adfece4c18a8f414c88cba2a9b",
+        "decoder-epoch-99-avg-1.int8.onnx": "1a70c593d71e53f023f5f55b0b4cfff5055abb786ee3992e5f63dc2e273cc4fa",
+        "joiner-epoch-99-avg-1.int8.onnx": "1ed689c5ed19dbaa725d9d191bb4822b5f4855a39e1ffd28cbc1f340d25b2ee0",
+        "tokens.txt": "a8e0e4ec53810e433789b54a5c0134a7eaa2ffca595a6334d54c00da858841d3"
+      }
+    },
+    "zipformer-zh-2025": {
+      "source": {
+        "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-streaming-zipformer-zh-int8-2025-06-30.tar.bz2",
+        "asset_id": 268558776,
+        "size": 132634597,
+        "sha256": "5a2832047ea1f97dd0dc595b816c230c4bafad65cfc0341fa57517cadc50afd0",
+        "created_at": "2025-06-30T07:04:07Z",
+        "updated_at": "2025-06-30T07:04:12Z",
+        "license_status": "not-stated-in-export-bundle; upstream-card-gated; unresolved"
+      },
+      "files": {
+        "encoder.int8.onnx": "5ac51e27981bb4dab01bb9be4958453ba50c3b61c063ddda0eab23fd3671aa4f",
+        "decoder.onnx": "06522ad63cec0fdf6809f4e1db9bb4f7d710c34582e3b35db62ac60eccafac7e",
+        "joiner.int8.onnx": "b34584dc6f561089e1d747fedebb3765f2caa72c927ef54d7ca55e5ae40a814b",
+        "tokens.txt": "6193c7ea1c96d0d9a1e9652789b40d13a8a913b434a5451e93158f5a09fd6652"
+      },
+      "auxiliary_files": {
+        "README.md": "24a953594138ebd61a4e60637febcff1cecd4f79ed05632109a937b74f9ebcd7",
+        "test_wavs/0.wav": "668bf8df51a10027b84d5d8816a1ce11ae93545538dc05cfe2aa6811d399c250",
+        "test_wavs/1.wav": "30edbabea84ca4c076f5b43bb44495f436f6711319c32a200d3fc5c67c1fee1d",
+        "test_wavs/8k.wav": "0ed3bddacf0a23477d2b3c07ff9c24ad9c1fc3b31cdd47cb0773441e8e045cde"
+      }
+    }
+  }
+}

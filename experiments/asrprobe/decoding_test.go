@@ -13,13 +13,17 @@ func TestSearchSettingsReachNativeConfigWithoutChangingModel(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	base := recognizerConfig("fixed-model", 2, greedy)
+	profile, err := lookupModelProfile(legacyProfile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	base := recognizerConfig("fixed-model", profile, 2, greedy)
 	for _, paths := range []int{1, 4, 16} {
 		beam, err := validateDecoding("modified_beam_search", paths)
 		if err != nil {
 			t.Fatal(err)
 		}
-		cfg := recognizerConfig("fixed-model", 2, beam)
+		cfg := recognizerConfig("fixed-model", profile, 2, beam)
 		if cfg.DecodingMethod != "modified_beam_search" || cfg.MaxActivePaths != paths || cfg.EnableEndpoint != 0 || cfg.FeatConfig.SampleRate != 16000 || cfg.FeatConfig.FeatureDim != 80 {
 			t.Fatalf("search/input settings not forwarded: %+v", cfg)
 		}

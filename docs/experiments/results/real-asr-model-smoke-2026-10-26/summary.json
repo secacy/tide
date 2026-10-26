@@ -1,0 +1,173 @@
+[
+  {
+    "name": "speech-0",
+    "profile": "zipformer-zh-2025",
+    "verification": {
+      "name": "speech-0",
+      "status": "completed_probe",
+      "submitted_bytes": 179568,
+      "decode_calls": 19,
+      "text_changes": 14,
+      "call_rtf": 0.10531828316849327
+    },
+    "metrics": {
+      "status": "completed_probe",
+      "input_bytes": 179568,
+      "submitted_bytes": 179568,
+      "leading_padding_samples": 4800,
+      "trailing_padding_samples": 9600,
+      "decode_calls": 19,
+      "text_changes": 14,
+      "last_text_snapshot": "对我做了介绍哈那么我想说的是呢大家如果对我的研究感兴趣呢",
+      "input_finished": true,
+      "close_returned": true,
+      "first_nonempty_text_ns": 824577542,
+      "first_text_before_input_end": true,
+      "max_schedule_lag_ns": 1685750,
+      "engine_call_ns": 590993546,
+      "call_rtf": 0.10531828316849327,
+      "last_input_call_end_to_flush_end_ns": 67327750,
+      "elapsed_ns": 5702330792,
+      "processed_audio_bytes": null
+    },
+    "load_ns": 2084087333,
+    "last_chunk_samples": 184
+  },
+  {
+    "name": "speech-1",
+    "profile": "zipformer-zh-2025",
+    "verification": {
+      "name": "speech-1",
+      "status": "completed_probe",
+      "submitted_bytes": 164898,
+      "decode_calls": 18,
+      "text_changes": 14,
+      "call_rtf": 0.08399079052505184
+    },
+    "metrics": {
+      "status": "completed_probe",
+      "input_bytes": 164898,
+      "submitted_bytes": 164898,
+      "leading_padding_samples": 4800,
+      "trailing_padding_samples": 9600,
+      "decode_calls": 18,
+      "text_changes": 14,
+      "last_text_snapshot": "重点呢想谈三个问题首先呢就是这一轮全球金融动荡的表现",
+      "input_finished": true,
+      "close_returned": true,
+      "first_nonempty_text_ns": 423137958,
+      "first_text_before_input_end": true,
+      "max_schedule_lag_ns": 1415292,
+      "engine_call_ns": 432809793,
+      "call_rtf": 0.08399079052505184,
+      "last_input_call_end_to_flush_end_ns": 40765875,
+      "elapsed_ns": 5163376833,
+      "processed_audio_bytes": null
+    },
+    "load_ns": 1456509833,
+    "last_chunk_samples": 849
+  },
+  {
+    "name": "silence",
+    "profile": "zipformer-zh-2025",
+    "verification": {
+      "name": "silence",
+      "status": "completed_probe",
+      "submitted_bytes": 65120,
+      "decode_calls": 8,
+      "text_changes": 0,
+      "call_rtf": 0.09052596412776413
+    },
+    "metrics": {
+      "status": "completed_probe",
+      "input_bytes": 65120,
+      "submitted_bytes": 65120,
+      "leading_padding_samples": 4800,
+      "trailing_padding_samples": 9600,
+      "decode_calls": 8,
+      "text_changes": 0,
+      "last_text_snapshot": "",
+      "input_finished": true,
+      "close_returned": true,
+      "first_nonempty_text_ns": null,
+      "first_text_before_input_end": false,
+      "max_schedule_lag_ns": 1164666,
+      "engine_call_ns": 184220337,
+      "call_rtf": 0.09052596412776413,
+      "last_input_call_end_to_flush_end_ns": 41254041,
+      "elapsed_ns": 2061073500,
+      "processed_audio_bytes": null
+    },
+    "load_ns": 1521033666,
+    "last_chunk_samples": 560
+  },
+  {
+    "name": "canceled",
+    "profile": "zipformer-zh-2025",
+    "verification": {
+      "name": "canceled",
+      "status": "canceled",
+      "submitted_bytes": 12800,
+      "decode_calls": 1,
+      "text_changes": 0,
+      "call_rtf": null
+    },
+    "metrics": {
+      "status": "canceled",
+      "error": "context deadline exceeded",
+      "input_bytes": 179568,
+      "submitted_bytes": 12800,
+      "leading_padding_samples": 4800,
+      "trailing_padding_samples": 0,
+      "decode_calls": 1,
+      "text_changes": 0,
+      "last_text_snapshot": "",
+      "input_finished": false,
+      "close_returned": true,
+      "first_nonempty_text_ns": null,
+      "first_text_before_input_end": false,
+      "max_schedule_lag_ns": 1719500,
+      "engine_call_ns": 24429625,
+      "call_rtf": null,
+      "last_input_call_end_to_flush_end_ns": null,
+      "elapsed_ns": 375122250,
+      "processed_audio_bytes": null
+    },
+    "load_ns": 1659939000,
+    "last_chunk_samples": 1600
+  },
+  {
+    "name": "legacy-speech",
+    "profile": "zipformer-bilingual-2023",
+    "verification": {
+      "name": "legacy-speech",
+      "status": "completed_probe",
+      "submitted_bytes": 321700,
+      "decode_calls": 33,
+      "text_changes": 16,
+      "call_rtf": 0.05843198090146099
+    },
+    "metrics": {
+      "status": "completed_probe",
+      "input_bytes": 321700,
+      "submitted_bytes": 321700,
+      "leading_padding_samples": 4800,
+      "trailing_padding_samples": 9600,
+      "decode_calls": 33,
+      "text_changes": 16,
+      "last_text_snapshot": "昨天是 MONDAY TODAY IS LIBR THE DAY AFTER TOMORROW是星期三",
+      "input_finished": true,
+      "close_returned": true,
+      "first_nonempty_text_ns": 1020659208,
+      "first_text_before_input_end": true,
+      "max_schedule_lag_ns": 2012500,
+      "engine_call_ns": 587424008,
+      "call_rtf": 0.05843198090146099,
+      "last_input_call_end_to_flush_end_ns": 30080167,
+      "elapsed_ns": 10046198042,
+      "processed_audio_bytes": null
+    },
+    "load_ns": 551775500,
+    "last_chunk_samples": 850
+  }
+]

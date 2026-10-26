@@ -14,8 +14,6 @@ type nativeEngine struct {
 	stream     *sherpa.OnlineStream
 }
 
-var modelFiles = []string{"encoder-epoch-99-avg-1.int8.onnx", "decoder-epoch-99-avg-1.int8.onnx", "joiner-epoch-99-avg-1.int8.onnx", "tokens.txt"}
-
 // decodingConfig records the effective SDK search settings, not text correction.
 // Greedy uses no path budget; beam requires an explicit bounded experiment budget.
 type decodingConfig struct {
@@ -41,11 +39,13 @@ func validateDecoding(method string, paths int) (decodingConfig, error) {
 
 // recognizerConfig maps already validated experiment settings to the native API.
 // All acoustic/model/input settings stay identical across the two search methods.
-func recognizerConfig(dir string, threads int, decoding decodingConfig) sherpa.OnlineRecognizerConfig {
+func recognizerConfig(dir string, profile modelProfile, threads int, decoding decodingConfig) sherpa.OnlineRecognizerConfig {
 	cfg := sherpa.OnlineRecognizerConfig{}
-	cfg.FeatConfig = sherpa.FeatureConfig{SampleRate: sampleRate, FeatureDim: 80}
-	cfg.ModelConfig.Transducer = sherpa.OnlineTransducerModelConfig{Encoder: filepath.Join(dir, modelFiles[0]), Decoder: filepath.Join(dir, modelFiles[1]), Joiner: filepath.Join(dir, modelFiles[2])}
-	cfg.ModelConfig.Tokens = filepath.Join(dir, modelFiles[3])
+	cfg.FeatConfig = sherpa.FeatureConfig{SampleRate: sampleRate, FeatureDim: featureDim}
+	cfg.ModelConfig.Transducer = sherpa.OnlineTransducerModelConfig{Encoder: filepath.Join(dir, profile.Encoder), Decoder: filepath.Join(dir, profile.Decoder), Joiner: filepath.Join(dir, profile.Joiner)}
+	cfg.ModelConfig.Tokens = filepath.Join(dir, profile.Tokens)
+	cfg.ModelConfig.ModelType = profile.ModelType
+	cfg.ModelConfig.ModelingUnit = profile.ModelingUnit
 	cfg.ModelConfig.NumThreads = threads
 	cfg.ModelConfig.Provider = "cpu"
 	cfg.DecodingMethod = decoding.Method
@@ -53,8 +53,8 @@ func recognizerConfig(dir string, threads int, decoding decodingConfig) sherpa.O
 	return cfg
 }
 
-func newNative(dir string, threads int, decoding decodingConfig) (engine, error) {
-	cfg := recognizerConfig(dir, threads, decoding)
+// newNative consumes the configuration value also recorded in the report.
+func newNative(cfg sherpa.OnlineRecognizerConfig) (engine, error) {
 	r := sherpa.NewOnlineRecognizer(&cfg)
 	if r == nil {
 		return nil, fmt.Errorf("native recognizer creation failed")

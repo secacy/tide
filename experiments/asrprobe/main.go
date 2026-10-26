@@ -24,7 +24,10 @@ type report struct {
 	Build         *debug.BuildInfo  `json:"build"`
 	Files         map[string]string `json:"file_sha256"`
 	Threads       int               `json:"threads"`
+	Provider      string            `json:"provider"`
 	Decoding      decodingConfig    `json:"decoding"`
+	Profile       modelProfile      `json:"model_profile"`
+	StreamConfig  streamConfig      `json:"stream_config"`
 	Realtime      bool              `json:"realtime"`
 	CancelAfterNS int64             `json:"cancel_after_ns"`
 	LoadNS        int64             `json:"load_ns"`
@@ -48,7 +51,8 @@ func digest(path string) (string, error) {
 
 func run(args []string) error {
 	fs := flag.NewFlagSet("asrprobe", flag.ContinueOnError)
-	dir := fs.String("model-dir", "", "fixed int8 Zipformer model directory")
+	dir := fs.String("model-dir", "", "pinned model directory matching the selected profile")
+	profileID := fs.String("model-profile", legacyProfile, "zipformer-bilingual-2023 or zipformer-zh-2025")
 	wav := fs.String("wav", "", "PCM S16LE/mono/16kHz WAV, maximum 16MiB")
 	silence := fs.Duration("silence", 0, "generate silence instead of WAV, maximum 30s")
 	out := fs.String("output", "", "new evidence directory (must not exist)")
@@ -68,17 +72,27 @@ func run(args []string) error {
 	if err != nil {
 		return err // Reject before reading assets, creating output or calling native code.
 	}
-	r := report{Version: 2, StartedUTC: time.Now().UTC(), GoVersion: runtime.Version(), Platform: runtime.GOOS + "/" + runtime.GOARCH, Files: map[string]string{}, Threads: *threads, Decoding: decoding, Realtime: *realtime, CancelAfterNS: int64(*cancelAfter), ScoreNote: "No independently verified human reference supplied; CER unknown"}
+	profile, err := lookupModelProfile(*profileID)
+	if err != nil {
+		return err
+	}
+	cfg := recognizerConfig(*dir, profile, *threads, decoding)
+	// Record the same SDK value passed to native construction, using portable
+	// filenames. The stream recipe uses the constants also used by runProbe.
+	r := report{Version: 3, StartedUTC: time.Now().UTC(), GoVersion: runtime.Version(), Platform: runtime.GOOS + "/" + runtime.GOARCH, Threads: cfg.ModelConfig.NumThreads, Provider: cfg.ModelConfig.Provider,
+		Decoding:     decodingConfig{cfg.DecodingMethod, cfg.MaxActivePaths},
+		Profile:      modelProfile{profile.ID, filepath.Base(cfg.ModelConfig.Transducer.Encoder), filepath.Base(cfg.ModelConfig.Transducer.Decoder), filepath.Base(cfg.ModelConfig.Transducer.Joiner), filepath.Base(cfg.ModelConfig.Tokens), cfg.ModelConfig.ModelType, cfg.ModelConfig.ModelingUnit},
+		StreamConfig: streamConfig{cfg.FeatConfig.SampleRate, cfg.FeatConfig.FeatureDim, chunkSamples, leadingPaddingSamples, trailingPaddingSamples, cfg.EnableEndpoint},
+		Realtime:     *realtime, CancelAfterNS: int64(*cancelAfter), ScoreNote: "No independently verified human reference supplied; CER unknown"}
 	r.Build, _ = debug.ReadBuildInfo()
 	var samples []float32
 	var reference string
-	for _, name := range modelFiles {
-		hash, err := digest(filepath.Join(*dir, name))
-		if err != nil {
-			return err
-		}
-		r.Files[name] = hash
+	r.Files, err = checkModelFiles(*dir, profile)
+	if err != nil {
+		return err
 	}
+	lockHash := sha256.Sum256(assetLock)
+	r.Files["model_asset_lock"] = fmt.Sprintf("%x", lockHash)
 	if *wav != "" {
 		var err error
 		samples, err = readPCM(*wav)
@@ -128,7 +142,7 @@ func run(args []string) error {
 	}
 	encoder := json.NewEncoder(events)
 	loadStart := time.Now()
-	e, runErr := newNative(*dir, *threads, decoding)
+	e, runErr := newNative(cfg)
 	r.LoadNS = time.Since(loadStart).Nanoseconds()
 	if runErr == nil {
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)

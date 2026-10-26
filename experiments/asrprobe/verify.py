@@ -4,9 +4,10 @@ import argparse
 import json
 from pathlib import Path
 from fetch_assets import ASSETS
+from model_assets import LEGACY, STREAM_CONFIG, expected_model as locked_model
 
 
-def verify_case(root, case, *, expected_decoding=None):
+def verify_case(root, case, *, expected_decoding=None, expected_model=None):
     name = case["name"]
     report = json.loads((root / name / "summary.json").read_text())
     m = report["metrics"]
@@ -17,11 +18,22 @@ def verify_case(root, case, *, expected_decoding=None):
     assert report["threads"] == 2 and report["realtime"], name
     # Version 1 was hard-coded greedy. Version 2 must declare actual SDK settings.
     greedy = {"method": "greedy_search", "max_active_paths": 0}
-    assert report["version"] in (1, 2), name
+    assert report["version"] in (1, 2, 3), name
     assert report.get("decoding", greedy if report["version"] == 1 else None) == (expected_decoding or greedy), name
     assert m["processed_audio_bytes"] is None and report["character_score"] is None, name
-    for asset in list(ASSETS)[:4]:
-        assert report["file_sha256"][asset] == ASSETS[asset], asset
+    if report["version"] == 3:
+        expected = expected_model if expected_model is not None else locked_model(LEGACY)
+        assert report["model_profile"] == expected["profile"], name
+        assert report["stream_config"] == STREAM_CONFIG, name
+        assert report["provider"] == "cpu", name
+        assert report["file_sha256"]["model_asset_lock"] == expected["asset_lock_sha256"], name
+        for asset, digest in expected["files"].items():
+            assert report["file_sha256"][asset] == digest, asset
+    else:
+        # Never reinterpret v1/v2 as a different model, even if requested.
+        assert expected_model is None, name
+        for asset in list(ASSETS)[:4]:
+            assert report["file_sha256"][asset] == ASSETS[asset], asset
     assert any(d["Path"] == "github.com/k2-fsa/sherpa-onnx-go-macos" and d["Version"] == "v1.13.8"
                for d in report["build"]["Deps"]), name
     offset = last_time = native_ns = max_lag = decodes = 0

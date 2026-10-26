@@ -4,7 +4,23 @@
 
 固定 Go 绑定 `sherpa-onnx-go-macos v1.13.8`，CPU/2 线程、greedy search、endpoint reset 关闭。模型为中英流式 Zipformer 的 int8 版本，revision 及七份资源的 SHA256 写在 `fetch_assets.py`。模型卡声明 Apache-2.0，来源和上游链接随下载保留。模型约 198MB，连同两个 WAV 等文件约 199MB；原生 Go 依赖另行下载，均不纳入 Git。
 
-默认搜索仍为 greedy。解码对照可显式指定 `-decoding-method=modified_beam_search -max-active-paths=4`；预算允许 1～16，是本探针的实验限制。greedy 仅接受路径预算 0，避免参数被静默忽略。版本 2 报告新增 `decoding`，记录实际 SDK 配置；复核器将旧版 v1 的固定行为解释为 greedy，不推测旧版使用了 beam。
+默认搜索仍为 greedy。解码对照可显式指定 `-decoding-method=modified_beam_search -max-active-paths=4`；预算允许 1～16，是本探针的实验限制。greedy 仅接受路径预算 0，避免参数被静默忽略。历史版本 2 报告新增 `decoding`，记录实际 SDK 配置；复核器将旧版 v1 的固定行为解释为 greedy，不推测旧版使用了 beam。
+
+当前版本 3 支持两个明确的 `-model-profile`：默认 `zipformer-bilingual-2023` 保留原文件名和 SDK 设置；`zipformer-zh-2025` 使用 `encoder.int8.onnx`、`decoder.onnx`、`joiner.int8.onnx` 和对应词表。`model-assets.json` 固定两组文件身份；原生加载前校验摘要，目录名不能代替模型身份。新报告记录模型配置、provider、流式参数和内嵌清单摘要；复核 v3 候选必须显式传入独立期望，历史 v1/v2 继续严格绑定旧模型。
+
+按下方 `go build` 命令重新构建探针后，候选下载与调用方式：
+
+```sh
+python3 fetch_candidate.py /tmp/tide-zh-2025-assets
+/tmp/tide-asrprobe -model-profile zipformer-zh-2025 \
+  -model-dir /tmp/tide-zh-2025-assets/model \
+  -wav /tmp/tide-zh-2025-assets/model/test_wavs/0.wav \
+  -output /tmp/tide-zh-2025-speech
+```
+
+候选 release 压缩包与内部文件摘要分别校验；下载失败保留目录，拒绝覆盖已有目标。导出包及维护者说明没有声明权重许可证，原始 checkpoint 模型卡受访问条件限制，使用条件仍未确认；不从 sherpa 源码许可推定权重许可。原始音频、模型和原生库仍只留本地。
+
+候选 encoder 元数据声明 `feature=whisper`、`model_type=zipformer2`；固定 SDK 的原生实现会选择 Whisper 特征，旧 encoder 无该标记。v3 `stream_config` 是 Go 传入字段及探针送样参数，不代表原生内部全部默认值；特征选择证据另见[冒烟记录](../../docs/worklog/2026-10-26-real-asr-model-smoke.md)。后续比较包含模型配套特征的变化，不能称为只换权重。版本 3 的 `file_sha256.model_asset_lock` 应对照运行前保存的清单，不用另一版本清单回写历史报告。
 
 在本目录执行，路径换成尚不存在的位置：
 

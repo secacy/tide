@@ -132,7 +132,10 @@ func runProbe(ctx context.Context, e engine, samples []float32, realtime bool, e
 	if len(samples) == 0 {
 		return m, errors.New("empty input")
 	}
-	if err = call("leading_padding", 4800, nil, func() { e.Accept(make([]float32, 4800)); m.LeadingPaddingSamples = 4800 }); err != nil {
+	if err = call("leading_padding", leadingPaddingSamples, nil, func() {
+		e.Accept(make([]float32, leadingPaddingSamples))
+		m.LeadingPaddingSamples = leadingPaddingSamples
+	}); err != nil {
 		return m, err
 	}
 	for pos := 0; pos < len(samples); {
@@ -142,7 +145,7 @@ func runProbe(ctx context.Context, e engine, samples []float32, realtime bool, e
 				return m, err
 			}
 		}
-		end := min(pos+1600, len(samples))
+		end := min(pos+chunkSamples, len(samples))
 		var planned *int64
 		if realtime {
 			planned = &plan
@@ -156,7 +159,10 @@ func runProbe(ctx context.Context, e engine, samples []float32, realtime bool, e
 		}
 		pos = end
 	}
-	if err = call("trailing_padding", 9600, nil, func() { e.Accept(make([]float32, 9600)); m.TrailingPaddingSamples = 9600 }); err != nil {
+	if err = call("trailing_padding", trailingPaddingSamples, nil, func() {
+		e.Accept(make([]float32, trailingPaddingSamples))
+		m.TrailingPaddingSamples = trailingPaddingSamples
+	}); err != nil {
 		return m, err
 	}
 	if err = call("input_finished", 0, nil, func() { e.Finish(); m.InputFinished = true }); err != nil {

@@ -1,0 +1,26 @@
+{
+  "archive_sha256": "09e89d41217d3dcf559c84f0bd55c6935e02ac1922c94817c3e55d9ec50cdb0b",
+  "readback_files_verified": 70,
+  "checks": {
+    "recheck": {
+      "exit_code": 0,
+      "stdout": "{\n  \"verified\": 5,\n  \"names\": [\n    \"speech-0\",\n    \"speech-1\",\n    \"silence\",\n    \"canceled\",\n    \"legacy-speech\"\n  ]\n}\n",
+      "stderr": ""
+    },
+    "counterchecks": {
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"mutation\": \"profile\",\n    \"rejected\": true\n  },\n  {\n    \"mutation\": \"encoder\",\n    \"rejected\": true\n  },\n  {\n    \"mutation\": \"lock\",\n    \"rejected\": true\n  },\n  {\n    \"mutation\": \"missing-profile\",\n    \"rejected\": true\n  },\n  {\n    \"mutation\": \"padding\",\n    \"rejected\": true\n  },\n  {\n    \"mutation\": \"text\",\n    \"rejected\": true\n  },\n  {\n    \"mutation\": \"close\",\n    \"rejected\": true\n  }\n]\n",
+      "stderr": ""
+    },
+    "python_assets": {
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ".\n----------------------------------------------------------------------\nRan 1 test in 0.002s\n\nOK\n"
+    },
+    "python_quality": {
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ".................\n----------------------------------------------------------------------\nRan 17 tests in 0.235s\n\nOK\n"
+    }
+  }
+}
