@@ -1,8 +1,10 @@
 # 本地中文流式模型探针
 
-独立 Go 模块，当前仅支持 macOS + cgo；主项目的 `go.mod` 与 Mock 测试不引入原生依赖。它验证单个模型的调用行为，尚未实现生产 Worker 适配器。
+独立 Go 模块，当前仅支持 macOS + cgo；主项目的 `go.mod` 与 Mock 测试不引入原生依赖。它验证单个模型的调用行为；生产接入另见 [sherpa Worker](../../workers/sherpa/README.md)，探针继续用于隔离诊断。
 
 固定 Go 绑定 `sherpa-onnx-go-macos v1.13.8`，CPU/2 线程、greedy search、endpoint reset 关闭。模型为中英流式 Zipformer 的 int8 版本，revision 及七份资源的 SHA256 写在 `fetch_assets.py`。模型卡声明 Apache-2.0，来源和上游链接随下载保留。模型约 198MB，连同两个 WAV 等文件约 199MB；原生 Go 依赖另行下载，均不纳入 Git。
+
+默认搜索仍为 greedy。解码对照可显式指定 `-decoding-method=modified_beam_search -max-active-paths=4`；预算允许 1～16，是本探针的实验限制。greedy 仅接受路径预算 0，避免参数被静默忽略。版本 2 报告新增 `decoding`，记录实际 SDK 配置；复核器将旧版 v1 的固定行为解释为 greedy，不推测旧版使用了 beam。
 
 在本目录执行，路径换成尚不存在的位置：
 
@@ -18,6 +20,10 @@ go build -o /tmp/tide-asrprobe .
 /tmp/tide-asrprobe -model-dir /tmp/tide-probe-model \
   -wav /tmp/tide-probe-model/test_wavs/0.wav \
   -cancel-after 350ms -output /tmp/tide-probe-canceled
+/tmp/tide-asrprobe -model-dir /tmp/tide-probe-model \
+  -wav /tmp/tide-probe-model/test_wavs/0.wav \
+  -decoding-method=modified_beam_search -max-active-paths=4 \
+  -output /tmp/tide-probe-beam
 ```
 
 正常探针退出 0，取消/失败退出 1。输出目录独占创建，含逐调用 `events.jsonl` 与最终 `summary.json`；取消和可返回的错误也保存结果。原生进程崩溃或不可返回的调用不能保证保存 summary，调用者需另设进程保护。动态库按 Go 模块自带 rpath 加载，移动二进制后仍需保留对应模块库路径。

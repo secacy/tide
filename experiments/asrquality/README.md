@@ -61,3 +61,14 @@ PYTHONDONTWRITEBYTECODE=1 python3 experiments/asrquality/compare_probe.py \
 ```
 
 冻结目录结构与可搬移复算命令随[诊断证据](../../docs/experiments/results/real-asr-direct-diagnostic-2026-10-26/README.md)提供。相邻相同快照可忽略末尾重复 final，文本内部任何字符均不去重；本轮不比较两路延迟。
+
+## 解码策略对照
+
+[六段配对计划](../../docs/experiments/real-asr-decoding-comparison.md)固定 G=greedy、B=beam/4 路，交替顺序，各素材每策略一次。探针显式记录 SDK 解码配置；`compare_decoding.py` 根据预登记十二个槽位、实际配置、原始调用/结果和同一参考评分，分别列失败/未知，只有六对完整时才计算同素材总体 CER 差值。
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 experiments/asrquality/compare_decoding.py \
+  /tmp/tide-decoding-evidence --output /tmp/tide-decoding-evidence/comparison.json
+```
+
+目录需包含执行前 `before-run.json`、冻结基线、十二个原始探针目录及 `execution.json`；实际运行器、固定条件与源快照随结果归档。计算代价采用探针既有包围段总时间，不是完整 CPU 时间或端到端容量。旧六段结果继续保留；本轮的同素材比较也不代表新场景质量。

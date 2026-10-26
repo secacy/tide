@@ -6,7 +6,7 @@ from pathlib import Path
 from fetch_assets import ASSETS
 
 
-def verify_case(root, case):
+def verify_case(root, case, *, expected_decoding=None):
     name = case["name"]
     report = json.loads((root / name / "summary.json").read_text())
     m = report["metrics"]
@@ -15,6 +15,10 @@ def verify_case(root, case):
     assert case["exit_code"] == (1 if name == "canceled" else 0), name
     assert m["status"] == expected_status and m["close_returned"], name
     assert report["threads"] == 2 and report["realtime"], name
+    # Version 1 was hard-coded greedy. Version 2 must declare actual SDK settings.
+    greedy = {"method": "greedy_search", "max_active_paths": 0}
+    assert report["version"] in (1, 2), name
+    assert report.get("decoding", greedy if report["version"] == 1 else None) == (expected_decoding or greedy), name
     assert m["processed_audio_bytes"] is None and report["character_score"] is None, name
     for asset in list(ASSETS)[:4]:
         assert report["file_sha256"][asset] == ASSETS[asset], asset

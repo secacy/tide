@@ -24,6 +24,7 @@ type report struct {
 	Build         *debug.BuildInfo  `json:"build"`
 	Files         map[string]string `json:"file_sha256"`
 	Threads       int               `json:"threads"`
+	Decoding      decodingConfig    `json:"decoding"`
 	Realtime      bool              `json:"realtime"`
 	CancelAfterNS int64             `json:"cancel_after_ns"`
 	LoadNS        int64             `json:"load_ns"`
@@ -53,6 +54,8 @@ func run(args []string) error {
 	out := fs.String("output", "", "new evidence directory (must not exist)")
 	ref := fs.String("reference", "", "optional UTF-8 human reference file; omit for unknown CER")
 	threads := fs.Int("threads", 2, "native CPU threads (1..16)")
+	method := fs.String("decoding-method", "greedy_search", "greedy_search or modified_beam_search")
+	paths := fs.Int("max-active-paths", 0, "0 for greedy; required beam search budget (1..16)")
 	realtime := fs.Bool("realtime", true, "feed at original 100ms schedule")
 	cancelAfter := fs.Duration("cancel-after", 0, "cooperative deadline after load; does not interrupt a native call")
 	if err := fs.Parse(args); err != nil {
@@ -61,7 +64,11 @@ func run(args []string) error {
 	if fs.NArg() != 0 || *out == "" || *dir == "" || (*wav == "") == (*silence == 0) || *silence < 0 || *silence > 30*time.Second || *threads < 1 || *threads > 16 || *cancelAfter < 0 {
 		return errors.New("require model-dir, new output, and exactly one of wav/silence; invalid limits")
 	}
-	r := report{Version: 1, StartedUTC: time.Now().UTC(), GoVersion: runtime.Version(), Platform: runtime.GOOS + "/" + runtime.GOARCH, Files: map[string]string{}, Threads: *threads, Realtime: *realtime, CancelAfterNS: int64(*cancelAfter), ScoreNote: "No independently verified human reference supplied; CER unknown"}
+	decoding, err := validateDecoding(*method, *paths)
+	if err != nil {
+		return err // Reject before reading assets, creating output or calling native code.
+	}
+	r := report{Version: 2, StartedUTC: time.Now().UTC(), GoVersion: runtime.Version(), Platform: runtime.GOOS + "/" + runtime.GOARCH, Files: map[string]string{}, Threads: *threads, Decoding: decoding, Realtime: *realtime, CancelAfterNS: int64(*cancelAfter), ScoreNote: "No independently verified human reference supplied; CER unknown"}
 	r.Build, _ = debug.ReadBuildInfo()
 	var samples []float32
 	var reference string
@@ -121,7 +128,7 @@ func run(args []string) error {
 	}
 	encoder := json.NewEncoder(events)
 	loadStart := time.Now()
-	e, runErr := newNative(*dir, *threads)
+	e, runErr := newNative(*dir, *threads, decoding)
 	r.LoadNS = time.Since(loadStart).Nanoseconds()
 	if runErr == nil {
 		ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
