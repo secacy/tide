@@ -1,0 +1,26 @@
+{
+  "archive_sha256": "139365de9ee36fb2c14494daaac3e59e6fe6f02433cffdb1683a49b2904b68d9",
+  "readback_files_verified": 103,
+  "checks": {
+    "recheck": {
+      "exit_code": 0,
+      "stdout": "{\n  \"groups\": {\n    \"A\": {\n      \"profile\": \"zipformer-bilingual-2023\",\n      \"planned\": 6,\n      \"completed\": 6,\n      \"failed\": 0,\n      \"unknown\": 0,\n      \"completed_subset\": {\n        \"N\": 200,\n        \"S\": 7,\n        \"D\": 0,\n        \"I\": 63,\n        \"errors\": 70,\n        \"cer\": 0.35\n      },\n      \"sum_engine_call_ns\": 6497694410,\n      \"aggregate_call_rtf\": 0.07841898787016147,\n      \"input_period_text_cases\": 6,\n      \"max_schedule_lag_ns\": 11520166,\n      \"texts_equal_to_original_gateway\": 6\n    },\n    \"B\": {\n      \"profile\": \"zipformer-zh-2025\",\n      \"planned\": 6,\n      \"completed\": 6,\n      \"failed\": 0,\n      \"unknown\": 0,\n      \"completed_subset\": {\n        \"N\": 200,\n        \"S\": 3,\n        \"D\": 1,\n        \"I\": 0,\n        \"errors\": 4,\n        \"cer\": 0.02\n      },\n      \"sum_engine_call_ns\": 10298005040,\n      \"aggregate_call_rtf\": 0.12428395079272768,\n      \"input_period_text_cases\": 6,\n      \"max_schedule_lag_ns\": 4067042,\n      \"texts_equal_to_original_gateway\": 0\n    }\n  },\n  \"all_six_pairs_complete\": true,\n  \"cer_reduction_percentage_points\": 32.99999999999999\n}\n",
+      "stderr": ""
+    },
+    "counterchecks": {
+      "exit_code": 0,
+      "stdout": "[\n  {\n    \"mutation\": \"profile\",\n    \"kept_planned\": 12,\n    \"completed_B\": 5,\n    \"overall_gain_suppressed\": true\n  },\n  {\n    \"mutation\": \"model\",\n    \"kept_planned\": 12,\n    \"completed_B\": 5,\n    \"overall_gain_suppressed\": true\n  },\n  {\n    \"mutation\": \"binary\",\n    \"kept_planned\": 12,\n    \"completed_B\": 5,\n    \"overall_gain_suppressed\": true\n  },\n  {\n    \"mutation\": \"wav\",\n    \"kept_planned\": 12,\n    \"completed_B\": 5,\n    \"overall_gain_suppressed\": true\n  },\n  {\n    \"mutation\": \"decoding\",\n    \"kept_planned\": 12,\n    \"completed_B\": 5,\n    \"overall_gain_suppressed\": true\n  },\n  {\n    \"mutation\": \"text\",\n    \"kept_planned\": 12,\n    \"completed_B\": 5,\n    \"overall_gain_suppressed\": true\n  },\n  {\n    \"mutation\": \"close\",\n    \"kept_planned\": 12,\n    \"completed_B\": 5,\n    \"overall_gain_suppressed\": true\n  },\n  {\n    \"mutation\": \"finish\",\n    \"kept_planned\": 12,\n    \"completed_B\": 5,\n    \"overall_gain_suppressed\": true\n  },\n  {\n    \"mutation\": \"failure\",\n    \"kept_planned\": 12,\n    \"completed_B\": 5,\n    \"overall_gain_suppressed\": true\n  },\n  {\n    \"mutation\": \"missing-exit\",\n    \"kept_planned\": 12,\n    \"completed_B\": 5,\n    \"overall_gain_suppressed\": true\n  },\n  {\n    \"mutation\": \"frozen-model\",\n    \"rejected\": true\n  },\n  {\n    \"mutation\": \"missing-slot\",\n    \"rejected\": true\n  }\n]\n",
+      "stderr": ""
+    },
+    "quality_tests": {
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ".......................\n----------------------------------------------------------------------\nRan 23 tests in 0.512s\n\nOK\n"
+    },
+    "asset_tests": {
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ".\n----------------------------------------------------------------------\nRan 1 test in 0.002s\n\nOK\n"
+    }
+  }
+}

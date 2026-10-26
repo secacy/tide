@@ -72,3 +72,14 @@ PYTHONDONTWRITEBYTECODE=1 python3 experiments/asrquality/compare_decoding.py \
 ```
 
 目录需包含执行前 `before-run.json`、冻结基线、十二个原始探针目录及 `execution.json`；实际运行器、固定条件与源快照随结果归档。计算代价采用探针既有包围段总时间，不是完整 CPU 时间或端到端容量。旧六段结果继续保留；本轮的同素材比较也不代表新场景质量。
+
+## 模型及配套特征对照
+
+[固定六对计划](../../docs/experiments/real-asr-model-comparison.md)以 A=旧 bilingual、B=中文 2025 profile，两个模型都采用 greedy/0。B 的元数据使 SDK 自动选择 Whisper 特征，因此是模型配套配置组合比较。`compare_models.py` 复核 v3 实际配置及运行前冻结的两组资产身份，再对完整同素材计算 CER；缺场或失败不缩小分母，成功空文本按删除错误计分。
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 experiments/asrquality/compare_models.py \
+  /tmp/tide-model-comparison-evidence --output /tmp/tide-model-comparison-evidence/comparison.json
+```
+
+本轮[结果与证据](../../docs/worklog/2026-10-26-real-asr-model-results.md)包含 CER、关键事实疑点与调用代价。六段仍为选择素材，人工事实审核 pending；权重使用条件也保持未确认，不从本机技术实验推导生产采用。
