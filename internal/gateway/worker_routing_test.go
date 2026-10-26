@@ -193,7 +193,7 @@ func TestSessionRoutingErrorIdentity(t *testing.T) {
 			return
 		}
 		defer ws.CloseNow()
-		s := newSession(ws, pool, sessionConfig{
+		s := newSession(ws, selectorAllocator{selector: pool}, sessionConfig{
 			StartTimeout:       time.Second,
 			InputIdleTimeout:   time.Second,
 			WorkerSendTimeout:  time.Second,

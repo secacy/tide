@@ -25,9 +25,9 @@
 已完成[真实 Worker 连续会话运行基线](worklog/2026-10-26-real-asr-backend-baseline-results.md)：同一 Worker 进程与 Gateway 实例，预热后五轮正常 5/5、预期取消 5/5，十一份模型均观察到释放、每场 Gateway 自然归零。五场正常首字 1024.327～1033.950ms、尾部 35.861～62.598ms；292 条资源采样无超过三秒缺口。空闲驱动 goroutine 均为 11；Worker RSS 未回到预热值，保留资源解释缺口，不作长期无泄漏结论。首轮工具摘要读取干扰驱动堆的问题已修订并完整复测，未改业务代码。单场仍限制 30 秒、一个名额且无可信处理进度，长问诊与真实并发容量待验证。
 
 
-已完成[真实 ASR 准入与背压设计评审](worklog/2026-10-26-real-asr-admission-design.md)：Gateway 总名额不保证空闲 Worker 被利用，采用原子 TryAcquire/Lease 的本地占用轮询，Worker 仍负责实际模型准入。2026-10-27 [本地占用池实现与组件验收](worklog/2026-10-27-worker-local-capacity-validation.md)已完成：配置隔离、错峰复用、并发上限与幂等释放测试通过 race/vet。**Gateway 集成及[两 Worker 对照](experiments/real-asr-admission-comparison.md)待实现，没有新的真实容量或调度收益数据。** 未知处理进度预算仍关闭，应用缓冲及发送/收尾期限不等于模型积压保护。
+已完成[真实 ASR 准入与背压设计评审](worklog/2026-10-26-real-asr-admission-design.md)：Gateway 总名额不保证空闲 Worker 被利用，采用原子 TryAcquire/Lease 的本地占用轮询，Worker 仍负责实际模型准入。2026-10-27 [本地占用池实现与组件验收](worklog/2026-10-27-worker-local-capacity-validation.md)已完成：配置隔离、错峰复用、并发上限与幂等释放测试通过 race/vet。**Gateway Lease 接入已完成并通过[集成验收](worklog/2026-10-27-gateway-worker-lease-validation.md)，[真实两 Worker 对照](experiments/real-asr-admission-comparison.md)待执行，仍无新的真实容量或调度收益数据。** 未知处理进度预算仍关闭，应用缓冲及发送/收尾期限不等于模型积压保护。
 
-2026-10-27 已形成[Gateway Lease 集成指导](worklog/2026-10-27-gateway-worker-lease-integration.md)：明确旧选择器适配、v1 完整退出后释放、v2 准备/提交/运行三阶段交接，以及本地清理先于名额归还的顺序。核心实现待开发者完成，随后由助手迁移测试夹具并补所有权验收。
+2026-10-27 已形成[Gateway Lease 集成指导](worklog/2026-10-27-gateway-worker-lease-integration.md)：明确旧选择器适配、v1 完整退出后释放、v2 准备/提交/运行三阶段交接，以及本地清理先于名额归还的顺序。经开发者委托，助手已完成核心接入、旧夹具迁移及 v1/v2 所有权测试：准备/提交失败回滚、断开恢复与结果保留不早还、阻塞 I/O 退出前不归还、错峰新场使用空闲实例，以及本地/远端释放间隙均有可控验证。新策略通过 NewWithAllocator 显式启用，现有 CLI 仍使用旧策略。
 
 | 阶段 | 状态 | 目标与主要工作 | 完成依据 / 验收标准 |
 | --- | --- | --- | --- |

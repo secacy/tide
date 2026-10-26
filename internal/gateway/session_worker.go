@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net"
 	"time"
+
+	"github.com/secacy/tide-artisan/internal/workerpool"
 )
 
 var (
@@ -61,16 +63,17 @@ const (
 // sessionWorker 组合原 Worker RPC 的双向任务与协调者独占状态。
 // 通过构造器创建，以指针使用，一次运行；运行中禁止外部读取可变字段。
 type sessionWorker struct {
-	config          sessionWorkerConfig // 构造后不变。
-	input           *audioInputBuffer   // 协调者独占；I/O 任务全退出后清理。
-	results         *resultBuffer       // 协调者独占；整个协调路径结束后清理。
-	uploader        *workerUploader     // 唯一 Send/CloseSend 任务。
-	receiver        *workerReceiver     // 唯一 Recv 任务。
-	delivery        resultDeliveryState // 只由 runCoordinator 修改。offeredSeq 跨连接代次保留，其余字段描述当前代投递状态。
-	completion      completionState     // 协调者独占；正常完成发送授权与整场确认事实。
-	phase           sessionWorkerPhase  // 计算成功只推进一次到 retaining。
-	dispatchedBytes uint64              // 已交付 uploader 的音频末端，可能仍在 Send 中。
-	processedBytes  uint64              // Worker 合法累计处理位置。
+	lease           *workerpool.WorkerLease // Gateway 准备后绑定，只读；纯部件夹具允许 nil。
+	config          sessionWorkerConfig     // 构造后不变。
+	input           *audioInputBuffer       // 协调者独占；I/O 任务全退出后清理。
+	results         *resultBuffer           // 协调者独占；整个协调路径结束后清理。
+	uploader        *workerUploader         // 唯一 Send/CloseSend 任务。
+	receiver        *workerReceiver         // 唯一 Recv 任务。
+	delivery        resultDeliveryState     // 只由 runCoordinator 修改。offeredSeq 跨连接代次保留，其余字段描述当前代投递状态。
+	completion      completionState         // 协调者独占；正常完成发送授权与整场确认事实。
+	phase           sessionWorkerPhase      // 计算成功只推进一次到 retaining。
+	dispatchedBytes uint64                  // 已交付 uploader 的音频末端，可能仍在 Send 中。
+	processedBytes  uint64                  // Worker 合法累计处理位置。
 
 }
 
@@ -256,6 +259,14 @@ func (w *sessionWorker) waitIO() {
 func (w *sessionWorker) releaseBuffers() {
 	w.input = nil
 	w.results = nil
+}
+
+// releaseLease 由 Gateway 的准备/运行所有者在本地资源清理后调用。
+// 不取消或等待 I/O，不确认远端释放；纯部件夹具没有申请名额。
+func (w *sessionWorker) releaseLease() {
+	if w.lease != nil {
+		w.lease.Release()
+	}
 }
 
 // runWithConnection 运行一场带实际连接所有权的逻辑会话。

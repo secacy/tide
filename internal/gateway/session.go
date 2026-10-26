@@ -27,9 +27,9 @@ type workerStream interface {
 
 // session 表示一个 WebSocket Connection 与一个 gRPC stream 之间的一对一桥接关系。
 type session struct {
-	ws       *websocket.Conn
-	pool     WorkerSelector // 与其他 session 共享的选择器。
-	workerID string         // 合法 start 后选中的后端标识，例如 localhost:50051；选择前为空。
+	ws        *websocket.Conn
+	allocator WorkerAllocator // 与其他 session 共享的分配器。
+	workerID  string          // 合法 start 后选中的后端标识，例如 localhost:50051；选择前为空。
 
 	startTimeout     time.Duration // 等待完整 start 消息的期限
 	inputIdleTimeout time.Duration // 限制音频输入阶段单次读取消息的等待时间
@@ -91,12 +91,12 @@ type sessionConfig struct {
 }
 
 // newSession 使用已解析的 cfg 创建会话，不重新校验或填充默认值。
-// ws 是本场会话的连接，pool 是与其他会话共享的选择器。
+// ws 是本场会话的连接，allocator 是与其他会话共享的分配器。
 // cfg 按值复制；创建本身不选择后端、不执行 I/O、不启动 goroutine。
-func newSession(ws *websocket.Conn, pool WorkerSelector, cfg sessionConfig) *session {
+func newSession(ws *websocket.Conn, allocator WorkerAllocator, cfg sessionConfig) *session {
 	return &session{
 		ws:                   ws,
-		pool:                 pool,
+		allocator:            allocator,
 		startTimeout:         cfg.StartTimeout,
 		inputIdleTimeout:     cfg.InputIdleTimeout,
 		workerSendTimeout:    cfg.WorkerSendTimeout,
@@ -142,7 +142,27 @@ func (s *session) run(ctx context.Context) error {
 	wsCtx, cancelWS := context.WithCancel(context.WithoutCancel(ctx))
 	defer cancelWS()
 
-	selected := s.pool.Pick()
+	lease, acquireErr := s.allocator.TryAcquire()
+	if acquireErr != nil {
+		result := sessionResult{kind: resultWorkerFailed, err: fmt.Errorf("allocate worker: %w", acquireErr)}
+		if ctx.Err() != nil {
+			result = sessionResult{kind: resultServerStopping, err: ctx.Err()}
+		}
+		_ = s.finish(wsCtx, result, cancelRPC, cancelWS)
+		return result.err
+	}
+	// 运行路径须先 finish + wg.Wait；建流/启动前失败则没有 I/O 任务要等待。
+	// 已较早注册的 context defer 在这里之后运行，因此显式先取消再归还。
+	defer func() {
+		cancelRPC()
+		cancelWS()
+		lease.Release()
+	}()
+	if err := ctx.Err(); err != nil {
+		_ = s.finish(wsCtx, sessionResult{kind: resultServerStopping, err: err}, cancelRPC, cancelWS)
+		return err
+	}
+	selected := lease.Worker()
 	s.workerID = selected.ID
 
 	stream, err := selected.Client.StreamingRecognize(rpcCtx)

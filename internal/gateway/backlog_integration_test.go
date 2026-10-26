@@ -51,7 +51,7 @@ func TestAudioBacklogConfig(t *testing.T) {
 func TestSessionAudioBacklogFailure(t *testing.T) {
 	s, client, _ := newLegacyResultWriteFixture(t, 2*time.Second, false)
 	worker := &heldProgressClient{ready: make(chan *heldProgressStream, 1)}
-	s.pool = singleWorkerPool(t, worker)
+	s.allocator = selectorAllocator{selector: singleWorkerPool(t, worker)}
 	s.startTimeout, s.inputIdleTimeout, s.workerSendTimeout, s.tailTimeout = 3*time.Second, 3*time.Second, 3*time.Second, 3*time.Second
 	s.maxPendingAudioBytes = 3199
 	appCtx, stop := context.WithCancel(context.Background())

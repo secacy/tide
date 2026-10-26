@@ -25,9 +25,9 @@ type Config struct {
 
 // Gateway 把 WebSocket 音频流桥接到 gRPC Worker。
 type Gateway struct {
-	ctx  context.Context
-	pool WorkerSelector // 本 Gateway 的会话共享同一选择器。
-	cfg  Config
+	ctx       context.Context
+	allocator WorkerAllocator // 新逻辑会话共享同一分配器；凭证由会话持有至清理完成。
+	cfg       Config
 
 	tracker  *sessionTracker  // 跟踪本 Gateway 已接纳但尚未完成清理的会话。用于停止接入以及等待所有会话退出。
 	gate     *entryGate       // 独立握手预算及共同停服提交边界，与 v1 共用 tracker。
@@ -55,6 +55,23 @@ func New(ctx context.Context, pool WorkerSelector, cfg Config) (*Gateway, error)
 	if isNilWorkerSelector(pool) {
 		return nil, fmt.Errorf("worker pool is nil")
 	}
+	return newGateway(ctx, selectorAllocator{selector: pool}, cfg)
+}
+
+// NewWithAllocator 使用显式分配器创建 Gateway；构造不申请 Worker 名额。
+// allocator 必须支持并发调用；nil 接口或动态 nil 会被拒绝。
+func NewWithAllocator(ctx context.Context, allocator WorkerAllocator, cfg Config) (*Gateway, error) {
+	if ctx == nil {
+		return nil, fmt.Errorf("gateway context is nil")
+	}
+	if isNilWorkerAllocator(allocator) {
+		return nil, fmt.Errorf("worker allocator is nil")
+	}
+	return newGateway(ctx, allocator, cfg)
+}
+
+// newGateway 共用配置归一化及内部状态构造；公开入口已校验依赖。
+func newGateway(ctx context.Context, allocator WorkerAllocator, cfg Config) (*Gateway, error) {
 	if cfg.MaxMessageBytes <= 0 {
 		cfg.MaxMessageBytes = 1024 * 1024 // 1 MiB
 	}
@@ -107,13 +124,13 @@ func New(ctx context.Context, pool WorkerSelector, cfg Config) (*Gateway, error)
 	// 运行中仅使用私有 v2 副本，不保留调用者的可变指针。
 	cfg.V2 = nil
 	return &Gateway{
-		ctx:      ctx,
-		pool:     pool,
-		cfg:      cfg,
-		tracker:  tracker,
-		gate:     gate,
-		registry: newSessionRegistry(),
-		v2:       v2,
+		ctx:       ctx,
+		allocator: allocator,
+		cfg:       cfg,
+		tracker:   tracker,
+		gate:      gate,
+		registry:  newSessionRegistry(),
+		v2:        v2,
 	}, nil
 }
 
@@ -158,7 +175,7 @@ func (g *Gateway) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	conn.SetReadLimit(g.cfg.MaxMessageBytes)
 
-	s := newSession(conn, g.pool, g.cfg.sessionConfig())
+	s := newSession(conn, g.allocator, g.cfg.sessionConfig())
 	_ = s.run(g.ctx)
 }
 

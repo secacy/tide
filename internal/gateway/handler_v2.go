@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/coder/websocket"
+	"github.com/secacy/tide-artisan/internal/workerpool"
 	"github.com/secacy/tide-artisan/internal/wsprotocol"
 )
 
@@ -123,6 +124,7 @@ func (g *Gateway) startV2(entryCtx context.Context, candidate *connectionCandida
 			if worker != nil {
 				worker.stopIO(err)
 				worker.releaseBuffers()
+				worker.releaseLease()
 			}
 			g.tracker.leave()
 		}
@@ -154,29 +156,47 @@ func (g *Gateway) startV2(entryCtx context.Context, candidate *connectionCandida
 	return nil
 }
 
-// prepareV2Worker 只选择/建立一次原 RPC，构造但不启动任务。
+// prepareV2Worker 取得一次 Lease 并建立原 RPC，构造但不启动任务。
 // RPC 继承 g.ctx；返回前解除入口取消转发，并等待已开始的回调。
-// 失败取消 RPC；成功后的取消或交接责任属于调用者。
-func (g *Gateway) prepareV2Worker(entryCtx context.Context) (*sessionWorker, error) {
+// 失败先取消 RPC 再归还 Lease；成功将两者交给调用者。
+func (g *Gateway) prepareV2Worker(entryCtx context.Context) (prepared *sessionWorker, err error) {
 	if cause := context.Cause(entryCtx); cause != nil {
 		return nil, cause
 	}
 	rpcCtx, cancelRPC := context.WithCancelCause(g.ctx)
 	stopForwarding := forwardEntryCancellation(entryCtx, cancelRPC)
-	defer stopForwarding()
-	selected := g.pool.Pick()
-	stream, openErr := selected.Client.StreamingRecognize(rpcCtx)
-	stopForwarding()
+	var lease *workerpool.WorkerLease
+	transferred := false
+	defer func() {
+		stopForwarding()
+		if !transferred {
+			cancelRPC(err)
+			if lease != nil {
+				lease.Release()
+			}
+		}
+	}()
+	lease, acquireErr := g.allocator.TryAcquire()
+	// 申请过程中发生的入口/服务取消仍优先于本地容量错误。
 	if cause := context.Cause(entryCtx); cause != nil {
-		cancelRPC(cause)
 		return nil, cause
 	}
 	if cause := context.Cause(rpcCtx); cause != nil {
-		cancelRPC(cause)
+		return nil, cause
+	}
+	if acquireErr != nil {
+		return nil, fmt.Errorf("%w: %w", errV2WorkerUnavailable, acquireErr)
+	}
+	selected := lease.Worker()
+	stream, openErr := selected.Client.StreamingRecognize(rpcCtx)
+	stopForwarding()
+	if cause := context.Cause(entryCtx); cause != nil {
+		return nil, cause
+	}
+	if cause := context.Cause(rpcCtx); cause != nil {
 		return nil, cause
 	}
 	if openErr != nil {
-		cancelRPC(openErr)
 		return nil, fmt.Errorf("%w: %w", errV2WorkerUnavailable, openErr)
 	}
 	worker, err := newSessionWorker(sessionWorkerConfig{
@@ -189,9 +209,10 @@ func (g *Gateway) prepareV2Worker(entryCtx context.Context) (*sessionWorker, err
 		maxPendingAudioBytes: uint64(g.cfg.MaxPendingAudioBytes),
 	})
 	if err != nil {
-		cancelRPC(err)
 		return nil, err
 	}
+	worker.lease = lease
+	transferred = true
 	return worker, nil
 }
 
@@ -206,9 +227,11 @@ func (g *Gateway) resumeV2(entryCtx context.Context, candidate *connectionCandid
 	return err
 }
 
-// runV2Session 在新建提交后恰好启动一次；完成实际清理后才撤销注册、归还名额。
+// runV2Session 在新建提交后恰好启动一次；本地清理后撤销注册、归还 Lease 及总名额。
+// 本地任务退出不确认远端模型释放，Worker 仍负责最终模型准入。
 func (g *Gateway) runV2Session(s *resumableSession, worker *sessionWorker, initial *connectionCandidate) {
 	_ = s.runWithConnection(g.ctx, time.Now, worker, initial)
 	g.registry.remove(s.identity.id, s)
+	worker.releaseLease()
 	g.tracker.leave()
 }

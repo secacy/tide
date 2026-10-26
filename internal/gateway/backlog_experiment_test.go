@@ -172,7 +172,7 @@ func runAudioBacklogExperiment(t *testing.T, name string, budget uint64, delay, 
 		}
 		defer ws.CloseNow()
 		ws.SetReadLimit(g.cfg.MaxMessageBytes)
-		s := newSession(ws, g.pool, g.cfg.sessionConfig())
+		s := newSession(ws, g.allocator, g.cfg.sessionConfig())
 		ready <- s
 		err = s.run(g.ctx)
 		runDone <- exit{time.Now(), err}

@@ -52,7 +52,7 @@ func dialSessionWithTimeouts(t *testing.T, parent context.Context, worker asrv1.
 			return
 		}
 		defer ws.CloseNow()
-		result <- newSession(ws, singleWorkerPool(t, worker), sessionConfig{
+		result <- newSession(ws, selectorAllocator{selector: singleWorkerPool(t, worker)}, sessionConfig{
 			StartTimeout:       startTimeout,
 			InputIdleTimeout:   inputIdleTimeout,
 			WorkerSendTimeout:  defaultWorkerSendTimeout,

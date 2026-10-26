@@ -31,7 +31,7 @@ func dialInputReader(t *testing.T, parent context.Context, timeout time.Duration
 			return
 		}
 		defer ws.CloseNow()
-		s := newSession(ws, singleWorkerPool(t, &recordingWorker{}), sessionConfig{
+		s := newSession(ws, selectorAllocator{selector: singleWorkerPool(t, &recordingWorker{})}, sessionConfig{
 			StartTimeout:       defaultStartTimeout,
 			InputIdleTimeout:   timeout,
 			WorkerSendTimeout:  defaultWorkerSendTimeout,
