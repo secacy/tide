@@ -1,0 +1,26 @@
+{
+  "schema": "tide.asr-quality-score.v1",
+  "normalization": "nfc-ascii-lower-no-space-sentence-punctuation-v1",
+  "alignment_tie_order": [
+    "match/substitute",
+    "delete",
+    "insert"
+  ],
+  "planned": 6,
+  "outcomes": {
+    "completed": 6,
+    "failed": 0,
+    "unknown": 0
+  },
+  "scored_cases": 6,
+  "completed_subset": {
+    "N": 200,
+    "S": 7,
+    "D": 0,
+    "I": 63,
+    "errors": 70,
+    "cer": 0.35
+  },
+  "six_models_created_and_closed": true,
+  "manual_fact_evaluation": "pending"
+}
