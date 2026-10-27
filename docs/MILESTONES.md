@@ -31,7 +31,7 @@
 
 2026-10-27 两真实 Worker 对照共 29 次尝试、26 条 RPC、23 份模型创建/释放，暖机与两类拒绝分开。263 条采样无超过三秒缺口；臂间 Gateway 归零、驱动空闲 goroutine 均为 17。首版复核器的 Go nil 切片兼容问题已修订并保留前后工具及失败记录，原数据未改、未重跑识别。后续进入长问诊分段与状态边界设计，处理进度与长期容量仍待验证。
 
-2026-10-27 已形成[长对话分段与状态边界设计](worklog/2026-10-27-long-dialogue-segmentation-design.md)：首版采用固定原始音频长度分段，同一 RPC 内复用 recognizer、逐段释放 online stream，保留整场名额及连续结果序号；自然端点重置留作后续策略。当前仅给出 segmentCursor 实现指导，核心代码、原生分段及 120 秒验证尚未完成，不新增长时性能结论。
+2026-10-27 已形成[长对话分段与状态边界设计](worklog/2026-10-27-long-dialogue-segmentation-design.md)：首版采用固定原始音频长度分段，同一 RPC 内复用 recognizer、逐段释放 online stream，保留整场名额及连续结果序号；自然端点重置留作后续策略。segmentCursor 已由开发者实现并通过[组件验收](worklog/2026-10-27-segment-cursor-validation.md)：2560 种请求划分验证原始字节守恒和固定段边界，realasr 包 race/vet 通过；首次 TCP 监听受沙箱限制后同命令复验通过。Worker/原生分段集成及 120 秒验证尚未完成，不新增长时性能结论。
 
 | 阶段 | 状态 | 目标与主要工作 | 完成依据 / 验收标准 |
 | --- | --- | --- | --- |
