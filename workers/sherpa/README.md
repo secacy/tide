@@ -71,6 +71,8 @@ TIDE_SHERPA_GATEWAY_EVIDENCE_DIR=/tmp/tide-sherpa-gateway-evidence-new \
 
 该实验区分客户端返回、原生释放返回与 Gateway 会话归零。RSS 包含原生堆、映射与分配器缓存，Go 堆包含客户端及工具；五轮结果只描述重复短会话行为。
 
+两个真实进程的旧轮询/本地占用策略对照，见 [asradmission 工具](../../experiments/asradmission/README.md)。仅设置 `TIDE_SHERPA_ADMISSION_EVIDENCE_DIR` 才启用 `TestRealWorkerAdmissionComparison`，包含固定暖机、错峰配对及超额拒绝验证；运行前冻结、运行后独立复核，不代表稳定容量测试。
+
 ## 当前边界
 
 - 不发送 AudioProgress。专用 Gateway 接通配置必须显式 `MaxPendingAudioBytes=0`；这项处理积压保护当前不可用，不能用模型接收量或文本位置代替。

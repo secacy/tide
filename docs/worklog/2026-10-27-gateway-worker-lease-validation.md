@@ -1,6 +1,6 @@
 # Gateway Worker Lease：接入与所有权验收
 
-日期：2026-10-27。状态：依据开发者委托，已完成核心接入、旧夹具迁移和新增所有权测试；真实两 Worker 对照尚未执行。实现依据见[集成指导](2026-10-27-gateway-worker-lease-integration.md)。
+日期：2026-10-27。状态：依据开发者委托，已完成核心接入、旧夹具迁移和新增所有权测试；后续[真实两 Worker 对照](2026-10-27-real-asr-admission-results.md)也已完成；下文保留本次接入验收范围。实现依据见[集成指导](2026-10-27-gateway-worker-lease-integration.md)。
 
 ## 当前行为
 

@@ -1,6 +1,6 @@
 # 真实 ASR：准入、背压与有限并发设计评审
 
-日期：2026-10-26。代码参照 `96100c2`。状态：设计评审完成；2026-10-27 本地占用池已实现并通过[组件验收](2026-10-27-worker-local-capacity-validation.md)，Gateway Lease 接入也已通过[集成验收](2026-10-27-gateway-worker-lease-validation.md)，真实并发对照待实施。本步没有新增容量或性能数据。
+日期：2026-10-26。代码参照 `96100c2`。状态：设计评审完成；2026-10-27 本地占用池已实现并通过[组件验收](2026-10-27-worker-local-capacity-validation.md)，Gateway Lease 接入也已通过[集成验收](2026-10-27-gateway-worker-lease-validation.md)，[真实两 Worker 对照](2026-10-27-real-asr-admission-results.md)也已完成，稳定容量仍未验证。本步没有新增容量或性能数据。
 
 ## 本次要解决什么
 

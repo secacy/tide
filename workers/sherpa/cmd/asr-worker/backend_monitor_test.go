@@ -46,7 +46,7 @@ type backendRuntimeSample struct {
 }
 
 // backendMonitor 串行拥有日志读取游标、事件与文件；sampler 和清理观察共享它。
-// events 最多保留预登记的 22 个生命周期事件，不保留任何转录全文。
+// events 只保留预登记上限内的生命周期事件，不保留任何转录全文。
 type backendMonitor struct {
 	mu        sync.Mutex
 	start     time.Time
@@ -59,6 +59,7 @@ type backendMonitor struct {
 	pending   string
 	events    []backendModelEvent
 	created   int
+	maxEvents int // 默认 22；其他显式实验在启动采集前按预登记规模设置。
 	closed    int
 	eventFile *os.File
 	samples   *os.File
@@ -83,11 +84,11 @@ func newBackendMonitor(out string, pid int, g *gateway.Gateway) (*backendMonitor
 		events.Close()
 		return nil, err
 	}
-	return &backendMonitor{start: time.Now(), g: g, pid: pid, phase: "startup", log: log, reader: bufio.NewReader(log), eventFile: events, samples: samples}, nil
+	return &backendMonitor{start: time.Now(), g: g, pid: pid, phase: "startup", maxEvents: 22, log: log, reader: bufio.NewReader(log), eventFile: events, samples: samples}, nil
 }
 
 // refreshLocked 只处理完整 JSON 行；EOF 前的半行保留至下一次读取。
-// 64KiB 行长和 22 条事件上限使意外日志不能导致工具无限积累。
+// 64KiB 行长和固定事件数上限使意外日志不能导致工具无限积累。
 func (m *backendMonitor) refreshLocked() error {
 	if m.err != nil {
 		return m.err
@@ -124,7 +125,7 @@ func (m *backendMonitor) refreshLocked() error {
 		if row.Msg != "model_created" && row.Msg != "engine_closed" {
 			continue
 		}
-		if len(m.events) >= 22 {
+		if len(m.events) >= m.maxEvents {
 			m.err = errors.New("too many model events")
 			return m.err
 		}
