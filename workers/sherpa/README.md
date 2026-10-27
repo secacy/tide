@@ -28,12 +28,25 @@ CGO_ENABLED=1 go build -o /tmp/tide-sherpa-worker ./cmd/asr-worker
 | `-model-dir` | 必填 | 四份 int8 模型/词表文件目录 |
 | `-threads` | 2 | 原生 CPU 线程数，允许 1～16 |
 | `-listen` | 127.0.0.1:50051 | gRPC 监听地址；`:0` 可分配临时端口 |
+| `-max-audio-bytes` | 960000 | 整场原始 PCM 上限，正偶数；默认 30 秒 |
+| `-segment-audio-bytes` | 0 | 0 为单段模式；正偶数启用固定长度分段，不得大于整场上限 |
 
 `-h` 帮助退出 0；参数、文件、监听和服务错误退出 1。启动先检查文件，模型在每场取得唯一名额后创建；`listening` 日志的 `model_loaded=false` 不代表模型已成功加载。`model_created` 记录每场加载耗时，`engine_closed` 只在原生释放调用返回后记录，均不记录转录文本。
 
-首版固定单场、每场原始 PCM 最多 960000B（30 秒）、每块最多 3200B、每个文本快照最多 4096B；gRPC 接收消息限制为 4096B。超限明确失败。输入为 16kHz、单声道、PCM S16LE，不发送 WAV 容器；不足 100ms 的末块只需保持两字节样本对齐。
+每个 Worker 固定一个整场名额；默认原始 PCM 最多 960000B（30 秒）、每块最多 3200B、每个文本快照最多 4096B；gRPC 接收消息限制为 4096B。超限明确失败。输入为 16kHz、单声道、PCM S16LE，不发送 WAV 容器；不足 100ms 的末块只需保持两字节样本对齐。
 
 输出使用同一 segment ID 的完整可修订快照；消费者应替换同片段文字。正常半关闭输入后完成尾部解码，发送一次 final 再结束 RPC。单个片段 final 与 Gateway 的整场 completed 不同。
+
+可显式启用固定分段，例如允许整场 120 秒、每段 30 秒：
+
+```sh
+/tmp/tide-sherpa-worker -model-dir /tmp/tide-sherpa-model \
+  -max-audio-bytes=3840000 -segment-audio-bytes=960000
+```
+
+这是配置示例，120 秒运行和资源趋势尚未验证。分段模式在同一 RPC 内复用 recognizer，满段立即刷新、发送 final 并删除当前 online stream；有下一段音频才建新流，片段 ID 依次为 1/2/3，整场持续占有名额。边界 EOF 不多建空段。固定边界可能截断词句，未启用自然端点或重叠拼接。逐段原始输入数不是模型处理确认。
+
+分段 CLI、真实原生流和独立 gRPC 进程的短验证已通过，复现入口及原始日志见[证据说明](../../docs/experiments/results/segmented-worker-smoke-2026-10-27/README.md)；Gateway/v2 多段完成与失败清理使用可控 Engine 验收，见[接入记录](../../docs/worklog/2026-10-27-segmented-worker-validation.md)。
 
 ## 真实运行验证
 
@@ -76,7 +89,7 @@ TIDE_SHERPA_GATEWAY_EVIDENCE_DIR=/tmp/tide-sherpa-gateway-evidence-new \
 ## 当前边界
 
 - 不发送 AudioProgress。专用 Gateway 接通配置必须显式 `MaxPendingAudioBytes=0`；这项处理积压保护当前不可用，不能用模型接收量或文本位置代替。
-- 每场重新加载模型并独占 recognizer/stream。300ms/600ms 前后 padding 不计入原始音频；不启用 endpoint/reset。长问诊分段与共享预加载尚未实现。
+- 每场重新加载并独占 recognizer；可显式分段并逐段创建/释放 stream。每段 300ms/600ms 前后 padding 不计入原始音频；不启用 endpoint/reset。长时资源趋势、自然分段与跨会话共享预加载尚未验证或实现。
 - 取消在原生调用之间观察；不会并发删除正在使用的对象。SIGINT/SIGTERM 先等待五秒自然结束，超时后取消 RPC 并等待 handler 清理，退出 1。原生永久卡住时不能保证进程在五秒退出。
 - 部分绑定方法不返回错误，Go stream 包装对象也不暴露底层 C 指针状态；不承诺捕获全部原生故障。没有新增处理位置、说话人或准确率保证。
 - 动态库按 SDK 自带 rpath 加载，移动二进制仍需保留相应原生库路径；当前没有自包含分发包。

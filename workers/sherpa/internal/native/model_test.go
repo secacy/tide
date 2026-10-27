@@ -76,6 +76,81 @@ func TestRealModelLifecycle(t *testing.T) {
 	}
 }
 
+// TestRealModelSegmentedLifecycle 验证真实模型复用、逐段流重建和取消清理。
+// 短静音只检查生命周期；不作为长时容量或识别质量实验。
+func TestRealModelSegmentedLifecycle(t *testing.T) {
+	dir := os.Getenv("TIDE_SHERPA_MODEL_DIR")
+	if dir == "" {
+		t.Skip("set TIDE_SHERPA_MODEL_DIR to run the pinned native model")
+	}
+	factory, err := NewSegmentedFactory(Config{ModelDir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	e, err := factory(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer e.Close()
+	owned := e.(*engine)
+	model := owned.recognizer
+	for segment := 0; segment < 3; segment++ {
+		if segment > 0 {
+			if err := e.StartSegment(); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if owned.leadingPadded || owned.finished || owned.recognizer != model || owned.stream == nil {
+			t.Fatal("new segment inherited state or reloaded model")
+		}
+		for i := 0; i < 10; i++ {
+			if err := e.Accept(make([]float32, 1600)); err != nil {
+				t.Fatal(err)
+			}
+			if err := drainRealTestEngine(e); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if err := e.Finish(); err != nil {
+			t.Fatal(err)
+		}
+		if err := drainRealTestEngine(e); err != nil {
+			t.Fatal(err)
+		}
+		if text, err := e.Result(); text != "" || err != nil {
+			t.Fatalf("silence segment %d=(%q,%v)", segment+1, text, err)
+		}
+		e.ReleaseSegment()
+		e.ReleaseSegment()
+		if owned.stream != nil || owned.recognizer != model {
+			t.Fatal("release did not separate stream and model ownership")
+		}
+		if _, err := e.Ready(); !errors.Is(err, errNoStream) {
+			t.Fatalf("ready after release=%v", err)
+		}
+		t.Logf("segment %d: one second of silence finished and stream released; recognizer retained", segment+1)
+	}
+	if err := e.StartSegment(); err != nil {
+		t.Fatal(err)
+	}
+	if err := e.Accept(make([]float32, 1600)); err != nil {
+		t.Fatal(err)
+	}
+	cancel()
+	e.ReleaseSegment()
+	e.Close()
+	e.Close()
+	if !owned.closed || owned.stream != nil || owned.recognizer != nil {
+		t.Fatal("canceled model not actually cleared")
+	}
+	if err := e.StartSegment(); !errors.Is(err, errClosed) {
+		t.Fatalf("start after actual close=%v", err)
+	}
+	t.Log("fourth stream: canceled after 100ms input; stream and recognizer cleared; repeated Close safe")
+}
+
 func drainRealTestEngine(e interface {
 	Ready() (bool, error)
 	Decode() error

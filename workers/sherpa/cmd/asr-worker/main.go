@@ -11,19 +11,19 @@ import (
 	"os"
 	"os/signal"
 	"strings"
-	"sync/atomic"
 	"syscall"
 	"time"
 
-	"github.com/secacy/tide-artisan/internal/realasr"
 	asrv1 "github.com/secacy/tide-artisan/proto/tide/asr/v1"
 	"github.com/secacy/tide-artisan/workers/sherpa/internal/native"
 	"google.golang.org/grpc"
 )
 
 type config struct {
-	listen string        // 实际监听前仍由 net.Listen 校验地址。
-	model  native.Config // 仅参数值；解析不加载模型或访问文件。
+	listen            string        // 实际监听前仍由 net.Listen 校验地址。
+	model             native.Config // 仅参数值；解析不加载模型或访问文件。
+	maxAudioBytes     int           // 整场原始输入上限，默认 30 秒。
+	segmentAudioBytes int           // 0 使用单段模式，正偶数显式启用分段。
 }
 
 // parseConfig 解析独立 Worker 参数；帮助输出不会创建原生对象。
@@ -34,11 +34,13 @@ func parseConfig(args []string, output io.Writer) (config, error) {
 	fs.StringVar(&cfg.listen, "listen", "127.0.0.1:50051", "gRPC TCP listen address")
 	fs.StringVar(&cfg.model.ModelDir, "model-dir", "", "required fixed int8 Zipformer asset directory")
 	fs.IntVar(&cfg.model.Threads, "threads", 2, "native CPU threads (1..16)")
+	fs.IntVar(&cfg.maxAudioBytes, "max-audio-bytes", 960000, "whole-session PCM byte limit (positive even integer)")
+	fs.IntVar(&cfg.segmentAudioBytes, "segment-audio-bytes", 0, "PCM bytes per segment; 0 disables segmentation")
 	if err := fs.Parse(args); err != nil {
 		return config{}, err
 	}
-	if fs.NArg() != 0 || strings.TrimSpace(cfg.listen) == "" || strings.TrimSpace(cfg.model.ModelDir) == "" || cfg.model.Threads < 1 || cfg.model.Threads > 16 {
-		return config{}, errors.New("require model-dir, nonempty listen address and threads between 1 and 16; no positional arguments")
+	if fs.NArg() != 0 || strings.TrimSpace(cfg.listen) == "" || strings.TrimSpace(cfg.model.ModelDir) == "" || cfg.model.Threads < 1 || cfg.model.Threads > 16 || cfg.maxAudioBytes <= 0 || cfg.maxAudioBytes%2 != 0 || cfg.segmentAudioBytes < 0 || cfg.segmentAudioBytes%2 != 0 || cfg.segmentAudioBytes > cfg.maxAudioBytes {
+		return config{}, errors.New("require model-dir, nonempty listen, threads 1..16, positive even max-audio-bytes and even segment-audio-bytes in [0,max]; no positional arguments")
 	}
 	return cfg, nil
 }
@@ -68,24 +70,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	if err := ctx.Err(); err != nil {
 		return nil
 	}
-	factory, err := native.NewFactory(cfg.model)
-	if err != nil {
-		return fmt.Errorf("configure native factory: %w", err)
-	}
-	var modelID atomic.Uint64
-	loggedFactory := func(ctx context.Context) (realasr.Engine, error) {
-		id := modelID.Add(1)
-		start := time.Now()
-		e, err := factory(ctx)
-		if err != nil {
-			logger.Error("model_creation_failed", "model_id", id, "elapsed_ms", float64(time.Since(start))/float64(time.Millisecond), "error", err)
-			return nil, err
-		}
-		logger.Info("model_created", "model_id", id, "load_ms", float64(time.Since(start))/float64(time.Millisecond))
-		return &loggedEngine{Engine: e, logger: logger, id: id}, nil
-	}
-	limits := realasr.Config{MaxAudioBytes: 960000, MaxChunkBytes: 3200, MaxTextBytes: 4096}
-	w, err := realasr.New(limits, loggedFactory)
+	w, limits, err := configuredWorker(cfg, logger)
 	if err != nil {
 		return err
 	}
@@ -102,21 +87,8 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	logger.Info("listening", "address", listener.Addr().String(), "model_loaded", false,
 		"backend", "sherpa-onnx-go-macos@v1.13.8", "threads", cfg.model.Threads,
 		"max_audio_bytes", limits.MaxAudioBytes, "max_chunk_bytes", limits.MaxChunkBytes, "max_text_bytes", limits.MaxTextBytes,
-		"progress_available", false)
+		"segment_audio_bytes", cfg.segmentAudioBytes, "progress_available", false)
 	return serve(ctx, server, listener, 5*time.Second)
-}
-
-// loggedEngine 仅记录创建/实际释放边界，不记录患者音频或识别文本。
-type loggedEngine struct {
-	realasr.Engine
-	logger *slog.Logger
-	id     uint64
-}
-
-func (e *loggedEngine) Close() {
-	start := time.Now()
-	e.Engine.Close()
-	e.logger.Info("engine_closed", "model_id", e.id, "close_ms", float64(time.Since(start))/float64(time.Millisecond))
 }
 
 // serve 同时观察 Serve 和外部停止；timeout 只限制自然收尾阶段。

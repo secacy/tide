@@ -1,0 +1,5 @@
+{"time":"2026-10-27T11:31:36.595058+08:00","level":"INFO","msg":"listening","address":"127.0.0.1:64932","model_loaded":false,"backend":"sherpa-onnx-go-macos@v1.13.8","threads":2,"max_audio_bytes":128000,"max_chunk_bytes":3200,"max_text_bytes":4096,"segment_audio_bytes":32000,"progress_available":false}
+{"time":"2026-10-27T11:31:37.208907+08:00","level":"INFO","msg":"model_created","model_id":1,"load_ms":610.444791}
+{"time":"2026-10-27T11:31:37.33179+08:00","level":"INFO","msg":"engine_closed","model_id":1,"close_ms":12.363625}
+{"time":"2026-10-27T11:31:37.848487+08:00","level":"INFO","msg":"model_created","model_id":2,"load_ms":516.29525}
+{"time":"2026-10-27T11:31:37.984405+08:00","level":"INFO","msg":"engine_closed","model_id":2,"close_ms":3.8465}

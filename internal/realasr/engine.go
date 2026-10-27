@@ -19,7 +19,7 @@ type Engine interface {
 	// Result 返回当前片段的完整文本快照，可以为空。
 	Result() (string, error)
 
-	// Finish 正常结束输入，提交模型需要的尾部 padding 和结束标记。
+	// Finish 正常结束当前模型流输入，提交尾部 padding 和结束标记。
 	// 返回后仍需要执行剩余解码。
 	Finish() error
 
@@ -33,3 +33,23 @@ type Engine interface {
 // 失败时自行清理部分资源，返回 nil 和错误。
 // ctx 用于协作取消，不保证中断同步原生创建。
 type EngineFactory func(ctx context.Context) (Engine, error)
+
+// SegmentedEngine 在单场 RPC 内串行复用模型，逐段拥有不同模型流。
+// 工厂成功返回时首段流已存在；不隐式创建后续流。
+type SegmentedEngine interface {
+	Engine
+
+	// ReleaseSegment 同步释放当前流，保留模型；空流重复释放无操作。
+	// 即使 ctx 已取消仍执行，不刷新、不发送 final、不创建下一流。
+	// 正常路径由调用者保证已完成 Finish、尾部解码和 final 发送。
+	ReleaseSegment()
+
+	// StartSegment 要求旧流已释放、整场未关闭且 ctx 有效。
+	// 成功后可提交新段音频；失败清理部分创建的流，调用者结束整场。
+	// 原生创建不能硬取消，返回后仍须检查取消并清理。
+	StartSegment() error
+}
+
+// SegmentedEngineFactory 成功移交独立模型和首段流，不返回动态 nil。
+// 失败自行释放部分资源；ctx 不承诺中断同步原生创建。
+type SegmentedEngineFactory func(ctx context.Context) (SegmentedEngine, error)

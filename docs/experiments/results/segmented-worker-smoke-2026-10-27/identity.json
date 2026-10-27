@@ -1,0 +1,33 @@
+{
+  "scope": "implementation smoke; identities collected after run, not preregistered capacity measurement",
+  "backend": "sherpa-onnx-go-macos@v1.13.8, original bilingual Zipformer int8, CPU threads=2",
+  "worker_binary_sha256": "7e65cc706291837f4d361f9b1d69368807c9ac59dcea14bcbc36c7e1d7b8a1c8",
+  "cli": {
+    "max_audio_bytes": 128000,
+    "segment_audio_bytes": 32000,
+    "max_chunk_bytes": 3200,
+    "max_text_bytes": 4096
+  },
+  "input": "16kHz mono PCM S16LE zero samples; boundary 64000B, short_tail 67200B; sent without real-time pacing",
+  "source_sha256": {
+    "internal/realasr/engine.go": "3e6b4f5054e6510fe49a330515366046165e4e6863e8a1be7aab451399056aae",
+    "internal/realasr/worker.go": "aaf7f41e7e30ea04a346d832581e2c7c347e8f32966e5645cced3ba35a92988e",
+    "internal/realasr/worker_segmented.go": "c79549dd5b9c4d799f9ad9240a8bf3be0ac1f07a9565383872b91ed0f46beb99",
+    "internal/realasr/segment_cursor.go": "f306db3ae929ec55be79f5ffe754d51a221e65387d0dae9fc8aacc128db449a7",
+    "internal/realasr/snapshot.go": "0a1b075c8eade693c0ac66518dc27acdd5b8e3455c34763a520ef0d9855fa456",
+    "workers/sherpa/internal/native/engine.go": "72d097401cad0636acc63ff95b2cd4be95d67868566e9a274fdeb8472efb17fc",
+    "workers/sherpa/internal/native/factory.go": "3cffb85bfba67411f15f598f5bbd46494756be59ed227a3140f6a097ea3b8f32",
+    "workers/sherpa/cmd/asr-worker/main.go": "c81861c706aaa021bb1414f615ffa48095d2f4d98f820e3a29808a06790cdbeb",
+    "workers/sherpa/cmd/asr-worker/worker_setup.go": "14a77964b8c7702a3c6e2537742cdb252a0b793fe1c5eb8e61744407179a8b7b"
+  },
+  "model_sha256": {
+    "encoder-epoch-99-avg-1.int8.onnx": "8fa764187a261844f859d7143ebaa563af5d10adfece4c18a8f414c88cba2a9b",
+    "decoder-epoch-99-avg-1.int8.onnx": "1a70c593d71e53f023f5f55b0b4cfff5055abb786ee3992e5f63dc2e273cc4fa",
+    "joiner-epoch-99-avg-1.int8.onnx": "1ed689c5ed19dbaa725d9d191bb4822b5f4855a39e1ffd28cbc1f340d25b2ee0",
+    "tokens.txt": "a8e0e4ec53810e433789b54a5c0134a7eaa2ffca595a6334d54c00da858841d3"
+  },
+  "evidence_sha256": {
+    "server.log": "0612ec1009c66d021417effe1ac713b993552d82044df901f19699bfeafc199e",
+    "cases.json": "16e64b3b18a879ab572b15688a04937f04c9120a4762247fc83666b8e8bd0a97"
+  }
+}

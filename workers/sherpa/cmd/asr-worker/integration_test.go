@@ -205,7 +205,7 @@ type realWorkerProcess struct {
 	address string
 }
 
-func startRealWorkerProcess(t *testing.T, bin, modelDir, out string) *realWorkerProcess {
+func startRealWorkerProcess(t *testing.T, bin, modelDir, out string, extraArgs ...string) *realWorkerProcess {
 	t.Helper()
 	logFile, err := os.Create(filepath.Join(out, "server.log"))
 	if err != nil {
@@ -213,7 +213,8 @@ func startRealWorkerProcess(t *testing.T, bin, modelDir, out string) *realWorker
 	}
 	t.Cleanup(func() { _ = logFile.Close() })
 	capture := &addressCapture{address: make(chan string, 1)}
-	cmd := exec.Command(bin, "-model-dir="+modelDir, "-listen=127.0.0.1:0", "-threads=2")
+	args := append([]string{"-model-dir=" + modelDir, "-listen=127.0.0.1:0", "-threads=2"}, extraArgs...)
+	cmd := exec.Command(bin, args...)
 	cmd.Stdout, cmd.Stderr = logFile, io.MultiWriter(logFile, capture)
 	if err := cmd.Start(); err != nil {
 		t.Fatal(err)

@@ -14,9 +14,9 @@ var (
 )
 
 // snapshotMapper 将单个模型流的完整快照转换为 Worker 响应。
-// 每个 RPC 独占一个实例，串行调用，无需加锁。
+// 每个片段独占一个实例，串行调用，无需加锁。
 type snapshotMapper struct {
-	segmentID    string // 本 RPC 内稳定的片段 ID，首版使用 "1"。
+	segmentID    string // 本片段内稳定；Worker 在 RPC 内为不同片段分配不同 ID。
 	maxTextBytes int    // 单条文本的字节上限，不是字符数。
 	lastText     string // 最近一次生成的文本快照。
 	finalized    bool   // 已生成 final，不表示发送成功。

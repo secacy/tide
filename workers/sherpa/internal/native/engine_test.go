@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	sherpa "github.com/k2-fsa/sherpa-onnx-go-macos"
 )
 
 func writeTestAssets(t *testing.T) string {
@@ -17,6 +19,67 @@ func writeTestAssets(t *testing.T) string {
 		}
 	}
 	return dir
+}
+
+func TestSegmentedFactoryValidationAndCancellation(t *testing.T) {
+	dir := writeTestAssets(t)
+	for _, cfg := range []Config{{}, {ModelDir: dir, Threads: 17}, {ModelDir: filepath.Join(dir, "missing")}} {
+		if f, err := NewSegmentedFactory(cfg); f != nil || err == nil {
+			t.Fatalf("invalid segmented config accepted: %+v", cfg)
+		}
+	}
+	f, err := NewSegmentedFactory(Config{ModelDir: dir})
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if e, err := f(ctx); e != nil || !errors.Is(err, context.Canceled) {
+		t.Fatalf("canceled segmented factory=(%v,%v)", e, err)
+	}
+	if e, err := f(nil); e != nil || err == nil {
+		t.Fatalf("nil-context segmented factory=(%v,%v)", e, err)
+	}
+}
+
+func TestSegmentedEngineGuardsWithoutNativeObjects(t *testing.T) {
+	e := &engine{ctx: context.Background()}
+	for _, call := range []func() error{
+		func() error { return e.Accept([]float32{0}) },
+		func() error { _, err := e.Ready(); return err },
+		e.Decode,
+		func() error { _, err := e.Result(); return err },
+	} {
+		if err := call(); !errors.Is(err, errNoStream) {
+			t.Fatalf("no-stream guard=%v", err)
+		}
+	}
+	e.leadingPadded = true
+	if err := e.Finish(); !errors.Is(err, errNoStream) {
+		t.Fatalf("no-stream finish=%v", err)
+	}
+	if err := e.StartSegment(); err == nil {
+		t.Fatal("started segment without recognizer")
+	}
+	// 仅测试 Go 状态保护，不将此无底层指针的占位对象交给 C。
+	e.stream = &sherpa.OnlineStream{}
+	if err := e.StartSegment(); err == nil {
+		t.Fatal("started segment over existing stream")
+	}
+	e.stream = nil
+	e.ReleaseSegment()
+	e.ReleaseSegment()
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	e.ctx = ctx
+	if err := e.StartSegment(); !errors.Is(err, context.Canceled) {
+		t.Fatalf("start after cancellation=%v", err)
+	}
+	e.Close()
+	e.ReleaseSegment()
+	if err := e.StartSegment(); !errors.Is(err, errClosed) {
+		t.Fatalf("start after close=%v", err)
+	}
 }
 
 func TestFactoryValidatesBeforeNativeCreation(t *testing.T) {

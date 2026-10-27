@@ -29,53 +29,78 @@ const (
 // NewFactory 检查并复制配置，不加载模型。
 // 每次成功调用返回的工厂会创建独立 Engine，所有权交给调用方。
 func NewFactory(cfg Config) (realasr.EngineFactory, error) {
+	cfg, err := validateConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return func(ctx context.Context) (realasr.Engine, error) {
+		e, err := newEngine(ctx, cfg)
+		if err != nil {
+			return nil, err
+		}
+		return e, nil
+	}, nil
+}
+
+// NewSegmentedFactory 使用同样的模型配置，显式返回分段能力。
+// 每场创建独立 recognizer 和首段流；配置检查不提前加载模型。
+func NewSegmentedFactory(cfg Config) (realasr.SegmentedEngineFactory, error) {
+	cfg, err := validateConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return func(ctx context.Context) (realasr.SegmentedEngine, error) {
+		e, err := newEngine(ctx, cfg)
+		if err != nil {
+			return nil, err
+		}
+		return e, nil
+	}, nil
+}
+
+// validateConfig 检查并复制配置；两个静态类型的工厂共用此流程。
+func validateConfig(cfg Config) (Config, error) {
 	if strings.TrimSpace(cfg.ModelDir) == "" {
-		return nil, errors.New("model directory is required")
+		return Config{}, errors.New("model directory is required")
 	}
 	if cfg.Threads == 0 {
 		cfg.Threads = 2
 	}
 	if cfg.Threads < 1 || cfg.Threads > 16 {
-		return nil, errors.New("threads must be between 1 and 16")
+		return Config{}, errors.New("threads must be between 1 and 16")
 	}
 	dir, err := filepath.Abs(cfg.ModelDir)
 	if err != nil {
-		return nil, fmt.Errorf("resolve model directory: %w", err)
+		return Config{}, fmt.Errorf("resolve model directory: %w", err)
 	}
 	cfg.ModelDir = dir
 	for _, name := range []string{encoderFile, decoderFile, joinerFile, tokensFile} {
 		path := filepath.Join(dir, name)
 		info, err := os.Stat(path)
 		if err != nil {
-			return nil, fmt.Errorf("stat model asset %s: %w", name, err)
+			return Config{}, fmt.Errorf("stat model asset %s: %w", name, err)
 		}
 		// 在 Open 前拒绝 FIFO/设备等非普通文件，避免配置检查阻塞读取。
 		if !info.Mode().IsRegular() || info.Size() == 0 {
-			return nil, fmt.Errorf("model asset %s must be a nonempty regular file", name)
+			return Config{}, fmt.Errorf("model asset %s must be a nonempty regular file", name)
 		}
 		f, err := os.Open(path)
 		if err != nil {
-			return nil, fmt.Errorf("open model asset %s: %w", name, err)
+			return Config{}, fmt.Errorf("open model asset %s: %w", name, err)
 		}
 		openedInfo, statErr := f.Stat()
 		closeErr := f.Close()
 		if statErr != nil {
-			return nil, fmt.Errorf("stat model asset %s: %w", name, statErr)
+			return Config{}, fmt.Errorf("stat model asset %s: %w", name, statErr)
 		}
 		if !openedInfo.Mode().IsRegular() || openedInfo.Size() == 0 {
-			return nil, fmt.Errorf("model asset %s must be a nonempty regular file", name)
+			return Config{}, fmt.Errorf("model asset %s must be a nonempty regular file", name)
 		}
 		if closeErr != nil {
-			return nil, fmt.Errorf("close model asset %s: %w", name, closeErr)
+			return Config{}, fmt.Errorf("close model asset %s: %w", name, closeErr)
 		}
 	}
-	return func(ctx context.Context) (realasr.Engine, error) {
-		e, err := newEngine(ctx, cfg)
-		if err != nil {
-			return nil, err // 不将 nil *engine 装进非 nil 接口。
-		}
-		return e, nil
-	}, nil
+	return cfg, nil
 }
 
 // newEngine 串行创建原生对象；失败时清理部分资源后才返回。
@@ -112,13 +137,8 @@ func newEngine(ctx context.Context, cfg Config) (_ *engine, err error) {
 	if e.recognizer == nil {
 		return nil, errors.New("native recognizer creation failed")
 	}
-	e.stream = sherpa.NewOnlineStream(e.recognizer)
-	if err := ctx.Err(); err != nil {
+	if err := e.StartSegment(); err != nil {
 		return nil, err
-	}
-	// 此绑定不公开底层 C 指针；Go 包装对象非 nil 不保证 C 分配成功。
-	if e.stream == nil {
-		return nil, errors.New("native stream creation failed")
 	}
 	return e, nil
 }

@@ -27,9 +27,11 @@ type Config struct {
 // Worker 实现流式识别服务；通过 New 创建后以指针使用，不得复制。
 type Worker struct {
 	asrv1.UnimplementedASRServiceServer
-	cfg     Config
-	factory EngineFactory // 只在取得名额后调用。
-	active  chan struct{} // 容量固定 1；占位覆盖创建、运行及实际释放全过程。
+	cfg              Config
+	factory          EngineFactory          // 单段入口设置；只在取得名额后调用。
+	segmentedFactory SegmentedEngineFactory // 分段入口设置；与 factory 互斥。
+	maxSegmentBytes  int                    // 分段入口的单段原始输入上限。
+	active           chan struct{}          // 容量固定 1；覆盖整场创建、运行及实际释放。
 }
 
 // New 校验并复制配置，创建一个名额；不加载模型、不启动 goroutine。
@@ -37,8 +39,37 @@ func New(cfg Config, factory EngineFactory) (*Worker, error) {
 	if factory == nil {
 		return nil, errors.New("engine factory must not be nil")
 	}
+	cfg, err := normalizeConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return &Worker{cfg: cfg, factory: factory, active: make(chan struct{}, 1)}, nil
+}
+
+// NewSegmented 显式启用分段；整场默认配置与 New 一致。
+// maxSegmentBytes 必须为正偶数且不大于整场上限，不采用隐式默认值。
+// 构造不加载模型、不启动任务。
+func NewSegmented(cfg Config, maxSegmentBytes int, factory SegmentedEngineFactory) (*Worker, error) {
+	if factory == nil {
+		return nil, errors.New("segmented engine factory must not be nil")
+	}
+	cfg, err := normalizeConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := newSegmentCursor(cfg.MaxAudioBytes, maxSegmentBytes); err != nil {
+		return nil, err
+	}
+	return &Worker{
+		cfg: cfg, segmentedFactory: factory, maxSegmentBytes: maxSegmentBytes,
+		active: make(chan struct{}, 1),
+	}, nil
+}
+
+// normalizeConfig 复制并校验短场与分段共用的整场、单块和快照预算。
+func normalizeConfig(cfg Config) (Config, error) {
 	if cfg.MaxAudioBytes < 0 || cfg.MaxChunkBytes < 0 || cfg.MaxTextBytes < 0 {
-		return nil, errors.New("worker limits must not be negative")
+		return Config{}, errors.New("worker limits must not be negative")
 	}
 	if cfg.MaxAudioBytes == 0 {
 		cfg.MaxAudioBytes = defaultMaxAudioBytes
@@ -50,13 +81,9 @@ func New(cfg Config, factory EngineFactory) (*Worker, error) {
 		cfg.MaxTextBytes = defaultMaxTextBytes
 	}
 	if cfg.MaxAudioBytes%2 != 0 || cfg.MaxChunkBytes%2 != 0 {
-		return nil, errors.New("PCM byte limits must be even")
+		return Config{}, errors.New("PCM byte limits must be even")
 	}
-	return &Worker{
-		cfg:     cfg,
-		factory: factory,
-		active:  make(chan struct{}, 1),
-	}, nil
+	return cfg, nil
 }
 
 // contextFailure 将取消或超时转换为对应的 gRPC 状态错误。
@@ -67,8 +94,8 @@ func contextFailure(ctx context.Context) error {
 	return nil
 }
 
-// StreamingRecognize 拥有本 RPC 的 Engine、mapper 和输入计数。
-// 正常尾部刷新及 final 发送成功后返回 nil；异常路径不补发 final。
+// StreamingRecognize 取得一次整场名额；分支完成实际 Close 后才能归还。
+// 分段定稿或释放当前流不会释放整场名额。
 func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeServer) error {
 	ctx := stream.Context()
 
@@ -79,9 +106,7 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 	// 非阻塞准入：Worker 忙时立即拒绝，不排队等待。
 	select {
 	case w.active <- struct{}{}:
-		// 先注册名额释放。
-		// Engine.Close 的 defer 将在后面注册，
-		// 因此 Close 完成后才会归还名额。
+		// 分支返回前会执行自己的 Engine.Close，再由外层归还名额。
 		defer func() {
 			<-w.active
 		}()
@@ -100,6 +125,16 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 		return err
 	}
 
+	if w.segmentedFactory != nil {
+		return w.recognizeSegmented(stream)
+	}
+	return w.recognizeSingle(stream)
+}
+
+// recognizeSingle 拥有本 RPC 的单段 Engine、mapper 和输入计数。
+// 正常尾部刷新及 final 发送成功后返回 nil；异常路径不补发 final。
+func (w *Worker) recognizeSingle(stream asrv1.ASRService_StreamingRecognizeServer) error {
+	ctx := stream.Context()
 	// 获取名额后才创建模型资源。
 	engine, factoryErr := w.factory(ctx)
 
@@ -145,29 +180,7 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 				return status.Error(codes.InvalidArgument, "audio stream is empty")
 			}
 
-			if err := contextFailure(ctx); err != nil {
-				return err
-			}
-
-			// 提交尾部 padding 并声明输入结束。
-			// 具体模型操作由 Engine 实现负责。
-			finishErr := engine.Finish()
-
-			if err := contextFailure(ctx); err != nil {
-				return err
-			}
-			if finishErr != nil {
-				return status.Error(codes.Internal, "model finish failed")
-			}
-
-			// 继续处理 Finish 后剩余的可执行解码步骤。
-			if err := w.drain(stream, engine, mapper); err != nil {
-				return err
-			}
-
-			// 最后读取一次完整文本快照。
-			// 即使文本为空或与上一条相同，也生成 final。
-			if err := w.sendSnapshot(stream, engine, mapper, true); err != nil {
+			if err := w.finishSegment(stream, engine, mapper); err != nil {
 				return err
 			}
 
@@ -230,6 +243,26 @@ func (w *Worker) StreamingRecognize(stream asrv1.ASRService_StreamingRecognizeSe
 		}
 	}
 
+}
+
+// finishSegment 正常刷新当前流、排空尾部并发送 final；不释放或换流。
+// 任一步失败直接返回，发送失败不重试，不补发成功结果。
+func (w *Worker) finishSegment(stream asrv1.ASRService_StreamingRecognizeServer, engine Engine, mapper *snapshotMapper) error {
+	ctx := stream.Context()
+	if err := contextFailure(ctx); err != nil {
+		return err
+	}
+	finishErr := engine.Finish()
+	if err := contextFailure(ctx); err != nil {
+		return err
+	}
+	if finishErr != nil {
+		return status.Error(codes.Internal, "model finish failed")
+	}
+	if err := w.drain(stream, engine, mapper); err != nil {
+		return err
+	}
+	return w.sendSnapshot(stream, engine, mapper, true)
 }
 
 // drain 执行当前可运行的解码步骤，每步之后尝试发送 partial。
