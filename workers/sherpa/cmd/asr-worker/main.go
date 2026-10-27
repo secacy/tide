@@ -24,6 +24,7 @@ type config struct {
 	model             native.Config // 仅参数值；解析不加载模型或访问文件。
 	maxAudioBytes     int           // 整场原始输入上限，默认 30 秒。
 	segmentAudioBytes int           // 0 使用单段模式，正偶数显式启用分段。
+	observeSegments   bool          // 显式实验观察；记录流边界和成功提交的样本摘要。
 }
 
 // parseConfig 解析独立 Worker 参数；帮助输出不会创建原生对象。
@@ -36,10 +37,11 @@ func parseConfig(args []string, output io.Writer) (config, error) {
 	fs.IntVar(&cfg.model.Threads, "threads", 2, "native CPU threads (1..16)")
 	fs.IntVar(&cfg.maxAudioBytes, "max-audio-bytes", 960000, "whole-session PCM byte limit (positive even integer)")
 	fs.IntVar(&cfg.segmentAudioBytes, "segment-audio-bytes", 0, "PCM bytes per segment; 0 disables segmentation")
+	fs.BoolVar(&cfg.observeSegments, "observe-segments", false, "log segment lifecycle and submitted sample digests (requires segmentation)")
 	if err := fs.Parse(args); err != nil {
 		return config{}, err
 	}
-	if fs.NArg() != 0 || strings.TrimSpace(cfg.listen) == "" || strings.TrimSpace(cfg.model.ModelDir) == "" || cfg.model.Threads < 1 || cfg.model.Threads > 16 || cfg.maxAudioBytes <= 0 || cfg.maxAudioBytes%2 != 0 || cfg.segmentAudioBytes < 0 || cfg.segmentAudioBytes%2 != 0 || cfg.segmentAudioBytes > cfg.maxAudioBytes {
+	if fs.NArg() != 0 || strings.TrimSpace(cfg.listen) == "" || strings.TrimSpace(cfg.model.ModelDir) == "" || cfg.model.Threads < 1 || cfg.model.Threads > 16 || cfg.maxAudioBytes <= 0 || cfg.maxAudioBytes%2 != 0 || cfg.segmentAudioBytes < 0 || cfg.segmentAudioBytes%2 != 0 || cfg.segmentAudioBytes > cfg.maxAudioBytes || (cfg.observeSegments && cfg.segmentAudioBytes == 0) {
 		return config{}, errors.New("require model-dir, nonempty listen, threads 1..16, positive even max-audio-bytes and even segment-audio-bytes in [0,max]; no positional arguments")
 	}
 	return cfg, nil
@@ -87,7 +89,7 @@ func run(ctx context.Context, cfg config, logger *slog.Logger) error {
 	logger.Info("listening", "address", listener.Addr().String(), "model_loaded", false,
 		"backend", "sherpa-onnx-go-macos@v1.13.8", "threads", cfg.model.Threads,
 		"max_audio_bytes", limits.MaxAudioBytes, "max_chunk_bytes", limits.MaxChunkBytes, "max_text_bytes", limits.MaxTextBytes,
-		"segment_audio_bytes", cfg.segmentAudioBytes, "progress_available", false)
+		"segment_audio_bytes", cfg.segmentAudioBytes, "observe_segments", cfg.observeSegments, "progress_available", false)
 	return serve(ctx, server, listener, 5*time.Second)
 }
 

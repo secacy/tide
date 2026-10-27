@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"hash"
 	"log/slog"
 	"sync/atomic"
 	"time"
@@ -48,7 +49,9 @@ func configuredWorker(cfg config, logger *slog.Logger) (*realasr.Worker, realasr
 		if err != nil {
 			return nil, err
 		}
-		return &loggedSegmentedEngine{SegmentedEngine: e, logger: logger, id: id}, nil
+		logged := &loggedSegmentedEngine{SegmentedEngine: e, logger: logger, id: id, observe: cfg.observeSegments}
+		logged.openSegment(true, time.Since(start))
+		return logged, nil
 	}
 	w, err := realasr.NewSegmented(limits, cfg.segmentAudioBytes, loggedFactory)
 	return w, limits, err
@@ -79,8 +82,13 @@ func (e *loggedEngine) Close() {
 // loggedSegmentedEngine 保留完整分段方法集合，不经旧 Engine 包装丢失能力。
 type loggedSegmentedEngine struct {
 	realasr.SegmentedEngine
-	logger *slog.Logger
-	id     uint64
+	logger     *slog.Logger
+	id         uint64
+	observe    bool      // 显式启用；关闭时不计算样本摘要。
+	segment    uint64    // 本场成功建立的流编号，首段为 1。
+	streamOpen bool      // 成功移交后、实际释放返回前持有。
+	samples    uint64    // 本段成功 Accept 的原始样本数，非处理进度。
+	sampleHash hash.Hash // little-endian float32 原始样本，不含 padding。
 }
 
 var _ realasr.SegmentedEngine = (*loggedSegmentedEngine)(nil)
@@ -88,5 +96,6 @@ var _ realasr.SegmentedEngine = (*loggedSegmentedEngine)(nil)
 func (e *loggedSegmentedEngine) Close() {
 	start := time.Now()
 	e.SegmentedEngine.Close()
+	e.closedSegment("engine_close", time.Since(start))
 	e.logger.Info("engine_closed", "model_id", e.id, "close_ms", float64(time.Since(start))/float64(time.Millisecond))
 }

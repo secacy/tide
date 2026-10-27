@@ -30,6 +30,7 @@ CGO_ENABLED=1 go build -o /tmp/tide-sherpa-worker ./cmd/asr-worker
 | `-listen` | 127.0.0.1:50051 | gRPC 监听地址；`:0` 可分配临时端口 |
 | `-max-audio-bytes` | 960000 | 整场原始 PCM 上限，正偶数；默认 30 秒 |
 | `-segment-audio-bytes` | 0 | 0 为单段模式；正偶数启用固定长度分段，不得大于整场上限 |
+| `-observe-segments` | false | 分段模式的显式观察开关，记录流边界、调用耗时和成功提交的原始样本摘要 |
 
 `-h` 帮助退出 0；参数、文件、监听和服务错误退出 1。启动先检查文件，模型在每场取得唯一名额后创建；`listening` 日志的 `model_loaded=false` 不代表模型已成功加载。`model_created` 记录每场加载耗时，`engine_closed` 只在原生释放调用返回后记录，均不记录转录文本。
 
@@ -44,7 +45,9 @@ CGO_ENABLED=1 go build -o /tmp/tide-sherpa-worker ./cmd/asr-worker
   -max-audio-bytes=3840000 -segment-audio-bytes=960000
 ```
 
-这是配置示例，120 秒运行和资源趋势尚未验证。分段模式在同一 RPC 内复用 recognizer，满段立即刷新、发送 final 并删除当前 online stream；有下一段音频才建新流，片段 ID 依次为 1/2/3，整场持续占有名额。边界 EOF 不多建空段。固定边界可能截断词句，未启用自然端点或重叠拼接。逐段原始输入数不是模型处理确认。
+分段模式在同一 RPC 内复用 recognizer，满段立即刷新、发送 final 并删除当前 online stream；有下一段音频才建新流，片段 ID 依次为 1/2/3，整场持续占有名额。边界 EOF 不多建空段。固定边界可能截断词句，未启用自然端点或重叠拼接。逐段原始输入数不是模型处理确认。
+
+已按固定条件完成[一次 120 秒基线](../../docs/worklog/2026-10-27-segmented-120s-results.md)，四段原始样本摘要一致、完整完成和清理通过；资源采样质量通过但 RSS 未回预热值，无长期稳定容量结论。工具、开关开销和时间定义见 [asrsegment](../../experiments/asrsegment/README.md)。观察默认关闭，不把该基线的时间值当作无观察开销的性能。
 
 分段 CLI、真实原生流和独立 gRPC 进程的短验证已通过，复现入口及原始日志见[证据说明](../../docs/experiments/results/segmented-worker-smoke-2026-10-27/README.md)；Gateway/v2 多段完成与失败清理使用可控 Engine 验收，见[接入记录](../../docs/worklog/2026-10-27-segmented-worker-validation.md)。
 

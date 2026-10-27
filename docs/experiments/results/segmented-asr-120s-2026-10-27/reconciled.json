@@ -1,0 +1,204 @@
+{
+  "schema": "tide.segment120-reconciled.v1",
+  "cases": {
+    "warmup": {
+      "completed": true,
+      "input_bytes": 321700,
+      "finals": [
+        "1"
+      ],
+      "updates": 17,
+      "timing": [
+        {
+          "segment": 1,
+          "source_read_to_final_ns": 44047250,
+          "grpc_send_to_final_ns": 42969542
+        }
+      ],
+      "max_source_lag_ns": 4532125,
+      "max_grpc_send_lag_ns": 9489250,
+      "source_eof_to_return_ns": 49485000,
+      "cleanup_after_return_ns": 47291,
+      "new_stream_create_ns": [],
+      "stream_release_ns": [
+        13625
+      ],
+      "model_load_ms": 546.475666
+    },
+    "formal": {
+      "completed": true,
+      "input_bytes": 3840000,
+      "finals": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "updates": 157,
+      "timing": [
+        {
+          "segment": 1,
+          "source_read_to_final_ns": 43505541,
+          "grpc_send_to_final_ns": 42972333
+        },
+        {
+          "segment": 2,
+          "source_read_to_final_ns": 43247333,
+          "grpc_send_to_final_ns": 42759875
+        },
+        {
+          "segment": 3,
+          "source_read_to_final_ns": 43224667,
+          "grpc_send_to_final_ns": 42702167
+        },
+        {
+          "segment": 4,
+          "source_read_to_final_ns": 44033750,
+          "grpc_send_to_final_ns": 43573875
+        }
+      ],
+      "max_source_lag_ns": 65000667,
+      "max_grpc_send_lag_ns": 166577875,
+      "source_eof_to_return_ns": 7334292,
+      "cleanup_after_return_ns": 70708,
+      "new_stream_create_ns": [
+        241625,
+        343541,
+        243000
+      ],
+      "stream_release_ns": [
+        27500,
+        34833,
+        16875,
+        20667
+      ],
+      "model_load_ms": 559.887459
+    },
+    "probe": {
+      "completed": true,
+      "input_bytes": 96000,
+      "finals": [
+        "1"
+      ],
+      "updates": 5,
+      "timing": [
+        {
+          "segment": 1,
+          "source_read_to_final_ns": 123257708,
+          "grpc_send_to_final_ns": 122411291
+        }
+      ],
+      "max_source_lag_ns": 2235000,
+      "max_grpc_send_lag_ns": 3745500,
+      "source_eof_to_return_ns": 28360292,
+      "cleanup_after_return_ns": 76208,
+      "new_stream_create_ns": [],
+      "stream_release_ns": [
+        18333
+      ],
+      "model_load_ms": 551.214292
+    }
+  },
+  "resources": {
+    "quality_passed": true,
+    "n": 307,
+    "max_monotonic_gap_ns": 505803500,
+    "max_wall_gap_ns": 505819000,
+    "rss_missing": 0,
+    "max_sample_duration_ns": 17062250,
+    "phases": {
+      "formal": {
+        "n": 240,
+        "rss_bytes": {
+          "min": 619380736,
+          "max": 645791744
+        },
+        "driver_heap_bytes": {
+          "min": 5259024,
+          "max": 9410200
+        },
+        "driver_goroutines": {
+          "min": 21,
+          "max": 21
+        }
+      },
+      "formal_idle": {
+        "n": 20,
+        "rss_bytes": {
+          "min": 627851264,
+          "max": 627851264
+        },
+        "driver_heap_bytes": {
+          "min": 6658496,
+          "max": 7636800
+        },
+        "driver_goroutines": {
+          "min": 11,
+          "max": 11
+        }
+      },
+      "probe": {
+        "n": 6,
+        "rss_bytes": {
+          "min": 650297344,
+          "max": 660537344
+        },
+        "driver_heap_bytes": {
+          "min": 7954264,
+          "max": 9076224
+        },
+        "driver_goroutines": {
+          "min": 21,
+          "max": 21
+        }
+      },
+      "probe_idle": {
+        "n": 10,
+        "rss_bytes": {
+          "min": 660422656,
+          "max": 660422656
+        },
+        "driver_heap_bytes": {
+          "min": 9414280,
+          "max": 9877704
+        },
+        "driver_goroutines": {
+          "min": 11,
+          "max": 11
+        }
+      },
+      "warmup": {
+        "n": 21,
+        "rss_bytes": {
+          "min": 18907136,
+          "max": 429195264
+        },
+        "driver_heap_bytes": {
+          "min": 4714496,
+          "max": 8065848
+        },
+        "driver_goroutines": {
+          "min": 9,
+          "max": 21
+        }
+      },
+      "warmup_idle": {
+        "n": 10,
+        "rss_bytes": {
+          "min": 429129728,
+          "max": 429129728
+        },
+        "driver_heap_bytes": {
+          "min": 6705016,
+          "max": 7171832
+        },
+        "driver_goroutines": {
+          "min": 11,
+          "max": 11
+        }
+      }
+    }
+  },
+  "models_created_and_closed": 3,
+  "streams_created_and_closed": 6
+}

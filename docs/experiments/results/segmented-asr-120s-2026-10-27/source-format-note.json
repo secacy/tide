@@ -1,0 +1,7 @@
+{
+  "path": "workers/sherpa/cmd/asr-worker/segment_experiment_test.go",
+  "change": "gofmt only, after all recognition and reconciliation; frozen source retains executed bytes",
+  "gofmt_equivalence": true,
+  "frozen_sha256": "4711317f86770d65285cc80d517d989b0d41b94137b80b15ca04120b4dfb19a9",
+  "current_sha256": "975fbbd680efa8bc4b71d0d14df02d75c2095c4b35d8031e8cb855ae5889bb28"
+}
