@@ -1,4 +1,4 @@
-# 固定分段 120 秒验证工具
+# 固定分段 120/600 秒验证工具
 
 条件与判据见[预登记计划](../../docs/experiments/real-asr-segmented-120s.md)。仅显式环境变量启用，不改变默认模型、准入或恢复规则。
 
@@ -35,3 +35,11 @@ python3 -m unittest discover -s experiments/asrsegment -v
 data/ 保留源读取、实际 Gateway gRPC Send/Recv、客户端结果、各场状态、Worker 原始日志、模型事件和 500ms 采样。观察器 SHA 是成功提交的 float32 样本摘要，不能作为处理完成确认；首流时间含模型工厂，后续 StartSegment 才是独立换流创建时间。
 
 客户端回调仅保留当前段，但 RPC 观察 trace 会保留本场有限结果直到归档；驱动堆包含工具和冻结输入。公共 Gateway Snapshot 没有内部缓冲占用，因此本工具不报告精确队列峰值。采样缺口或 RSS 缺失会使资源质量标记为 false，不能用完整性通过替代资源判据。
+
+## 十分钟档
+
+[600 秒计划](../../docs/experiments/real-asr-segmented-600s.md)保持同一模型、Worker 二进制、30 秒段长和采集方式。使用 `--seconds=600` 准备，显式设置 `TIDE_SHERPA_SEGMENT600_DIR` 并运行 `TestRealWorkerSegmented600s`，总测试期限改为 `-test.timeout=12m`。准备器核对 Worker 是否为两分钟基线保留的原程序；本轮对照不能用其他构建替代。其他构建或环境需要另行登记条件。
+
+首轮[十分钟结果](../../docs/worklog/2026-10-27-segmented-600s-results.md)已完成，原始记录与冻结工具见[归档](../../docs/experiments/results/segmented-asr-600s-2026-10-27/README.md)。
+
+两个档共用驱动、复核器和损坏副本检查，默认仍为 120 秒。600 秒汇总增加五个两分钟窗口的边界等待和 RSS 范围，保留所有原始点，不设置运行后挑选的达标阈值。驱动堆还包含完整输入和各场 RPC 汇总快照；19.2MB 输入与 3.84MB 输入之间的工具堆差值不能解释为业务泄漏。

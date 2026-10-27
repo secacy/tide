@@ -4,10 +4,29 @@ import struct
 import unittest
 
 from prepare import sample_digest
-from verify import check_callbacks, check_native
+from verify import check_callbacks, check_native, profile_seconds, window_trends
 
 
 class SegmentVerification(unittest.TestCase):
+    def test_explicit_duration_profiles_and_legacy(self):
+        self.assertEqual(profile_seconds({"schema": "tide.segment120.v1"}), 120)
+        self.assertEqual(profile_seconds({"schema": "tide.segment600.v1", "formal_seconds": 600}), 600)
+        for value in (0, 119, 601):
+            with self.assertRaises(ValueError):
+                profile_seconds({"schema": "tide.segment600.v1", "formal_seconds": value})
+        with self.assertRaises(ValueError):
+            profile_seconds({"schema": "tide.segment120.v1", "formal_seconds": 600})
+
+    def test_twenty_segments_in_five_windows(self):
+        samples = [{"phase": "formal", "elapsed_ns": (i*120+1)*1000000000, "worker_rss_bytes": 100+i,
+                    "driver_heap_bytes": 50, "driver_goroutines": 21} for i in range(5)]
+        timing = [{"segment": i, "source_read_to_final_ns": i} for i in range(1, 21)]
+        result = window_trends(samples, {"FirstReadNS": 0}, timing, 600)
+        self.assertEqual([r["boundary_wait_ns"]["median"] for r in result], [2.5, 6.5, 10.5, 14.5, 18.5])
+        self.assertEqual(result[-1]["last_rss_bytes"], 104)
+        with self.assertRaises(ValueError):
+            window_trends(samples, {"FirstReadNS": 0}, timing[:-1], 600)
+
     def test_independent_sample_encoding(self):
         pcm = struct.pack("<hhh", 0, 16384, -32768)
         expected = hashlib.sha256(bytes.fromhex("000000000000003f000080bf")).hexdigest()

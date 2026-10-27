@@ -1,4 +1,4 @@
-"""Freeze source and repeated PCM before the single 120-second experiment."""
+"""Freeze source and repeated PCM for an explicit 120/600-second experiment."""
 import argparse
 import hashlib
 import json
@@ -21,7 +21,11 @@ def sample_digest(pcm):
     return h.hexdigest()
 
 
-def prepare(root, output, binary, driver, model):
+def prepare(root, output, binary, driver, model, seconds=120):
+    if seconds not in (120, 600):
+        raise ValueError("only the preregistered 120/600-second profiles are supported")
+    if seconds == 600 and digest(binary) != "a8a112f2d8d9f65ae0e1dc45dc9b3e6c615f41168a855211d84c532e7d8fba1b":
+        raise ValueError("600s profile must reuse the original 120s Worker binary")
     lock = root / "experiments/asrprobe/model-assets.json"
     models = json.loads(lock.read_text())["profiles"]["zipformer-bilingual-2023"]["files"]
     for name, expected in models.items():
@@ -33,16 +37,17 @@ def prepare(root, output, binary, driver, model):
         base = f.readframes(f.getnframes())
     if len(base) != 321700 or hashlib.sha256(base).hexdigest() != "237ee4752b8a1fb41c6284ae94f2d7baf9a1fc8f28c26d3409c69e86cecbade1":
         raise ValueError("input identity mismatch")
-    pcm = (base * 12)[:3840000]
+    total = seconds * 32000
+    pcm = (base * ((total+len(base)-1)//len(base)))[:total]
     module = json.loads(subprocess.check_output(["go", "list", "-m", "-json", "github.com/k2-fsa/sherpa-onnx-go-macos"], cwd=root / "workers/sherpa", text=True))
     libraries = {str(p): digest(p) for p in sorted(Path(module["Dir"]).rglob("*.dylib"))}
     if not libraries:
         raise ValueError("missing native libraries")
-    paths = {root / "go.mod", root / "go.sum", lock, root / "docs/experiments/real-asr-segmented-120s.md"}
+    paths = {root / "go.mod", root / "go.sum", lock, root / f"docs/experiments/real-asr-segmented-{seconds}s.md"}
     for directory in ("internal", "proto", "workers/sherpa", "experiments/asrsegment"):
         paths.update(p for p in (root / directory).rglob("*") if p.is_file() and p.suffix in (".go", ".mod", ".sum", ".proto", ".py"))
     hardware = subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string", "hw.memsize", "hw.logicalcpu"], text=True).splitlines()
-    manifest = {"schema": "tide.segment120.v1", "worker_sha256": digest(binary), "worker_path": str(binary), "driver_sha256": digest(driver), "model_path": str(model),
+    manifest = {"schema": f"tide.segment{seconds}.v1", "formal_seconds": seconds, "worker_sha256": digest(binary), "worker_path": str(binary), "driver_sha256": digest(driver), "model_path": str(model),
                 "model_sha256": models, "native_libraries": libraries, "source": {}, "hardware": hardware, "platform": platform.platform(),
                 "git_head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip(),
                 "build_info": subprocess.check_output(["go", "version", "-m", str(binary)], text=True),
@@ -71,6 +76,7 @@ if __name__ == "__main__":
     p.add_argument("--worker-bin", type=Path, required=True)
     p.add_argument("--driver-bin", type=Path, required=True)
     p.add_argument("--model-dir", type=Path, required=True)
+    p.add_argument("--seconds", type=int, choices=(120, 600), default=120)
     args = p.parse_args()
-    result = prepare(Path(__file__).resolve().parents[2], args.output, args.worker_bin.resolve(), args.driver_bin.resolve(), args.model_dir.resolve())
+    result = prepare(Path(__file__).resolve().parents[2], args.output, args.worker_bin.resolve(), args.driver_bin.resolve(), args.model_dir.resolve(), args.seconds)
     print(json.dumps({"source_files": len(result["source"]), "input_bytes": result["inputs"]["formal"]["bytes"], "worker_sha256": result["worker_sha256"]}))

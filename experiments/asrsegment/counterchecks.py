@@ -10,12 +10,12 @@ from verify import verify
 
 def check(root):
     result = []
-    for kind in ("missing_stream_close", "sample_digest", "duplicate_final", "completion", "sample_gap"):
+    for kind in ("missing_stream_close", "sample_digest", "duplicate_final", "completion", "sample_gap", "wrong_duration", "last_segment_digest"):
         with tempfile.TemporaryDirectory(prefix="tide-segment-counter-") as temporary:
             target = Path(temporary) / "collection"
             shutil.copytree(root, target)
             data = target / "data"
-            if kind in ("missing_stream_close", "sample_digest"):
+            if kind in ("missing_stream_close", "sample_digest", "last_segment_digest"):
                 path = data / "server.log"
                 rows = path.read_text().splitlines()
                 for index, text in enumerate(rows):
@@ -23,7 +23,8 @@ def check(root):
                         row = json.loads(text)
                     except json.JSONDecodeError:
                         continue
-                    if row.get("msg") == "stream_closed" and row["model_id"] == 2:
+                    expected_segment = len(json.loads((target/"manifest.json").read_text())["inputs"]["formal"]["segments"]) if kind == "last_segment_digest" else 1
+                    if row.get("msg") == "stream_closed" and row["model_id"] == 2 and row["segment_id"] == expected_segment:
                         if kind == "missing_stream_close":
                             del rows[index]
                         else:
@@ -42,6 +43,10 @@ def check(root):
                 row = json.loads(path.read_text())
                 row["Client"]["CompletionAckWritten"] = False
                 path.write_text(json.dumps(row))
+            elif kind == "wrong_duration":
+                path = target / "input.pcm"
+                original = path.read_bytes()
+                path.write_bytes(original[:3840000] if len(original) > 3840000 else original[:-3200])
             else:
                 path = data / "samples.jsonl"
                 rows = [json.loads(line) for line in path.read_text().splitlines()]

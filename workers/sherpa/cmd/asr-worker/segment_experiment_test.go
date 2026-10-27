@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -155,7 +156,7 @@ type segmentCase struct {
 	Failure                  string
 }
 
-func runSegmentCase(t *testing.T, m *backendMonitor, g *gateway.Gateway, a *segmentAllocator, c *segmentObservedClient, url, out, name string, pcm []byte, id int) segmentCase {
+func runSegmentCase(t *testing.T, m *backendMonitor, g *gateway.Gateway, a *segmentAllocator, c *segmentObservedClient, url, out, name string, pcm []byte, id int, budget time.Duration) segmentCase {
 	t.Helper()
 	slot := segmentCase{Name: name, State: "running", InputBytes: len(pcm)}
 	reads := segmentLog(t, filepath.Join(out, name+"-reads.jsonl"))
@@ -190,7 +191,7 @@ func runSegmentCase(t *testing.T, m *backendMonitor, g *gateway.Gateway, a *segm
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), budget)
 	slot.StartNS = time.Since(m.start).Nanoseconds()
 	slot.Client, err = client.Run(ctx, source)
 	cancel()
@@ -229,11 +230,22 @@ func runSegmentCase(t *testing.T, m *backendMonitor, g *gateway.Gateway, a *segm
 	return slot
 }
 
-// TestRealWorkerSegmented120s 是单场延长实验；只显式启用，不纳入普通回归。
+// TestRealWorkerSegmented120s 保留明确的两分钟档；普通回归默认跳过。
 func TestRealWorkerSegmented120s(t *testing.T) {
-	root := os.Getenv("TIDE_SHERPA_SEGMENT120_DIR")
+	runSegmentExperiment(t, "TIDE_SHERPA_SEGMENT120_DIR", 120)
+}
+
+// TestRealWorkerSegmented600s 在相同段长下延长同一会话，不纳入普通回归。
+func TestRealWorkerSegmented600s(t *testing.T) {
+	runSegmentExperiment(t, "TIDE_SHERPA_SEGMENT600_DIR", 600)
+}
+
+// runSegmentExperiment 共享采集语义；时长仅由上述两个显式入口决定。
+func runSegmentExperiment(t *testing.T, env string, seconds int) {
+	t.Helper()
+	root := os.Getenv(env)
 	if root == "" {
-		t.Skip("set frozen experiment directory to run 120-second segmented baseline")
+		t.Skip("set " + env + " to run the frozen segmented experiment")
 	}
 	bin, model := os.Getenv("TIDE_SHERPA_WORKER_BIN"), os.Getenv("TIDE_SHERPA_MODEL_DIR")
 	if bin == "" || model == "" {
@@ -241,9 +253,10 @@ func TestRealWorkerSegmented120s(t *testing.T) {
 	}
 	// 运行前核对实际二进制和源码；不能只冻结一个未使用的程序摘要。
 	var frozen struct {
-		Worker string            `json:"worker_sha256"`
-		Driver string            `json:"driver_sha256"`
-		Source map[string]string `json:"source"`
+		Worker        string            `json:"worker_sha256"`
+		Driver        string            `json:"driver_sha256"`
+		Source        map[string]string `json:"source"`
+		FormalSeconds int               `json:"formal_seconds"`
 	}
 	manifest, err := os.ReadFile(filepath.Join(root, "manifest.json"))
 	if err != nil {
@@ -251,6 +264,9 @@ func TestRealWorkerSegmented120s(t *testing.T) {
 	}
 	if err := json.Unmarshal(manifest, &frozen); err != nil {
 		t.Fatal(err)
+	}
+	if frozen.FormalSeconds != seconds {
+		t.Fatal("experiment duration does not match frozen profile")
 	}
 	driver, err := os.Executable()
 	if err != nil {
@@ -283,8 +299,8 @@ func TestRealWorkerSegmented120s(t *testing.T) {
 		t.Fatal(err)
 	}
 	input, err := os.ReadFile(filepath.Join(root, "input.pcm"))
-	if err != nil || len(input) != 3840000 {
-		t.Fatal("missing frozen 120s PCM", err)
+	if err != nil || len(input) != seconds*32000 {
+		t.Fatal("missing frozen PCM for the selected duration", err)
 	}
 	for i, b := range input {
 		if b != base[i%len(base)] {
@@ -295,7 +311,7 @@ func TestRealWorkerSegmented120s(t *testing.T) {
 	if err := os.Mkdir(out, 0700); err != nil {
 		t.Fatal(err)
 	}
-	process := startRealWorkerProcess(t, bin, model, out, "-max-audio-bytes=3840000", "-segment-audio-bytes=960000", "-observe-segments")
+	process := startRealWorkerProcess(t, bin, model, out, "-max-audio-bytes="+strconv.Itoa(seconds*32000), "-segment-audio-bytes=960000", "-observe-segments")
 	conn, err := grpc.NewClient("passthrough:///"+process.address, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatal(err)
@@ -346,7 +362,11 @@ func TestRealWorkerSegmented120s(t *testing.T) {
 		idle time.Duration
 	}{{"warmup", base, 5 * time.Second}, {"formal", input, 10 * time.Second}, {"probe", base[:96000], 5 * time.Second}} {
 		m.setPhase(tc.name, i)
-		slots = append(slots, runSegmentCase(t, m, g, a, c, url, out, tc.name, tc.pcm, i+1))
+		budget := 150 * time.Second
+		if tc.name == "formal" {
+			budget = time.Duration(seconds+30) * time.Second
+		}
+		slots = append(slots, runSegmentCase(t, m, g, a, c, url, out, tc.name, tc.pcm, i+1, budget))
 		writeGatewayJSON(t, filepath.Join(out, "cases.json"), slots)
 		m.setPhase(tc.name+"_idle", i)
 		time.Sleep(tc.idle)
@@ -356,5 +376,5 @@ func TestRealWorkerSegmented120s(t *testing.T) {
 	}
 	stopped = true
 	process.stop(t)
-	t.Logf("120s segmented run completed; evidence: %s", root)
+	t.Logf("%ds segmented run completed; evidence: %s", seconds, root)
 }

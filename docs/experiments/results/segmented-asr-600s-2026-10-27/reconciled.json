@@ -1,0 +1,449 @@
+{
+  "schema": "tide.segment600-reconciled.v1",
+  "cases": {
+    "warmup": {
+      "completed": true,
+      "input_bytes": 321700,
+      "finals": [
+        "1"
+      ],
+      "updates": 17,
+      "timing": [
+        {
+          "segment": 1,
+          "source_read_to_final_ns": 46843750,
+          "grpc_send_to_final_ns": 45777958
+        }
+      ],
+      "max_source_lag_ns": 2322125,
+      "max_grpc_send_lag_ns": 3257000,
+      "source_eof_to_return_ns": 52559916,
+      "cleanup_after_return_ns": 32834,
+      "new_stream_create_ns": [],
+      "stream_release_ns": [
+        14208
+      ],
+      "model_load_ms": 558.670958
+    },
+    "formal": {
+      "completed": true,
+      "input_bytes": 19200000,
+      "finals": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+        "12",
+        "13",
+        "14",
+        "15",
+        "16",
+        "17",
+        "18",
+        "19",
+        "20"
+      ],
+      "updates": 796,
+      "timing": [
+        {
+          "segment": 1,
+          "source_read_to_final_ns": 33911292,
+          "grpc_send_to_final_ns": 33583083
+        },
+        {
+          "segment": 2,
+          "source_read_to_final_ns": 34024000,
+          "grpc_send_to_final_ns": 33699125
+        },
+        {
+          "segment": 3,
+          "source_read_to_final_ns": 33197792,
+          "grpc_send_to_final_ns": 32872375
+        },
+        {
+          "segment": 4,
+          "source_read_to_final_ns": 39692208,
+          "grpc_send_to_final_ns": 39232333
+        },
+        {
+          "segment": 5,
+          "source_read_to_final_ns": 42886750,
+          "grpc_send_to_final_ns": 42306417
+        },
+        {
+          "segment": 6,
+          "source_read_to_final_ns": 43176375,
+          "grpc_send_to_final_ns": 42614250
+        },
+        {
+          "segment": 7,
+          "source_read_to_final_ns": 46978417,
+          "grpc_send_to_final_ns": 46446292
+        },
+        {
+          "segment": 8,
+          "source_read_to_final_ns": 44570625,
+          "grpc_send_to_final_ns": 44108000
+        },
+        {
+          "segment": 9,
+          "source_read_to_final_ns": 44440792,
+          "grpc_send_to_final_ns": 43947833
+        },
+        {
+          "segment": 10,
+          "source_read_to_final_ns": 42008709,
+          "grpc_send_to_final_ns": 41661875
+        },
+        {
+          "segment": 11,
+          "source_read_to_final_ns": 43288834,
+          "grpc_send_to_final_ns": 42779709
+        },
+        {
+          "segment": 12,
+          "source_read_to_final_ns": 32001875,
+          "grpc_send_to_final_ns": 31702750
+        },
+        {
+          "segment": 13,
+          "source_read_to_final_ns": 37619208,
+          "grpc_send_to_final_ns": 37241083
+        },
+        {
+          "segment": 14,
+          "source_read_to_final_ns": 33095041,
+          "grpc_send_to_final_ns": 32817541
+        },
+        {
+          "segment": 15,
+          "source_read_to_final_ns": 34418083,
+          "grpc_send_to_final_ns": 34054500
+        },
+        {
+          "segment": 16,
+          "source_read_to_final_ns": 24127500,
+          "grpc_send_to_final_ns": 23822292
+        },
+        {
+          "segment": 17,
+          "source_read_to_final_ns": 36442500,
+          "grpc_send_to_final_ns": 36140500
+        },
+        {
+          "segment": 18,
+          "source_read_to_final_ns": 33057416,
+          "grpc_send_to_final_ns": 32809083
+        },
+        {
+          "segment": 19,
+          "source_read_to_final_ns": 38329875,
+          "grpc_send_to_final_ns": 38017666
+        },
+        {
+          "segment": 20,
+          "source_read_to_final_ns": 33345541,
+          "grpc_send_to_final_ns": 32931458
+        }
+      ],
+      "max_source_lag_ns": 30866666,
+      "max_grpc_send_lag_ns": 42799416,
+      "source_eof_to_return_ns": 7306583,
+      "cleanup_after_return_ns": 308667,
+      "new_stream_create_ns": [
+        196583,
+        224250,
+        223416,
+        198833,
+        298750,
+        227209,
+        265209,
+        213667,
+        254792,
+        263875,
+        234375,
+        198333,
+        221167,
+        220500,
+        192125,
+        224417,
+        248625,
+        196375,
+        217500
+      ],
+      "stream_release_ns": [
+        14959,
+        15000,
+        16333,
+        17125,
+        24416,
+        22417,
+        63791,
+        24334,
+        19208,
+        33083,
+        21167,
+        13333,
+        17125,
+        15416,
+        15583,
+        13958,
+        28750,
+        14000,
+        32209,
+        13792
+      ],
+      "model_load_ms": 523.433917
+    },
+    "probe": {
+      "completed": true,
+      "input_bytes": 96000,
+      "finals": [
+        "1"
+      ],
+      "updates": 5,
+      "timing": [
+        {
+          "segment": 1,
+          "source_read_to_final_ns": 120039917,
+          "grpc_send_to_final_ns": 119279375
+        }
+      ],
+      "max_source_lag_ns": 1549292,
+      "max_grpc_send_lag_ns": 4061375,
+      "source_eof_to_return_ns": 25528625,
+      "cleanup_after_return_ns": 70750,
+      "new_stream_create_ns": [],
+      "stream_release_ns": [
+        16750
+      ],
+      "model_load_ms": 581.082459
+    }
+  },
+  "resources": {
+    "quality_passed": true,
+    "n": 1267,
+    "max_monotonic_gap_ns": 515029375,
+    "max_wall_gap_ns": 515045000,
+    "rss_missing": 0,
+    "max_sample_duration_ns": 61057708,
+    "phases": {
+      "formal": {
+        "n": 1200,
+        "rss_bytes": {
+          "min": 612958208,
+          "max": 642285568
+        },
+        "driver_heap_bytes": {
+          "min": 20671208,
+          "max": 37775264
+        },
+        "driver_goroutines": {
+          "min": 21,
+          "max": 21
+        }
+      },
+      "formal_idle": {
+        "n": 20,
+        "rss_bytes": {
+          "min": 615415808,
+          "max": 615415808
+        },
+        "driver_heap_bytes": {
+          "min": 37270576,
+          "max": 38248928
+        },
+        "driver_goroutines": {
+          "min": 11,
+          "max": 11
+        }
+      },
+      "probe": {
+        "n": 6,
+        "rss_bytes": {
+          "min": 637190144,
+          "max": 659587072
+        },
+        "driver_heap_bytes": {
+          "min": 21450848,
+          "max": 22609608
+        },
+        "driver_goroutines": {
+          "min": 21,
+          "max": 21
+        }
+      },
+      "probe_idle": {
+        "n": 10,
+        "rss_bytes": {
+          "min": 659472384,
+          "max": 659472384
+        },
+        "driver_heap_bytes": {
+          "min": 23741952,
+          "max": 24205552
+        },
+        "driver_goroutines": {
+          "min": 11,
+          "max": 11
+        }
+      },
+      "warmup": {
+        "n": 21,
+        "rss_bytes": {
+          "min": 19611648,
+          "max": 490471424
+        },
+        "driver_heap_bytes": {
+          "min": 20080024,
+          "max": 25011576
+        },
+        "driver_goroutines": {
+          "min": 9,
+          "max": 21
+        }
+      },
+      "warmup_idle": {
+        "n": 10,
+        "rss_bytes": {
+          "min": 490405888,
+          "max": 490405888
+        },
+        "driver_heap_bytes": {
+          "min": 25181768,
+          "max": 25650680
+        },
+        "driver_goroutines": {
+          "min": 11,
+          "max": 11
+        }
+      }
+    }
+  },
+  "formal_windows": [
+    {
+      "start_seconds": 0,
+      "end_seconds": 120,
+      "samples": 240,
+      "boundary_wait_ns": {
+        "min": 33197792,
+        "median": 33967646.0,
+        "max": 39692208
+      },
+      "rss_bytes": {
+        "min": 612958208,
+        "max": 642285568
+      },
+      "last_rss_bytes": 614121472,
+      "driver_heap_bytes": {
+        "min": 20681272,
+        "max": 37423288
+      },
+      "driver_goroutines": {
+        "min": 21,
+        "max": 21
+      }
+    },
+    {
+      "start_seconds": 120,
+      "end_seconds": 240,
+      "samples": 240,
+      "boundary_wait_ns": {
+        "min": 42886750,
+        "median": 43873500.0,
+        "max": 46978417
+      },
+      "rss_bytes": {
+        "min": 614121472,
+        "max": 614842368
+      },
+      "last_rss_bytes": 614842368,
+      "driver_heap_bytes": {
+        "min": 20671208,
+        "max": 37539448
+      },
+      "driver_goroutines": {
+        "min": 21,
+        "max": 21
+      }
+    },
+    {
+      "start_seconds": 240,
+      "end_seconds": 360,
+      "samples": 240,
+      "boundary_wait_ns": {
+        "min": 32001875,
+        "median": 42648771.5,
+        "max": 44440792
+      },
+      "rss_bytes": {
+        "min": 614842368,
+        "max": 615448576
+      },
+      "last_rss_bytes": 615448576,
+      "driver_heap_bytes": {
+        "min": 20834208,
+        "max": 37578608
+      },
+      "driver_goroutines": {
+        "min": 21,
+        "max": 21
+      }
+    },
+    {
+      "start_seconds": 360,
+      "end_seconds": 480,
+      "samples": 240,
+      "boundary_wait_ns": {
+        "min": 24127500,
+        "median": 33756562.0,
+        "max": 37619208
+      },
+      "rss_bytes": {
+        "min": 615448576,
+        "max": 615481344
+      },
+      "last_rss_bytes": 615481344,
+      "driver_heap_bytes": {
+        "min": 20784344,
+        "max": 37739984
+      },
+      "driver_goroutines": {
+        "min": 21,
+        "max": 21
+      }
+    },
+    {
+      "start_seconds": 480,
+      "end_seconds": 600,
+      "samples": 240,
+      "boundary_wait_ns": {
+        "min": 33057416,
+        "median": 34894020.5,
+        "max": 38329875
+      },
+      "rss_bytes": {
+        "min": 615481344,
+        "max": 615530496
+      },
+      "last_rss_bytes": 615530496,
+      "driver_heap_bytes": {
+        "min": 20847040,
+        "max": 37775264
+      },
+      "driver_goroutines": {
+        "min": 21,
+        "max": 21
+      }
+    }
+  ],
+  "models_created_and_closed": 3,
+  "streams_created_and_closed": 22
+}

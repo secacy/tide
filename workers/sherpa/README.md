@@ -49,6 +49,8 @@ CGO_ENABLED=1 go build -o /tmp/tide-sherpa-worker ./cmd/asr-worker
 
 已按固定条件完成[一次 120 秒基线](../../docs/worklog/2026-10-27-segmented-120s-results.md)，四段原始样本摘要一致、完整完成和清理通过；资源采样质量通过但 RSS 未回预热值，无长期稳定容量结论。工具、开关开销和时间定义见 [asrsegment](../../experiments/asrsegment/README.md)。观察默认关闭，不把该基线的时间值当作无观察开销的性能。
 
+随后使用同一 Worker 程序完成[一次 600 秒延长观察](../../docs/worklog/2026-10-27-segmented-600s-results.md)：20 段完整完成，边界等待未持续增长，采样质量通过；RSS 有小幅变化且未回预热值。该观察不等于稳定并发容量或任意时长资源有界。
+
 分段 CLI、真实原生流和独立 gRPC 进程的短验证已通过，复现入口及原始日志见[证据说明](../../docs/experiments/results/segmented-worker-smoke-2026-10-27/README.md)；Gateway/v2 多段完成与失败清理使用可控 Engine 验收，见[接入记录](../../docs/worklog/2026-10-27-segmented-worker-validation.md)。
 
 ## 真实运行验证

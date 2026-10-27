@@ -2,6 +2,7 @@
 import argparse
 import json
 from pathlib import Path
+import statistics
 
 from prepare import digest, sample_digest
 
@@ -83,8 +84,8 @@ def check_native(rows, inputs):
     return result
 
 
-def check_samples(rows, formal):
-    require(len(rows) >= 240, "insufficient resource samples")
+def check_samples(rows, formal, seconds=120):
+    require(len(rows) >= seconds*2, "insufficient resource samples")
     require(all(r["duration_ns"] >= 0 and r["active_sessions"] in (0, 1) for r in rows), "invalid runtime sample")
     gaps = [b["elapsed_ns"]-a["elapsed_ns"] for a, b in zip(rows, rows[1:])]
     walls = [b["wall_ns"]-a["wall_ns"] for a, b in zip(rows, rows[1:])]
@@ -101,15 +102,42 @@ def check_samples(rows, formal):
             "rss_missing": sum(not r["worker_rss_bytes"] for r in rows), "max_sample_duration_ns": max(r["duration_ns"] for r in rows), "phases": phases}
 
 
+def profile_seconds(manifest):
+    seconds = manifest.get("formal_seconds", 120)  # 兼容旧冻结证据。
+    require(seconds in (120, 600) and manifest["schema"] == f"tide.segment{seconds}.v1", "experiment duration/profile mismatch")
+    return seconds
+
+
+def window_trends(samples, formal, timing, seconds):
+    windows = []
+    for start in range(0, seconds, 120):
+        selected = [r for r in samples if r["phase"] == "formal" and
+                    start*1000000000 <= r["elapsed_ns"]-formal["FirstReadNS"] < (start+120)*1000000000]
+        require(bool(selected), "empty formal trend window")
+        waits = [r["source_read_to_final_ns"] for r in timing if start//30 < r["segment"] <= (start+120)//30]
+        require(len(waits) == 4, "missing final in trend window")
+        rss = [r["worker_rss_bytes"] for r in selected if r["worker_rss_bytes"]]
+        windows.append({"start_seconds": start, "end_seconds": start+120, "samples": len(selected),
+                        "boundary_wait_ns": {"min": min(waits), "median": statistics.median(waits), "max": max(waits)},
+                        "rss_bytes": span(rss), "last_rss_bytes": selected[-1]["worker_rss_bytes"],
+                        "driver_heap_bytes": span([r["driver_heap_bytes"] for r in selected]),
+                        "driver_goroutines": span([r["driver_goroutines"] for r in selected])})
+    return windows
+
+
 def verify(root):
     m = load(root / "manifest.json")
-    require(m["schema"] == "tide.segment120.v1" and m["plan"] == ["warmup", "formal", "probe"] and m["segment_bytes"] == 960000, "experiment condition mismatch")
+    seconds = profile_seconds(m)
+    total = seconds*32000
+    require(m["plan"] == ["warmup", "formal", "probe"] and m["segment_bytes"] == 960000, "experiment condition mismatch")
+    if seconds == 600:
+        require(m["worker_sha256"] == "a8a112f2d8d9f65ae0e1dc45dc9b3e6c615f41168a855211d84c532e7d8fba1b", "600s Worker differs from baseline")
     require(bool(m["source"]) and bool(m["native_libraries"]), "missing source or native identities")
     for name, expected in m["source"].items():
         require(digest(root / "source" / name) == expected, f"source digest mismatch: {name}")
     base, formal = (root / "base.pcm").read_bytes(), (root / "input.pcm").read_bytes()
     require(digest(root / "base.pcm") == "237ee4752b8a1fb41c6284ae94f2d7baf9a1fc8f28c26d3409c69e86cecbade1", "original PCM identity mismatch")
-    require(len(base) == 321700 and len(formal) == 3840000 and formal == (base*12)[:3840000], "frozen PCM construction mismatch")
+    require(len(base) == 321700 and len(formal) == total and formal == (base*((total+len(base)-1)//len(base)))[:total], "frozen PCM construction mismatch")
     data = {"warmup": base, "formal": formal, "probe": base[:96000]}
     for name, pcm in data.items():
         reference = m["inputs"][name]
@@ -119,7 +147,7 @@ def verify(root):
         require(reference["segments"] == expected, "input sample reference mismatch")
     native = lines(root / "data/server.log", native=True)
     listening = [r for r in native if r.get("msg") == "listening"]
-    require(len(listening) == 1 and listening[0]["max_audio_bytes"] == 3840000 and listening[0]["segment_audio_bytes"] == 960000 and listening[0]["observe_segments"] and not listening[0]["progress_available"] and listening[0]["threads"] == 2, "Worker runtime configuration mismatch")
+    require(len(listening) == 1 and listening[0]["max_audio_bytes"] == total and listening[0]["segment_audio_bytes"] == 960000 and listening[0]["observe_segments"] and not listening[0]["progress_available"] and listening[0]["threads"] == 2, "Worker runtime configuration mismatch")
     lifecycles = check_native(native, [m["inputs"][name] for name in m["plan"]])
     summaries, cases = {}, []
     for index, name in enumerate(m["plan"], 1):
@@ -169,8 +197,10 @@ def verify(root):
                            "new_stream_create_ns": [r["create_ns"] for r in model["created"] if not r["initial"]],
                            "stream_release_ns": [r["release_ns"] for r in model["closed"]], "model_load_ms": model["load_ms"]}
     require(load(root / "data/cases.json") == cases, "aggregate cases differ")
-    samples = check_samples(lines(root / "data/samples.jsonl"), cases[1])
-    return {"schema": "tide.segment120-reconciled.v1", "cases": summaries, "resources": samples,
+    sample_rows = lines(root / "data/samples.jsonl")
+    samples = check_samples(sample_rows, cases[1], seconds)
+    return {"schema": f"tide.segment{seconds}-reconciled.v1", "cases": summaries, "resources": samples,
+            "formal_windows": window_trends(sample_rows, cases[1], summaries["formal"]["timing"], seconds),
             "models_created_and_closed": len(lifecycles), "streams_created_and_closed": sum(len(r["closed"]) for r in lifecycles.values())}
 
 
