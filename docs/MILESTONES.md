@@ -33,6 +33,8 @@
 
 2026-10-27 已形成[长对话分段与状态边界设计](worklog/2026-10-27-long-dialogue-segmentation-design.md)：首版采用固定原始音频长度分段，同一 RPC 内复用 recognizer、逐段释放 online stream，保留整场名额及连续结果序号；自然端点重置留作后续策略。segmentCursor 已由开发者实现并通过[组件验收](worklog/2026-10-27-segment-cursor-validation.md)：2560 种请求划分验证原始字节守恒和固定段边界，realasr 包 race/vet 通过；首次 TCP 监听受沙箱限制后同命令复验通过。Worker/原生分段集成及 120 秒验证尚未完成，不新增长时性能结论。
 
+2026-10-27 已补充[分段 Worker 与原生生命周期接入指导](worklog/2026-10-27-segmented-worker-integration.md)：选用显式 SegmentedEngine/工厂/构造入口，逐段释放与启动流，外层持有一次整场名额；明确跨请求边界、EOF、取消与日志包装透传，并规划 CLI 显式模式。当前待开发者实现、助手补集成测试，无新增运行数据。
+
 | 阶段 | 状态 | 目标与主要工作 | 完成依据 / 验收标准 |
 | --- | --- | --- | --- |
 | 1. 最小双向流 | 已完成 | 打通客户端与 Mock Worker 的 gRPC 双向流，理解发送、接收和半关闭 | 音频仍在发送时能收到结果；输入结束后能继续收到尾部结果 |

@@ -27,4 +27,4 @@ go vet ./internal/realasr
 
 现在已有可独立验证的分段计数规则，尚无实际分段输出。当前 Worker 仍使用一个片段，默认整场上限仍为 30 秒。测试中的 advance 只代表计数推进，没有执行 Finish、final 发送或原生流创建/释放。
 
-下一块按原设计成组接入 Worker 与原生生命周期：明确分段 Engine 契约和显式模式入口、逐段流释放/创建、新片段 ID、边界 EOF 与错误收尾，保留整场 RPC 和名额。随后补可控模型及 Gateway/v2 验收，再开展预登记的真实 120 秒验证。
+下一块按[集成指导](2026-10-27-segmented-worker-integration.md)成组接入 Worker 与原生生命周期：明确分段 Engine 契约和显式模式入口、逐段流释放/创建、新片段 ID、边界 EOF 与错误收尾，保留整场 RPC 和名额。随后补可控模型及 Gateway/v2 验收，再开展预登记的真实 120 秒验证。
